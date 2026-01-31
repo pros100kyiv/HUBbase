@@ -12,6 +12,18 @@ const registerSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    // Перевіряємо підключення до бази даних
+    if (!process.env.DATABASE_URL) {
+      console.error('DATABASE_URL is not set')
+      return NextResponse.json(
+        { 
+          error: 'База даних не налаштована',
+          details: 'DATABASE_URL environment variable is missing'
+        },
+        { status: 500 }
+      )
+    }
+
     const body = await request.json()
     const validated = registerSchema.parse(body)
 
@@ -19,14 +31,28 @@ export async function POST(request: Request) {
     const slug = validated.slug || generateSlug(validated.name)
 
     // Перевіряємо чи slug вже існує
-    const existingBusiness = await prisma.business.findFirst({
-      where: {
-        OR: [
-          { slug },
-          { email: validated.email },
-        ],
-      },
-    })
+    let existingBusiness
+    try {
+      existingBusiness = await prisma.business.findFirst({
+        where: {
+          OR: [
+            { slug },
+            { email: validated.email.toLowerCase().trim() },
+          ],
+        },
+      })
+    } catch (dbError) {
+      console.error('Database connection error:', dbError)
+      return NextResponse.json(
+        { 
+          error: 'Помилка підключення до бази даних',
+          details: process.env.NODE_ENV === 'development' 
+            ? String(dbError) 
+            : 'Перевірте налаштування DATABASE_URL'
+        },
+        { status: 500 }
+      )
+    }
 
     if (existingBusiness) {
       return NextResponse.json(
@@ -58,8 +84,19 @@ export async function POST(request: Request) {
     }
 
     console.error('Registration error:', error)
+    
+    // Детальна інформація про помилку для розробки
+    const errorMessage = error instanceof Error ? error.message : String(error)
+    const errorStack = error instanceof Error ? error.stack : undefined
+    
     return NextResponse.json(
-      { error: 'Помилка при реєстрації' },
+      { 
+        error: 'Помилка при реєстрації',
+        details: process.env.NODE_ENV === 'development' 
+          ? errorMessage 
+          : 'Зверніться до адміністратора',
+        ...(process.env.NODE_ENV === 'development' && errorStack && { stack: errorStack })
+      },
       { status: 500 }
     )
   }

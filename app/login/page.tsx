@@ -50,7 +50,10 @@ function LoginPageContent() {
 
       if (!response.ok) {
         console.error('Login error:', data)
-        setErrors({ submit: data.error || 'Помилка при вході' })
+        const errorMessage = data.details 
+          ? `${data.error}: ${data.details}` 
+          : data.error || 'Помилка при вході'
+        setErrors({ submit: errorMessage })
         setIsLoading(false)
         return
       }

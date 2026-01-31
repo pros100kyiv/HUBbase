@@ -33,7 +33,12 @@ export default function RegisterPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        setErrors({ submit: data.error || 'Помилка при реєстрації' })
+        // Показуємо детальну помилку якщо є
+        const errorMessage = data.details 
+          ? `${data.error}: ${data.details}` 
+          : data.error || 'Помилка при реєстрації'
+        setErrors({ submit: errorMessage })
+        console.error('Registration error:', data)
         return
       }
 
