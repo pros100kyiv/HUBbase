@@ -1,0 +1,100 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model Business {
+  id          String        @id @default(cuid())
+  name        String
+  slug        String        @unique // для URL: /booking/[slug]
+  email       String        @unique
+  password    String?       // хешований пароль (опціональний для OAuth)
+  googleId    String?       @unique // Google OAuth ID
+  phone       String?
+  address     String?
+  description String?
+  logo        String?
+  primaryColor String?       @default("#C5A059")
+  secondaryColor String?     @default("#FFFFFF")
+  backgroundColor String?    @default("#050505")
+  surfaceColor String?       @default("#121212")
+  hideRevenue  Boolean       @default(false)
+  isActive    Boolean       @default(true)
+  masters     Master[]
+  services    Service[]
+  appointments Appointment[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([slug])
+  @@index([email])
+  @@index([googleId])
+}
+
+model Master {
+  id          String        @id @default(cuid())
+  businessId  String
+  business    Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String
+  photo       String?
+  bio         String?
+  rating      Float         @default(0)
+  isActive    Boolean       @default(true)
+  workingHours String?      // JSON: { "monday": { "start": "09:00", "end": "18:00", "enabled": true }, ... }
+  blockedPeriods String?    // JSON: [{ "start": "2024-01-15T10:00:00Z", "end": "2024-01-15T12:00:00Z" }]
+  appointments Appointment[]
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([businessId])
+}
+
+model Service {
+  id          String        @id @default(cuid())
+  businessId  String
+  business    Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name        String
+  price       Int
+  duration    Int           // in minutes
+  category    String?
+  description String?
+  image       String?
+  isActive    Boolean       @default(true)
+  masterIds   String?       // JSON array of master IDs who can perform this service
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  @@index([businessId])
+}
+
+model Appointment {
+  id          String   @id @default(cuid())
+  businessId  String
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  masterId    String
+  master      Master   @relation(fields: [masterId], references: [id], onDelete: Cascade)
+  clientName  String
+  clientPhone String
+  clientEmail String?
+  startTime   DateTime
+  endTime     DateTime
+  status      String   @default("Pending") // Pending, Confirmed, Done, Cancelled
+  services    String   // JSON array of service IDs
+  notes       String?
+  reminderSent Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([businessId])
+  @@index([masterId])
+  @@index([startTime])
+  @@index([clientPhone])
+}
+
