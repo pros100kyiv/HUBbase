@@ -29,6 +29,7 @@ interface Master {
   photo?: string
   bio?: string
   rating: number
+  workingHours?: any
 }
 
 interface Service {

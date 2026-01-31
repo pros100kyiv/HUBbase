@@ -10,10 +10,10 @@ function isUUID(str: string): boolean {
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ param: string }> | { param: string } }
+  { params }: { params: Promise<{ param: string }> }
 ) {
   try {
-    const resolvedParams = await Promise.resolve(params)
+    const resolvedParams = await params
     const { param } = resolvedParams
 
     let business
@@ -57,10 +57,10 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ param: string }> | { param: string } }
+  { params }: { params: Promise<{ param: string }> }
 ) {
   try {
-    const resolvedParams = await Promise.resolve(params)
+    const resolvedParams = await params
     const { param } = resolvedParams
 
     console.log('PATCH request received with param:', param)

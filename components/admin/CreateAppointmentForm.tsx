@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { format, addMinutes } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -52,16 +52,7 @@ export function CreateAppointmentForm({
   const [isLoadingSlots, setIsLoadingSlots] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
-  // Load available slots when master and date change
-  useEffect(() => {
-    if (formData.masterId && formData.date) {
-      loadAvailableSlots()
-    } else {
-      setAvailableSlots([])
-    }
-  }, [formData.masterId, formData.date])
-
-  const loadAvailableSlots = async () => {
+  const loadAvailableSlots = useCallback(async () => {
     if (!formData.masterId || !formData.date) return
 
     setIsLoadingSlots(true)
@@ -78,7 +69,16 @@ export function CreateAppointmentForm({
     } finally {
       setIsLoadingSlots(false)
     }
-  }
+  }, [formData.masterId, formData.date, businessId])
+
+  // Load available slots when master and date change
+  useEffect(() => {
+    if (formData.masterId && formData.date) {
+      loadAvailableSlots()
+    } else {
+      setAvailableSlots([])
+    }
+  }, [formData.masterId, formData.date, loadAvailableSlots])
 
   const calculateDuration = () => {
     return services
@@ -247,8 +247,8 @@ export function CreateAppointmentForm({
           {/* Client Info */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
+              <label className="block text-sm font-semibold mb-1.5 text-foreground dark:text-white">Ім&apos;я клієнта *</label>
               <Input
-                label="Ім'я клієнта *"
                 value={formData.clientName}
                 onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
                 placeholder="Ім'я клієнта"
@@ -257,8 +257,8 @@ export function CreateAppointmentForm({
               {errors.clientName && <p className="text-red-500 text-xs mt-1">{errors.clientName}</p>}
             </div>
             <div>
+              <label className="block text-sm font-semibold mb-1.5 text-foreground dark:text-white">Телефон *</label>
               <Input
-                label="Телефон *"
                 type="tel"
                 value={formData.clientPhone}
                 onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
@@ -270,8 +270,8 @@ export function CreateAppointmentForm({
           </div>
 
           <div>
+            <label className="block text-sm font-semibold mb-1.5 text-foreground dark:text-white">Email (опціонально)</label>
             <Input
-              label="Email (опціонально)"
               type="email"
               value={formData.clientEmail}
               onChange={(e) => setFormData({ ...formData, clientEmail: e.target.value })}
@@ -282,8 +282,8 @@ export function CreateAppointmentForm({
           {/* Date and Time */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div>
+              <label className="block text-sm font-semibold mb-1.5 text-foreground dark:text-white">Дата *</label>
               <Input
-                label="Дата *"
                 type="date"
                 value={formData.date}
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
@@ -362,5 +362,6 @@ export function CreateAppointmentForm({
     </Card>
   )
 }
+
 
 

@@ -78,7 +78,7 @@ export default function MainPage() {
         
         const withMasters = appointmentsArray.map((apt: Appointment) => {
           const master = mastersArray.find((m: any) => m.id === apt.masterId)
-          return { ...apt, masterName: master?.name || apt.master?.name || 'Невідомий майстер' }
+          return { ...apt, masterName: master?.name || 'Невідомий майстер' }
         })
         setTodayAppointments(withMasters)
         setLoading(false)

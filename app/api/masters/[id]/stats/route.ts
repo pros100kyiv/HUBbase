@@ -4,10 +4,10 @@ import { startOfMonth, endOfMonth } from 'date-fns'
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const resolvedParams = await Promise.resolve(params)
+    const resolvedParams = await params
     const masterId = resolvedParams.id
 
     const now = new Date()
@@ -77,6 +77,7 @@ export async function GET(
     return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 })
   }
 }
+
 
 
 

@@ -96,7 +96,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
         <div className="bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-candy-sm p-3 mb-3">
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-bold mb-1.5 text-white">Ім'я *</label>
+              <label className="block text-sm font-bold mb-1.5 text-white">Ім&apos;я *</label>
               <Input
                 value={state.clientName}
                 onChange={(e) => setClientName(e.target.value)}

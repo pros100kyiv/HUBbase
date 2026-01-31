@@ -183,3 +183,4 @@ import { Skeleton, SkeletonCard, SkeletonWidget } from '@/components/ui/skeleton
 - Confetti можна викликати з будь-якого місця
 - Skeleton loaders можна використовувати скрізь
 
+

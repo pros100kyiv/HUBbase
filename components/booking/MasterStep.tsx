@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Image from 'next/image'
 import { useBooking, Master } from '@/contexts/BookingContext'
 import { Button } from '@/components/ui/button'
 
@@ -95,9 +96,11 @@ export function MasterStep({ businessId }: MasterStepProps) {
                       } flex items-center justify-center bg-gray-800 dark:bg-gray-900 overflow-hidden`}
                     >
                       {master.photo ? (
-                        <img
+                        <Image
                           src={master.photo}
                           alt={master.name}
+                          width={96}
+                          height={96}
                           className="w-full h-full object-cover"
                         />
                       ) : (

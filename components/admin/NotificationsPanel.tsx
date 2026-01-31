@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { XIcon, CheckIcon, ClockIcon } from '@/components/icons'
@@ -157,13 +157,7 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState<string | null>(null)
 
-  useEffect(() => {
-    if (isOpen && businessId) {
-      loadPendingAppointments()
-    }
-  }, [isOpen, businessId])
-
-  const loadPendingAppointments = async () => {
+  const loadPendingAppointments = useCallback(async () => {
     setLoading(true)
     try {
       const response = await fetch(`/api/appointments?businessId=${businessId}&status=Pending`)
@@ -186,7 +180,7 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
     } finally {
       setLoading(false)
     }
-  }
+  }, [businessId])
 
   const handleConfirm = async (appointmentId: string) => {
     setProcessing(appointmentId)
@@ -228,6 +222,12 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
       setProcessing(null)
     }
   }
+
+  useEffect(() => {
+    if (isOpen && businessId) {
+      loadPendingAppointments()
+    }
+  }, [isOpen, businessId, loadPendingAppointments])
 
   if (!isOpen) return null
 

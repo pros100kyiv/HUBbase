@@ -70,8 +70,8 @@ export default function ClientsPage() {
               appointmentsCount: 0,
               lastVisit: apt.startTime,
               totalSpent: 0,
-              appointments: [],
-              servicesUsed: [],
+              appointments: [] as any[],
+              servicesUsed: [] as string[],
             }
 
             existing.appointmentsCount++
@@ -119,7 +119,7 @@ export default function ClientsPage() {
 
   const calculateClientDetails = (client: Client): ClientDetails => {
     // Calculate total spent from services
-    const serviceMap = new Map<string, { name: string; count: number }>()
+    const serviceMap = new Map<string, { id: string; name: string; count: number }>()
     let totalSpent = 0
 
     client.appointments.forEach((apt: any) => {
@@ -130,7 +130,7 @@ export default function ClientsPage() {
             const service = services.find((s) => s.id === serviceId)
             if (service) {
               totalSpent += service.price
-              const existing = serviceMap.get(serviceId) || { name: service.name, count: 0 }
+              const existing = serviceMap.get(serviceId) || { id: serviceId, name: service.name, count: 0 }
               existing.count++
               serviceMap.set(serviceId, existing)
             }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { CalendarIcon, MoneyIcon, UsersIcon, StarIcon, ChevronDownIcon, ChevronUpIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 
@@ -53,9 +54,11 @@ export function MasterProfileCard({ master, stats, onScheduleClick, onToggleActi
             {/* Avatar */}
             <div className="w-8 h-8 rounded-candy-xs candy-purple overflow-hidden flex-shrink-0 shadow-soft-lg">
               {master.photo ? (
-                <img
+                <Image
                   src={master.photo}
                   alt={master.name}
+                  width={32}
+                  height={32}
                   className="w-full h-full object-cover"
                 />
               ) : (
