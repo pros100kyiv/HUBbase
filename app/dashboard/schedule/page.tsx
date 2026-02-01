@@ -148,25 +148,26 @@ export default function SchedulePage() {
                 <h1 className="text-heading">Графік роботи</h1>
                 <p className="text-caption font-medium">Календар записів</p>
               </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                className="btn-secondary"
-              >
-                <ChevronLeftIcon className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setCurrentMonth(new Date())}
+              <div className="flex gap-2">
+                <button
+                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                  className="btn-secondary"
+                >
+                  <ChevronLeftIcon className="w-4 h-4" />
+                </button>
+                <button
+                  onClick={() => setCurrentMonth(new Date())}
                 className="btn-primary"
               >
                 Сьогодні
               </button>
-              <button
-                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                className="btn-secondary"
-              >
-                <ChevronRightIcon className="w-4 h-4" />
-              </button>
+                <button
+                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                  className="btn-secondary"
+                >
+                  <ChevronRightIcon className="w-4 h-4" />
+                </button>
+              </div>
             </div>
           </div>
 
