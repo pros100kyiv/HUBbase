@@ -66,6 +66,7 @@ export function Sidebar({ className }: SidebarProps) {
     { id: 'clients', label: 'Клієнти', icon: <UsersIcon />, path: '/dashboard/clients' },
     { id: 'masters', label: 'Майстри', icon: <UserIcon />, path: '/dashboard/masters' },
     { id: 'services', label: 'Послуги', icon: <StarIcon />, path: '/dashboard/services' },
+    { id: 'pricelist', label: 'Прайс-лист', icon: <ChartIcon />, path: '/dashboard/pricelist' },
     { id: 'analytics', label: 'Аналітика', icon: <ChartIcon />, path: '/dashboard/analytics' },
     { id: 'notifications', label: 'Бронювання', icon: <BellIcon />, path: '#', badge: pendingCount, onClick: () => setShowNotifications(true) },
     { id: 'settings', label: 'Налаштування', icon: <SettingsIcon />, path: '/dashboard/settings' },

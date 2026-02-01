@@ -6,7 +6,7 @@ import { format, addDays, subDays, isToday, isSameDay } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { MobileWidget } from '@/components/admin/MobileWidget'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
-import { CalendarIcon, UsersIcon, CheckIcon, MoneyIcon } from '@/components/icons'
+import { CalendarIcon, UsersIcon, CheckIcon, MoneyIcon, StarIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { Skeleton, SkeletonWidget, SkeletonCard } from '@/components/ui/skeleton'
 import { Search } from '@/components/ui/search'
@@ -174,12 +174,11 @@ export default function MainPage() {
               onClick={() => router.push('/dashboard/appointments')}
             />
             <MobileWidget
-              icon={<CheckIcon />}
-              title="Підтверджено"
-              value={stats?.confirmedAppointments || 0}
-              trend="up"
+              icon={<StarIcon />}
+              title="Прайс-лист"
+              value={servicesCache.length || 0}
               iconColor="green"
-              onClick={() => router.push('/dashboard/appointments?status=Confirmed')}
+              onClick={() => router.push('/dashboard/pricelist')}
             />
             {!hideRevenue && (
               <MobileWidget
