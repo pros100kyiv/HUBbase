@@ -28,17 +28,40 @@ interface AppointmentCardProps {
   processing: string | null
 }
 
-function AppointmentCard({ appointment, onConfirm, onReschedule, processing }: AppointmentCardProps) {
+interface AppointmentCardWithServicesProps extends AppointmentCardProps {
+  servicesCache: any[]
+}
+
+function AppointmentCard({ appointment, onConfirm, onReschedule, processing, servicesCache = [] }: AppointmentCardWithServicesProps) {
   const startTime = new Date(appointment.startTime)
   const endTime = new Date(appointment.endTime)
   let servicesList: string[] = []
+  let serviceNames: string[] = []
+  let customService: string | null = null
+  
   try {
     if (appointment.services) {
-      servicesList = JSON.parse(appointment.services)
+      const parsed = JSON.parse(appointment.services)
+      if (Array.isArray(parsed)) {
+        // Старий формат - просто масив ID
+        servicesList = parsed
+      } else if (typeof parsed === 'object' && parsed.serviceIds) {
+        // Новий формат з кастомною послугою
+        servicesList = parsed.serviceIds || []
+        customService = parsed.customService || null
+      }
     }
   } catch (e) {
     // Ignore
   }
+  
+  // Отримуємо назви послуг
+  serviceNames = servicesList
+    .map((id: string) => {
+      const service = servicesCache.find((s: any) => s.id === id)
+      return service ? service.name : null
+    })
+    .filter((name: string | null) => name !== null) as string[]
 
   const [newDate, setNewDate] = useState(format(startTime, 'yyyy-MM-dd'))
   const [newStartTime, setNewStartTime] = useState(format(startTime, 'HH:mm'))
@@ -60,8 +83,19 @@ function AppointmentCard({ appointment, onConfirm, onReschedule, processing }: A
               <ClockIcon className="w-3 h-3" />
               {format(startTime, 'd MMMM yyyy, HH:mm', { locale: uk })} - {format(endTime, 'HH:mm')}
             </p>
-            {servicesList.length > 0 && (
-              <p>📋 Послуги: {servicesList.length}</p>
+            {(serviceNames.length > 0 || customService) && (
+              <p className="text-xs">
+                <span className="font-semibold">📋 Послуги:</span>{' '}
+                {serviceNames.length > 0 && (
+                  <span>{serviceNames.join(', ')}</span>
+                )}
+                {customService && (
+                  <span>
+                    {serviceNames.length > 0 ? ', ' : ''}
+                    <span className="italic text-candy-blue dark:text-blue-400">{customService}</span>
+                  </span>
+                )}
+              </p>
             )}
             {appointment.notes && (
               <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-1">
@@ -156,6 +190,7 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState<string | null>(null)
+  const [servicesCache, setServicesCache] = useState<any[]>([])
 
   const loadPendingAppointments = useCallback(async () => {
     setLoading(true)
@@ -164,9 +199,16 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
       if (!response.ok) throw new Error('Failed to fetch appointments')
       const data = await response.json()
       
-      // Get masters for names
-      const mastersRes = await fetch(`/api/masters?businessId=${businessId}`)
+      // Get masters and services for names
+      const [mastersRes, servicesRes] = await Promise.all([
+        fetch(`/api/masters?businessId=${businessId}`),
+        fetch(`/api/services?businessId=${businessId}`),
+      ])
+      
       const masters = mastersRes.ok ? await mastersRes.json() : []
+      const services = servicesRes.ok ? await servicesRes.json() : []
+      
+      setServicesCache(services)
       
       const withMasters = (data || []).map((apt: Appointment) => {
         const master = masters.find((m: any) => m.id === apt.masterId)
@@ -266,6 +308,7 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
                   onConfirm={handleConfirm}
                   onReschedule={handleReschedule}
                   processing={processing}
+                  servicesCache={servicesCache}
                 />
               ))}
             </div>

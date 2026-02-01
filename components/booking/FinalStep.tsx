@@ -48,6 +48,14 @@ export function FinalStep({ businessId }: FinalStepProps) {
       startTime.setHours(hours, minutes, 0, 0)
       const endTime = new Date(startTime.getTime() + totalDuration * 60000)
 
+      // Формуємо services: якщо є кастомна послуга, зберігаємо її разом з ID послуг
+      const servicesData = state.customService.trim().length > 0
+        ? JSON.stringify({
+            serviceIds: state.selectedServices.map(s => s.id),
+            customService: state.customService.trim(),
+          })
+        : JSON.stringify(state.selectedServices.map(s => s.id))
+
       const response = await fetch('/api/appointments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -58,7 +66,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
           clientPhone: state.clientPhone,
           startTime: startTime.toISOString(),
           endTime: endTime.toISOString(),
-          services: state.selectedServices.map(s => s.id),
+          services: servicesData,
         }),
       })
 
@@ -141,7 +149,15 @@ export function FinalStep({ businessId }: FinalStepProps) {
             </div>
             <div className="flex justify-between">
               <span className="text-white/70">Послуги:</span>
-              <span className="font-bold text-white text-right max-w-[60%]">{state.selectedServices.map(s => s.name).join(', ')}</span>
+              <span className="font-bold text-white text-right max-w-[60%]">
+                {state.selectedServices.map(s => s.name).join(', ')}
+                {state.customService.trim().length > 0 && (
+                  <>
+                    {state.selectedServices.length > 0 ? ', ' : ''}
+                    <span className="italic text-blue-300">{state.customService}</span>
+                  </>
+                )}
+              </span>
             </div>
             <div className="flex justify-between pt-2 border-t border-white/20">
               <span className="font-bold text-white">Всього:</span>
