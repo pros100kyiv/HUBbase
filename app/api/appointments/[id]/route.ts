@@ -1,6 +1,33 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+function checkConflict(
+  businessId: string,
+  masterId: string,
+  startTime: Date,
+  endTime: Date,
+  excludeId?: string
+): Promise<boolean> {
+  return prisma.appointment
+    .findFirst({
+      where: {
+        businessId,
+        masterId,
+        startTime: {
+          lt: endTime,
+        },
+        endTime: {
+          gt: startTime,
+        },
+        status: {
+          not: 'Cancelled',
+        },
+        ...(excludeId && { id: { not: excludeId } }),
+      },
+    })
+    .then((conflict) => !!conflict)
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
@@ -20,6 +47,41 @@ export async function PATCH(
       services,
       notes
     } = body
+
+    // Get current appointment to check for conflicts
+    const currentAppointment = await prisma.appointment.findUnique({
+      where: { id: resolvedParams.id },
+      select: { masterId: true, startTime: true, endTime: true },
+    })
+
+    if (!currentAppointment) {
+      return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
+    }
+
+    // Check for conflicts if time or master changed
+    const newMasterId = masterId || currentAppointment.masterId
+    const newStartTime = startTime ? new Date(startTime) : currentAppointment.startTime
+    const newEndTime = endTime ? new Date(endTime) : currentAppointment.endTime
+
+    const timeChanged = startTime || endTime
+    const masterChanged = masterId && masterId !== currentAppointment.masterId
+
+    if (timeChanged || masterChanged) {
+      const hasConflict = await checkConflict(
+        currentAppointment.masterId === newMasterId ? (await prisma.appointment.findUnique({ where: { id: resolvedParams.id }, select: { businessId: true } }))?.businessId || '' : '',
+        newMasterId,
+        newStartTime,
+        newEndTime,
+        resolvedParams.id
+      )
+
+      if (hasConflict) {
+        return NextResponse.json(
+          { error: 'This time slot is already booked' },
+          { status: 409 }
+        )
+      }
+    }
 
     const updateData: any = {}
     if (status) updateData.status = status
