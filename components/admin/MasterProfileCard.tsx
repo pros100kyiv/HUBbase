@@ -34,7 +34,8 @@ export function MasterProfileCard({ master, stats, onScheduleClick, onToggleActi
       style: 'currency',
       currency: 'UAH',
       minimumFractionDigits: 0,
-    }).format(amount)
+      maximumFractionDigits: 0,
+    }).format(amount / 100)
   }
 
   const isActive = master.isActive !== false

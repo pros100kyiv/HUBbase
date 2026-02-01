@@ -391,7 +391,7 @@ export function MobileAppointmentCard({
                 "text-sm font-black",
                 appointment.customPrice ? "text-candy-blue" : "text-gray-900 dark:text-white"
               )}>
-                {new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH' }).format(displayPrice)}
+                {new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(displayPrice)}
               </span>
               {appointment.customPrice && (
                 <span className="text-[9px] text-gray-500 dark:text-gray-400 italic">

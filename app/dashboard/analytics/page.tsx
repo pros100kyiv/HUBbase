@@ -252,6 +252,7 @@ export default function AnalyticsPage() {
       style: 'currency',
       currency: 'UAH',
       minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
     }).format(amount / 100) // Конвертуємо з копійок
   }
 

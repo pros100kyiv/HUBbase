@@ -263,7 +263,7 @@ export function CreateAppointmentForm({
                     <div className="flex-1">
                       <span className="text-sm font-medium text-foreground">{service.name}</span>
                       <span className="text-xs text-gray-500 ml-2">
-                        {service.duration} хв • {new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH' }).format(service.price)}
+                        {service.duration} хв • {new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(service.price / 100)}
                       </span>
                     </div>
                   </label>
@@ -274,7 +274,7 @@ export function CreateAppointmentForm({
             {formData.serviceIds.length > 0 && (
               <div className="mt-2 text-sm text-gray-600 dark:text-gray-400">
                 <p>Тривалість: <span className="font-bold">{calculateDuration()} хв</span></p>
-                <p>Вартість: <span className="font-bold">{new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH' }).format(calculateTotalPrice())}</span></p>
+                <p>Вартість: <span className="font-bold">{new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(calculateTotalPrice() / 100)}</span></p>
               </div>
             )}
           </div>

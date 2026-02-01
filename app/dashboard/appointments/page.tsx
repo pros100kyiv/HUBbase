@@ -294,11 +294,11 @@ export default function AppointmentsPage() {
 
           {/* Month Navigation */}
           <div className="card-candy p-3 spacing-section overflow-hidden">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-subheading">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+              <h2 className="text-subheading text-center sm:text-left">
                 {format(currentMonth, 'LLLL yyyy', { locale: uk })}
               </h2>
-              <div className="flex gap-2">
+              <div className="flex gap-1.5 justify-center sm:justify-end flex-wrap">
                 <button
                   onClick={() => {
                     const prev = new Date(currentMonth)
@@ -306,7 +306,7 @@ export default function AppointmentsPage() {
                     setCurrentMonth(prev)
                     setSelectedDate(null)
                   }}
-                  className="btn-secondary"
+                  className="btn-secondary text-xs px-2 py-1.5 whitespace-nowrap"
                 >
                   ← Попередній
                 </button>
@@ -317,7 +317,7 @@ export default function AppointmentsPage() {
                     setCurrentMonth(today)
                     setSelectedDate(today)
                   }}
-                  className="btn-primary"
+                  className="btn-primary text-xs px-2 py-1.5 whitespace-nowrap"
                 >
                   Сьогодні
                 </button>
@@ -328,7 +328,7 @@ export default function AppointmentsPage() {
                     setCurrentMonth(next)
                     setSelectedDate(null)
                   }}
-                  className="btn-secondary"
+                  className="btn-secondary text-xs px-2 py-1.5 whitespace-nowrap"
                 >
                   Наступний →
                 </button>
@@ -354,10 +354,10 @@ export default function AppointmentsPage() {
             </div>
 
             {/* Month Calendar Grid */}
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
               {/* Day headers */}
               {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
-                <div key={day} className="text-center text-xs font-bold text-gray-500 dark:text-gray-400 py-1">
+                <div key={day} className="text-center text-[10px] sm:text-xs font-bold text-gray-500 dark:text-gray-400 py-1">
                   {day}
                 </div>
               ))}
@@ -378,7 +378,7 @@ export default function AppointmentsPage() {
                       }
                     }}
                     className={cn(
-                      'relative p-2 rounded-candy-xs border transition-all min-h-[60px] flex flex-col items-center justify-start',
+                      'relative p-1 sm:p-2 rounded-candy-xs border transition-all min-h-[40px] sm:min-h-[60px] flex flex-col items-center justify-start',
                       !isCurrentMonth && 'opacity-30',
                       isSelected
                         ? 'border-candy-purple bg-candy-purple/10 dark:bg-candy-purple/20'
@@ -388,14 +388,14 @@ export default function AppointmentsPage() {
                     )}
                   >
                     <div className={cn(
-                      'text-sm font-black mb-1',
+                      'text-[10px] sm:text-sm font-black mb-0.5 sm:mb-1',
                       isToday ? 'text-candy-purple' : 'text-foreground'
                     )}>
                       {format(day, 'd')}
                     </div>
                     {dayAppointments.length > 0 && (
                       <div className="w-full mt-auto">
-                        <div className="text-[10px] font-black text-candy-purple text-center bg-candy-purple/10 dark:bg-candy-purple/20 rounded-full py-0.5">
+                        <div className="text-[8px] sm:text-[10px] font-black text-candy-purple text-center bg-candy-purple/10 dark:bg-candy-purple/20 rounded-full py-0.5 px-1">
                           {dayAppointments.length}
                         </div>
                       </div>

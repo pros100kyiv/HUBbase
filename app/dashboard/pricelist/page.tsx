@@ -72,7 +72,8 @@ export default function PricelistPage() {
       style: 'currency',
       currency: 'UAH',
       minimumFractionDigits: 0,
-    }).format(amount)
+      maximumFractionDigits: 0,
+    }).format(amount / 100)
   }
 
   const formatDuration = (minutes: number) => {
@@ -169,23 +170,23 @@ export default function PricelistPage() {
       <div className="p-3">
         <div className="max-w-7xl mx-auto">
           <div className="spacing-item mb-4">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
               <div>
                 <h1 className="text-heading">Прайс-лист</h1>
                 <p className="text-caption font-medium">Список послуг та їх вартість</p>
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 flex-wrap">
                 <Button
                   onClick={() => setShowCalculator(true)}
                   className={cn(
-                    "btn-primary",
+                    "btn-primary text-xs sm:text-sm whitespace-nowrap",
                     selectedServices.size > 0 && "relative"
                   )}
                 >
-                  <CalculatorIcon className="w-4 h-4 mr-2" />
+                  <CalculatorIcon className="w-4 h-4 mr-1 sm:mr-2" />
                   Калькулятор
                   {selectedServices.size > 0 && (
-                    <span className="ml-2 bg-white/20 px-1.5 py-0.5 rounded-full text-xs font-bold">
+                    <span className="ml-1 sm:ml-2 bg-white/20 px-1.5 py-0.5 rounded-full text-[10px] sm:text-xs font-bold">
                       {selectedServices.size}
                     </span>
                   )}
@@ -197,7 +198,7 @@ export default function PricelistPage() {
                       setShowCalculator(false)
                     }}
                     variant="outline"
-                    className="text-xs"
+                    className="text-xs whitespace-nowrap"
                   >
                     Очистити
                   </Button>

@@ -192,13 +192,13 @@ export default function ClientsPage() {
           </div>
 
           {/* Search */}
-          <div className="mb-2">
+          <div className="mb-2 spacing-item">
             <input
               type="text"
               placeholder="Пошук за ім'ям або телефоном..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-3 py-2 text-sm rounded-candy-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-candy-blue focus:border-candy-blue transition-all"
+              className="w-full px-3 py-2.5 text-sm rounded-candy-sm border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-candy-blue focus:border-candy-blue transition-all"
             />
           </div>
 
@@ -262,7 +262,8 @@ export default function ClientsPage() {
                               style: 'currency',
                               currency: 'UAH',
                               minimumFractionDigits: 0,
-                            }).format(details.totalSpent)}
+                              maximumFractionDigits: 0,
+                            }).format(details.totalSpent / 100)}
                           </div>
                         </div>
 

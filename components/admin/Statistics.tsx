@@ -55,7 +55,9 @@ export function Statistics({ businessId }: StatisticsProps) {
     return new Intl.NumberFormat('uk-UA', {
       style: 'currency',
       currency: 'UAH',
-    }).format(amount)
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(amount / 100)
   }
 
   return (
