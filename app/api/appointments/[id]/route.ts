@@ -8,7 +8,18 @@ export async function PATCH(
   try {
     const resolvedParams = await params
     const body = await request.json()
-    const { status, startTime, endTime, customPrice } = body
+    const { 
+      status, 
+      startTime, 
+      endTime, 
+      customPrice,
+      masterId,
+      clientName,
+      clientPhone,
+      clientEmail,
+      services,
+      notes
+    } = body
 
     const updateData: any = {}
     if (status) updateData.status = status
@@ -17,6 +28,12 @@ export async function PATCH(
     if (customPrice !== undefined) {
       updateData.customPrice = customPrice ? parseInt(customPrice) : null
     }
+    if (masterId) updateData.masterId = masterId
+    if (clientName) updateData.clientName = clientName.trim()
+    if (clientPhone) updateData.clientPhone = clientPhone.trim()
+    if (clientEmail !== undefined) updateData.clientEmail = clientEmail?.trim() || null
+    if (services) updateData.services = typeof services === 'string' ? services : JSON.stringify(services)
+    if (notes !== undefined) updateData.notes = notes?.trim() || null
 
     const appointment = await prisma.appointment.update({
       where: { id: resolvedParams.id },
@@ -25,7 +42,11 @@ export async function PATCH(
 
     return NextResponse.json(appointment)
   } catch (error) {
-    return NextResponse.json({ error: 'Failed to update appointment' }, { status: 500 })
+    console.error('Error updating appointment:', error)
+    return NextResponse.json({ 
+      error: 'Failed to update appointment',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 })
   }
 }
 

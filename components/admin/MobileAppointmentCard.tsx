@@ -25,6 +25,7 @@ interface MobileAppointmentCardProps {
   appointment: Appointment
   onStatusChange?: (id: string, status: string) => void
   onPriceChange?: (id: string, price: number | null) => void
+  onEdit?: (appointment: Appointment) => void
   servicesCache?: any[]
 }
 
@@ -32,6 +33,7 @@ export function MobileAppointmentCard({
   appointment,
   onStatusChange,
   onPriceChange,
+  onEdit,
   servicesCache = [],
 }: MobileAppointmentCardProps) {
   const [isEditingPrice, setIsEditingPrice] = useState(false)
@@ -405,6 +407,20 @@ export function MobileAppointmentCard({
           )}
         </div>
       </div>
+
+      {/* Edit Button */}
+      {onEdit && (
+        <div className="flex justify-end mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
+          <button
+            onClick={() => onEdit(appointment)}
+            className="flex items-center gap-1.5 px-2 py-1 rounded-candy-xs text-xs font-bold text-candy-blue hover:bg-candy-blue/10 dark:hover:bg-candy-blue/20 transition-colors"
+            title="Редагувати запис"
+          >
+            <EditIcon className="w-3.5 h-3.5" />
+            Редагувати
+          </button>
+        </div>
+      )}
     </div>
   )
 }

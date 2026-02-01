@@ -6,6 +6,7 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSa
 import { uk } from 'date-fns/locale'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
 import { CreateAppointmentForm } from '@/components/admin/CreateAppointmentForm'
+import { EditAppointmentForm } from '@/components/admin/EditAppointmentForm'
 import { cn } from '@/lib/utils'
 
 interface Appointment {
@@ -18,11 +19,13 @@ interface Appointment {
   }
   clientName: string
   clientPhone: string
+  clientEmail?: string | null
   startTime: string
   endTime: string
   status: string
   services?: string
   customPrice?: number | null
+  notes?: string | null
 }
 
 export default function AppointmentsPage() {
@@ -39,6 +42,7 @@ export default function AppointmentsPage() {
   const [masters, setMasters] = useState<any[]>([])
   const [services, setServices] = useState<any[]>([])
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -172,6 +176,32 @@ export default function AppointmentsPage() {
       console.error('Error updating price:', error)
       throw error
     }
+  }
+
+  const handleEdit = (appointment: Appointment) => {
+    setEditingAppointment(appointment)
+  }
+
+  const handleEditSuccess = () => {
+    setEditingAppointment(null)
+    // Reload appointments
+    const start = startOfMonth(currentMonth)
+    const end = endOfMonth(currentMonth)
+    const startStr = format(start, 'yyyy-MM-dd')
+    const endStr = format(end, 'yyyy-MM-dd')
+    
+    fetch(`/api/appointments?businessId=${business.id}&startDate=${startStr}&endDate=${endStr}`)
+      .then((res) => res.json())
+      .then((data) => {
+        const withMasters = (data || []).map((apt: Appointment) => {
+          const master = masters.find((m) => m.id === apt.masterId)
+          return { ...apt, masterName: master?.name || apt.master?.name || 'Невідомий майстер' }
+        })
+        setAppointments(withMasters)
+      })
+      .catch((error) => {
+        console.error('Error reloading appointments:', error)
+      })
   }
 
   const filteredAppointments = appointments.filter((apt) => {
@@ -400,6 +430,7 @@ export default function AppointmentsPage() {
                                 appointment={appointment}
                                 onStatusChange={handleStatusChange}
                                 onPriceChange={handlePriceChange}
+                                onEdit={handleEdit}
                                 servicesCache={services}
                               />
                             ))}
@@ -430,6 +461,20 @@ export default function AppointmentsPage() {
                 selectedDate={selectedDate || undefined}
                 onSuccess={handleAppointmentCreated}
                 onCancel={() => setShowCreateForm(false)}
+              />
+            </div>
+          )}
+
+          {/* Edit Appointment Form */}
+          {editingAppointment && (
+            <div className="mb-4">
+              <EditAppointmentForm
+                appointment={editingAppointment}
+                businessId={business.id}
+                masters={masters}
+                services={services}
+                onSuccess={handleEditSuccess}
+                onCancel={() => setEditingAppointment(null)}
               />
             </div>
           )}
