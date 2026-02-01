@@ -130,7 +130,7 @@ export function Statistics({ businessId }: StatisticsProps) {
           icon={<UsersIcon />}
           title="Клієнти"
           value={stats.uniqueClients}
-          iconColor="purple"
+          iconColor="blue"
         />
         <MobileWidget
           icon={<MoneyIcon />}

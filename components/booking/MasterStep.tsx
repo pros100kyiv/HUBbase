@@ -29,18 +29,18 @@ const AvatarIcon = ({ gender, size = 64 }: { gender: 'male' | 'female', size?: n
   if (gender === 'female') {
     return (
       <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="32" cy="20" r="12" fill="#A78BFA" />
-        <path d="M16 52 C16 42, 24 36, 32 36 C40 36, 48 42, 48 52" stroke="#A78BFA" strokeWidth="4" fill="none" />
-        <path d="M20 24 Q24 20, 28 24" stroke="#8B5CF6" strokeWidth="2" fill="none" />
-        <path d="M36 24 Q40 20, 44 24" stroke="#8B5CF6" strokeWidth="2" fill="none" />
+        <circle cx="32" cy="20" r="12" fill="#60A5FA" />
+        <path d="M16 52 C16 42, 24 36, 32 36 C40 36, 48 42, 48 52" stroke="#60A5FA" strokeWidth="4" fill="none" />
+        <path d="M20 24 Q24 20, 28 24" stroke="#3B82F6" strokeWidth="2" fill="none" />
+        <path d="M36 24 Q40 20, 44 24" stroke="#3B82F6" strokeWidth="2" fill="none" />
       </svg>
     )
   }
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="32" cy="18" r="12" fill="#A78BFA" />
-      <path d="M16 52 C16 42, 24 36, 32 36 C40 36, 48 42, 48 52" stroke="#A78BFA" strokeWidth="4" fill="none" />
-      <rect x="26" y="22" width="12" height="4" rx="2" fill="#8B5CF6" />
+      <circle cx="32" cy="18" r="12" fill="#60A5FA" />
+      <path d="M16 52 C16 42, 24 36, 32 36 C40 36, 48 42, 48 52" stroke="#60A5FA" strokeWidth="4" fill="none" />
+      <rect x="26" y="22" width="12" height="4" rx="2" fill="#3B82F6" />
     </svg>
   )
 }

@@ -175,11 +175,11 @@ export default function ServicesPage() {
                                   backgroundColor: 'transparent',
                                 }}
                                 onMouseEnter={(e) => {
-                                  const bgColor = serviceColor.bg.includes('purple') ? '#8B5CF6' :
+                                  const bgColor = serviceColor.bg.includes('purple') ? '#3B82F6' :
                                     serviceColor.bg.includes('blue') ? '#3B82F6' :
                                     serviceColor.bg.includes('mint') ? '#10B981' :
                                     serviceColor.bg.includes('pink') ? '#EC4899' :
-                                    serviceColor.bg.includes('orange') ? '#F59E0B' : '#8B5CF6'
+                                    serviceColor.bg.includes('orange') ? '#F59E0B' : '#3B82F6'
                                   e.currentTarget.style.backgroundColor = bgColor
                                   e.currentTarget.style.color = 'white'
                                 }}

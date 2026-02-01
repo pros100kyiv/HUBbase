@@ -20,7 +20,7 @@ export function Confetti({ trigger, onComplete }: ConfettiProps) {
     canvas.width = window.innerWidth
     canvas.height = window.innerHeight
 
-    const colors = ['#8B5CF6', '#A78BFA', '#EC4899', '#3B82F6', '#10B981', '#F59E0B']
+    const colors = ['#3B82F6', '#60A5FA', '#EC4899', '#3B82F6', '#10B981', '#F59E0B']
     const confetti: Array<{
       x: number
       y: number

@@ -21,14 +21,14 @@ const config = {
       colors: {
         background: "rgb(var(--background) / <alpha-value>)",
         surface: "#FFFFFF",
-        primary: "#8B5CF6",
+        primary: "#3B82F6",
         secondary: "#6B7280",
         border: "rgb(var(--border) / <alpha-value>)",
         input: "rgb(var(--input) / <alpha-value>)",
         ring: "rgb(var(--ring) / <alpha-value>)",
         foreground: "rgb(var(--foreground) / <alpha-value>)",
         success: "#10B981",
-        "candy-purple": "#8B5CF6",
+        "candy-purple": "#3B82F6", // Замінено на синій для кращої читабельності
         "candy-blue": "#3B82F6",
         "candy-mint": "#10B981",
         "candy-pink": "#EC4899",

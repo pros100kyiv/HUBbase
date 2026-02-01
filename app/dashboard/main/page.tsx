@@ -175,7 +175,7 @@ export default function MainPage() {
               icon={<UsersIcon />}
               title="Клієнти"
               value={stats?.uniqueClients || 0}
-              iconColor="purple"
+              iconColor="blue"
             />
           </div>
 

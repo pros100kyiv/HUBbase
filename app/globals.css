@@ -10,7 +10,7 @@
     --foreground: 26 26 26;
     --border: 0 0 0 / 0.08;
     --input: 255 255 255;
-    --ring: 139 92 246;
+    --ring: 59 130 246;
   }
   
   .dark {
@@ -18,7 +18,7 @@
     --foreground: 255 255 255;
     --border: 255 255 255 / 0.1;
     --input: 38 38 38;
-    --ring: 139 92 246;
+    --ring: 59 130 246;
   }
   
   * {
@@ -63,7 +63,7 @@
   /* Unified Button Styles */
   .btn-primary {
     @apply px-3 py-1.5 text-xs font-bold text-white rounded-candy-sm shadow-soft hover:shadow-soft-lg transition-all;
-    background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+    background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
   }
   
   .btn-primary:active {
@@ -129,7 +129,7 @@
   
   /* Candy Colors */
   .candy-purple {
-    background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+    background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
     color: #FFFFFF;
   }
   
@@ -154,7 +154,7 @@
   }
   
   .text-candy-purple {
-    color: #8B5CF6;
+    color: #3B82F6;
   }
   
   .text-candy-blue {

@@ -142,7 +142,7 @@ export default function AnalyticsPage() {
               icon={<UsersIcon />}
               title="Унікальні клієнти"
               value={stats?.uniqueClients || 0}
-              iconColor="purple"
+              iconColor="blue"
             />
           </div>
 
