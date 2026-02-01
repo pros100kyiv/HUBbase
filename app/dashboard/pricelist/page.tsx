@@ -114,12 +114,7 @@ export default function PricelistPage() {
     return acc
   }, {} as Record<string, Record<string, { subcategory: string | null; services: Service[] }>>)
 
-  // Initialize expanded categories
-  useEffect(() => {
-    if (Object.keys(categoryGroups).length > 0 && expandedCategories.size === 0) {
-      setExpandedCategories(new Set(Object.keys(categoryGroups)))
-    }
-  }, [categoryGroups])
+  // Categories are collapsed by default - no auto-expand
 
   const toggleCategory = (category: string) => {
     setExpandedCategories(prev => {
@@ -180,31 +175,39 @@ export default function PricelistPage() {
                 <p className="text-caption font-medium">Список послуг та їх вартість</p>
               </div>
               <div className="flex items-center gap-2">
+                <Button
+                  onClick={() => setShowCalculator(true)}
+                  className={cn(
+                    "btn-primary",
+                    selectedServices.size > 0 && "relative"
+                  )}
+                >
+                  <CalculatorIcon className="w-4 h-4 mr-2" />
+                  Калькулятор
+                  {selectedServices.size > 0 && (
+                    <span className="ml-2 bg-white/20 px-1.5 py-0.5 rounded-full text-xs font-bold">
+                      {selectedServices.size}
+                    </span>
+                  )}
+                </Button>
                 {selectedServices.size > 0 && (
                   <Button
-                    onClick={() => setShowCalculator(true)}
-                    className="btn-primary"
+                    onClick={() => {
+                      setSelectedServices(new Set())
+                      setShowCalculator(false)
+                    }}
+                    variant="outline"
+                    className="text-xs"
                   >
-                    <CalculatorIcon className="w-4 h-4 mr-2" />
-                    Калькулятор ({selectedServices.size})
+                    Очистити
                   </Button>
                 )}
-                <Button
-                  onClick={() => {
-                    setSelectedServices(new Set())
-                    setShowCalculator(false)
-                  }}
-                  variant="outline"
-                  className="text-xs"
-                >
-                  Очистити
-                </Button>
               </div>
             </div>
           </div>
 
           {/* Calculator Modal */}
-          {showCalculator && selectedServices.size > 0 && (
+          {showCalculator && (
             <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
               <div className="bg-white dark:bg-gray-800 rounded-candy-lg shadow-soft-xl w-full max-w-md p-4">
                 <div className="flex items-center justify-between mb-4">
@@ -220,52 +223,66 @@ export default function PricelistPage() {
                   </button>
                 </div>
                 <div className="space-y-3">
-                  <div className="space-y-2 max-h-60 overflow-y-auto">
-                    {selectedServicesData.map(service => (
-                      <div
-                        key={service.id}
-                        className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-candy-sm"
-                      >
-                        <div className="flex-1">
-                          <p className="text-sm font-bold text-foreground dark:text-white">
-                            {service.name}
-                          </p>
-                          <p className="text-xs text-gray-500 dark:text-gray-400">
-                            {formatDuration(service.duration)}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <p className="text-sm font-black text-blue-500">
-                            {formatCurrency(service.price)}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => toggleService(service.id)}
-                          className="ml-2 text-red-500 hover:text-red-600"
-                        >
-                          <XIcon className="w-4 h-4" />
-                        </button>
+                  {selectedServices.size > 0 ? (
+                    <>
+                      <div className="space-y-2 max-h-60 overflow-y-auto">
+                        {selectedServicesData.map(service => (
+                          <div
+                            key={service.id}
+                            className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-candy-sm"
+                          >
+                            <div className="flex-1">
+                              <p className="text-sm font-bold text-foreground dark:text-white">
+                                {service.name}
+                              </p>
+                              <p className="text-xs text-gray-500 dark:text-gray-400">
+                                {formatDuration(service.duration)}
+                              </p>
+                            </div>
+                            <div className="text-right">
+                              <p className="text-sm font-black text-blue-500">
+                                {formatCurrency(service.price)}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => toggleService(service.id)}
+                              className="ml-2 text-red-500 hover:text-red-600"
+                            >
+                              <XIcon className="w-4 h-4" />
+                            </button>
+                          </div>
+                        ))}
                       </div>
-                    ))}
-                  </div>
-                  <div className="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
-                        Загальна тривалість:
-                      </span>
-                      <span className="text-sm font-black text-foreground dark:text-white">
-                        {formatDuration(totalDuration)}
-                      </span>
+                      <div className="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                            Загальна тривалість:
+                          </span>
+                          <span className="text-sm font-black text-foreground dark:text-white">
+                            {formatDuration(totalDuration)}
+                          </span>
+                        </div>
+                        <div className="flex items-center justify-between">
+                          <span className="text-base font-bold text-foreground dark:text-white">
+                            Загальна сума:
+                          </span>
+                          <span className="text-xl font-black text-blue-500">
+                            {formatCurrency(totalPrice)}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  ) : (
+                    <div className="text-center py-8">
+                      <CalculatorIcon className="w-12 h-12 mx-auto mb-3 text-gray-400" />
+                      <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                        Виберіть послуги з прайс-листу
+                      </p>
+                      <p className="text-xs text-gray-500 dark:text-gray-500">
+                        Натисніть на послугу, щоб додати її до калькулятора
+                      </p>
                     </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-base font-bold text-foreground dark:text-white">
-                        Загальна сума:
-                      </span>
-                      <span className="text-xl font-black text-blue-500">
-                        {formatCurrency(totalPrice)}
-                      </span>
-                    </div>
-                  </div>
+                  )}
                 </div>
               </div>
             </div>
