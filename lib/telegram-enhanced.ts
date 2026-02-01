@@ -261,6 +261,40 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     )
   })
 
+  // Callback для сповіщень
+  bot.action('menu_alerts', async (ctx: Context) => {
+    const user = await getUser(ctx)
+    if (!user || !hasPermission(user.role, 'view_alerts')) {
+      await ctx.answerCbQuery('❌ У вас немає прав для перегляду сповіщень.')
+      return
+    }
+
+    await logAction('callback', 'menu_alerts', null, ctx.from?.id?.toString())
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    const alertsData = await fetch(`${baseUrl}/api/analytics/alerts?businessId=${config.businessId}`)
+      .then(res => res.json())
+      .catch(() => ({ alerts: [] }))
+
+    if (!alertsData.alerts || alertsData.alerts.length === 0) {
+      await ctx.editMessageText(
+        '✅ Немає активних сповіщень.\n\nОберіть дію:',
+        getMainMenu(user.role)
+      )
+      return
+    }
+
+    const alertsText = alertsData.alerts.map((alert: any, i: number) => {
+      const icon = alert.type === 'critical' ? '🔴' : alert.type === 'warning' ? '🟡' : '🔵'
+      return `${icon} ${i + 1}. ${alert.message}\n   Зміна: ${alert.change > 0 ? '+' : ''}${alert.change.toFixed(1)}%`
+    }).join('\n\n')
+
+    await ctx.editMessageText(
+      `⚠️ Активні сповіщення:\n\n${alertsText}\n\nОберіть дію:`,
+      getMainMenu(user.role)
+    )
+  })
+
   // Callback для створення розсилки
   bot.action('menu_broadcast_create', async (ctx: Context) => {
     const user = await getUser(ctx)
@@ -272,12 +306,115 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     await ctx.answerCbQuery('📢 Створення розсилки')
     await ctx.reply(
       `📢 Створення розсилки\n\n` +
-      `Відправте повідомлення у форматі:\n` +
-      `Назва: <назва розсилки>\n` +
-      `Текст: <текст повідомлення>\n\n` +
-      `Або використайте команду:\n` +
-      `/broadcast_create\n\n` +
-      `Для скасування: /cancel`
+      `Для створення розсилки використайте веб-інтерфейс:\n` +
+      `Налаштування → Telegram → Розсилки\n\n` +
+      `Або поверніться до головного меню:`,
+      getMainMenu(user.role)
+    )
+  })
+
+  // Callback для списку розсилок
+  bot.action('menu_broadcasts', async (ctx: Context) => {
+    const user = await getUser(ctx)
+    if (!user || !hasPermission(user.role, 'create_broadcast')) {
+      await ctx.answerCbQuery('❌ У вас немає прав для перегляду розсилок.')
+      return
+    }
+
+    await logAction('callback', 'menu_broadcasts', null, ctx.from?.id?.toString())
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    const broadcasts = await fetch(`${baseUrl}/api/telegram/broadcasts?businessId=${config.businessId}`)
+      .then(res => res.json())
+      .catch(() => [])
+
+    if (!broadcasts || broadcasts.length === 0) {
+      await ctx.editMessageText(
+        '📋 Немає створених розсилок.\n\nОберіть дію:',
+        getMainMenu(user.role)
+      )
+      return
+    }
+
+    const broadcastsText = broadcasts.slice(0, 5).map((b: any, i: number) => {
+      const statusIcon = b.status === 'sent' ? '✅' : b.status === 'scheduled' ? '⏰' : '📝'
+      return `${statusIcon} ${i + 1}. ${b.title}\n   Статус: ${b.status === 'draft' ? 'Чернетка' : b.status === 'sent' ? 'Відправлено' : 'Заплановано'}`
+    }).join('\n\n')
+
+    await ctx.editMessageText(
+      `📋 Мої розсилки:\n\n${broadcastsText}\n\nОберіть дію:`,
+      getMainMenu(user.role)
+    )
+  })
+
+  // Callback для користувачів
+  bot.action('menu_users', async (ctx: Context) => {
+    const user = await getUser(ctx)
+    if (!user || !hasPermission(user.role, 'manage_users')) {
+      await ctx.answerCbQuery('❌ У вас немає прав для перегляду користувачів.')
+      return
+    }
+
+    await logAction('callback', 'menu_users', null, ctx.from?.id?.toString())
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    const users = await fetch(`${baseUrl}/api/telegram/users?businessId=${config.businessId}`)
+      .then(res => res.json())
+      .catch(() => [])
+
+    if (!users || users.length === 0) {
+      await ctx.editMessageText(
+        '👥 Немає зареєстрованих користувачів.\n\nОберіть дію:',
+        getMainMenu(user.role)
+      )
+      return
+    }
+
+    const usersText = users.slice(0, 10).map((u: any, i: number) => {
+      return `${i + 1}. ${u.firstName || ''} ${u.lastName || ''} (${getRoleName(u.role)})`
+    }).join('\n')
+
+    await ctx.editMessageText(
+      `👥 Користувачі бота:\n\n${usersText}\n\nОберіть дію:`,
+      getMainMenu(user.role)
+    )
+  })
+
+  // Callback для моніторингу (розробник)
+  bot.action('menu_monitor', async (ctx: Context) => {
+    const user = await getUser(ctx)
+    if (!user || !hasPermission(user.role, '*')) {
+      await ctx.answerCbQuery('❌ У вас немає прав для моніторингу.')
+      return
+    }
+
+    await logAction('callback', 'menu_monitor', null, ctx.from?.id?.toString())
+
+    const logs = await prisma.telegramLog.findMany({
+      where: { businessId: config.businessId },
+      orderBy: { createdAt: 'desc' },
+      take: 10,
+    })
+
+    const logsText = logs.map((log, i) => {
+      return `${i + 1}. [${log.action}] ${log.command || log.message || 'N/A'}`
+    }).join('\n')
+
+    await ctx.editMessageText(
+      `🔧 Останні дії:\n\n${logsText || 'Немає логів'}\n\nОберіть дію:`,
+      getMainMenu(user.role)
+    )
+  })
+
+  // Callback для допомоги
+  bot.action('menu_help', async (ctx: Context) => {
+    const user = await getUser(ctx)
+    await logAction('callback', 'menu_help', null, ctx.from?.id?.toString())
+
+    const commands = getAvailableCommands(user?.role || 'VIEWER')
+    await ctx.editMessageText(
+      `ℹ️ Допомога\n\nДоступні команди:\n${commands.join('\n')}\n\nВаша роль: ${getRoleName(user?.role || 'VIEWER')}\n\nОберіть дію:`,
+      getMainMenu(user?.role || 'VIEWER')
     )
   })
 
@@ -288,6 +425,41 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
   })
 
   return bot
+}
+
+function getAvailableCommands(role: string): string[] {
+  const permissions: Record<string, string[]> = {
+    DEVELOPER: ['*'],
+    OWNER: ['view_stats', 'view_revenue', 'view_alerts', 'manage_users', 'manage_settings', 'create_broadcast', 'send_broadcast'],
+    ADMIN: ['view_stats', 'view_revenue', 'view_alerts', 'manage_users', 'create_broadcast', 'send_broadcast'],
+    MANAGER: ['view_stats', 'view_revenue', 'view_alerts', 'create_broadcast'],
+    EMPLOYEE: ['view_stats'],
+    CLIENT: ['receive_broadcast'],
+    VIEWER: [],
+  }
+
+  const rolePermissions = permissions[role] || []
+  const hasPermission = (perm: string) => rolePermissions.includes('*') || rolePermissions.includes(perm)
+
+  const commands: string[] = ['/start - Початок роботи']
+
+  if (hasPermission('view_stats')) {
+    commands.push('📊 Статистика - через меню')
+  }
+
+  if (hasPermission('view_revenue')) {
+    commands.push('💰 Аналітика прибутку - через меню')
+  }
+
+  if (hasPermission('view_alerts')) {
+    commands.push('⚠️ Сповіщення - через меню')
+  }
+
+  if (hasPermission('create_broadcast')) {
+    commands.push('📢 Створення розсилок - через веб-інтерфейс')
+  }
+
+  return commands
 }
 
 function getRoleName(role: string): string {
