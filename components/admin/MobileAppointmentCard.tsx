@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
-import { ClockIcon, CheckIcon, XIcon, UserIcon, EditIcon, MoneyIcon } from '@/components/icons'
+import { ClockIcon, CheckIcon, XIcon, UserIcon, EditIcon, MoneyIcon, RepeatIcon } from '@/components/icons'
 
 interface Appointment {
   id: string
@@ -17,6 +17,8 @@ interface Appointment {
   status: string
   services?: string
   customPrice?: number | null
+  isRecurring?: boolean
+  recurrencePattern?: string | null
 }
 
 interface MobileAppointmentCardProps {
@@ -313,6 +315,33 @@ export function MobileAppointmentCard({
               {Math.round((endTime.getTime() - startTime.getTime()) / 60000)} хв
             </span>
           </div>
+        </div>
+      )}
+
+      {/* Recurring Badge */}
+      {appointment.isRecurring && (
+        <div className="flex items-center gap-1 mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700">
+          <RepeatIcon className="w-3 h-3 text-candy-blue" />
+          <span className="text-[9px] font-bold text-candy-blue uppercase">
+            Циклічний запис
+          </span>
+          {appointment.recurrencePattern && (() => {
+            try {
+              const pattern = JSON.parse(appointment.recurrencePattern)
+              const typeLabels: Record<string, string> = {
+                daily: 'Щодня',
+                weekly: 'Щотижня',
+                monthly: 'Щомісяця',
+              }
+              return (
+                <span className="text-[9px] text-gray-600 dark:text-gray-400">
+                  • {typeLabels[pattern.type] || pattern.type}
+                </span>
+              )
+            } catch {
+              return null
+            }
+          })()}
         </div>
       )}
 

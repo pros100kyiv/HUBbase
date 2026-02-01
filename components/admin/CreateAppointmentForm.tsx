@@ -47,6 +47,10 @@ export function CreateAppointmentForm({
     time: format(new Date(), 'HH:mm'),
     customPrice: '',
     notes: '',
+    isRecurring: false,
+    recurrenceType: 'weekly' as 'daily' | 'weekly' | 'monthly',
+    daysOfWeek: [] as number[], // 0 = Неділя, 1 = Понеділок, ..., 6 = Субота
+    recurrenceEndDate: '',
   })
   const [availableSlots, setAvailableSlots] = useState<string[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -132,6 +136,16 @@ export function CreateAppointmentForm({
       setErrors({ time: 'Оберіть дату та час' })
       return
     }
+    if (formData.isRecurring) {
+      if (formData.recurrenceType === 'weekly' && formData.daysOfWeek.length === 0) {
+        setErrors({ recurrence: 'Оберіть хоча б один день тижня' })
+        return
+      }
+      if (!formData.recurrenceEndDate) {
+        setErrors({ recurrence: 'Вкажіть дату закінчення циклу' })
+        return
+      }
+    }
 
     const duration = calculateDuration()
     const startTime = new Date(`${formData.date}T${formData.time}`)
@@ -145,6 +159,11 @@ export function CreateAppointmentForm({
 
     setIsLoading(true)
     try {
+      const recurrencePattern = formData.isRecurring ? {
+        type: formData.recurrenceType,
+        daysOfWeek: formData.recurrenceType === 'weekly' ? formData.daysOfWeek : undefined,
+      } : undefined
+
       const response = await fetch('/api/appointments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -159,6 +178,9 @@ export function CreateAppointmentForm({
           services: formData.serviceIds,
           customPrice: formData.customPrice ? Math.round(parseFloat(formData.customPrice) * 100) : undefined,
           notes: formData.notes.trim() || undefined,
+          isRecurring: formData.isRecurring,
+          recurrencePattern: recurrencePattern ? JSON.stringify(recurrencePattern) : undefined,
+          recurrenceEndDate: formData.isRecurring && formData.recurrenceEndDate ? new Date(formData.recurrenceEndDate).toISOString() : undefined,
         }),
       })
 
@@ -341,6 +363,101 @@ export function CreateAppointmentForm({
               {isLoadingSlots && <p className="text-xs text-gray-500 mt-1">Завантаження доступних часів...</p>}
               {errors.time && <p className="text-red-500 text-xs mt-1">{errors.time}</p>}
             </div>
+          </div>
+
+          {/* Recurring Appointment */}
+          <div className="border-t border-gray-200 dark:border-gray-700 pt-4">
+            <div className="flex items-center gap-2 mb-3">
+              <input
+                type="checkbox"
+                id="isRecurring"
+                checked={formData.isRecurring}
+                onChange={(e) => setFormData({ ...formData, isRecurring: e.target.checked })}
+                className="w-4 h-4 rounded border-gray-300 text-candy-blue focus:ring-candy-blue"
+              />
+              <label htmlFor="isRecurring" className="text-sm font-semibold text-foreground dark:text-white cursor-pointer">
+                Циклічний запис
+              </label>
+            </div>
+
+            {formData.isRecurring && (
+              <div className="space-y-3 pl-6 border-l-2 border-candy-blue/30">
+                {/* Recurrence Type */}
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-foreground dark:text-white">
+                    Тип циклічності
+                  </label>
+                  <select
+                    value={formData.recurrenceType}
+                    onChange={(e) => setFormData({ ...formData, recurrenceType: e.target.value as 'daily' | 'weekly' | 'monthly', daysOfWeek: [] })}
+                    className="w-full h-10 rounded-candy-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-foreground"
+                  >
+                    <option value="daily">Щодня</option>
+                    <option value="weekly">Щотижня</option>
+                    <option value="monthly">Щомісяця</option>
+                  </select>
+                </div>
+
+                {/* Days of Week (for weekly) */}
+                {formData.recurrenceType === 'weekly' && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-foreground dark:text-white">
+                      Дні тижня
+                    </label>
+                    <div className="flex flex-wrap gap-2">
+                      {[
+                        { value: 1, label: 'Пн' },
+                        { value: 2, label: 'Вт' },
+                        { value: 3, label: 'Ср' },
+                        { value: 4, label: 'Чт' },
+                        { value: 5, label: 'Пт' },
+                        { value: 6, label: 'Сб' },
+                        { value: 0, label: 'Нд' },
+                      ].map((day) => (
+                        <button
+                          key={day.value}
+                          type="button"
+                          onClick={() => {
+                            const newDays = formData.daysOfWeek.includes(day.value)
+                              ? formData.daysOfWeek.filter((d) => d !== day.value)
+                              : [...formData.daysOfWeek, day.value]
+                            setFormData({ ...formData, daysOfWeek: newDays })
+                          }}
+                          className={cn(
+                            'px-3 py-1.5 rounded-candy-xs text-sm font-bold transition-all',
+                            formData.daysOfWeek.includes(day.value)
+                              ? 'candy-blue text-white shadow-soft-lg'
+                              : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                          )}
+                        >
+                          {day.label}
+                        </button>
+                      ))}
+                    </div>
+                    {formData.daysOfWeek.length === 0 && (
+                      <p className="text-xs text-red-500 mt-1">Оберіть хоча б один день</p>
+                    )}
+                  </div>
+                )}
+
+                {/* End Date */}
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-foreground dark:text-white">
+                    Дата закінчення циклу *
+                  </label>
+                  <Input
+                    type="date"
+                    value={formData.recurrenceEndDate}
+                    onChange={(e) => setFormData({ ...formData, recurrenceEndDate: e.target.value })}
+                    min={formData.date}
+                    className="w-full"
+                  />
+                  {!formData.recurrenceEndDate && (
+                    <p className="text-xs text-red-500 mt-1">Вкажіть дату закінчення</p>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
 
           {/* Notes */}
