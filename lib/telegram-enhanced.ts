@@ -411,6 +411,161 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     )
   })
 
+  // Callback для створення нагадування
+  bot.action('menu_reminder_create', async (ctx: Context) => {
+    const user = await getUser(ctx)
+    if (!user || !hasPermission(user.role, 'create_broadcast')) {
+      await ctx.answerCbQuery('❌ У вас немає прав для створення нагадувань.')
+      return
+    }
+
+    await ctx.answerCbQuery('⏰ Створення нагадування')
+    await ctx.reply(
+      `⏰ Створення нагадування\n\n` +
+      `Відправте команду:\n` +
+      `/reminder <текст нагадування>\n\n` +
+      `Приклад:\n` +
+      `/reminder Завтра манік 22.00 чекаю )))))\n\n` +
+      `Для персонального нагадування:\n` +
+      `/reminder @username Завтра манік 22.00 чекаю`
+    )
+  })
+
+  // Callback для списку нагадувань
+  bot.action('menu_reminders', async (ctx: Context) => {
+    const user = await getUser(ctx)
+    if (!user || !hasPermission(user.role, 'create_broadcast')) {
+      await ctx.answerCbQuery('❌ У вас немає прав для перегляду нагадувань.')
+      return
+    }
+
+    await logAction('callback', 'menu_reminders', null, ctx.from?.id?.toString())
+
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    const reminders = await fetch(`${baseUrl}/api/telegram/reminders?businessId=${config.businessId}`)
+      .then(res => res.json())
+      .catch(() => [])
+
+    if (!reminders || reminders.length === 0) {
+      await ctx.editMessageText(
+        '📝 Немає створених нагадувань.\n\nОберіть дію:',
+        getMainMenu(user.role)
+      )
+      return
+    }
+
+    const remindersText = reminders.slice(0, 5).map((r: any, i: number) => {
+      const statusIcon = r.status === 'sent' ? '✅' : r.status === 'pending' ? '⏰' : '❌'
+      const targetText = r.targetType === 'client' && r.client ? `для ${r.client.name}` : 'всім'
+      return `${statusIcon} ${i + 1}. ${r.message.substring(0, 30)}...\n   ${targetText}`
+    }).join('\n\n')
+
+    await ctx.editMessageText(
+      `📝 Мої нагадування:\n\n${remindersText}\n\nОберіть дію:`,
+      getMainMenu(user.role)
+    )
+  })
+
+  // Команда для створення нагадування
+  bot.command('reminder', async (ctx: Context) => {
+    const user = await getUser(ctx)
+    if (!user || !hasPermission(user.role, 'create_broadcast')) {
+      await ctx.reply('❌ У вас немає прав для створення нагадувань.')
+      return
+    }
+
+    const messageText = ctx.message && 'text' in ctx.message ? ctx.message.text : ''
+    const args = messageText ? messageText.split(' ') : []
+    const reminderText = args.slice(1).join(' ')
+
+    if (!reminderText) {
+      await ctx.reply(
+        `⏰ Створення нагадування\n\n` +
+        `Використання:\n` +
+        `/reminder <текст> - для всіх клієнтів\n\n` +
+        `Приклад:\n` +
+        `/reminder Завтра манік 22.00 чекаю )))))`
+      )
+      return
+    }
+
+    await logAction('command', 'reminder', reminderText, ctx.from?.id?.toString())
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+      const response = await fetch(`${baseUrl}/api/telegram/reminders`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId: config.businessId,
+          message: reminderText,
+          targetType: 'all',
+          createdBy: user.id,
+        }),
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        await ctx.reply(
+          `✅ Нагадування створено!\n\n` +
+          `Текст: ${reminderText}\n\n` +
+          `Відправити зараз?`,
+          Markup.inlineKeyboard([
+            [Markup.button.callback('✅ Відправити', `send_reminder_${data.reminder.id}`)],
+            [Markup.button.callback('❌ Скасувати', 'menu_cancel')],
+          ])
+        )
+      } else {
+        await ctx.reply('❌ Помилка при створенні нагадування.')
+      }
+    } catch (error) {
+      console.error('Error creating reminder:', error)
+      await ctx.reply('❌ Помилка при створенні нагадування.')
+    }
+  })
+
+  // Callback для відправки нагадування
+  bot.action(/^send_reminder_(.+)$/, async (ctx: Context) => {
+    const user = await getUser(ctx)
+    if (!user || !hasPermission(user.role, 'create_broadcast')) {
+      await ctx.answerCbQuery('❌ У вас немає прав.')
+      return
+    }
+
+    const reminderId = ctx.match[1]
+    await ctx.answerCbQuery('⏰ Відправка нагадування...')
+
+    try {
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+      const response = await fetch(`${baseUrl}/api/telegram/reminders/${reminderId}/send`, {
+        method: 'POST',
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        await ctx.editMessageText(
+          `✅ Нагадування відправлено!\n\n` +
+          `Відправлено: ${data.sentCount} клієнтів\n` +
+          `Помилок: ${data.failedCount}\n\n` +
+          `Оберіть дію:`,
+          getMainMenu(user.role)
+        )
+      } else {
+        await ctx.editMessageText('❌ Помилка при відправці нагадування.', getMainMenu(user.role))
+      }
+    } catch (error) {
+      console.error('Error sending reminder:', error)
+      await ctx.editMessageText('❌ Помилка при відправці.', getMainMenu(user.role))
+    }
+  })
+
+  // Callback для скасування
+  bot.action('menu_cancel', async (ctx: Context) => {
+    const user = await getUser(ctx)
+    await ctx.answerCbQuery('Скасовано')
+    await ctx.editMessageText('Операцію скасовано.\n\nОберіть дію:', getMainMenu(user?.role || 'VIEWER'))
+  })
+
   // Callback для допомоги
   bot.action('menu_help', async (ctx: Context) => {
     const user = await getUser(ctx)
