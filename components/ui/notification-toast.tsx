@@ -62,7 +62,11 @@ export function NotificationToast({ businessId, onConfirm, onDismiss }: Notifica
 
   const handleDismiss = (id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id))
-    setSeenIds(prev => new Set([...prev, id]))
+    setSeenIds(prev => {
+      const newSet = new Set(prev)
+      newSet.add(id)
+      return newSet
+    })
     onDismiss?.(id)
   }
 
