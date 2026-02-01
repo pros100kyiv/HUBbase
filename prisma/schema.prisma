@@ -57,11 +57,17 @@ model Business {
   socialMedia                 String? // JSON: { "facebook": "...", "instagram": "...", "telegram": "..." }
   workingHours                String? // JSON: { "monday": { "start": "09:00", "end": "18:00", "enabled": true }, ... }
   location                    String? // Розташування/адреса для візитівки
+  // Telegram інтеграція
+  telegramBotToken            String? // Токен Telegram бота для бізнесу
+  telegramChatId              String? // ID чату для сповіщень
+  telegramNotificationsEnabled Boolean  @default(false) // Чи увімкнені сповіщення
+  telegramSettings             String? // JSON: налаштування бота (розсилки, команди тощо)
   // Відносини
   masters                     Master[]
   services                    Service[]
   appointments                Appointment[]
   users                       BusinessUser[] // Користувачі бізнесу
+  telegramUsers               TelegramUser[] // Користувачі Telegram бота
   clients                     Client[] // Клієнти
   analytics                   AnalyticsReport[] // Аналітичні звіти
   imports                     DataImport[] // Імпорти даних
@@ -309,4 +315,43 @@ model DataExport {
   @@index([businessId])
   @@index([status])
   @@index([createdAt])
+}
+
+// Користувачі Telegram бота
+model TelegramUser {
+  id                String    @id @default(cuid())
+  telegramId        BigInt    @unique
+  businessId        String
+  business          Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  username          String?
+  firstName         String?
+  lastName          String?
+  role              UserRole  @default(VIEWER)
+  permissions       String?
+  isActive          Boolean   @default(true)
+  language          String    @default("uk")
+  notificationsEnabled Boolean @default(true)
+  lastActivity      DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  @@unique([businessId, telegramId])
+  @@index([businessId])
+  @@index([telegramId])
+}
+
+// Логи дій в Telegram боті
+model TelegramLog {
+  id          String    @id @default(cuid())
+  businessId  String
+  telegramUserId String?
+  action      String
+  command     String?
+  message     String?
+  metadata    String?
+  createdAt   DateTime  @default(now())
+
+  @@index([businessId])
+  @@index([createdAt])
+  @@index([action])
 }
