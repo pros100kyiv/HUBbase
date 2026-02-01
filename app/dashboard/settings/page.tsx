@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { WorkingHoursEditor } from '@/components/admin/WorkingHoursEditor'
 import { BusinessCardEditor } from '@/components/admin/BusinessCardEditor'
-import { ImageIcon } from '@/components/icons'
+import { ImageIcon, ClockIcon, ChevronDownIcon, ChevronUpIcon } from '@/components/icons'
 import { toast } from '@/components/ui/toast'
 import { Confetti, triggerConfetti } from '@/components/ui/confetti'
 
@@ -45,6 +45,20 @@ interface Service {
   price: number
   duration: number
   category?: string
+  subcategory?: string
+  description?: string
+}
+
+const getCategoryColor = (index: number) => {
+  const colors = [
+    { bg: 'bg-blue-500', text: 'text-blue-500', border: 'border-blue-500' },
+    { bg: 'bg-green-500', text: 'text-green-500', border: 'border-green-500' },
+    { bg: 'bg-purple-500', text: 'text-purple-500', border: 'border-purple-500' },
+    { bg: 'bg-pink-500', text: 'text-pink-500', border: 'border-pink-500' },
+    { bg: 'bg-orange-500', text: 'text-orange-500', border: 'border-orange-500' },
+    { bg: 'bg-indigo-500', text: 'text-indigo-500', border: 'border-indigo-500' },
+  ]
+  return colors[index % colors.length]
 }
 
 type Tab = 'info' | 'masters' | 'services' | 'businessCard'
@@ -63,6 +77,7 @@ export default function SettingsPage() {
   const [showServiceForm, setShowServiceForm] = useState(false)
   const [editingMaster, setEditingMaster] = useState<Master | null>(null)
   const [editingService, setEditingService] = useState<Service | null>(null)
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
 
   // Master form
   const [masterForm, setMasterForm] = useState({
@@ -755,50 +770,170 @@ export default function SettingsPage() {
                 </Card>
               )}
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {services.map((service) => (
-                  <Card key={service.id}>
-                    <CardContent className="p-6">
-                      <div className="flex justify-between items-start mb-4">
-                        <div>
-                          <h3 className="text-base md:text-lg font-black text-foreground mb-1">
-                          {service.name}
-                          </h3>
-                          {service.category && (
-                            <p className="text-sm text-gray-600 dark:text-gray-400">{service.category}</p>
+              {/* Group services by category */}
+              {(() => {
+                const categoryGroups = services.reduce((acc, service) => {
+                  let category = service.category || 'Інші'
+                  let subcategory = service.subcategory || null
+                  
+                  if (category.includes(' > ')) {
+                    const parts = category.split(' > ')
+                    category = parts[0]
+                    subcategory = parts[1] || null
+                  }
+                  
+                  if (!acc[category]) {
+                    acc[category] = {}
+                  }
+                  
+                  const subKey = subcategory || '_main'
+                  if (!acc[category][subKey]) {
+                    acc[category][subKey] = {
+                      subcategory,
+                      services: []
+                    }
+                  }
+                  acc[category][subKey].services.push(service)
+                  return acc
+                }, {} as Record<string, Record<string, { subcategory: string | null; services: Service[] }>>)
+
+                const formatCurrency = (amount: number) => {
+                  return new Intl.NumberFormat('uk-UA', {
+                    style: 'currency',
+                    currency: 'UAH',
+                    minimumFractionDigits: 0,
+                  }).format(amount)
+                }
+
+                const formatDuration = (minutes: number) => {
+                  if (minutes < 60) {
+                    return `${minutes} хв`
+                  }
+                  const hours = Math.floor(minutes / 60)
+                  const mins = minutes % 60
+                  if (mins === 0) {
+                    return `${hours} год`
+                  }
+                  return `${hours} год ${mins} хв`
+                }
+
+                const toggleCategory = (category: string) => {
+                  setExpandedCategories(prev => {
+                    const newSet = new Set(prev)
+                    if (newSet.has(category)) {
+                      newSet.delete(category)
+                    } else {
+                      newSet.add(category)
+                    }
+                    return newSet
+                  })
+                }
+
+                return (
+                  <div className="space-y-3">
+                    {Object.entries(categoryGroups).map(([category, subcategories], categoryIndex) => {
+                      const categoryColor = getCategoryColor(categoryIndex)
+                      const isExpanded = expandedCategories.has(category)
+                      const totalServicesInCategory = Object.values(subcategories).reduce(
+                        (sum, sub) => sum + sub.services.length, 0
+                      )
+                      
+                      return (
+                        <Card key={category} className="overflow-hidden">
+                          {/* Category Header - Clickable */}
+                          <button
+                            onClick={() => toggleCategory(category)}
+                            className={cn(
+                              'w-full p-3 border-b-2 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors',
+                              categoryColor.border
+                            )}
+                          >
+                            <div className="flex items-center gap-2 flex-1">
+                              <div className={cn('w-1 h-6 rounded-full', categoryColor.bg)} />
+                              <h2 className="text-base md:text-lg font-black text-foreground dark:text-white text-left">
+                                {category}
+                              </h2>
+                              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                                ({totalServicesInCategory})
+                              </span>
+                            </div>
+                            {isExpanded ? (
+                              <ChevronUpIcon className="w-5 h-5 text-gray-400" />
+                            ) : (
+                              <ChevronDownIcon className="w-5 h-5 text-gray-400" />
+                            )}
+                          </button>
+
+                          {/* Services List - Collapsible */}
+                          {isExpanded && (
+                            <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                              {Object.entries(subcategories).map(([subKey, subGroup]) => (
+                                <div key={subKey}>
+                                  {subGroup.subcategory && (
+                                    <div className="px-3 py-2 bg-gray-50 dark:bg-gray-800/30 border-b border-gray-100 dark:border-gray-700">
+                                      <h3 className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">
+                                        {subGroup.subcategory}
+                                      </h3>
+                                    </div>
+                                  )}
+                                  {subGroup.services.map((service) => (
+                                    <div
+                                      key={service.id}
+                                      className="p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                                    >
+                                      <div className="flex items-start justify-between gap-4">
+                                        <div className="flex-1 min-w-0">
+                                          <h3 className="text-sm md:text-base font-black text-foreground dark:text-white mb-1">
+                                            {service.name}
+                                          </h3>
+                                          {service.description && (
+                                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                              {service.description}
+                                            </p>
+                                          )}
+                                          <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                                            <div className="flex items-center gap-1">
+                                              <ClockIcon className="w-3 h-3" />
+                                              <span className="font-medium">{formatDuration(service.duration)}</span>
+                                            </div>
+                                          </div>
+                                        </div>
+                                        <div className="text-right flex-shrink-0 mr-2">
+                                          <div className={cn('text-lg md:text-xl font-black mb-1', categoryColor.text)}>
+                                            {formatCurrency(service.price)}
+                                          </div>
+                                        </div>
+                                        <div className="flex gap-1.5 flex-shrink-0">
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => startEditService(service)}
+                                            className="text-xs px-2 py-1 h-auto"
+                                          >
+                                            Редагувати
+                                          </Button>
+                                          <Button
+                                            size="sm"
+                                            variant="outline"
+                                            onClick={() => handleDeleteService(service.id)}
+                                            className="text-xs px-2 py-1 h-auto text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                          >
+                                            Видалити
+                                          </Button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              ))}
+                            </div>
                           )}
-                          <div className="flex gap-4 mt-2">
-                            <p className="text-sm text-gray-700 dark:text-gray-300">
-                              {service.price} ₴
-                            </p>
-                            <p className="text-sm text-gray-700 dark:text-gray-300">
-                              {service.duration} хв
-                            </p>
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => startEditService(service)}
-                          className="flex-1"
-                        >
-                          Редагувати
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDeleteService(service.id)}
-                          className="text-red-500 hover:text-red-600"
-                        >
-                          Видалити
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
+                        </Card>
+                      )
+                    })}
+                  </div>
+                )
+              })()}
             </div>
           )}
 
