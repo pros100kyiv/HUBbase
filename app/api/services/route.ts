@@ -23,7 +23,7 @@ export async function GET(request: Request) {
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { businessId, name, price, duration, category } = body
+    const { businessId, name, price, duration, category, subcategory } = body
 
     if (!businessId || !name || !price || !duration) {
       return NextResponse.json(
@@ -39,6 +39,7 @@ export async function POST(request: Request) {
         price: parseInt(price),
         duration: parseInt(duration),
         category: category || null,
+        subcategory: subcategory || null,
       },
     })
 

@@ -94,6 +94,7 @@ export default function SettingsPage() {
     price: '',
     duration: '',
     category: '',
+    subcategory: '',
   })
 
   const loadData = useCallback(async () => {
@@ -326,6 +327,7 @@ export default function SettingsPage() {
           price: serviceForm.price,
           duration: serviceForm.duration,
           category: serviceForm.category || null,
+          subcategory: serviceForm.subcategory || null,
         }),
       })
 
@@ -714,7 +716,7 @@ export default function SettingsPage() {
                   onClick={() => {
                     setShowServiceForm(true)
                     setEditingService(null)
-                    setServiceForm({ name: '', price: '', duration: '', category: '' })
+                    setServiceForm({ name: '', price: '', duration: '', category: '', subcategory: '' })
                   }}
                 >
                   + Додати послугу
@@ -748,11 +750,76 @@ export default function SettingsPage() {
                         onChange={(e) => setServiceForm({ ...serviceForm, duration: e.target.value })}
                       />
                     </div>
-                    <Input
-                      placeholder="Категорія (опціонально)"
-                      value={serviceForm.category}
-                      onChange={(e) => setServiceForm({ ...serviceForm, category: e.target.value })}
-                    />
+                    <div className="space-y-2">
+                      <div>
+                        <label className="block text-sm font-medium mb-1.5 text-gray-900 dark:text-white">
+                          Категорія (папка)
+                        </label>
+                        <Input
+                          placeholder="Наприклад: Стрижка, Манікюр"
+                          value={serviceForm.category}
+                          onChange={(e) => setServiceForm({ ...serviceForm, category: e.target.value })}
+                        />
+                        {services.length > 0 && (
+                          <select
+                            onChange={(e) => {
+                              if (e.target.value) {
+                                setServiceForm({ ...serviceForm, category: e.target.value })
+                              }
+                            }}
+                            className="mt-1.5 w-full px-3 py-2 rounded-candy border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white"
+                          >
+                            <option value="">Або виберіть існуючу категорію</option>
+                            {Array.from(new Set(services.map(s => {
+                              const cat = s.category || ''
+                              return cat.includes(' > ') ? cat.split(' > ')[0] : cat
+                            }).filter(Boolean))).map(cat => (
+                              <option key={cat} value={cat}>{cat}</option>
+                            ))}
+                          </select>
+                        )}
+                      </div>
+                      {serviceForm.category && (
+                        <div>
+                          <label className="block text-sm font-medium mb-1.5 text-gray-900 dark:text-white">
+                            Підкатегорія (підпапка) - опціонально
+                          </label>
+                          <Input
+                            placeholder="Наприклад: Чоловіча, Жіноча, Дитяча"
+                            value={serviceForm.subcategory}
+                            onChange={(e) => setServiceForm({ ...serviceForm, subcategory: e.target.value })}
+                          />
+                          {services.length > 0 && serviceForm.category && (
+                            <select
+                              onChange={(e) => {
+                                if (e.target.value) {
+                                  setServiceForm({ ...serviceForm, subcategory: e.target.value })
+                                }
+                              }}
+                              className="mt-1.5 w-full px-3 py-2 rounded-candy border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white"
+                            >
+                              <option value="">Або виберіть існуючу підкатегорію</option>
+                              {Array.from(new Set(services
+                                .filter(s => {
+                                  const cat = s.category || ''
+                                  const mainCat = cat.includes(' > ') ? cat.split(' > ')[0] : cat
+                                  return mainCat === serviceForm.category
+                                })
+                                .map(s => {
+                                  const cat = s.category || ''
+                                  if (cat.includes(' > ')) {
+                                    return cat.split(' > ')[1]
+                                  }
+                                  return s.subcategory || ''
+                                })
+                                .filter(Boolean))).map(sub => (
+                                <option key={sub} value={sub}>{sub}</option>
+                              ))}
+                            </select>
+                          )}
+                        </div>
+                      )}
+                    </div>
                     <div className="flex gap-2">
                       <Button onClick={handleSaveService} className="flex-1">
                         Зберегти
