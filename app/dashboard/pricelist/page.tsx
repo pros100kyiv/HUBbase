@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { ClockIcon } from '@/components/icons'
+import { ClockIcon, ChevronDownIcon, ChevronUpIcon, CalculatorIcon, XIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { Skeleton } from '@/components/ui/skeleton'
+import { Button } from '@/components/ui/button'
 
 interface Service {
   id: string
@@ -33,6 +34,9 @@ export default function PricelistPage() {
   const [business, setBusiness] = useState<any>(null)
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
+  const [selectedServices, setSelectedServices] = useState<Set<string>>(new Set())
+  const [showCalculator, setShowCalculator] = useState(false)
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -83,8 +87,8 @@ export default function PricelistPage() {
     return `${hours} год ${mins} хв`
   }
 
-  // Group services by category and subcategory
-  const groupedServices = services.reduce((acc, service) => {
+  // Group services by category first, then by subcategory
+  const categoryGroups = services.reduce((acc, service) => {
     let category = service.category || 'Інші'
     let subcategory = service.subcategory || null
     
@@ -95,18 +99,59 @@ export default function PricelistPage() {
       subcategory = parts[1] || null
     }
     
-    const key = subcategory ? `${category} > ${subcategory}` : category
+    if (!acc[category]) {
+      acc[category] = {}
+    }
     
-    if (!acc[key]) {
-      acc[key] = {
-        category,
+    const subKey = subcategory || '_main'
+    if (!acc[category][subKey]) {
+      acc[category][subKey] = {
         subcategory,
         services: []
       }
     }
-    acc[key].services.push(service)
+    acc[category][subKey].services.push(service)
     return acc
-  }, {} as Record<string, { category: string; subcategory: string | null; services: Service[] }>)
+  }, {} as Record<string, Record<string, { subcategory: string | null; services: Service[] }>>)
+
+  // Initialize expanded categories
+  useEffect(() => {
+    if (Object.keys(categoryGroups).length > 0 && expandedCategories.size === 0) {
+      setExpandedCategories(new Set(Object.keys(categoryGroups)))
+    }
+  }, [categoryGroups])
+
+  const toggleCategory = (category: string) => {
+    setExpandedCategories(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(category)) {
+        newSet.delete(category)
+      } else {
+        newSet.add(category)
+      }
+      return newSet
+    })
+  }
+
+  const toggleService = (serviceId: string) => {
+    setSelectedServices(prev => {
+      const newSet = new Set(prev)
+      if (newSet.has(serviceId)) {
+        newSet.delete(serviceId)
+      } else {
+        newSet.add(serviceId)
+      }
+      return newSet
+    })
+  }
+
+  // Calculate total for selected services
+  const selectedServicesData = Array.from(selectedServices)
+    .map(id => services.find(s => s.id === id))
+    .filter(Boolean) as Service[]
+
+  const totalPrice = selectedServicesData.reduce((sum, s) => sum + s.price, 0)
+  const totalDuration = selectedServicesData.reduce((sum, s) => sum + s.duration, 0)
 
   if (!business || loading) {
     return (
@@ -129,68 +174,197 @@ export default function PricelistPage() {
       <div className="p-3">
         <div className="max-w-7xl mx-auto">
           <div className="spacing-item mb-4">
-            <h1 className="text-heading">Прайс-лист</h1>
-            <p className="text-caption font-medium">Список послуг та їх вартість</p>
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <div>
+                <h1 className="text-heading">Прайс-лист</h1>
+                <p className="text-caption font-medium">Список послуг та їх вартість</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {selectedServices.size > 0 && (
+                  <Button
+                    onClick={() => setShowCalculator(true)}
+                    className="btn-primary"
+                  >
+                    <CalculatorIcon className="w-4 h-4 mr-2" />
+                    Калькулятор ({selectedServices.size})
+                  </Button>
+                )}
+                <Button
+                  onClick={() => {
+                    setSelectedServices(new Set())
+                    setShowCalculator(false)
+                  }}
+                  variant="outline"
+                  className="text-xs"
+                >
+                  Очистити
+                </Button>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-4">
-            {Object.entries(groupedServices).map(([key, group], categoryIndex) => {
-              const categoryColor = getCategoryColor(categoryIndex)
-              const displayName = group.subcategory 
-                ? `${group.category} > ${group.subcategory}`
-                : group.category
-              
-              return (
-                <div key={key} className="card-candy overflow-hidden">
-                  {/* Category Header */}
-                  <div className={cn('p-3 border-b-2', categoryColor.border)}>
-                    <div className="flex items-center gap-2">
-                      <div className={cn('w-1 h-6 rounded-full', categoryColor.bg)} />
-                      <h2 className="text-base md:text-lg font-black text-foreground dark:text-white">
-                        {displayName}
-                      </h2>
-                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
-                        ({group.services.length})
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Services List */}
-                  <div className="divide-y divide-gray-100 dark:divide-gray-700">
-                    {group.services.map((service, serviceIndex) => (
+          {/* Calculator Modal */}
+          {showCalculator && selectedServices.size > 0 && (
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-candy-lg shadow-soft-xl w-full max-w-md p-4">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-black text-foreground dark:text-white flex items-center gap-2">
+                    <CalculatorIcon className="w-5 h-5" />
+                    Калькулятор послуг
+                  </h3>
+                  <button
+                    onClick={() => setShowCalculator(false)}
+                    className="text-gray-400 hover:text-gray-600 dark:hover:text-gray-300"
+                  >
+                    <XIcon className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="space-y-3">
+                  <div className="space-y-2 max-h-60 overflow-y-auto">
+                    {selectedServicesData.map(service => (
                       <div
                         key={service.id}
-                        className={cn(
-                          'p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors',
-                          serviceIndex === 0 && 'border-t-0'
-                        )}
+                        className="flex items-center justify-between p-2 bg-gray-50 dark:bg-gray-700 rounded-candy-sm"
                       >
-                        <div className="flex items-start justify-between gap-4">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-sm md:text-base font-black text-foreground dark:text-white mb-1">
-                              {service.name}
-                            </h3>
-                            {service.description && (
-                              <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
-                                {service.description}
-                              </p>
-                            )}
-                            <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
-                              <div className="flex items-center gap-1">
-                                <ClockIcon className="w-3 h-3" />
-                                <span className="font-medium">{formatDuration(service.duration)}</span>
-                              </div>
-                            </div>
-                          </div>
-                          <div className="text-right flex-shrink-0">
-                            <div className={cn('text-lg md:text-xl font-black mb-1', categoryColor.text)}>
-                              {formatCurrency(service.price)}
-                            </div>
-                          </div>
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-foreground dark:text-white">
+                            {service.name}
+                          </p>
+                          <p className="text-xs text-gray-500 dark:text-gray-400">
+                            {formatDuration(service.duration)}
+                          </p>
                         </div>
+                        <div className="text-right">
+                          <p className="text-sm font-black text-blue-500">
+                            {formatCurrency(service.price)}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => toggleService(service.id)}
+                          className="ml-2 text-red-500 hover:text-red-600"
+                        >
+                          <XIcon className="w-4 h-4" />
+                        </button>
                       </div>
                     ))}
                   </div>
+                  <div className="border-t border-gray-200 dark:border-gray-700 pt-3 space-y-2">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm font-medium text-gray-600 dark:text-gray-400">
+                        Загальна тривалість:
+                      </span>
+                      <span className="text-sm font-black text-foreground dark:text-white">
+                        {formatDuration(totalDuration)}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-base font-bold text-foreground dark:text-white">
+                        Загальна сума:
+                      </span>
+                      <span className="text-xl font-black text-blue-500">
+                        {formatCurrency(totalPrice)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className="space-y-3">
+            {Object.entries(categoryGroups).map(([category, subcategories], categoryIndex) => {
+              const categoryColor = getCategoryColor(categoryIndex)
+              const isExpanded = expandedCategories.has(category)
+              const totalServicesInCategory = Object.values(subcategories).reduce(
+                (sum, sub) => sum + sub.services.length, 0
+              )
+              
+              return (
+                <div key={category} className="card-candy overflow-hidden">
+                  {/* Category Header - Clickable */}
+                  <button
+                    onClick={() => toggleCategory(category)}
+                    className={cn(
+                      'w-full p-3 border-b-2 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors',
+                      categoryColor.border
+                    )}
+                  >
+                    <div className="flex items-center gap-2 flex-1">
+                      <div className={cn('w-1 h-6 rounded-full', categoryColor.bg)} />
+                      <h2 className="text-base md:text-lg font-black text-foreground dark:text-white text-left">
+                        {category}
+                      </h2>
+                      <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                        ({totalServicesInCategory})
+                      </span>
+                    </div>
+                    {isExpanded ? (
+                      <ChevronUpIcon className="w-5 h-5 text-gray-400" />
+                    ) : (
+                      <ChevronDownIcon className="w-5 h-5 text-gray-400" />
+                    )}
+                  </button>
+
+                  {/* Services List - Collapsible */}
+                  {isExpanded && (
+                    <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                      {Object.entries(subcategories).map(([subKey, subGroup]) => (
+                        <div key={subKey}>
+                          {subGroup.subcategory && (
+                            <div className="px-3 py-2 bg-gray-50 dark:bg-gray-800/30 border-b border-gray-100 dark:border-gray-700">
+                              <h3 className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">
+                                {subGroup.subcategory}
+                              </h3>
+                            </div>
+                          )}
+                          {subGroup.services.map((service, serviceIndex) => {
+                            const isSelected = selectedServices.has(service.id)
+                            return (
+                              <div
+                                key={service.id}
+                                className={cn(
+                                  'p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors cursor-pointer',
+                                  isSelected && 'bg-blue-50 dark:bg-blue-900/20 border-l-4 border-blue-500'
+                                )}
+                                onClick={() => toggleService(service.id)}
+                              >
+                                <div className="flex items-start justify-between gap-4">
+                                  <div className="flex-1 min-w-0">
+                                    <div className="flex items-center gap-2 mb-1">
+                                      <h3 className="text-sm md:text-base font-black text-foreground dark:text-white">
+                                        {service.name}
+                                      </h3>
+                                      {isSelected && (
+                                        <span className="text-xs bg-blue-500 text-white px-1.5 py-0.5 rounded-full font-bold">
+                                          ✓
+                                        </span>
+                                      )}
+                                    </div>
+                                    {service.description && (
+                                      <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                        {service.description}
+                                      </p>
+                                    )}
+                                    <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                                      <div className="flex items-center gap-1">
+                                        <ClockIcon className="w-3 h-3" />
+                                        <span className="font-medium">{formatDuration(service.duration)}</span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                  <div className="text-right flex-shrink-0">
+                                    <div className={cn('text-lg md:text-xl font-black mb-1', categoryColor.text)}>
+                                      {formatCurrency(service.price)}
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               )
             })}
