@@ -100,7 +100,13 @@ export function EditAppointmentForm({
       )
       if (response.ok) {
         const data = await response.json()
-        setAvailableSlots(data.availableSlots || [])
+        // Add current appointment time to available slots (for editing)
+        const currentSlot = `${formData.date}T${format(startTime, 'HH:mm')}`
+        const slots = data.availableSlots || []
+        if (!slots.includes(currentSlot)) {
+          slots.push(currentSlot)
+        }
+        setAvailableSlots(slots)
       }
     } catch (error) {
       console.error('Error loading available slots:', error)
@@ -131,9 +137,11 @@ export function EditAppointmentForm({
 
   const isTimeAvailable = (time: string) => {
     const slot = `${formData.date}T${time}`
-    // Allow current appointment time or available slots
+    // Allow current appointment time (even if not in available slots)
     const currentSlot = `${formData.date}T${format(startTime, 'HH:mm')}`
-    return availableSlots.includes(slot) || slot === currentSlot
+    if (slot === currentSlot) return true
+    // Check if slot is in available slots
+    return availableSlots.includes(slot)
   }
 
   const handleServiceToggle = (serviceId: string) => {
