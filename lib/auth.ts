@@ -36,30 +36,106 @@ export async function authenticateBusiness(email: string, password: string) {
   // Normalize email (lowercase, trim)
   const normalizedEmail = email.toLowerCase().trim()
   
-  const business = await prisma.business.findUnique({
-    where: { email: normalizedEmail },
-  })
+  try {
+    // Використовуємо select без нових полів, щоб уникнути помилок, якщо вони відсутні в БД
+    const business = await prisma.business.findUnique({
+      where: { email: normalizedEmail },
+      select: {
+        id: true,
+        name: true,
+        slug: true,
+        email: true,
+        phone: true,
+        address: true,
+        description: true,
+        logo: true,
+        primaryColor: true,
+        secondaryColor: true,
+        backgroundColor: true,
+        surfaceColor: true,
+        hideRevenue: true,
+        isActive: true,
+        password: true, // Потрібен для перевірки
+        googleId: true,
+        createdAt: true,
+        updatedAt: true,
+        // Нові поля візитівки (опціональні)
+        businessCardBackgroundImage: true,
+        slogan: true,
+        additionalInfo: true,
+        socialMedia: true,
+        workingHours: true,
+        location: true,
+      },
+    })
 
-  if (!business) {
-    console.log('Business not found for email:', normalizedEmail)
-    return null
+    if (!business) {
+      console.log('Business not found for email:', normalizedEmail)
+      return null
+    }
+
+    // Check if password is set
+    if (!business.password) {
+      console.log('Business has no password set:', business.id)
+      return null
+    }
+
+    const isValid = await verifyPassword(password, business.password)
+    if (!isValid) {
+      console.log('Password verification failed for business:', business.id)
+      return null
+    }
+
+    // Не повертаємо пароль
+    const { password: _, ...businessWithoutPassword } = business
+    return businessWithoutPassword
+  } catch (error: any) {
+    // Якщо поля відсутні в БД, спробуємо без них
+    if (error?.message?.includes('does not exist')) {
+      console.warn('Business card fields not found, retrying without them')
+      try {
+        const business = await prisma.business.findUnique({
+          where: { email: normalizedEmail },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            email: true,
+            phone: true,
+            address: true,
+            description: true,
+            logo: true,
+            primaryColor: true,
+            secondaryColor: true,
+            backgroundColor: true,
+            surfaceColor: true,
+            hideRevenue: true,
+            isActive: true,
+            password: true,
+            googleId: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        })
+
+        if (!business || !business.password) {
+          return null
+        }
+
+        const isValid = await verifyPassword(password, business.password)
+        if (!isValid) {
+          return null
+        }
+
+        const { password: _, ...businessWithoutPassword } = business
+        return businessWithoutPassword
+      } catch (retryError) {
+        console.error('Error in retry:', retryError)
+        throw retryError
+      }
+    }
+    throw error
   }
-
-  // Check if password is set
-  if (!business.password) {
-    console.log('Business has no password set:', business.id)
-    return null
-  }
-
-  const isValid = await verifyPassword(password, business.password)
-  if (!isValid) {
-    console.log('Password verification failed for business:', business.id)
-    return null
-  }
-
-  // Не повертаємо пароль
-  const { password: _, ...businessWithoutPassword } = business
-  return businessWithoutPassword
 }
 
 export function generateSlug(name: string): string {

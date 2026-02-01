@@ -22,8 +22,13 @@ export async function POST(request: Request) {
       const { prisma } = await import('@/lib/prisma')
       const { createBusiness } = await import('@/lib/auth')
       
+      // Використовуємо базовий select без нових полів
       const existing = await prisma.business.findUnique({
         where: { email: TEST_EMAIL.toLowerCase() },
+        select: {
+          id: true,
+          email: true,
+        },
       })
       
       if (!existing) {
