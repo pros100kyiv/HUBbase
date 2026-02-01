@@ -96,6 +96,7 @@ export function Navbar() {
   // Don't show on dashboard pages (they have sidebar)
   if (pathname?.startsWith('/dashboard')) {
     return (
+      <>
       <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-800/50 shadow-soft">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
           <div className="flex justify-between items-center h-14 md:h-16">
@@ -188,7 +189,7 @@ export function Navbar() {
           onUpdate={handleNotificationUpdate}
         />
       )}
-    </>
+      </>
     )
   }
 
