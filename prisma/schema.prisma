@@ -178,6 +178,8 @@ model Appointment {
   recurrenceEndDate   DateTime? // Дата закінчення циклу
   parentAppointmentId String? // ID батьківського запису (для циклічних)
   isFromBooking       Boolean   @default(false) // Чи створено через публічне бронювання (QR/посилання)
+  source              String? // Джерело запису: "qr", "link", "phone", "walk_in", "ad_campaign_*", тощо
+  campaignId          String? // ID рекламної кампанії (якщо запис з реклами)
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 

@@ -75,6 +75,8 @@ export default function AnalyticsPage() {
   
   // Revenue data
   const [revenueData, setRevenueData] = useState<any>(null)
+  const [campaignData, setCampaignData] = useState<any>(null)
+  const [alerts, setAlerts] = useState<any[]>([])
   
   // Employees data
   const [employeesData, setEmployeesData] = useState<MasterStats[]>([])
@@ -238,6 +240,25 @@ export default function AnalyticsPage() {
               setServicesData(serviceStatsArray.sort((a, b) => b.count - a.count))
             }
           })
+      }
+
+      // Завантажуємо детальну аналітику прибутку для вкладки revenue
+      if (activeTab === 'revenue') {
+        promises.push(
+          fetch(`/api/analytics/revenue?businessId=${business.id}&period=${period}`)
+            .then(res => res.json())
+            .catch(() => null)
+        )
+        promises.push(
+          fetch(`/api/analytics/campaigns?businessId=${business.id}&period=${period}`)
+            .then(res => res.json())
+            .catch(() => null)
+        )
+        promises.push(
+          fetch(`/api/analytics/alerts?businessId=${business.id}`)
+            .then(res => res.json())
+            .catch(() => ({ alerts: [] }))
+        )
       }
 
       setLoading(false)
@@ -636,53 +657,139 @@ export default function AnalyticsPage() {
           {/* Revenue Tab */}
           {activeTab === 'revenue' && (
             <div className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-1.5">
+              {/* Сповіщення */}
+              {alerts.length > 0 && (
+                <div className="space-y-2">
+                  {alerts.map((alert: any, idx: number) => (
+                    <div
+                      key={idx}
+                      className={cn(
+                        'card-candy p-3 border-2',
+                        alert.type === 'critical' && 'border-red-500 bg-red-50 dark:bg-red-900/20',
+                        alert.type === 'warning' && 'border-yellow-500 bg-yellow-50 dark:bg-yellow-900/20',
+                        alert.type === 'info' && 'border-blue-500 bg-blue-50 dark:bg-blue-900/20'
+                      )}
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex-1">
+                          <p className={cn(
+                            'text-sm font-black mb-1',
+                            alert.type === 'critical' && 'text-red-700 dark:text-red-300',
+                            alert.type === 'warning' && 'text-yellow-700 dark:text-yellow-300',
+                            alert.type === 'info' && 'text-blue-700 dark:text-blue-300'
+                          )}>
+                            {alert.message}
+                          </p>
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            Поточне: {formatCurrency(alert.value)} | Попереднє: {formatCurrency(alert.previousValue)} | Зміна: {alert.change > 0 ? '+' : ''}{alert.change.toFixed(1)}%
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Основні метрики */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
                 <MobileWidget
                   icon={<MoneyIcon />}
-                  title="Загальний дохід"
-                  value={formatCurrency(overviewStats?.totalRevenue || 0)}
+                  title="Поточний прибуток"
+                  value={formatCurrency(revenueData?.currentRevenue || 0)}
                   iconColor="green"
                 />
                 <MobileWidget
                   icon={<TrendingUpIcon />}
-                  title="Середній чек"
-                  value={overviewStats?.totalAppointments > 0 
-                    ? formatCurrency((overviewStats?.totalRevenue || 0) / overviewStats.totalAppointments)
-                    : formatCurrency(0)
-                  }
+                  title="Прогнозований прибуток"
+                  value={formatCurrency(revenueData?.forecastedRevenue || 0)}
                   iconColor="blue"
-                />
-                <MobileWidget
-                  icon={<CalendarIcon />}
-                  title="Візитів"
-                  value={overviewStats?.totalAppointments || 0}
-                  iconColor="orange"
                 />
               </div>
 
-              <div className="card-candy p-4 spacing-section">
-                <h3 className="text-subheading mb-3">Детальна статистика доходу</h3>
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center p-3 rounded-candy-sm bg-candy-blue/10 border border-candy-blue/30">
-                    <span className="text-sm font-medium text-foreground">Підтверджені візити</span>
-                    <span className="text-base font-black text-candy-blue">
-                      {formatCurrency((overviewStats?.confirmedAppointments || 0) * 500)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 rounded-candy-sm bg-candy-mint/10 border border-candy-mint/30">
-                    <span className="text-sm font-medium text-foreground">Завершені візити</span>
-                    <span className="text-base font-black text-candy-mint">
-                      {formatCurrency((overviewStats?.completedAppointments || 0) * 500)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between items-center p-3 rounded-candy-sm bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                    <span className="text-sm font-medium text-foreground">Очікуючі візити</span>
-                    <span className="text-base font-black text-foreground">
-                      {formatCurrency((overviewStats?.totalAppointments - (overviewStats?.completedAppointments || 0)) * 500)}
-                    </span>
+              {/* Тренди */}
+              {revenueData?.trends && (
+                <div className="card-candy p-4">
+                  <h3 className="text-subheading mb-3">Тренди</h3>
+                  <div className="space-y-2">
+                    <div className="flex justify-between items-center p-2 rounded-candy-sm bg-gray-100 dark:bg-gray-800">
+                      <span className="text-sm font-medium text-foreground">Зміна поточного прибутку</span>
+                      <span className={cn(
+                        'text-sm font-black',
+                        revenueData.trends.currentRevenueChange > 0 ? 'text-green-600' : 'text-red-600'
+                      )}>
+                        {revenueData.trends.currentRevenueChange > 0 ? '+' : ''}{revenueData.trends.currentRevenueChange.toFixed(1)}%
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center p-2 rounded-candy-sm bg-gray-100 dark:bg-gray-800">
+                      <span className="text-sm font-medium text-foreground">Зміна прогнозованого прибутку</span>
+                      <span className={cn(
+                        'text-sm font-black',
+                        revenueData.trends.forecastedRevenueChange > 0 ? 'text-green-600' : 'text-red-600'
+                      )}>
+                        {revenueData.trends.forecastedRevenueChange > 0 ? '+' : ''}{revenueData.trends.forecastedRevenueChange.toFixed(1)}%
+                      </span>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
+
+              {/* Аналітика по послугах */}
+              {revenueData?.revenueByService && revenueData.revenueByService.length > 0 && (
+                <div className="card-candy p-4">
+                  <h3 className="text-subheading mb-3">Прибуток по послугах</h3>
+                  <div className="space-y-2">
+                    {revenueData.revenueByService.slice(0, 10).map((service: any) => (
+                      <div key={service.serviceId} className="flex justify-between items-center p-2 rounded-candy-sm bg-gray-100 dark:bg-gray-800">
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-black text-foreground truncate">{service.serviceName}</p>
+                          {service.category && (
+                            <p className="text-xs text-gray-500">{service.category}</p>
+                          )}
+                          <p className="text-xs text-gray-600 dark:text-gray-400">
+                            {service.count} візитів • Середній чек: {formatCurrency(service.averagePrice)}
+                          </p>
+                        </div>
+                        <div className="text-right flex-shrink-0 ml-2">
+                          <p className="text-sm font-black text-candy-blue">{formatCurrency(service.revenue)}</p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Аналітика рекламних кампаній */}
+              {campaignData?.campaigns && campaignData.campaigns.length > 0 && (
+                <div className="card-candy p-4">
+                  <h3 className="text-subheading mb-3">Ефективність рекламних кампаній</h3>
+                  <div className="space-y-2">
+                    {campaignData.campaigns.map((campaign: any) => (
+                      <div key={campaign.campaignId} className="p-3 rounded-candy-sm bg-gray-100 dark:bg-gray-800">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <p className="text-sm font-black text-foreground">{campaign.source}</p>
+                            <p className="text-xs text-gray-600 dark:text-gray-400">
+                              {campaign.totalAppointments} візитів • {campaign.completedAppointments} завершено
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-black text-candy-blue">{formatCurrency(campaign.revenue)}</p>
+                            <p className="text-xs text-gray-500">Прогноз: {formatCurrency(campaign.forecastedRevenue)}</p>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-2 text-xs">
+                          <span className="text-gray-600 dark:text-gray-400">
+                            Конверсія: {campaign.conversionRate.toFixed(1)}%
+                          </span>
+                          <span className="text-gray-600 dark:text-gray-400">
+                            • Середній чек: {formatCurrency(campaign.averageOrderValue)}
+                          </span>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
