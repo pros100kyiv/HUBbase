@@ -36,6 +36,7 @@ interface Client {
   retentionRate: number
   lastAppointmentDate?: string
   firstAppointmentDate?: string
+  isActive?: boolean
 }
 
 interface MasterStats {
@@ -558,12 +559,12 @@ export default function AnalyticsPage() {
           {activeTab === 'clients' && (
             <div className="space-y-4">
               <div className="flex gap-2">
-                <Search
-                  placeholder="Пошук клієнтів..."
-                  value={clientsSearch}
-                  onSearch={setClientsSearch}
-                  className="flex-1"
-                />
+                <div className="flex-1">
+                  <Search
+                    placeholder="Пошук клієнтів..."
+                    onSearch={setClientsSearch}
+                  />
+                </div>
                 <Button
                   onClick={() => router.push('/dashboard/clients')}
                   className="whitespace-nowrap"
@@ -590,8 +591,8 @@ export default function AnalyticsPage() {
                           <p className="text-xs text-gray-500 dark:text-gray-500">{client.email}</p>
                         )}
                       </div>
-                      <Badge variant={client.isActive ? 'success' : 'secondary'}>
-                        {client.isActive ? 'Активний' : 'Неактивний'}
+                      <Badge variant={(client.isActive !== false) ? 'success' : 'default'}>
+                        {(client.isActive !== false) ? 'Активний' : 'Неактивний'}
                       </Badge>
                     </div>
                     <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
