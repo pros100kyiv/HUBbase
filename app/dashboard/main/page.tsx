@@ -30,6 +30,7 @@ export default function MainPage() {
   const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [hideRevenue, setHideRevenue] = useState(false)
+  const [servicesCache, setServicesCache] = useState<any[]>([])
   const [selectedAppointment, setSelectedAppointment] = useState<string | null>(null)
 
   useEffect(() => {
@@ -58,11 +59,16 @@ export default function MainPage() {
     // Load today's appointments
     const today = format(new Date(), 'yyyy-MM-dd')
     
-    // Load masters and appointments in parallel
+    // Load masters, services and appointments in parallel
     Promise.all([
       fetch(`/api/masters?businessId=${business.id}`)
         .then((res) => {
           if (!res.ok) throw new Error('Failed to fetch masters')
+          return res.json()
+        }),
+      fetch(`/api/services?businessId=${business.id}`)
+        .then((res) => {
+          if (!res.ok) throw new Error('Failed to fetch services')
           return res.json()
         }),
       fetch(`/api/appointments?date=${today}&businessId=${business.id}`)
@@ -71,10 +77,13 @@ export default function MainPage() {
           return res.json()
         })
     ])
-      .then(([masters, data]) => {
-        // Ensure masters is an array
+      .then(([masters, services, data]) => {
+        // Ensure arrays
         const mastersArray = Array.isArray(masters) ? masters : []
+        const servicesArray = Array.isArray(services) ? services : []
         const appointmentsArray = Array.isArray(data) ? data : []
+        
+        setServicesCache(servicesArray)
         
         const withMasters = appointmentsArray.map((apt: Appointment) => {
           const master = mastersArray.find((m: any) => m.id === apt.masterId)
@@ -229,6 +238,7 @@ export default function MainPage() {
                   <MobileAppointmentCard
                     key={appointment.id}
                     appointment={appointment}
+                    servicesCache={servicesCache}
                     onStatusChange={async (id, newStatus) => {
                       try {
                         const response = await fetch(`/api/appointments/${id}`, {

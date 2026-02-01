@@ -20,11 +20,13 @@ interface Appointment {
 interface MobileAppointmentCardProps {
   appointment: Appointment
   onStatusChange?: (id: string, status: string) => void
+  servicesCache?: any[]
 }
 
 export function MobileAppointmentCard({
   appointment,
   onStatusChange,
+  servicesCache = [],
 }: MobileAppointmentCardProps) {
   const startTime = new Date(appointment.startTime)
   const endTime = new Date(appointment.endTime)
@@ -75,13 +77,32 @@ export function MobileAppointmentCard({
   }
 
   let servicesList: string[] = []
+  let serviceNames: string[] = []
+  let customService: string | null = null
+  
   try {
     if (appointment.services) {
-      servicesList = JSON.parse(appointment.services)
+      const parsed = JSON.parse(appointment.services)
+      if (Array.isArray(parsed)) {
+        // Старий формат - просто масив ID
+        servicesList = parsed
+      } else if (typeof parsed === 'object' && parsed.serviceIds) {
+        // Новий формат з кастомною послугою
+        servicesList = parsed.serviceIds || []
+        customService = parsed.customService || null
+      }
     }
   } catch (e) {
     // Ignore
   }
+  
+  // Отримуємо назви послуг
+  serviceNames = servicesList
+    .map((id: string) => {
+      const service = servicesCache.find((s: any) => s.id === id)
+      return service ? service.name : null
+    })
+    .filter((name: string | null) => name !== null) as string[]
 
   const getStatusBorderColor = (status: string) => {
     switch (status) {
@@ -197,24 +218,34 @@ export function MobileAppointmentCard({
       </div>
 
       {/* Services and Time */}
-      {(servicesList.length > 0 || true) && (
-        <div className="flex items-center justify-between gap-1.5 mt-1.5 pt-1.5 border-t border-gray-100">
-          {servicesList.length > 0 && (
-            <div className="flex items-center gap-1 flex-wrap">
-              <span className="text-[9px] text-gray-600 dark:text-gray-400 font-bold uppercase">Послуги:</span>
-              {servicesList.slice(0, 2).map((serviceId, idx) => (
+      {(serviceNames.length > 0 || customService) && (
+        <div className="flex items-center justify-between gap-1.5 mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700">
+          <div className="flex items-center gap-1 flex-wrap flex-1 min-w-0">
+            <span className="text-[9px] text-gray-600 dark:text-gray-400 font-bold uppercase flex-shrink-0">Послуги:</span>
+            <div className="flex items-center gap-1 flex-wrap flex-1 min-w-0">
+              {serviceNames.length > 0 && (
+                <>
+                  {serviceNames.map((name, idx) => (
+                    <span
+                      key={idx}
+                      className="px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-[9px] font-bold text-gray-900 dark:text-gray-100 truncate max-w-[120px]"
+                      title={name}
+                    >
+                      {name}
+                    </span>
+                  ))}
+                </>
+              )}
+              {customService && (
                 <span
-                  key={idx}
-                  className="px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-[9px] font-bold text-gray-900 dark:text-gray-100"
+                  className="px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-600 text-[9px] font-bold text-blue-700 dark:text-blue-300 italic truncate max-w-[120px]"
+                  title={customService}
                 >
-                  {idx + 1}
+                  {customService}
                 </span>
-              ))}
-              {servicesList.length > 2 && (
-                <span className="text-[9px] text-gray-500 font-bold">+{servicesList.length - 2}</span>
               )}
             </div>
-          )}
+          </div>
           <div className="flex items-center gap-1 flex-shrink-0">
             <ClockIcon className="w-3 h-3 text-gray-400" />
             <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300">

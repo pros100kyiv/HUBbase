@@ -23,6 +23,17 @@ interface NotificationToastProps {
 export function NotificationToast({ businessId, onConfirm, onDismiss }: NotificationToastProps) {
   const [notifications, setNotifications] = useState<AppointmentNotification[]>([])
   const [seenIds, setSeenIds] = useState<Set<string>>(new Set())
+  const [servicesCache, setServicesCache] = useState<any[]>([])
+
+  useEffect(() => {
+    if (!businessId) return
+
+    // Завантажуємо послуги один раз
+    fetch(`/api/services?businessId=${businessId}`)
+      .then(res => res.json())
+      .then(data => setServicesCache(Array.isArray(data) ? data : []))
+      .catch(err => console.error('Error loading services:', err))
+  }, [businessId])
 
   useEffect(() => {
     if (!businessId) return
@@ -77,13 +88,32 @@ export function NotificationToast({ businessId, onConfirm, onDismiss }: Notifica
       {notifications.map((notification) => {
         const startTime = new Date(notification.startTime)
         let servicesList: string[] = []
+        let serviceNames: string[] = []
+        let customService: string | null = null
+        
         try {
           if (notification.services) {
-            servicesList = JSON.parse(notification.services)
+            const parsed = JSON.parse(notification.services)
+            if (Array.isArray(parsed)) {
+              // Старий формат - просто масив ID
+              servicesList = parsed
+            } else if (typeof parsed === 'object' && parsed.serviceIds) {
+              // Новий формат з кастомною послугою
+              servicesList = parsed.serviceIds || []
+              customService = parsed.customService || null
+            }
           }
         } catch (e) {
           // Ignore
         }
+        
+        // Отримуємо назви послуг
+        serviceNames = servicesList
+          .map((id: string) => {
+            const service = servicesCache.find((s: any) => s.id === id)
+            return service ? service.name : null
+          })
+          .filter((name: string | null) => name !== null) as string[]
 
         return (
           <div
@@ -122,9 +152,18 @@ export function NotificationToast({ businessId, onConfirm, onDismiss }: Notifica
               <p className="text-gray-600 dark:text-gray-400">
                 {notification.clientPhone}
               </p>
-              {servicesList.length > 0 && (
-                <p className="text-gray-500 dark:text-gray-500">
-                  {servicesList.join(', ')}
+              {(serviceNames.length > 0 || customService) && (
+                <p className="text-xs text-gray-700 dark:text-gray-300 font-medium mt-1">
+                  <span className="font-semibold">Послуги:</span>{' '}
+                  {serviceNames.length > 0 && (
+                    <span>{serviceNames.join(', ')}</span>
+                  )}
+                  {customService && (
+                    <span>
+                      {serviceNames.length > 0 ? ', ' : ''}
+                      <span className="italic text-candy-blue dark:text-blue-400">{customService}</span>
+                    </span>
+                  )}
                 </p>
               )}
             </div>
