@@ -153,6 +153,7 @@ model Client {
   tags                 String? // JSON: масив тегів
   metadata             String? // JSON: додаткові дані
   appointments         Appointment[]
+  telegramReminders    TelegramReminder[] // Нагадування для клієнта
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 
