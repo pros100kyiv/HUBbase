@@ -86,15 +86,15 @@ export default function AnalyticsPage() {
                 <h1 className="text-heading">Аналітика</h1>
                 <p className="text-caption font-medium">Статистика та звіти</p>
               </div>
-            <div className="flex gap-1 bg-gray-100 p-1 rounded-candy-sm border border-gray-200 overflow-hidden">
+            <div className="flex gap-1 bg-gray-100 dark:bg-gray-800 p-1 rounded-candy-sm border border-gray-200 dark:border-gray-700 overflow-hidden">
               {(['day', 'week', 'month'] as const).map((p) => (
                 <button
                   key={p}
                   onClick={() => setPeriod(p)}
-                  className={`px-2 py-1 rounded-candy-xs text-[10px] font-bold transition-all duration-200 active:scale-97 whitespace-nowrap ${
+                  className={`px-3 py-1.5 rounded-candy-xs text-xs font-bold transition-all duration-200 active:scale-97 whitespace-nowrap ${
                     period === p
                       ? 'candy-purple text-white shadow-soft-lg'
-                      : 'text-gray-600 dark:text-gray-300 hover:text-candy-blue dark:hover:text-blue-400 hover:bg-white dark:hover:bg-gray-700'
+                      : 'text-gray-700 dark:text-gray-300 hover:text-candy-blue dark:hover:text-blue-400 hover:bg-white dark:hover:bg-gray-700'
                   }`}
                 >
                   {p === 'day' ? 'День' : p === 'week' ? 'Тиждень' : 'Місяць'}
