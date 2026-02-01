@@ -118,6 +118,7 @@ export async function PATCH(
         backgroundColor: true,
         surfaceColor: true,
         isActive: true,
+        hideRevenue: true,
         businessCardBackgroundImage: true,
         slogan: true,
         additionalInfo: true,
