@@ -17,8 +17,7 @@ export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) 
   const [telegramBotToken] = useState(business.telegramBotToken || '')
   const [telegramUsers, setTelegramUsers] = useState<any[]>([])
   const [activePasswords, setActivePasswords] = useState<any[]>([])
-  const [adminPassword, setAdminPassword] = useState<string | null>(null)
-  const [clientPassword, setClientPassword] = useState<string | null>(null)
+  const [clientPasswordCount, setClientPasswordCount] = useState(1)
 
   const loadData = () => {
     if (business.id) {
@@ -39,31 +38,42 @@ export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) 
     loadData()
   }, [business.id])
 
-  const generatePassword = async (role: 'ADMIN' | 'CLIENT') => {
+  const generatePassword = async (role: 'ADMIN' | 'CLIENT', count: number = 1) => {
     try {
-      const response = await fetch('/api/telegram/generate-password', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          businessId: business.id,
-          role,
-        }),
-      })
+      const promises = []
+      for (let i = 0; i < count; i++) {
+        promises.push(
+          fetch('/api/telegram/generate-password', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              businessId: business.id,
+              role,
+            }),
+          })
+        )
+      }
 
-      if (response.ok) {
-        const data = await response.json()
-        if (role === 'ADMIN') {
-          setAdminPassword(data.password)
-        } else {
-          setClientPassword(data.password)
-        }
+      const responses = await Promise.all(promises)
+      const results = await Promise.all(responses.map(r => r.json()))
+
+      const failed = results.filter(r => !r.success)
+      if (failed.length > 0) {
+        const { toast } = await import('@/components/ui/toast')
+        toast({ title: 'Помилка', description: `Не вдалося згенерувати ${failed.length} паролів`, type: 'error' })
+      }
+
+      const successCount = results.filter(r => r.success).length
+      if (successCount > 0) {
         // Оновлюємо список активних паролів
         loadData()
         const { toast } = await import('@/components/ui/toast')
-        toast({ title: 'Пароль згенеровано!', type: 'success', duration: 3000 })
-      } else {
-        const { toast } = await import('@/components/ui/toast')
-        toast({ title: 'Помилка', description: 'Не вдалося згенерувати пароль', type: 'error' })
+        toast({ 
+          title: 'Паролі згенеровано!', 
+          description: `Успішно згенеровано ${successCount} паролів`,
+          type: 'success', 
+          duration: 3000 
+        })
       }
     } catch (error) {
       console.error('Error generating password:', error)
@@ -100,76 +110,127 @@ export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) 
               <h3 className="text-sm font-black text-foreground">🔐 Пароль для адміністратора</h3>
               <Button
                 size="sm"
-                onClick={() => generatePassword('ADMIN')}
+                onClick={() => generatePassword('ADMIN', 1)}
               >
                 Згенерувати
               </Button>
             </div>
-            {adminPassword && (
-              <div className="mt-2 p-2 bg-white dark:bg-gray-800 rounded">
-                <code className="block text-lg font-black text-center">{adminPassword}</code>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 text-center">
-                  Відправте користувачу: <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">/start {adminPassword}</code>
-                </p>
-              </div>
-            )}
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
+              Можна згенерувати кілька паролів для різних адміністраторів або пристроїв
+            </p>
           </div>
 
           {/* Пароль для клієнтів */}
           <div className="p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-candy-sm">
             <div className="flex justify-between items-center mb-2">
-              <h3 className="text-sm font-black text-foreground">📢 Пароль для клієнтів (розсилки)</h3>
+              <h3 className="text-sm font-black text-foreground">📢 Паролі для клієнтів (розсилки)</h3>
+            </div>
+            <div className="flex gap-2 items-end">
+              <div className="flex-1">
+                <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
+                  Кількість паролів
+                </label>
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={clientPasswordCount}
+                  onChange={(e) => setClientPasswordCount(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
+                  className="w-full p-2 rounded-candy-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"
+                />
+              </div>
               <Button
                 size="sm"
-                onClick={() => generatePassword('CLIENT')}
+                onClick={() => generatePassword('CLIENT', clientPasswordCount)}
               >
-                Згенерувати
+                Згенерувати {clientPasswordCount > 1 ? `${clientPasswordCount} паролів` : 'пароль'}
               </Button>
             </div>
-            {clientPassword && (
-              <div className="mt-2 p-2 bg-white dark:bg-gray-800 rounded">
-                <code className="block text-lg font-black text-center">{clientPassword}</code>
-                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 text-center">
-                  Відправте клієнтам: <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">/start {clientPassword}</code>
-                </p>
-              </div>
-            )}
+            <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+              Генеруйте стільки паролів, скільки потрібно клієнтів. Кожен клієнт отримує свій унікальний пароль.
+            </p>
           </div>
         </div>
 
         {/* Список активних паролів */}
         {activePasswords.length > 0 && (
           <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h3 className="text-sm font-black text-foreground mb-3">📋 Активні паролі активації</h3>
-            <div className="space-y-2">
-              {activePasswords.map((user) => (
-                <div key={user.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-candy-sm">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="text-sm font-medium text-foreground">
-                        {user.role === 'ADMIN' ? '🔐 Адміністратор' : user.role === 'CLIENT' ? '📢 Клієнт' : user.role}
-                      </p>
-                      {user.firstName && (
-                        <p className="text-xs text-gray-500">
-                          {user.firstName} {user.lastName || ''}
-                        </p>
-                      )}
-                      <p className="text-xs text-gray-500 mt-1">
-                        Створено: {new Date(user.createdAt).toLocaleDateString('uk-UA')}
-                      </p>
+            <h3 className="text-sm font-black text-foreground mb-3">📋 Всі активні паролі активації</h3>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+              Тут відображаються всі паролі, які ще не використані. Після активації користувачем пароль автоматично видаляється зі списку.
+            </p>
+            
+            {/* Паролі адміністраторів */}
+            {activePasswords.filter(p => p.role === 'ADMIN').length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-xs font-black text-foreground mb-2">🔐 Паролі адміністраторів</h4>
+                <div className="space-y-2">
+                  {activePasswords.filter(p => p.role === 'ADMIN').map((user) => (
+                    <div key={user.id} className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-candy-sm">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">
+                            🔐 Адміністратор
+                          </p>
+                          {user.firstName && (
+                            <p className="text-xs text-gray-500">
+                              {user.firstName} {user.lastName || ''}
+                            </p>
+                          )}
+                          <p className="text-xs text-gray-500 mt-1">
+                            Створено: {new Date(user.createdAt).toLocaleDateString('uk-UA')} {new Date(user.createdAt).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <code className="block text-lg font-black text-candy-blue dark:text-candy-mint">
+                            {user.activationPassword}
+                          </code>
+                          <p className="text-xs text-gray-500 mt-1">
+                            /start {user.activationPassword}
+                          </p>
+                        </div>
+                      </div>
                     </div>
-                    <div className="text-right">
-                      <code className="block text-lg font-black text-candy-blue dark:text-candy-mint">
-                        {user.activationPassword}
-                      </code>
-                      <p className="text-xs text-gray-500 mt-1">
-                        /start {user.activationPassword}
-                      </p>
-                    </div>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
+              </div>
+            )}
+
+            {/* Паролі клієнтів */}
+            {activePasswords.filter(p => p.role === 'CLIENT').length > 0 && (
+              <div>
+                <h4 className="text-xs font-black text-foreground mb-2">📢 Паролі клієнтів ({activePasswords.filter(p => p.role === 'CLIENT').length})</h4>
+                <div className="space-y-2 max-h-96 overflow-y-auto">
+                  {activePasswords.filter(p => p.role === 'CLIENT').map((user) => (
+                    <div key={user.id} className="p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-candy-sm">
+                      <div className="flex justify-between items-start">
+                        <div>
+                          <p className="text-sm font-medium text-foreground">
+                            📢 Клієнт
+                          </p>
+                          {user.firstName && (
+                            <p className="text-xs text-gray-500">
+                              {user.firstName} {user.lastName || ''}
+                            </p>
+                          )}
+                          <p className="text-xs text-gray-500 mt-1">
+                            Створено: {new Date(user.createdAt).toLocaleDateString('uk-UA')} {new Date(user.createdAt).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <code className="block text-lg font-black text-candy-purple dark:text-candy-mint">
+                            {user.activationPassword}
+                          </code>
+                          <p className="text-xs text-gray-500 mt-1">
+                            /start {user.activationPassword}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>
