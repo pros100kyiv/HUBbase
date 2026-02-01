@@ -691,6 +691,7 @@ export default function SettingsPage() {
                     </div>
                   </CardContent>
                 </Card>
+                </div>
               )}
 
               <div className="space-y-1.5">
@@ -879,6 +880,7 @@ export default function SettingsPage() {
                     </div>
                   </CardContent>
                 </Card>
+                </div>
               )}
 
               {/* Group services by category */}
@@ -1084,6 +1086,7 @@ export default function SettingsPage() {
             </div>
           )}
 
+        </div>
         </div>
       </div>
     </div>
