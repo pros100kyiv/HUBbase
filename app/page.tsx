@@ -2,6 +2,7 @@
 
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
+import { XbaseLogo } from '@/components/ui/XbaseLogo'
 
 export default function Home() {
   const router = useRouter()
@@ -14,13 +15,8 @@ export default function Home() {
       </div>
 
       {/* Xbase Logo at top center */}
-      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-20 flex items-center gap-2">
-        <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm candy-blue flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-lg">
-          X
-        </div>
-        <span className="text-xs md:text-sm font-black text-white">
-          Xbase
-        </span>
+      <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-20">
+        <XbaseLogo size="md" showText={true} className="text-white" />
       </div>
 
       {/* Content */}

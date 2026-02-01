@@ -7,6 +7,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { useSidebar } from '@/contexts/SidebarContext'
 import { SunIcon, MoonIcon, BellIcon } from '@/components/icons'
 import { NotificationsPanel } from '@/components/admin/NotificationsPanel'
+import { XbaseLogo } from '@/components/ui/XbaseLogo'
 
 // Оновлюємо бізнес при зміні localStorage
 if (typeof window !== 'undefined') {
@@ -106,12 +107,7 @@ export function Navbar() {
               className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer"
               title="Перемкнути меню"
             >
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm candy-blue flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-lg">
-                X
-              </div>
-              <span className="text-xs md:text-sm font-black text-foreground dark:text-white hidden sm:block">
-                Xbase
-              </span>
+              <XbaseLogo size="md" showText={true} />
             </button>
 
             {/* Center - Business name */}
@@ -202,12 +198,7 @@ export function Navbar() {
               className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer"
               title="Перемкнути меню"
             >
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm candy-blue flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-lg">
-                X
-              </div>
-              <span className="text-xs md:text-sm font-black text-foreground dark:text-white hidden sm:block">
-                Xbase
-              </span>
+              <XbaseLogo size="md" showText={true} />
             </button>
 
           {/* Center - Business name and navigation */}
