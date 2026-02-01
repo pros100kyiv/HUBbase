@@ -4,7 +4,6 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameDay, eachDayOfInterval, getDay, isToday, addMonths, subMonths } from 'date-fns'
 import { uk } from 'date-fns/locale'
-import { Sidebar } from '@/components/admin/Sidebar'
 import { cn } from '@/lib/utils'
 import { ChevronLeftIcon, ChevronRightIcon } from '@/components/icons'
 
@@ -141,8 +140,7 @@ export default function SchedulePage() {
 
   return (
     <div className="bg-background">
-      <Sidebar />
-      <div className="ml-16 md:ml-40 p-3">
+      <div className="p-3">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between spacing-item">
             <h1 className="text-heading">Графік роботи</h1>

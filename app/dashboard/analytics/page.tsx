@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Sidebar } from '@/components/admin/Sidebar'
 import { MobileWidget } from '@/components/admin/MobileWidget'
 import { CalendarIcon, CheckIcon, XIcon, MoneyIcon, UsersIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
@@ -79,8 +78,7 @@ export default function AnalyticsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar />
-      <div className="ml-16 md:ml-40 p-3">
+      <div className="p-3">
         <div className="max-w-7xl mx-auto">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between spacing-item gap-2">
             <h1 className="text-heading">Аналітика</h1>

@@ -6,7 +6,6 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSa
 import { uk } from 'date-fns/locale'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
 import { CreateAppointmentForm } from '@/components/admin/CreateAppointmentForm'
-import { Sidebar } from '@/components/admin/Sidebar'
 import { cn } from '@/lib/utils'
 
 interface Appointment {
@@ -200,8 +199,7 @@ export default function AppointmentsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar />
-      <div className="ml-16 md:ml-40 p-3">
+      <div className="p-3">
         <div className="max-w-7xl mx-auto">
                  <div className="flex items-center justify-between spacing-item">
                    <h1 className="text-heading">Записи</h1>

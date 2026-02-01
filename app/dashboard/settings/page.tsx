@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { WorkingHoursEditor } from '@/components/admin/WorkingHoursEditor'
-import { Sidebar } from '@/components/admin/Sidebar'
 import { toast } from '@/components/ui/toast'
 import { Confetti, triggerConfetti } from '@/components/ui/confetti'
 
@@ -411,8 +410,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-background">
       <Confetti trigger={showConfetti} />
-      <Sidebar />
-      <div className="ml-16 md:ml-40 p-3">
+      <div className="p-3">
         <div className="max-w-7xl mx-auto">
           <h1 className="text-heading spacing-item">Налаштування</h1>
 

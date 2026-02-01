@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Sidebar } from '@/components/admin/Sidebar'
 import { ClockIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 
@@ -83,8 +82,7 @@ export default function ServicesPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Sidebar />
-      <div className="ml-16 md:ml-40 p-3">
+      <div className="p-3">
         <div className="max-w-7xl mx-auto">
                  <div className="flex items-center justify-between spacing-item">
                    <h1 className="text-heading">Послуги</h1>

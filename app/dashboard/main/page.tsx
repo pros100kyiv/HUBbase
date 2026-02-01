@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
-import { Sidebar } from '@/components/admin/Sidebar'
 import { MobileWidget } from '@/components/admin/MobileWidget'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
 import { CalendarIcon, UsersIcon, CheckIcon, MoneyIcon } from '@/components/icons'
@@ -93,8 +92,7 @@ export default function MainPage() {
   if (!business || loading) {
     return (
       <div className="bg-background dark:bg-gray-900">
-        <Sidebar />
-        <div className="ml-16 md:ml-40 p-3">
+        <div className="p-3">
           <div className="max-w-7xl mx-auto">
             <div className="spacing-item">
               <Skeleton className="h-8 w-48 mb-2" />
@@ -127,8 +125,7 @@ export default function MainPage() {
 
   return (
     <div className="bg-background dark:bg-gray-900">
-      <Sidebar />
-      <div className="ml-16 md:ml-40 p-3">
+      <div className="p-3">
         <div className="max-w-7xl mx-auto">
           <div className="spacing-item">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
