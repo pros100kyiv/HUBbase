@@ -25,6 +25,15 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // Перевіряємо чи бізнес існує
+    const business = await prisma.business.findUnique({
+      where: { id: businessId },
+    })
+
+    if (!business) {
+      return NextResponse.json({ error: 'Business not found' }, { status: 404 })
+    }
+
     const reminder = await prisma.telegramReminder.create({
       data: {
         businessId,
@@ -32,17 +41,17 @@ export async function POST(request: NextRequest) {
         targetType: targetType || 'all',
         clientId: targetType === 'client' ? clientId : null,
         scheduledAt: scheduledAt ? new Date(scheduledAt) : null,
-        status: scheduledAt ? 'pending' : 'pending',
+        status: 'pending',
         createdBy: createdBy || null,
       },
       include: {
-        client: targetType === 'client' ? {
+        client: targetType === 'client' && clientId ? {
           select: {
             id: true,
             name: true,
             phone: true,
           },
-        } : false,
+        } : undefined,
       },
     })
 

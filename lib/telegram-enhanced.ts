@@ -506,21 +506,33 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
 
       if (response.ok) {
         const data = await response.json()
-        await ctx.reply(
-          `✅ Нагадування створено!\n\n` +
-          `Текст: ${reminderText}\n\n` +
-          `Відправити зараз?`,
-          Markup.inlineKeyboard([
-            [Markup.button.callback('✅ Відправити', `send_reminder_${data.reminder.id}`)],
-            [Markup.button.callback('❌ Скасувати', 'menu_cancel')],
-          ])
-        )
+        if (data.success && data.reminder) {
+          await ctx.reply(
+            `✅ Нагадування створено!\n\n` +
+            `Текст: ${reminderText}\n\n` +
+            `Відправити зараз?`,
+            Markup.inlineKeyboard([
+              [Markup.button.callback('✅ Відправити', `send_reminder_${data.reminder.id}`)],
+              [Markup.button.callback('❌ Скасувати', 'menu_cancel')],
+            ])
+          )
+        } else {
+          console.error('Unexpected response format:', data)
+          await ctx.reply('❌ Помилка: неочікуваний формат відповіді від сервера.')
+        }
       } else {
-        await ctx.reply('❌ Помилка при створенні нагадування.')
+        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
+        console.error('Error creating reminder:', response.status, errorData)
+        await ctx.reply(
+          `❌ Помилка при створенні нагадування.\n` +
+          `Код: ${response.status}\n` +
+          `Деталі: ${errorData.error || errorData.details || 'Невідома помилка'}`
+        )
       }
     } catch (error) {
       console.error('Error creating reminder:', error)
-      await ctx.reply('❌ Помилка при створенні нагадування.')
+      const errorMessage = error instanceof Error ? error.message : 'Невідома помилка'
+      await ctx.reply(`❌ Помилка при створенні нагадування: ${errorMessage}`)
     }
   })
 
