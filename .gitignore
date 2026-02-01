@@ -33,6 +33,10 @@ next-env.d.ts
 /dev.db
 /dev.db-journal
 
+# business credentials (не комітити логіни/паролі!)
+business-credentials/*.md
+!business-credentials/README.md
+
 
 
 
