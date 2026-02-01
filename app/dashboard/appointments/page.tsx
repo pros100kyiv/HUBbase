@@ -154,6 +154,26 @@ export default function AppointmentsPage() {
     }
   }
 
+  const handlePriceChange = async (id: string, price: number | null) => {
+    try {
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customPrice: price }),
+      })
+
+      if (response.ok) {
+        const updated = await response.json()
+        setAppointments((prev) =>
+          prev.map((apt) => (apt.id === id ? { ...apt, customPrice: updated.customPrice } : apt))
+        )
+      }
+    } catch (error) {
+      console.error('Error updating price:', error)
+      throw error
+    }
+  }
+
   const filteredAppointments = appointments.filter((apt) => {
     if (filterStatus !== 'all' && apt.status !== filterStatus) return false
     return true
