@@ -373,7 +373,7 @@ export default function EnterpriseAnalyticsPage() {
                   />
                   <MobileWidget
                     icon={<CalendarIcon />}
-                    title="Записи"
+                    title="Візити"
                     value={employeeStats.totalAppointments || 0}
                     iconColor="orange"
                   />
