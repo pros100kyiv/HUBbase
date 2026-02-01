@@ -137,9 +137,18 @@ export default function ServicesPage() {
   })
 
   // Group services by category and subcategory
+  // Support both "Category > Subcategory" format and separate fields
   const groupedServices = sortedServices.reduce((acc, service) => {
-    const category = service.category || 'Інші'
-    const subcategory = service.subcategory || null
+    let category = service.category || 'Інші'
+    let subcategory = service.subcategory || null
+    
+    // Check if category contains ">" (subcategory format)
+    if (category.includes(' > ')) {
+      const parts = category.split(' > ')
+      category = parts[0]
+      subcategory = parts[1] || null
+    }
+    
     const key = subcategory ? `${category} > ${subcategory}` : category
     
     if (!acc[key]) {
@@ -231,39 +240,27 @@ export default function ServicesPage() {
 
               {/* Sort Dropdown */}
               <div className="relative">
-                <button
-                  onClick={() => {}}
-                  className="px-3 py-2 rounded-candy border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white flex items-center gap-1.5 whitespace-nowrap"
+                <select
+                  value={`${sortBy}-${sortDirection}`}
+                  onChange={(e) => {
+                    const [option, direction] = e.target.value.split('-') as [SortOption, SortDirection]
+                    setSortBy(option)
+                    setSortDirection(direction)
+                  }}
+                  className="px-3 py-2 pr-8 rounded-candy border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white appearance-none cursor-pointer"
                 >
-                  <SortIcon className="w-4 h-4" />
-                  <span className="hidden sm:inline">
-                    {sortBy === 'name' && 'Назва'}
-                    {sortBy === 'price' && 'Ціна'}
-                    {sortBy === 'duration' && 'Тривалість'}
-                    {sortBy === 'date' && 'Дата'}
-                    {sortBy === 'category' && 'Категорія'}
-                    {sortDirection === 'asc' ? ' ↑' : ' ↓'}
-                  </span>
-                </button>
-                <div className="absolute right-0 mt-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-candy shadow-lg z-10 min-w-[150px]">
-                  {(['name', 'price', 'duration', 'date', 'category'] as SortOption[]).map(option => (
-                    <button
-                      key={option}
-                      onClick={() => toggleSort(option)}
-                      className={cn(
-                        "w-full text-left px-3 py-2 text-sm hover:bg-gray-100 dark:hover:bg-gray-700",
-                        sortBy === option && "bg-blue-50 dark:bg-blue-900/20"
-                      )}
-                    >
-                      {option === 'name' && 'Назва'}
-                      {option === 'price' && 'Ціна'}
-                      {option === 'duration' && 'Тривалість'}
-                      {option === 'date' && 'Дата'}
-                      {option === 'category' && 'Категорія'}
-                      {sortBy === option && (sortDirection === 'asc' ? ' ↑' : ' ↓')}
-                    </button>
-                  ))}
-                </div>
+                  <option value="name-asc">Назва ↑</option>
+                  <option value="name-desc">Назва ↓</option>
+                  <option value="price-asc">Ціна ↑</option>
+                  <option value="price-desc">Ціна ↓</option>
+                  <option value="duration-asc">Тривалість ↑</option>
+                  <option value="duration-desc">Тривалість ↓</option>
+                  <option value="date-asc">Дата ↑</option>
+                  <option value="date-desc">Дата ↓</option>
+                  <option value="category-asc">Категорія ↑</option>
+                  <option value="category-desc">Категорія ↓</option>
+                </select>
+                <SortIcon className="absolute right-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
               </div>
             </div>
           </div>
