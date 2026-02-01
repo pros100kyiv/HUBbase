@@ -335,7 +335,7 @@ export default function SettingsPage() {
         await loadData()
         setShowServiceForm(false)
         setEditingService(null)
-        setServiceForm({ name: '', price: '', duration: '', category: '' })
+        setServiceForm({ name: '', price: '', duration: '', category: '', subcategory: '' })
         toast({ 
           title: 'Успішно!', 
           description: editingService ? 'Послугу оновлено' : 'Послугу додано', 
