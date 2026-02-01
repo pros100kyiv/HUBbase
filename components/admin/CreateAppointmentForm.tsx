@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { format, addMinutes } from 'date-fns'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -201,7 +201,8 @@ export function CreateAppointmentForm({
   const activeMasters = masters.filter((m) => m.isActive !== false)
 
   return (
-    <Card className="max-w-2xl mx-auto">
+    <div ref={formRef}>
+      <Card className="max-w-2xl mx-auto">
       <CardHeader>
         <CardTitle className="text-lg font-black text-foreground">Новий запис</CardTitle>
       </CardHeader>
