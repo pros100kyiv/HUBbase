@@ -20,31 +20,59 @@ export async function GET(
 
     // Якщо це UUID, шукаємо по ID
     if (isUUID(param)) {
-      business = await prisma.business.findUnique({
-        where: { id: param },
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          email: true,
-          phone: true,
-          address: true,
-          description: true,
-          logo: true,
-          primaryColor: true,
-          secondaryColor: true,
-          backgroundColor: true,
-          surfaceColor: true,
-          hideRevenue: true,
-          isActive: true,
-          businessCardBackgroundImage: true,
-          slogan: true,
-          additionalInfo: true,
-          socialMedia: true,
-          workingHours: true,
-          location: true,
-        },
-      })
+      try {
+        business = await prisma.business.findUnique({
+          where: { id: param },
+          select: {
+            id: true,
+            name: true,
+            slug: true,
+            email: true,
+            phone: true,
+            address: true,
+            description: true,
+            logo: true,
+            primaryColor: true,
+            secondaryColor: true,
+            backgroundColor: true,
+            surfaceColor: true,
+            hideRevenue: true,
+            isActive: true,
+            businessCardBackgroundImage: true,
+            slogan: true,
+            additionalInfo: true,
+            socialMedia: true,
+            workingHours: true,
+            location: true,
+          },
+        })
+      } catch (error: any) {
+        // Якщо поля відсутні в БД, використовуємо базовий select
+        if (error?.message?.includes('does not exist')) {
+          console.warn('Business card fields not found in database, using basic select')
+          business = await prisma.business.findUnique({
+            where: { id: param },
+            select: {
+              id: true,
+              name: true,
+              slug: true,
+              email: true,
+              phone: true,
+              address: true,
+              description: true,
+              logo: true,
+              primaryColor: true,
+              secondaryColor: true,
+              backgroundColor: true,
+              surfaceColor: true,
+              hideRevenue: true,
+              isActive: true,
+            },
+          })
+        } else {
+          throw error
+        }
+      }
     } else {
       // Інакше шукаємо по slug
       business = await getBusinessBySlug(param)
