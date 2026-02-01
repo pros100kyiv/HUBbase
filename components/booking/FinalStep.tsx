@@ -67,6 +67,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
           startTime: startTime.toISOString(),
           endTime: endTime.toISOString(),
           services: servicesData,
+          isFromBooking: true, // Позначаємо, що запис створено через публічне бронювання
         }),
       })
 

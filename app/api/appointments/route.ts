@@ -79,7 +79,8 @@ export async function POST(request: Request) {
       notes,
       isRecurring,
       recurrencePattern,
-      recurrenceEndDate
+      recurrenceEndDate,
+      isFromBooking // Чи створено через публічне бронювання
     } = body
 
     if (!businessId || !masterId || !clientName || !clientPhone || !startTime || !endTime || !services) {
@@ -151,6 +152,7 @@ export async function POST(request: Request) {
           isRecurring: true,
           recurrencePattern: recurrencePattern,
           recurrenceEndDate: endDate,
+          isFromBooking: isFromBooking === true, // Тільки якщо явно вказано true
         }
 
         if (parentAppointmentId) {
@@ -197,6 +199,7 @@ export async function POST(request: Request) {
       notes: notes?.trim() || null,
       status: 'Pending',
       isRecurring: false,
+      isFromBooking: isFromBooking === true, // Тільки якщо явно вказано true
     }
 
     const appointment = await prisma.appointment.create({

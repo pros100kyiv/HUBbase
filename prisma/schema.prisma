@@ -103,6 +103,7 @@ model Appointment {
   recurrencePattern String? // JSON: { type: "daily"|"weekly"|"monthly", daysOfWeek: [0-6], endDate: "ISO string" }
   recurrenceEndDate DateTime? // Дата закінчення циклу
   parentAppointmentId String? // ID батьківського запису (для циклічних)
+  isFromBooking Boolean @default(false) // Чи створено через публічне бронювання (QR/посилання)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 

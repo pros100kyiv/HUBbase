@@ -45,9 +45,10 @@ export function NotificationToast({ businessId, onConfirm, onDismiss }: Notifica
           const data = await response.json()
           const appointments = Array.isArray(data) ? data : []
           
-          // Фільтруємо тільки нові записи (які ще не показувалися)
+          // Фільтруємо тільки записи, створені через публічне бронювання (QR/посилання)
+          // та які ще не показувалися
           const newAppointments = appointments.filter(
-            (apt: AppointmentNotification) => !seenIds.has(apt.id)
+            (apt: any) => apt.isFromBooking === true && !seenIds.has(apt.id)
           )
 
           if (newAppointments.length > 0) {
