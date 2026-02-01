@@ -78,14 +78,18 @@ export function MobileAppointmentCard({
 
   const handleSavePrice = async () => {
     if (!onPriceChange) return
-    
+
     setIsSavingPrice(true)
     try {
       const priceInCents = priceValue ? Math.round(parseFloat(priceValue) * 100) : null
       await onPriceChange(appointment.id, priceInCents)
       setIsEditingPrice(false)
+      const { toast } = await import('@/components/ui/toast')
+      toast({ title: 'Збережено', type: 'success', duration: 1500 })
     } catch (error) {
       console.error('Error saving price:', error)
+      const { toast } = await import('@/components/ui/toast')
+      toast({ title: 'Помилка', description: 'Не вдалося зберегти', type: 'error', duration: 2000 })
     } finally {
       setIsSavingPrice(false)
     }

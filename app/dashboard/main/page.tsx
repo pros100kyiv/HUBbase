@@ -289,6 +289,8 @@ export default function MainPage() {
                         appointment={appointment}
                         servicesCache={servicesCache}
                         onStatusChange={async (id, newStatus) => {
+                          const { toast } = await import('@/components/ui/toast')
+                          toast({ title: 'Збережено', type: 'success', duration: 1500 })
                           try {
                             const response = await fetch(`/api/appointments/${id}`, {
                               method: 'PATCH',

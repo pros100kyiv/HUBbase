@@ -25,7 +25,7 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
     const timer = setTimeout(() => {
       setIsVisible(false)
       setTimeout(() => onRemove(toast.id), 300)
-    }, toast.duration || 3000)
+    }, toast.duration || 2000)
 
     return () => clearTimeout(timer)
   }, [toast.id, toast.duration, onRemove])
@@ -47,36 +47,27 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
   return (
     <div
       className={cn(
-        'min-w-[300px] max-w-md rounded-candy-sm border-2 p-4 shadow-soft-lg backdrop-blur-sm transition-all duration-300',
+        'min-w-[200px] max-w-sm rounded-candy-sm border-2 p-3 shadow-soft-xl backdrop-blur-md bg-white/90 dark:bg-gray-800/90 transition-all duration-300',
         colors[toast.type || 'info'],
-        isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
+        isVisible ? 'translate-x-0 opacity-100 scale-100' : 'translate-x-full opacity-0 scale-95'
       )}
     >
-      <div className="flex items-start gap-3">
+      <div className="flex items-center gap-2">
         <div className={cn(
-          'flex-shrink-0 rounded-candy-sm p-1.5',
-          toast.type === 'success' && 'bg-candy-mint/20',
-          toast.type === 'error' && 'bg-red-500/20',
-          toast.type === 'warning' && 'bg-candy-orange/20',
-          toast.type === 'info' && 'bg-candy-blue/20',
+          'flex-shrink-0 rounded-candy-xs p-1',
+          toast.type === 'success' && 'bg-candy-mint/30',
+          toast.type === 'error' && 'bg-red-500/30',
+          toast.type === 'warning' && 'bg-candy-orange/30',
+          toast.type === 'info' && 'bg-candy-blue/30',
         )}>
           {icons[toast.type || 'info']}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-black text-foreground dark:text-white">{toast.title}</p>
+          <p className="text-xs font-black text-foreground dark:text-white leading-tight">{toast.title}</p>
           {toast.description && (
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{toast.description}</p>
+            <p className="text-[10px] text-gray-600 dark:text-gray-400 mt-0.5 leading-tight">{toast.description}</p>
           )}
         </div>
-        <button
-          onClick={() => {
-            setIsVisible(false)
-            setTimeout(() => onRemove(toast.id), 300)
-          }}
-          className="flex-shrink-0 text-gray-400 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
-        >
-          <XIcon className="w-4 h-4" />
-        </button>
       </div>
     </div>
   )
@@ -104,7 +95,7 @@ export function ToastContainer() {
   }
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+    <div className="fixed top-3 right-3 sm:top-4 sm:right-4 z-50 flex flex-col gap-1.5 pointer-events-none">
       {toasts.map((toast) => (
         <div key={toast.id} className="pointer-events-auto">
           <ToastComponent toast={toast} onRemove={removeToast} />

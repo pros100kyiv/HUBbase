@@ -253,7 +253,7 @@ export default function SettingsPage() {
           description: updated.business.description || '',
         })
         localStorage.setItem('business', JSON.stringify(updated.business))
-        toast({ title: 'Успішно!', description: 'Дані збережено', type: 'success' })
+        toast({ title: 'Збережено', type: 'success', duration: 1500 })
         setShowConfetti(true)
         setTimeout(() => setShowConfetti(false), 2000)
       } else {
@@ -1073,7 +1073,7 @@ export default function SettingsPage() {
                     setFormData(updated.business)
                     localStorage.setItem('business', JSON.stringify(updated.business))
                     triggerConfetti()
-                    toast({ title: 'Успішно!', description: 'Візитівку збережено!', type: 'success' })
+                    toast({ title: 'Збережено', type: 'success', duration: 1500 })
                   } else {
                     throw new Error('Invalid response format')
                   }

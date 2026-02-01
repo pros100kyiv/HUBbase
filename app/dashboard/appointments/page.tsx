@@ -124,8 +124,11 @@ export default function AppointmentsPage() {
       })
   }, [business, currentMonth, masters])
 
-  const handleAppointmentCreated = () => {
+  const handleAppointmentCreated = async () => {
     setShowCreateForm(false)
+    const { toast } = await import('@/components/ui/toast')
+    toast({ title: 'Запис створено', type: 'success', duration: 1500 })
+    
     // Reload appointments with extended range
     const start = startOfMonth(currentMonth)
     const end = endOfMonth(currentMonth)
@@ -165,9 +168,13 @@ export default function AppointmentsPage() {
         setAppointments((prev) =>
           prev.map((apt) => (apt.id === id ? { ...apt, status } : apt))
         )
+        const { toast } = await import('@/components/ui/toast')
+        toast({ title: 'Збережено', type: 'success', duration: 1500 })
       }
     } catch (error) {
       console.error('Error updating appointment:', error)
+      const { toast } = await import('@/components/ui/toast')
+      toast({ title: 'Помилка', description: 'Не вдалося зберегти', type: 'error', duration: 2000 })
     }
   }
 
@@ -184,9 +191,13 @@ export default function AppointmentsPage() {
         setAppointments((prev) =>
           prev.map((apt) => (apt.id === id ? { ...apt, customPrice: updated.customPrice } : apt))
         )
+        const { toast } = await import('@/components/ui/toast')
+        toast({ title: 'Збережено', type: 'success', duration: 1500 })
       }
     } catch (error) {
       console.error('Error updating price:', error)
+      const { toast } = await import('@/components/ui/toast')
+      toast({ title: 'Помилка', description: 'Не вдалося зберегти', type: 'error', duration: 2000 })
       throw error
     }
   }
