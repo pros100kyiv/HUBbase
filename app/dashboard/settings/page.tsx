@@ -79,6 +79,10 @@ export default function SettingsPage() {
   const [editingMaster, setEditingMaster] = useState<Master | null>(null)
   const [editingService, setEditingService] = useState<Service | null>(null)
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
+  const [telegramBotToken, setTelegramBotToken] = useState('')
+  const [telegramChatId, setTelegramChatId] = useState('')
+  const [telegramNotificationsEnabled, setTelegramNotificationsEnabled] = useState(false)
+  const [telegramUsers, setTelegramUsers] = useState<any[]>([])
   const masterFormRef = useRef<HTMLDivElement>(null)
   const serviceFormRef = useRef<HTMLDivElement>(null)
   const businessCardRef = useRef<HTMLDivElement>(null)
@@ -167,8 +171,19 @@ export default function SettingsPage() {
           }
           setBusiness(updatedBusiness)
           setFormData(updatedBusiness)
+          setTelegramBotToken(updatedBusiness.telegramBotToken || '')
+          setTelegramChatId(updatedBusiness.telegramChatId || '')
+          setTelegramNotificationsEnabled(updatedBusiness.telegramNotificationsEnabled || false)
           // Оновлюємо localStorage з актуальними даними
           localStorage.setItem('business', JSON.stringify(updatedBusiness))
+          
+          // Завантажуємо користувачів Telegram
+          if (updatedBusiness.id) {
+            fetch(`/api/telegram/users?businessId=${updatedBusiness.id}`)
+              .then(res => res.json())
+              .then(data => setTelegramUsers(Array.isArray(data) ? data : []))
+              .catch(() => setTelegramUsers([]))
+          }
         }
         if (mastersData) {
           setMasters(mastersData)
