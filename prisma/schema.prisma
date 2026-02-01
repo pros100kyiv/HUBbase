@@ -95,6 +95,7 @@ model Appointment {
   endTime     DateTime
   status      String   @default("Pending") // Pending, Confirmed, Done, Cancelled
   services    String   // JSON array of service IDs
+  customPrice Int?     // Індивідуальна ціна для клієнта (в копійках)
   notes       String?
   reminderSent Boolean  @default(false)
   createdAt   DateTime @default(now())
