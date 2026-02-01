@@ -71,6 +71,7 @@ model Service {
   price       Int
   duration    Int           // in minutes
   category    String?
+  subcategory String?       // Підкатегорія (підпапка)
   description String?
   image       String?
   isActive    Boolean       @default(true)
