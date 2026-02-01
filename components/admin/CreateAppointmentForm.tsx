@@ -37,6 +37,7 @@ export function CreateAppointmentForm({
   onSuccess,
   onCancel,
 }: CreateAppointmentFormProps) {
+  const formRef = useRef<HTMLDivElement>(null)
   const [formData, setFormData] = useState({
     masterId: '',
     serviceIds: [] as string[],
@@ -84,6 +85,15 @@ export function CreateAppointmentForm({
       setAvailableSlots([])
     }
   }, [formData.masterId, formData.date, loadAvailableSlots])
+
+  // Автоматична прокрутка до форми
+  useEffect(() => {
+    if (formRef.current) {
+      setTimeout(() => {
+        formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    }
+  }, [])
 
   const calculateDuration = () => {
     return services
@@ -499,6 +509,7 @@ export function CreateAppointmentForm({
         </form>
       </CardContent>
     </Card>
+    </div>
   )
 }
 
