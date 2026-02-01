@@ -30,6 +30,7 @@ export default function MainPage() {
   const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [hideRevenue, setHideRevenue] = useState(false)
+  const [selectedAppointment, setSelectedAppointment] = useState<string | null>(null)
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -155,6 +156,7 @@ export default function MainPage() {
               title="Сьогодні"
               value={stats?.totalAppointments || 0}
               iconColor="orange"
+              onClick={() => router.push('/dashboard/appointments')}
             />
             <MobileWidget
               icon={<CheckIcon />}
@@ -162,6 +164,7 @@ export default function MainPage() {
               value={stats?.confirmedAppointments || 0}
               trend="up"
               iconColor="green"
+              onClick={() => router.push('/dashboard/appointments?status=Confirmed')}
             />
             {!hideRevenue && (
               <MobileWidget
@@ -169,6 +172,7 @@ export default function MainPage() {
                 title="Дохід"
                 value={formatCurrency(stats?.totalRevenue || 0)}
                 iconColor="blue"
+                onClick={() => router.push('/dashboard/analytics')}
               />
             )}
             <MobileWidget
@@ -176,6 +180,7 @@ export default function MainPage() {
               title="Клієнти"
               value={stats?.uniqueClients || 0}
               iconColor="blue"
+              onClick={() => router.push('/dashboard/clients')}
             />
           </div>
 
@@ -220,93 +225,36 @@ export default function MainPage() {
               {todayAppointments
                 .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
                 .slice(0, 5)
-                .map((appointment) => {
-                  const startTime = new Date(appointment.startTime)
-                  const endTime = new Date(appointment.endTime)
-                  let servicesList: string[] = []
-                  try {
-                    if (appointment.services) {
-                      servicesList = JSON.parse(appointment.services)
-                    }
-                  } catch (e) {
-                    // Ignore
-                  }
-
-                  const getStatusColor = (status: string) => {
-                    switch (status) {
-                      case 'Pending':
-                      case 'Очікує':
-                        return 'bg-candy-orange/10 text-candy-orange border-candy-orange'
-                      case 'Confirmed':
-                      case 'Підтверджено':
-                        return 'bg-candy-mint/10 text-candy-mint border-candy-mint'
-                      case 'Done':
-                      case 'Виконано':
-                        return 'bg-candy-blue/10 text-candy-blue border-candy-blue'
-                      case 'Cancelled':
-                      case 'Скасовано':
-                        return 'bg-red-50 text-red-500 border-red-500'
-                      default:
-                        return 'bg-gray-50 text-gray-500 border-gray-400'
-                    }
-                  }
-
-                  const getStatusLabel = (status: string) => {
-                    switch (status) {
-                      case 'Pending':
-                        return 'Очікує'
-                      case 'Confirmed':
-                        return 'Підтверджено'
-                      case 'Done':
-                        return 'Виконано'
-                      case 'Cancelled':
-                        return 'Скасовано'
-                      default:
-                        return status
-                    }
-                  }
-
-                  return (
-                    <div
-                      key={appointment.id}
-                      className="card-candy card-candy-hover p-2.5 flex items-center justify-between gap-2.5"
-                    >
-                      <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                        <div className="flex flex-col items-center justify-center w-14 h-14 rounded-candy-sm bg-candy-blue/10 dark:bg-candy-blue/20 text-candy-blue flex-shrink-0 border border-candy-blue/20">
-                          <span className="text-sm font-black leading-tight">
-                            {format(startTime, 'HH:mm')}
-                          </span>
-                          <span className="text-[10px] font-bold leading-tight text-gray-500 dark:text-gray-400">
-                            {format(endTime, 'HH:mm')}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="text-sm font-black text-foreground dark:text-white truncate">{appointment.clientName}</p>
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex-shrink-0 whitespace-nowrap ${getStatusColor(appointment.status)}`}>
-                              {getStatusLabel(appointment.status)}
-                            </span>
-                          </div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {appointment.masterName && (
-                              <span className="text-xs text-gray-600 dark:text-gray-400 font-medium truncate">
-                                Майстер: {appointment.masterName}
-                              </span>
-                            )}
-                            {servicesList.length > 0 && (
-                              <span className="text-xs text-gray-500 dark:text-gray-500">
-                                • {servicesList.length} {servicesList.length === 1 ? 'послуга' : 'послуг'}
-                              </span>
-                            )}
-                            <span className="text-xs text-gray-500 dark:text-gray-500">
-                              • {Math.round((endTime.getTime() - startTime.getTime()) / 60000)} хв
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
+                .map((appointment) => (
+                  <MobileAppointmentCard
+                    key={appointment.id}
+                    appointment={appointment}
+                    onStatusChange={async (id, newStatus) => {
+                      try {
+                        const response = await fetch(`/api/appointments/${id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ status: newStatus }),
+                        })
+                        if (response.ok) {
+                          setTodayAppointments(prev =>
+                            prev.map(apt => apt.id === id ? { ...apt, status: newStatus } : apt)
+                          )
+                          // Оновити статистику
+                          if (business?.id) {
+                            const statsResponse = await fetch(`/api/statistics?businessId=${business.id}&period=day`)
+                            if (statsResponse.ok) {
+                              const statsData = await statsResponse.json()
+                              setStats(statsData)
+                            }
+                          }
+                        }
+                      } catch (error) {
+                        console.error('Error updating appointment status:', error)
+                      }
+                    }}
+                  />
+                ))}
               {todayAppointments.length === 0 && (
                 <p className="text-gray-500 dark:text-gray-400 text-center py-8 font-medium text-sm">Немає записів на сьогодні</p>
               )}

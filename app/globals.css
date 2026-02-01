@@ -26,7 +26,7 @@
   }
   
   body {
-    background: #E5E5E5;
+    background: #F5F5F5;
     color: #1A1A1A;
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -35,7 +35,7 @@
   }
   
   .dark body {
-    background: #121212;
+    background: #0F0F0F;
     color: #FFFFFF;
   }
 }
@@ -47,7 +47,7 @@
   
   /* Unified Card Styles */
   .card-candy {
-    @apply bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/50 rounded-candy-sm shadow-soft;
+    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-candy-sm shadow-soft;
     @apply transition-all duration-300;
   }
   
@@ -107,11 +107,11 @@
   }
   
   .text-caption {
-    @apply text-xs text-gray-600 dark:text-gray-400;
+    @apply text-xs text-gray-700 dark:text-gray-300 font-medium;
   }
   
   .text-small {
-    @apply text-[10px] text-gray-500 dark:text-gray-500;
+    @apply text-[10px] text-gray-600 dark:text-gray-400 font-medium;
   }
   
   /* Unified Spacing */

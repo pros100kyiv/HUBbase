@@ -26,7 +26,7 @@ export function MobileWidget({
   trend,
   iconColor = 'orange',
 }: MobileWidgetProps) {
-  const baseClasses = 'rounded-candy-sm bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/50 p-3 shadow-soft transition-all duration-200 active:scale-[0.97] overflow-hidden'
+  const baseClasses = 'rounded-candy-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 p-3 shadow-soft transition-all duration-200 active:scale-[0.97] overflow-hidden'
   const clickableClasses = onClick ? 'cursor-pointer hover:shadow-soft-xl hover:-translate-y-0.5' : ''
 
   const iconGradientClasses = {
@@ -76,11 +76,11 @@ export function MobileWidget({
         )}
         {title && (
           <div className="mb-1.5">
-            <p className="text-xs text-gray-600 dark:text-gray-400 font-bold uppercase tracking-wider mb-0.5">
+            <p className="text-xs text-gray-700 dark:text-gray-300 font-bold uppercase tracking-wider mb-0.5">
               {title}
             </p>
             {subtitle && (
-              <p className="text-[10px] text-gray-400 dark:text-gray-500 leading-tight">{subtitle}</p>
+              <p className="text-[10px] text-gray-600 dark:text-gray-400 leading-tight font-medium">{subtitle}</p>
             )}
           </div>
         )}

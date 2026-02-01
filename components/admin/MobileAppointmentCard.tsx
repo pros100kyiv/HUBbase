@@ -33,18 +33,25 @@ export function MobileAppointmentCard({
     switch (status) {
       case 'Pending':
       case 'Очікує':
-        return 'text-candy-orange border-candy-orange bg-candy-orange/10'
+        return 'text-candy-orange border-candy-orange bg-candy-orange/10 dark:bg-candy-orange/20'
       case 'Confirmed':
       case 'Підтверджено':
-        return 'text-candy-mint border-candy-mint bg-candy-mint/10'
+        return 'text-candy-mint border-candy-mint bg-candy-mint/10 dark:bg-candy-mint/20'
+      case 'Arrived':
+      case 'Прибув':
+        return 'text-blue-600 dark:text-blue-400 border-blue-500 bg-blue-50 dark:bg-blue-900/30'
+      case 'InProgress':
+      case 'В роботі':
+        return 'text-yellow-600 dark:text-yellow-400 border-yellow-500 bg-yellow-50 dark:bg-yellow-900/30'
       case 'Done':
       case 'Виконано':
-        return 'text-candy-blue border-candy-blue bg-candy-blue/10'
+      case 'Закінчили':
+        return 'text-candy-blue border-candy-blue bg-candy-blue/10 dark:bg-candy-blue/20'
       case 'Cancelled':
       case 'Скасовано':
-        return 'text-red-500 border-red-500 bg-red-50'
+        return 'text-red-600 dark:text-red-400 border-red-500 bg-red-50 dark:bg-red-900/30'
       default:
-        return 'text-gray-500 border-gray-400 bg-gray-50'
+        return 'text-gray-600 dark:text-gray-400 border-gray-400 bg-gray-50 dark:bg-gray-700'
     }
   }
 
@@ -54,6 +61,10 @@ export function MobileAppointmentCard({
         return 'Очікує'
       case 'Confirmed':
         return 'Підтверджено'
+      case 'Arrived':
+        return 'Прибув'
+      case 'InProgress':
+        return 'В роботі'
       case 'Done':
         return 'Виконано'
       case 'Cancelled':
@@ -80,8 +91,15 @@ export function MobileAppointmentCard({
       case 'Confirmed':
       case 'Підтверджено':
         return 'border-l-4 border-candy-mint'
+      case 'Arrived':
+      case 'Прибув':
+        return 'border-l-4 border-blue-500'
+      case 'InProgress':
+      case 'В роботі':
+        return 'border-l-4 border-yellow-500'
       case 'Done':
       case 'Виконано':
+      case 'Закінчили':
         return 'border-l-4 border-candy-blue'
       case 'Cancelled':
       case 'Скасовано':
@@ -105,12 +123,12 @@ export function MobileAppointmentCard({
             </span>
           </div>
           <div className="flex-1 min-w-0 overflow-hidden">
-            <p className="font-black text-foreground dark:text-white text-sm mb-0.5 truncate">{appointment.clientName}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-0.5 truncate">{appointment.clientPhone}</p>
+            <p className="font-black text-gray-900 dark:text-white text-sm mb-0.5 truncate">{appointment.clientName}</p>
+            <p className="text-xs text-gray-700 dark:text-gray-300 font-semibold mb-0.5 truncate">{appointment.clientPhone}</p>
             {appointment.masterName && (
               <div className="flex items-center gap-1 min-w-0">
                 <UserIcon className="w-3 h-3 text-gray-500 flex-shrink-0" />
-                <p className="text-[10px] text-gray-500 font-semibold truncate min-w-0">
+                <p className="text-[10px] text-gray-600 dark:text-gray-400 font-semibold truncate min-w-0">
                   {appointment.masterName}
                 </p>
               </div>
@@ -127,32 +145,50 @@ export function MobileAppointmentCard({
             {getStatusLabel(appointment.status)}
           </span>
           {onStatusChange && (
-            <div className="flex gap-1">
-              {appointment.status !== 'Confirmed' && (
+            <div className="flex gap-1 flex-wrap justify-end">
+              {appointment.status === 'Pending' && (
                 <button
                   onClick={() => onStatusChange(appointment.id, 'Confirmed')}
-                  className="w-6 h-6 rounded-candy-xs border border-candy-mint text-candy-mint hover:bg-candy-mint hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0"
+                  className="px-2 py-1 rounded-candy-xs border border-candy-mint text-candy-mint hover:bg-candy-mint hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
                   title="Підтвердити"
                 >
-                  <CheckIcon className="w-3 h-3" />
+                  Підтвердити
                 </button>
               )}
-              {appointment.status !== 'Done' && appointment.status !== 'Cancelled' && (
+              {appointment.status === 'Confirmed' && (
+                <button
+                  onClick={() => onStatusChange(appointment.id, 'Arrived')}
+                  className="px-2 py-1 rounded-candy-xs border border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
+                  title="Прибув"
+                >
+                  Прибув
+                </button>
+              )}
+              {appointment.status === 'Arrived' && (
+                <button
+                  onClick={() => onStatusChange(appointment.id, 'InProgress')}
+                  className="px-2 py-1 rounded-candy-xs border border-yellow-500 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
+                  title="В роботі"
+                >
+                  В роботі
+                </button>
+              )}
+              {(appointment.status === 'InProgress' || appointment.status === 'Arrived') && (
                 <button
                   onClick={() => onStatusChange(appointment.id, 'Done')}
-                  className="w-6 h-6 rounded-candy-xs border border-candy-blue text-candy-blue hover:bg-candy-blue hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0"
-                  title="Виконано"
+                  className="px-2 py-1 rounded-candy-xs border border-candy-blue text-candy-blue hover:bg-candy-blue hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
+                  title="Закінчили"
                 >
-                  <CheckIcon className="w-3 h-3" />
+                  Закінчили
                 </button>
               )}
-              {appointment.status !== 'Cancelled' && (
+              {appointment.status !== 'Cancelled' && appointment.status !== 'Done' && (
                 <button
                   onClick={() => onStatusChange(appointment.id, 'Cancelled')}
-                  className="w-6 h-6 rounded-candy-xs border border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0"
+                  className="px-2 py-1 rounded-candy-xs border border-red-500 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
                   title="Скасувати"
                 >
-                  <XIcon className="w-3 h-3" />
+                  Скасувати
                 </button>
               )}
             </div>
@@ -165,11 +201,11 @@ export function MobileAppointmentCard({
         <div className="flex items-center justify-between gap-1.5 mt-1.5 pt-1.5 border-t border-gray-100">
           {servicesList.length > 0 && (
             <div className="flex items-center gap-1 flex-wrap">
-              <span className="text-[9px] text-gray-400 font-bold uppercase">Послуги:</span>
+              <span className="text-[9px] text-gray-600 dark:text-gray-400 font-bold uppercase">Послуги:</span>
               {servicesList.slice(0, 2).map((serviceId, idx) => (
                 <span
                   key={idx}
-                  className="px-1.5 py-0.5 rounded-full bg-gray-50 border border-gray-200 text-[9px] font-bold text-foreground"
+                  className="px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-[9px] font-bold text-gray-900 dark:text-gray-100"
                 >
                   {idx + 1}
                 </span>
@@ -181,11 +217,11 @@ export function MobileAppointmentCard({
           )}
           <div className="flex items-center gap-1 flex-shrink-0">
             <ClockIcon className="w-3 h-3 text-gray-400" />
-            <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400">
+            <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300">
               {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
             </span>
-            <span className="text-[9px] text-gray-400">•</span>
-            <span className="text-[10px] text-gray-500 font-semibold">
+            <span className="text-[9px] text-gray-500 dark:text-gray-500">•</span>
+            <span className="text-[10px] text-gray-600 dark:text-gray-400 font-semibold">
               {Math.round((endTime.getTime() - startTime.getTime()) / 60000)} хв
             </span>
           </div>

@@ -159,22 +159,20 @@ export function Navbar() {
               )}
               {business && (
                 <>
-                  <Button
-                    variant="outline"
-                    size="sm"
+                  <button
                     onClick={() => window.open(`/qr/${business.slug}`, '_blank')}
-                    className="hidden md:flex text-xs px-2 py-1 h-auto"
+                    className="hidden md:flex items-center gap-1.5 px-3 py-1.5 rounded-candy-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 active:scale-95 transition-all duration-200 text-xs font-bold shadow-soft hover:shadow-soft-lg border-0"
+                    title="Відкрити QR код"
                   >
-                    QR код
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
+                    <span>QR код</span>
+                  </button>
+                  <button
                     onClick={handleLogout}
-                    className="text-xs px-2 py-1 h-auto"
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-candy-sm bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400 active:scale-95 transition-all duration-200 text-xs font-bold shadow-soft hover:shadow-soft-lg border-0"
+                    title="Вийти з акаунту"
                   >
-                    Вийти
-                  </Button>
+                    <span>Вийти</span>
+                  </button>
                 </>
               )}
             </div>
