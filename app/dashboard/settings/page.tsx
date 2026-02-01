@@ -407,11 +407,22 @@ export default function SettingsPage() {
 
   const startEditService = (service: Service) => {
     setEditingService(service)
+    // Parse category if it contains subcategory format
+    let category = service.category || ''
+    let subcategory = service.subcategory || ''
+    
+    if (category.includes(' > ')) {
+      const parts = category.split(' > ')
+      category = parts[0]
+      subcategory = parts[1] || ''
+    }
+    
     setServiceForm({
       name: service.name,
       price: service.price.toString(),
       duration: service.duration.toString(),
-      category: service.category || '',
+      category: category,
+      subcategory: subcategory,
     })
     setShowServiceForm(true)
   }
