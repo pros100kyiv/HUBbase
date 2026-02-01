@@ -1050,6 +1050,7 @@ export default function SettingsPage() {
 
           {/* Візитівка */}
           {activeTab === 'businessCard' && business && (
+            <div ref={businessCardRef}>
             <BusinessCardEditor
               business={business}
               onSave={async (data) => {
