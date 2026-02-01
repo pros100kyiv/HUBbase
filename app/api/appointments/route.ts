@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { addDays, addWeeks, addMonths, getDay, startOfDay, isBefore, isAfter } from 'date-fns'
+import { upsertClient } from '@/lib/client-utils'
 
 function checkConflict(
   businessId: string,
@@ -186,9 +187,17 @@ export async function POST(request: Request) {
       )
     }
 
+    // Створюємо або оновлюємо клієнта
+    const client = await upsertClient(businessId, {
+      name: clientName,
+      phone: clientPhone,
+      email: clientEmail,
+    })
+
     const appointmentData: any = {
       businessId,
       masterId,
+      clientId: client?.id || null,
       clientName: clientName.trim(),
       clientPhone: clientPhone.trim(),
       clientEmail: clientEmail?.trim() || null,

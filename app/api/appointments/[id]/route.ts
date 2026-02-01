@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { addDays, addMonths, getDay, isBefore, isAfter } from 'date-fns'
+import { upsertClient, updateClientMetrics } from '@/lib/client-utils'
 
 function checkConflict(
   businessId: string,
@@ -264,10 +265,58 @@ export async function PATCH(
     if (recurrencePattern !== undefined) updateData.recurrencePattern = recurrencePattern
     if (recurrenceEndDate !== undefined) updateData.recurrenceEndDate = recurrenceEndDate ? new Date(recurrenceEndDate) : null
 
+    // Створюємо або оновлюємо клієнта якщо змінюються дані клієнта
+    let clientId: string | null = null
+    if (clientName || clientPhone || clientEmail !== undefined) {
+      const finalClientName = clientName || currentAppointment.clientName
+      const finalClientPhone = clientPhone || currentAppointment.clientPhone
+      const finalClientEmail = clientEmail !== undefined ? clientEmail : currentAppointment.clientEmail
+      
+      const client = await upsertClient(currentAppointment.businessId, {
+        name: finalClientName,
+        phone: finalClientPhone,
+        email: finalClientEmail,
+      })
+      if (client) {
+        clientId = client.id
+        updateData.clientId = clientId
+      }
+    }
+
     const appointment = await prisma.appointment.update({
       where: { id: resolvedParams.id },
       data: updateData,
     })
+
+    // Оновлюємо метрики клієнта якщо статус змінився на 'Done'
+    if (status === 'Done' && appointment.clientId) {
+      // Розраховуємо ціну
+      let price = 0
+      if (appointment.customPrice) {
+        price = appointment.customPrice
+      } else if (appointment.services) {
+        try {
+          const serviceIds = JSON.parse(appointment.services) as string[]
+          const services = await prisma.service.findMany({
+            where: {
+              id: { in: serviceIds },
+              businessId: currentAppointment.businessId,
+            },
+            select: { price: true },
+          })
+          price = services.reduce((sum, s) => sum + s.price, 0)
+        } catch (e) {
+          console.error('Error calculating price from services:', e)
+        }
+      }
+
+      if (price > 0) {
+        await updateClientMetrics(appointment.clientId, {
+          price,
+          completed: true,
+        })
+      }
+    }
 
     return NextResponse.json(appointment)
   } catch (error) {
