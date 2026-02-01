@@ -28,6 +28,8 @@ enum UserRole {
   MANAGER // Менеджер
   EMPLOYEE // Співробітник
   VIEWER // Переглядач
+  CLIENT // Клієнт (тільки розсилки)
+  DEVELOPER // Розробник (повний контроль)
 }
 
 model Business {
@@ -68,6 +70,7 @@ model Business {
   appointments                Appointment[]
   users                       BusinessUser[] // Користувачі бізнесу
   telegramUsers               TelegramUser[] // Користувачі Telegram бота
+  telegramBroadcasts          TelegramBroadcast[] // Розсилки Telegram
   clients                     Client[] // Клієнти
   analytics                   AnalyticsReport[] // Аналітичні звіти
   imports                     DataImport[] // Імпорти даних
@@ -331,6 +334,8 @@ model TelegramUser {
   isActive          Boolean   @default(true)
   language          String    @default("uk")
   notificationsEnabled Boolean @default(true)
+  activationPassword String? // Пароль для активації бота
+  activatedAt       DateTime? // Дата активації
   lastActivity      DateTime?
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
@@ -338,6 +343,7 @@ model TelegramUser {
   @@unique([businessId, telegramId])
   @@index([businessId])
   @@index([telegramId])
+  @@index([activationPassword])
 }
 
 // Логи дій в Telegram боті
@@ -354,4 +360,27 @@ model TelegramLog {
   @@index([businessId])
   @@index([createdAt])
   @@index([action])
+}
+
+// Розсилки в Telegram
+model TelegramBroadcast {
+  id          String    @id @default(cuid())
+  businessId  String
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  title       String
+  message     String
+  targetRole  UserRole?
+  status      String    @default("draft")
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  sentCount   Int       @default(0)
+  failedCount Int       @default(0)
+  createdBy   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([businessId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([createdAt])
 }

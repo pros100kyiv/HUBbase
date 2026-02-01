@@ -25,6 +25,20 @@ async function setupWebhook(businessId: string) {
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
     const webhookUrl = `${baseUrl}/api/telegram/webhook?businessId=${businessId}`
 
+    // Перевірка чи URL використовує HTTPS
+    if (!webhookUrl.startsWith('https://')) {
+      console.error('❌ Помилка: Telegram вимагає HTTPS URL для webhook')
+      console.error('📡 Поточний URL:', webhookUrl)
+      console.error('\n💡 Рішення:')
+      console.error('1. Для production: встановіть NEXT_PUBLIC_BASE_URL=https://xbase.online в .env')
+      console.error('2. Для локального тестування: використайте ngrok')
+      console.error('   - Запустіть: ngrok http 3000')
+      console.error('   - Скопіюйте HTTPS URL')
+      console.error('   - Встановіть: NEXT_PUBLIC_BASE_URL=https://ваш-ngrok-url.ngrok.io')
+      console.error('   - Запустіть скрипт знову')
+      process.exit(1)
+    }
+
     console.log('🔗 Налаштування webhook для:', business.name)
     console.log('📡 URL:', webhookUrl)
 
