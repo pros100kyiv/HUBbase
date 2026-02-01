@@ -2,6 +2,7 @@
 
 import { useBooking } from '@/contexts/BookingContext'
 import { Button } from '@/components/ui/button'
+import { XbaseLogo } from '@/components/ui/XbaseLogo'
 
 interface Business {
   name?: string
