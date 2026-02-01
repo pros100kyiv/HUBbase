@@ -208,7 +208,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
 
     await logAction('callback', 'menu_stats', null, ctx.from?.id?.toString())
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'
     const stats = await fetch(`${baseUrl}/api/statistics?businessId=${config.businessId}&period=month`)
       .then(res => res.json())
       .catch(() => null)
@@ -241,7 +241,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
 
     await logAction('callback', 'menu_revenue', null, ctx.from?.id?.toString())
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'
     const revenue = await fetch(`${baseUrl}/api/analytics/revenue?businessId=${config.businessId}&period=month`)
       .then(res => res.json())
       .catch(() => null)
@@ -276,7 +276,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
 
     await logAction('callback', 'menu_alerts', null, ctx.from?.id?.toString())
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'
     const alertsData = await fetch(`${baseUrl}/api/analytics/alerts?businessId=${config.businessId}`)
       .then(res => res.json())
       .catch(() => ({ alerts: [] }))
@@ -328,7 +328,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
 
     await logAction('callback', 'menu_broadcasts', null, ctx.from?.id?.toString())
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'
     const broadcasts = await fetch(`${baseUrl}/api/telegram/broadcasts?businessId=${config.businessId}`)
       .then(res => res.json())
       .catch(() => [])
@@ -362,7 +362,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
 
     await logAction('callback', 'menu_users', null, ctx.from?.id?.toString())
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'
     const users = await fetch(`${baseUrl}/api/telegram/users?businessId=${config.businessId}`)
       .then(res => res.json())
       .catch(() => [])
@@ -441,7 +441,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
 
     await logAction('callback', 'menu_reminders', null, ctx.from?.id?.toString())
 
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'
     const reminders = await fetch(`${baseUrl}/api/telegram/reminders?businessId=${config.businessId}`)
       .then(res => res.json())
       .catch(() => [])
@@ -492,7 +492,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     await logAction('command', 'reminder', reminderText, ctx.from?.id?.toString())
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'
       const response = await fetch(`${baseUrl}/api/telegram/reminders`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -554,7 +554,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     await ctx.answerCbQuery('⏰ Відправка нагадування...')
 
     try {
-      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'
       const response = await fetch(`${baseUrl}/api/telegram/reminders/${reminderId}/send`, {
         method: 'POST',
       })
