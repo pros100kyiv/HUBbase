@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { format } from 'date-fns'
+import { format, addDays, subDays, isToday, isSameDay } from 'date-fns'
+import { uk } from 'date-fns/locale'
 import { MobileWidget } from '@/components/admin/MobileWidget'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
 import { CalendarIcon, UsersIcon, CheckIcon, MoneyIcon } from '@/components/icons'
@@ -32,6 +33,7 @@ export default function MainPage() {
   const [hideRevenue, setHideRevenue] = useState(false)
   const [servicesCache, setServicesCache] = useState<any[]>([])
   const [selectedAppointment, setSelectedAppointment] = useState<string | null>(null)
+  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -55,9 +57,13 @@ export default function MainPage() {
     fetch(`/api/statistics?businessId=${business.id}&period=day`)
       .then((res) => res.json())
       .then((data) => setStats(data))
+  }, [business])
 
-    // Load today's appointments
-    const today = format(new Date(), 'yyyy-MM-dd')
+  useEffect(() => {
+    if (!business) return
+
+    // Load appointments for selected date
+    const dateStr = format(selectedDate, 'yyyy-MM-dd')
     
     // Load masters, services and appointments in parallel
     Promise.all([
@@ -71,7 +77,7 @@ export default function MainPage() {
           if (!res.ok) throw new Error('Failed to fetch services')
           return res.json()
         }),
-      fetch(`/api/appointments?date=${today}&businessId=${business.id}`)
+      fetch(`/api/appointments?date=${dateStr}&businessId=${business.id}`)
         .then((res) => {
           if (!res.ok) throw new Error('Failed to fetch appointments')
           return res.json()
@@ -97,7 +103,7 @@ export default function MainPage() {
         setTodayAppointments([])
         setLoading(false)
       })
-  }, [business])
+  }, [business, selectedDate])
 
   if (!business || loading) {
     return (
@@ -227,9 +233,42 @@ export default function MainPage() {
 
           {/* Today's Appointments */}
           <div className="card-candy p-3 mb-3 overflow-hidden">
-            <h2 className="text-subheading mb-3 truncate">
-              Записи на сьогодні ({format(new Date(), 'd MMMM yyyy')})
-            </h2>
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-subheading truncate">
+                {isToday(selectedDate) 
+                  ? `Записи на сьогодні (${format(selectedDate, 'd MMMM yyyy', { locale: uk })})`
+                  : `Записи на ${format(selectedDate, 'd MMMM yyyy', { locale: uk })}`
+                }
+              </h2>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setSelectedDate(subDays(selectedDate, 1))}
+                  className="px-2 py-1 rounded-candy-xs bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-xs font-bold"
+                  title="Попередній день"
+                >
+                  ←
+                </button>
+                <button
+                  onClick={() => setSelectedDate(new Date())}
+                  className={cn(
+                    "px-2 py-1 rounded-candy-xs border text-xs font-bold transition-all",
+                    isToday(selectedDate)
+                      ? "bg-blue-500 text-white border-blue-500"
+                      : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+                  )}
+                  title="Сьогодні"
+                >
+                  Сьогодні
+                </button>
+                <button
+                  onClick={() => setSelectedDate(addDays(selectedDate, 1))}
+                  className="px-2 py-1 rounded-candy-xs bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-xs font-bold"
+                  title="Наступний день"
+                >
+                  →
+                </button>
+              </div>
+            </div>
             <div className="space-y-2">
               {todayAppointments
                 .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
@@ -266,7 +305,12 @@ export default function MainPage() {
                   />
                 ))}
               {todayAppointments.length === 0 && (
-                <p className="text-gray-500 dark:text-gray-400 text-center py-8 font-medium text-sm">Немає записів на сьогодні</p>
+                <p className="text-gray-500 dark:text-gray-400 text-center py-8 font-medium text-sm">
+                  {isToday(selectedDate) 
+                    ? 'Немає записів на сьогодні'
+                    : `Немає записів на ${format(selectedDate, 'd MMMM yyyy', { locale: uk })}`
+                  }
+                </p>
               )}
               {todayAppointments.length > 5 && (
                 <button
