@@ -526,7 +526,7 @@ export default function SettingsPage() {
                   onClick={() => {
                     setShowMasterForm(true)
                     setEditingMaster(null)
-                    setMasterForm({ name: '', bio: '', rating: '0' })
+                    setMasterForm({ name: '', bio: '', rating: '0', photo: '' })
                   }}
                 >
                   + Додати майстра
