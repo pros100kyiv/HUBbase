@@ -18,7 +18,7 @@ if (typeof window !== 'undefined') {
 export function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
-  const { open: openSidebar } = useSidebar()
+  const { toggle: toggleSidebar } = useSidebar()
   const [business, setBusiness] = useState<any>(null)
   const [pendingCount, setPendingCount] = useState(0)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -102,9 +102,9 @@ export function Navbar() {
           <div className="flex justify-between items-center h-14 md:h-16">
             {/* Left side - HUBbase Logo (клікабельний для відкриття sidebar) */}
             <button
-              onClick={openSidebar}
+              onClick={toggleSidebar}
               className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer"
-              title="Відкрити меню"
+              title="Перемкнути меню"
             >
               <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm candy-purple flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-lg">
                 HUB
@@ -200,9 +200,9 @@ export function Navbar() {
           <div className="flex justify-between items-center h-14 md:h-16">
             {/* Left side - HUBbase Logo */}
             <button
-              onClick={openSidebar}
+              onClick={toggleSidebar}
               className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer"
-              title="Відкрити меню"
+              title="Перемкнути меню"
             >
               <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm candy-purple flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-lg">
                 HUB

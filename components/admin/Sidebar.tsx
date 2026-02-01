@@ -82,10 +82,10 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <>
-      {/* Overlay для мобільних пристроїв */}
+      {/* Overlay для закриття sidebar на всіх пристроях */}
       {isOpen && (
         <div 
-          className="fixed inset-0 bg-black/50 z-30 md:hidden"
+          className="fixed inset-0 bg-black/50 z-30"
           onClick={close}
         />
       )}
@@ -95,11 +95,11 @@ export function Sidebar({ className }: SidebarProps) {
         isOpen ? 'translate-x-0' : '-translate-x-full',
         className
       )}>
-        {/* Кнопка закриття для мобільних */}
+        {/* Кнопка закриття */}
         {isOpen && (
           <button
             onClick={close}
-            className="absolute top-2 right-2 p-1 rounded-candy-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700 md:hidden"
+            className="absolute top-2 right-2 p-1 rounded-candy-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
           >
             <XIcon className="w-4 h-4" />
           </button>
