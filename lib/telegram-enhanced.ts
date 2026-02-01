@@ -623,6 +623,7 @@ function getAvailableCommands(role: string): string[] {
 
   if (hasPermission('create_broadcast')) {
     commands.push('📢 Створення розсилок - через веб-інтерфейс')
+    commands.push('⏰ Створення нагадувань - /reminder <текст>')
   }
 
   return commands
