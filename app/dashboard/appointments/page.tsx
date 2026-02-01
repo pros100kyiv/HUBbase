@@ -89,13 +89,19 @@ export default function AppointmentsPage() {
   useEffect(() => {
     if (!business) return
 
-    // Load appointments for current month
+    // Load appointments for current month and extended range to include recurring appointments
     const start = startOfMonth(currentMonth)
     const end = endOfMonth(currentMonth)
     
+    // Extend range to 3 months before and after to catch all recurring appointments
+    const extendedStart = new Date(start)
+    extendedStart.setMonth(extendedStart.getMonth() - 3)
+    const extendedEnd = new Date(end)
+    extendedEnd.setMonth(extendedEnd.getMonth() + 3)
+    
     // Format dates properly for API
-    const startStr = format(start, 'yyyy-MM-dd')
-    const endStr = format(end, 'yyyy-MM-dd')
+    const startStr = format(extendedStart, 'yyyy-MM-dd')
+    const endStr = format(extendedEnd, 'yyyy-MM-dd')
     
     fetch(`/api/appointments?businessId=${business.id}&startDate=${startStr}&endDate=${endStr}`)
       .then((res) => {
@@ -120,11 +126,18 @@ export default function AppointmentsPage() {
 
   const handleAppointmentCreated = () => {
     setShowCreateForm(false)
-    // Reload appointments
+    // Reload appointments with extended range
     const start = startOfMonth(currentMonth)
     const end = endOfMonth(currentMonth)
-    const startStr = format(start, 'yyyy-MM-dd')
-    const endStr = format(end, 'yyyy-MM-dd')
+    
+    // Extend range to 3 months before and after to catch all recurring appointments
+    const extendedStart = new Date(start)
+    extendedStart.setMonth(extendedStart.getMonth() - 3)
+    const extendedEnd = new Date(end)
+    extendedEnd.setMonth(extendedEnd.getMonth() + 3)
+    
+    const startStr = format(extendedStart, 'yyyy-MM-dd')
+    const endStr = format(extendedEnd, 'yyyy-MM-dd')
     
     fetch(`/api/appointments?businessId=${business.id}&startDate=${startStr}&endDate=${endStr}`)
       .then((res) => res.json())
@@ -184,11 +197,18 @@ export default function AppointmentsPage() {
 
   const handleEditSuccess = () => {
     setEditingAppointment(null)
-    // Reload appointments
+    // Reload appointments with extended range
     const start = startOfMonth(currentMonth)
     const end = endOfMonth(currentMonth)
-    const startStr = format(start, 'yyyy-MM-dd')
-    const endStr = format(end, 'yyyy-MM-dd')
+    
+    // Extend range to 3 months before and after to catch all recurring appointments
+    const extendedStart = new Date(start)
+    extendedStart.setMonth(extendedStart.getMonth() - 3)
+    const extendedEnd = new Date(end)
+    extendedEnd.setMonth(extendedEnd.getMonth() + 3)
+    
+    const startStr = format(extendedStart, 'yyyy-MM-dd')
+    const endStr = format(extendedEnd, 'yyyy-MM-dd')
     
     fetch(`/api/appointments?businessId=${business.id}&startDate=${startStr}&endDate=${endStr}`)
       .then((res) => res.json())
