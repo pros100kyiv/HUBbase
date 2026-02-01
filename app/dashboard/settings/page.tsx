@@ -1113,135 +1113,15 @@ export default function SettingsPage() {
 
           {/* Telegram Tab */}
           {activeTab === 'telegram' && business && (
-            <div className="space-y-4">
-              <div className="card-candy p-4">
-                <h2 className="text-subheading mb-4">Налаштування Telegram бота</h2>
-                
-                <div className="space-y-3">
-                  <div>
-                    <label className="block text-sm font-medium mb-2">Токен бота</label>
-                    <Input
-                      type="password"
-                      placeholder="Введіть токен Telegram бота"
-                      value={telegramBotToken}
-                      onChange={(e) => setTelegramBotToken(e.target.value)}
-                      className="w-full"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">
-                      Отримайте токен від @BotFather в Telegram
-                    </p>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium mb-2">ID чату (опціонально)</label>
-                    <Input
-                      placeholder="ID чату для сповіщень"
-                      value={telegramChatId}
-                      onChange={(e) => setTelegramChatId(e.target.value)}
-                      className="w-full"
-                    />
-                  </div>
-
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="telegramNotifications"
-                      checked={telegramNotificationsEnabled}
-                      onChange={(e) => setTelegramNotificationsEnabled(e.target.checked)}
-                      className="w-4 h-4 rounded"
-                    />
-                    <label htmlFor="telegramNotifications" className="text-sm font-medium">
-                      Увімкнути сповіщення
-                    </label>
-                  </div>
-
-                  <Button
-                    onClick={async () => {
-                      try {
-                        const response = await fetch('/api/telegram/setup', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({
-                            businessId: business.id,
-                            botToken: telegramBotToken,
-                            chatId: telegramChatId || null,
-                            notificationsEnabled: telegramNotificationsEnabled,
-                          }),
-                        })
-
-                        if (response.ok) {
-                          const { toast } = await import('@/components/ui/toast')
-                          toast({ title: 'Успішно!', description: 'Telegram бота налаштовано', type: 'success', duration: 2000 })
-                          
-                          setBusiness((prev: any) => ({
-                            ...prev,
-                            telegramBotToken,
-                            telegramChatId,
-                            telegramNotificationsEnabled,
-                          }))
-                        } else {
-                          const { toast } = await import('@/components/ui/toast')
-                          toast({ title: 'Помилка', description: 'Не вдалося налаштувати бота', type: 'error', duration: 3000 })
-                        }
-                      } catch (error) {
-                        console.error('Error setting up Telegram bot:', error)
-                        const { toast } = await import('@/components/ui/toast')
-                        toast({ title: 'Помилка', description: 'Помилка при збереженні', type: 'error', duration: 3000 })
-                      }
-                    }}
-                    className="w-full"
-                  >
-                    Зберегти налаштування
-                  </Button>
-                </div>
-              </div>
-
-              {/* Користувачі Telegram */}
-              <div className="card-candy p-4">
-                <h2 className="text-subheading mb-4">Користувачі Telegram бота</h2>
-                
-                {telegramUsers.length === 0 ? (
-                  <p className="text-sm text-gray-500 text-center py-4">
-                    Немає зареєстрованих користувачів
-                  </p>
-                ) : (
-                  <div className="space-y-2">
-                    {telegramUsers.map((user) => (
-                      <div key={user.id} className="p-3 rounded-candy-sm bg-gray-100 dark:bg-gray-800">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <p className="text-sm font-black text-foreground">
-                              {user.firstName} {user.lastName}
-                            </p>
-                            <p className="text-xs text-gray-500">@{user.username || 'без username'}</p>
-                            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                              Роль: {user.role === 'OWNER' ? 'Власник' : user.role === 'ADMIN' ? 'Адміністратор' : user.role === 'MANAGER' ? 'Менеджер' : user.role === 'EMPLOYEE' ? 'Співробітник' : 'Переглядач'}
-                            </p>
-                          </div>
-                          <div className="text-right">
-                            <span className={`text-xs px-2 py-1 rounded ${user.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}`}>
-                              {user.isActive ? 'Активний' : 'Неактивний'}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              {/* Інструкції */}
-              <div className="card-candy p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-                <h3 className="text-sm font-black text-foreground mb-2">📋 Інструкції</h3>
-                <ol className="text-xs text-gray-700 dark:text-gray-300 space-y-1 list-decimal list-inside">
-                  <li>Отримайте токен від @BotFather в Telegram</li>
-                  <li>Введіть токен та збережіть налаштування</li>
-                  <li>Налаштуйте webhook через команду: <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">npm run telegram:webhook {business.id}</code></li>
-                  <li>Відправте <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">/start</code> боту в Telegram</li>
-                  <li>Зареєструйте користувача через API або веб-інтерфейс</li>
-                </ol>
-              </div>
-            </div>
+            <TelegramSettings
+              business={business}
+              onUpdate={(updated) => {
+                setBusiness(updated)
+                setTelegramBotToken(updated.telegramBotToken || '')
+                setTelegramChatId(updated.telegramChatId || '')
+                setTelegramNotificationsEnabled(updated.telegramNotificationsEnabled || false)
+              }}
+            />
           )}
 
         </div>

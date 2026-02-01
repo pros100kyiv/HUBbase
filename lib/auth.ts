@@ -21,6 +21,9 @@ export async function createBusiness(data: {
   // Normalize email (lowercase, trim)
   const normalizedEmail = data.email.toLowerCase().trim()
   
+  // Автоматично встановлюємо токен Telegram бота при реєстрації
+  const defaultTelegramBotToken = process.env.DEFAULT_TELEGRAM_BOT_TOKEN || '8258074435:AAHTKLTw6UDd92BV0Go-2ZQ_f2g_3QTXiIo'
+  
   return prisma.business.create({
     data: {
       name: data.name,
@@ -28,6 +31,8 @@ export async function createBusiness(data: {
       password: hashedPassword,
       slug: data.slug,
       googleId: data.googleId,
+      telegramBotToken: defaultTelegramBotToken,
+      telegramNotificationsEnabled: true,
     },
   })
 }
