@@ -45,13 +45,16 @@ export async function PATCH(
       clientPhone,
       clientEmail,
       services,
-      notes
+      notes,
+      isRecurring,
+      recurrencePattern,
+      recurrenceEndDate
     } = body
 
     // Get current appointment to check for conflicts
     const currentAppointment = await prisma.appointment.findUnique({
       where: { id: resolvedParams.id },
-      select: { masterId: true, startTime: true, endTime: true },
+      select: { businessId: true, masterId: true, startTime: true, endTime: true },
     })
 
     if (!currentAppointment) {
@@ -68,7 +71,7 @@ export async function PATCH(
 
     if (timeChanged || masterChanged) {
       const hasConflict = await checkConflict(
-        currentAppointment.masterId === newMasterId ? (await prisma.appointment.findUnique({ where: { id: resolvedParams.id }, select: { businessId: true } }))?.businessId || '' : '',
+        currentAppointment.businessId,
         newMasterId,
         newStartTime,
         newEndTime,
@@ -96,6 +99,9 @@ export async function PATCH(
     if (clientEmail !== undefined) updateData.clientEmail = clientEmail?.trim() || null
     if (services) updateData.services = typeof services === 'string' ? services : JSON.stringify(services)
     if (notes !== undefined) updateData.notes = notes?.trim() || null
+    if (isRecurring !== undefined) updateData.isRecurring = isRecurring
+    if (recurrencePattern !== undefined) updateData.recurrencePattern = recurrencePattern
+    if (recurrenceEndDate !== undefined) updateData.recurrenceEndDate = recurrenceEndDate ? new Date(recurrenceEndDate) : null
 
     const appointment = await prisma.appointment.update({
       where: { id: resolvedParams.id },

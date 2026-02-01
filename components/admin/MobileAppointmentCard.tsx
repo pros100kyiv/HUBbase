@@ -231,7 +231,7 @@ export function MobileAppointmentCard({
               {appointment.status === 'Pending' && (
                 <button
                   onClick={() => onStatusChange(appointment.id, 'Confirmed')}
-                  className="px-2 py-1 rounded-candy-xs border border-candy-mint text-candy-mint hover:bg-candy-mint hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
+                  className="px-2 py-1 rounded-candy-xs border border-candy-mint text-candy-mint hover:bg-candy-mint hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
                   title="Підтвердити"
                 >
                   Підтвердити
@@ -240,7 +240,7 @@ export function MobileAppointmentCard({
               {appointment.status === 'Confirmed' && (
                 <button
                   onClick={() => onStatusChange(appointment.id, 'Arrived')}
-                  className="px-2 py-1 rounded-candy-xs border border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
+                  className="px-2 py-1 rounded-candy-xs border border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-500 hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
                   title="Прибув"
                 >
                   Прибув
@@ -249,7 +249,7 @@ export function MobileAppointmentCard({
               {appointment.status === 'Arrived' && (
                 <button
                   onClick={() => onStatusChange(appointment.id, 'InProgress')}
-                  className="px-2 py-1 rounded-candy-xs border border-yellow-500 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
+                  className="px-2 py-1 rounded-candy-xs border border-yellow-500 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500 hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
                   title="В роботі"
                 >
                   В роботі
@@ -258,7 +258,7 @@ export function MobileAppointmentCard({
               {(appointment.status === 'InProgress' || appointment.status === 'Arrived') && (
                 <button
                   onClick={() => onStatusChange(appointment.id, 'Done')}
-                  className="px-2 py-1 rounded-candy-xs border border-candy-blue text-candy-blue hover:bg-candy-blue hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
+                  className="px-2 py-1 rounded-candy-xs border border-candy-blue text-candy-blue hover:bg-candy-blue hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
                   title="Закінчили"
                 >
                   Закінчили
@@ -267,7 +267,7 @@ export function MobileAppointmentCard({
               {appointment.status !== 'Cancelled' && appointment.status !== 'Done' && (
                 <button
                   onClick={() => onStatusChange(appointment.id, 'Cancelled')}
-                  className="px-2 py-1 rounded-candy-xs border border-red-500 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
+                  className="px-2 py-1 rounded-candy-xs border border-red-500 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
                   title="Скасувати"
                 >
                   Скасувати

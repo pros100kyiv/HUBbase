@@ -91,7 +91,7 @@ export function Sidebar({ className }: SidebarProps) {
       )}
       
       <aside className={cn(
-        'bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 w-16 md:w-40 min-h-screen fixed left-0 top-0 pt-14 md:pt-16 z-40 shadow-soft transition-transform duration-300 ease-in-out',
+        'bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 w-16 md:w-40 h-screen fixed left-0 top-0 pt-14 md:pt-16 z-40 shadow-soft transition-transform duration-300 ease-in-out overflow-y-auto',
         isOpen ? 'translate-x-0' : '-translate-x-full',
         className
       )}>

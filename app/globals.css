@@ -56,10 +56,6 @@
     @apply hover-lift;
   }
   
-  .card-candy-hover:active {
-    transform: scale(0.97);
-  }
-  
   /* Unified Button Styles */
   .btn-primary {
     @apply px-3 py-1.5 text-xs font-bold text-white rounded-candy-sm shadow-soft hover:shadow-soft-lg transition-all;
