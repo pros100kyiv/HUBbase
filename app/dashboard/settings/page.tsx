@@ -10,6 +10,7 @@ import { BusinessCardEditor } from '@/components/admin/BusinessCardEditor'
 import { ImageIcon, ClockIcon, ChevronDownIcon, ChevronUpIcon } from '@/components/icons'
 import { toast } from '@/components/ui/toast'
 import { Confetti, triggerConfetti } from '@/components/ui/confetti'
+import { cn } from '@/lib/utils'
 
 interface Business {
   id: string
