@@ -127,7 +127,7 @@ export function CreateAppointmentForm({
 
     // Validation
     if (!formData.masterId) {
-      setErrors({ masterId: 'Оберіть майстра' })
+      setErrors({ masterId: 'Оберіть спеціаліста' })
       return
     }
     if (formData.serviceIds.length === 0) {
@@ -196,13 +196,13 @@ export function CreateAppointmentForm({
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Помилка створення запису')
+        throw new Error(errorData.error || 'Помилка створення візиту')
       }
 
       onSuccess()
     } catch (error) {
       console.error('Error creating appointment:', error)
-      setErrors({ submit: error instanceof Error ? error.message : 'Помилка створення запису' })
+      setErrors({ submit: error instanceof Error ? error.message : 'Помилка створення візиту' })
     } finally {
       setIsLoading(false)
     }
@@ -214,13 +214,13 @@ export function CreateAppointmentForm({
     <div ref={formRef}>
       <Card className="max-w-2xl mx-auto">
       <CardHeader>
-        <CardTitle className="text-lg font-black text-foreground">Новий запис</CardTitle>
+        <CardTitle className="text-lg font-black text-foreground">Новий візит</CardTitle>
       </CardHeader>
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Master Selection */}
           <div>
-            <label className="block text-sm font-medium mb-2">Майстер *</label>
+            <label className="block text-sm font-medium mb-2">Спеціаліст *</label>
             <select
               value={formData.masterId}
               onChange={(e) => setFormData({ ...formData, masterId: e.target.value })}
@@ -229,7 +229,7 @@ export function CreateAppointmentForm({
                 errors.masterId && 'border-red-500'
               )}
             >
-              <option value="">Оберіть майстра</option>
+              <option value="">Оберіть спеціаліста</option>
               {activeMasters.map((master) => (
                 <option key={master.id} value={master.id}>
                   {master.name}
@@ -387,7 +387,7 @@ export function CreateAppointmentForm({
                 className="w-4 h-4 rounded border-gray-300 text-candy-blue focus:ring-candy-blue"
               />
               <label htmlFor="isRecurring" className="text-sm font-semibold text-foreground dark:text-white cursor-pointer">
-                Циклічний запис
+                Циклічний візит
               </label>
             </div>
 
@@ -495,7 +495,7 @@ export function CreateAppointmentForm({
               disabled={isLoading}
               className="flex-1"
             >
-              {isLoading ? 'Створення...' : 'Створити запис'}
+              {isLoading ? 'Створення...' : 'Створити візит'}
             </Button>
             <Button
               type="button"

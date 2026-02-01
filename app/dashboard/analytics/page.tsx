@@ -337,7 +337,7 @@ export default function AnalyticsPage() {
               <div className="grid grid-cols-2 md:grid-cols-4 gap-1.5">
                 <MobileWidget
                   icon={<CalendarIcon />}
-                  title="Записи"
+                  title="Візити"
                   value={overviewStats?.totalAppointments || 0}
                   iconColor="orange"
                   onClick={() => router.push('/dashboard/appointments')}
@@ -486,7 +486,7 @@ export default function AnalyticsPage() {
                           <div>
                             <p className="text-sm font-black text-foreground">{emp.masterName}</p>
                             <p className="text-xs text-gray-600 dark:text-gray-400">
-                              {emp.totalAppointments} записів
+                              {emp.totalAppointments} візитів
                             </p>
                           </div>
                         </div>
@@ -598,7 +598,7 @@ export default function AnalyticsPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-2 pt-3 border-t border-gray-200 dark:border-gray-700">
                       <div>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Записів</p>
+                        <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">Візитів</p>
                         <p className="text-sm font-black text-foreground">{client.totalAppointments}</p>
                       </div>
                       <div>
@@ -654,7 +654,7 @@ export default function AnalyticsPage() {
                 />
                 <MobileWidget
                   icon={<CalendarIcon />}
-                  title="Записів"
+                  title="Візитів"
                   value={overviewStats?.totalAppointments || 0}
                   iconColor="orange"
                 />
@@ -664,19 +664,19 @@ export default function AnalyticsPage() {
                 <h3 className="text-subheading mb-3">Детальна статистика доходу</h3>
                 <div className="space-y-3">
                   <div className="flex justify-between items-center p-3 rounded-candy-sm bg-candy-blue/10 border border-candy-blue/30">
-                    <span className="text-sm font-medium text-foreground">Підтверджені записи</span>
+                    <span className="text-sm font-medium text-foreground">Підтверджені візити</span>
                     <span className="text-base font-black text-candy-blue">
                       {formatCurrency((overviewStats?.confirmedAppointments || 0) * 500)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center p-3 rounded-candy-sm bg-candy-mint/10 border border-candy-mint/30">
-                    <span className="text-sm font-medium text-foreground">Виконані записи</span>
+                    <span className="text-sm font-medium text-foreground">Завершені візити</span>
                     <span className="text-base font-black text-candy-mint">
                       {formatCurrency((overviewStats?.completedAppointments || 0) * 500)}
                     </span>
                   </div>
                   <div className="flex justify-between items-center p-3 rounded-candy-sm bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700">
-                    <span className="text-sm font-medium text-foreground">Очікуючі записи</span>
+                    <span className="text-sm font-medium text-foreground">Очікуючі візити</span>
                     <span className="text-base font-black text-foreground">
                       {formatCurrency((overviewStats?.totalAppointments - (overviewStats?.completedAppointments || 0)) * 500)}
                     </span>
@@ -738,7 +738,7 @@ export default function AnalyticsPage() {
                             <div>
                               <p className="text-sm font-black text-foreground">{emp.masterName}</p>
                               <div className="flex items-center gap-3 text-xs text-gray-600 dark:text-gray-400">
-                                <span>{emp.totalAppointments} записів</span>
+                                <span>{emp.totalAppointments} візитів</span>
                                 <span className="flex items-center gap-1">
                                   <StarIcon className="w-3 h-3" />
                                   {emp.averageRating.toFixed(1)}
@@ -873,7 +873,7 @@ export default function AnalyticsPage() {
                           <div>
                             <p className="text-sm font-black text-foreground">{client.clientName}</p>
                             <p className="text-xs text-gray-600 dark:text-gray-400">
-                              {client.clientPhone} • {client.totalAppointments} записів
+                              {client.clientPhone} • {client.totalAppointments} візитів
                             </p>
                           </div>
                         </div>

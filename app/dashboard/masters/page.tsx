@@ -103,14 +103,14 @@ export default function MastersPage() {
           <div className="spacing-item">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
               <div>
-                <h1 className="text-heading">Майстри</h1>
-                <p className="text-caption font-medium">Управління майстрами</p>
+                <h1 className="text-heading">Спеціалісти</h1>
+                <p className="text-caption font-medium">Управління спеціалістами</p>
               </div>
               <button
                 onClick={() => router.push('/dashboard/settings?tab=masters')}
                 className="btn-primary"
               >
-                + Додати майстра
+                + Додати спеціаліста
               </button>
             </div>
           </div>
@@ -153,12 +153,12 @@ export default function MastersPage() {
 
             {(!Array.isArray(masters) || masters.length === 0) && (
               <div className="card-candy rounded-candy shadow-soft p-6 text-center">
-                <p className="text-gray-500 text-sm mb-3">Немає майстрів</p>
+                <p className="text-gray-500 text-sm mb-3">Немає спеціалістів</p>
                 <button
                   onClick={() => router.push('/dashboard/settings?tab=masters')}
                   className="px-3 py-1.5 text-xs font-bold candy-purple text-white rounded-candy shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-97"
                 >
-                  Додати першого майстра
+                  Додати першого спеціаліста
                 </button>
               </div>
             )}

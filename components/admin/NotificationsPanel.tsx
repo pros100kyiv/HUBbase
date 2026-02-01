@@ -75,7 +75,7 @@ function AppointmentCard({ appointment, onConfirm, onReschedule, processing, ser
           <div className="space-y-0.5 text-xs text-gray-600 dark:text-gray-400">
             <p>📞 {appointment.clientPhone}</p>
             {appointment.clientEmail && <p>✉️ {appointment.clientEmail}</p>}
-            <p>👤 Майстер: {appointment.masterName}</p>
+            <p>👤 Спеціаліст: {appointment.masterName}</p>
             <p className="flex items-center gap-1">
               <ClockIcon className="w-3 h-3" />
               {format(startTime, 'd MMMM yyyy, HH:mm', { locale: uk })} - {format(endTime, 'HH:mm')}
@@ -210,7 +210,7 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
       
       const withMasters = (data || []).map((apt: Appointment) => {
         const master = masters.find((m: any) => m.id === apt.masterId)
-        return { ...apt, masterName: master?.name || 'Невідомий майстер' }
+        return { ...apt, masterName: master?.name || 'Невідомий спеціаліст' }
       })
       
       setAppointments(withMasters)

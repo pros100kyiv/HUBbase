@@ -61,9 +61,9 @@ export function Sidebar({ className }: SidebarProps) {
 
   const navItems: NavItem[] = [
     { id: 'main', label: 'Головна', icon: <HomeIcon />, path: '/dashboard/main' },
-    { id: 'appointments', label: 'Записи', icon: <CalendarIcon />, path: '/dashboard/appointments' },
+    { id: 'appointments', label: 'Візити', icon: <CalendarIcon />, path: '/dashboard/appointments' },
     { id: 'clients', label: 'Клієнти', icon: <UsersIcon />, path: '/dashboard/clients' },
-    { id: 'masters', label: 'Майстри', icon: <UserIcon />, path: '/dashboard/masters' },
+    { id: 'masters', label: 'Спеціалісти', icon: <UserIcon />, path: '/dashboard/masters' },
     { id: 'pricelist', label: 'Прайс-лист', icon: <StarIcon />, path: '/dashboard/pricelist' },
     { id: 'analytics', label: 'CRM', icon: <ChartIcon />, path: '/dashboard/analytics' },
     { id: 'notifications', label: 'Бронювання', icon: <BellIcon />, path: '#', badge: pendingCount, onClick: () => setShowNotifications(true) },

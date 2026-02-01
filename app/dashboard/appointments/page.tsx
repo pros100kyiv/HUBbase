@@ -114,7 +114,7 @@ export default function AppointmentsPage() {
         // Map appointments with master names
         const withMasters = (data || []).map((apt: Appointment) => {
           const master = masters.find((m) => m.id === apt.masterId)
-          return { ...apt, masterName: master?.name || apt.master?.name || 'Невідомий майстер' }
+          return { ...apt, masterName: master?.name || apt.master?.name || 'Невідомий спеціаліст' }
         })
         setAppointments(withMasters)
       })
@@ -127,7 +127,7 @@ export default function AppointmentsPage() {
   const handleAppointmentCreated = async () => {
     setShowCreateForm(false)
     const { toast } = await import('@/components/ui/toast')
-    toast({ title: 'Запис створено', type: 'success', duration: 1500 })
+    toast({ title: 'Візит створено', type: 'success', duration: 1500 })
     
     // Reload appointments with extended range
     const start = startOfMonth(currentMonth)
@@ -147,7 +147,7 @@ export default function AppointmentsPage() {
       .then((data) => {
         const withMasters = (data || []).map((apt: Appointment) => {
           const master = masters.find((m) => m.id === apt.masterId)
-          return { ...apt, masterName: master?.name || apt.master?.name || 'Невідомий майстер' }
+          return { ...apt, masterName: master?.name || apt.master?.name || 'Невідомий спеціаліст' }
         })
         setAppointments(withMasters)
       })
@@ -226,7 +226,7 @@ export default function AppointmentsPage() {
       .then((data) => {
         const withMasters = (data || []).map((apt: Appointment) => {
           const master = masters.find((m) => m.id === apt.masterId)
-          return { ...apt, masterName: master?.name || apt.master?.name || 'Невідомий майстер' }
+          return { ...apt, masterName: master?.name || apt.master?.name || 'Невідомий спеціаліст' }
         })
         setAppointments(withMasters)
       })
@@ -286,8 +286,8 @@ export default function AppointmentsPage() {
           <div className="spacing-item">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
               <div>
-                <h1 className="text-heading">Записи</h1>
-                <p className="text-caption font-medium">Управління записами</p>
+                <h1 className="text-heading">Візити</h1>
+                <p className="text-caption font-medium">Управління візитами</p>
               </div>
               <button
                 onClick={() => {
@@ -298,7 +298,7 @@ export default function AppointmentsPage() {
                 }}
                 className="btn-primary whitespace-nowrap"
               >
-                + Додати запис
+                + Додати візит
               </button>
             </div>
           </div>
@@ -359,7 +359,7 @@ export default function AppointmentsPage() {
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                   )}
                 >
-                  {status === 'all' ? 'Всі' : status === 'Pending' ? 'Очікує' : status === 'Confirmed' ? 'Підтверджено' : status === 'Done' ? 'Виконано' : 'Скасовано'}
+                  {status === 'all' ? 'Всі' : status === 'Pending' ? 'Очікує' : status === 'Confirmed' ? 'Підтверджено' : status === 'Done' ? 'Завершено' : 'Скасовано'}
                 </button>
               ))}
             </div>
@@ -440,7 +440,7 @@ export default function AppointmentsPage() {
                 if (hours.length === 0) {
                   return (
                     <div className="text-center py-8">
-                      <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Немає записів на цей день</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Немає візитів на цей день</p>
                     </div>
                   )
                 }
@@ -477,7 +477,7 @@ export default function AppointmentsPage() {
           {!selectedDate && !showCreateForm && (
             <div className="card-candy p-6 text-center">
               <p className="text-caption font-medium">
-                Оберіть дату в календарі, щоб переглянути записи
+                Оберіть дату в календарі, щоб переглянути візити
               </p>
             </div>
           )}

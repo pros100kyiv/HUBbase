@@ -73,7 +73,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
 
       if (response.ok) {
         reset()
-        const confirmed = window.confirm('Запис успішно створено! Хочете створити ще один?')
+        const confirmed = window.confirm('Візит успішно створено! Хочете створити ще один?')
         if (confirmed) {
           setStep(0)
         } else {
@@ -84,10 +84,10 @@ export function FinalStep({ businessId }: FinalStepProps) {
         }
       } else {
         const data = await response.json()
-        alert(data.error || 'Помилка при створенні запису')
+        alert(data.error || 'Помилка при створенні візиту')
       }
     } catch (error) {
-      alert('Помилка при створенні запису')
+      alert('Помилка при створенні візиту')
     } finally {
       setIsSubmitting(false)
     }
@@ -134,10 +134,10 @@ export function FinalStep({ businessId }: FinalStepProps) {
 
         {/* Summary */}
         <div className="bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-candy-sm p-3 mb-4">
-          <h3 className="text-base font-black mb-3 text-white">Деталі запису:</h3>
+          <h3 className="text-base font-black mb-3 text-white">Деталі візиту:</h3>
           <div className="space-y-1.5 text-xs">
             <div className="flex justify-between">
-              <span className="text-white/70">Майстер:</span>
+              <span className="text-white/70">Спеціаліст:</span>
               <span className="font-bold text-white">{state.selectedMaster?.name}</span>
             </div>
             <div className="flex justify-between">
@@ -176,7 +176,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
             disabled={isSubmitting}
             className="btn-primary flex-1"
           >
-            {isSubmitting ? 'Відправка...' : 'Підтвердити запис'}
+            {isSubmitting ? 'Відправка...' : 'Підтвердити візит'}
           </Button>
         </div>
       </div>

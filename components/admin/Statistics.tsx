@@ -103,7 +103,7 @@ export function Statistics({ businessId }: StatisticsProps) {
       <div className="grid grid-cols-2 gap-1.5">
         <MobileWidget
           icon={<CalendarIcon />}
-          title="Всього записів"
+          title="Всього візитів"
           value={stats.totalAppointments}
           iconColor="orange"
         />

@@ -241,7 +241,7 @@ export default function EnterpriseAnalyticsPage() {
                             {client.clientName}
                           </p>
                           <p className="text-xs text-gray-600 dark:text-gray-400">
-                            {client.clientPhone} • {client.totalAppointments} записів
+                            {client.clientPhone} • {client.totalAppointments} візитів
                           </p>
                         </div>
                       </div>

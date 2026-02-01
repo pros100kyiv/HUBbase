@@ -45,14 +45,14 @@ export function NotificationToast({ businessId, onConfirm, onDismiss }: Notifica
           const data = await response.json()
           const appointments = Array.isArray(data) ? data : []
           
-          // Фільтруємо тільки записи, створені через публічне бронювання (QR/посилання)
+          // Фільтруємо тільки візити, створені через публічне бронювання (QR/посилання)
           // та які ще не показувалися
           const newAppointments = appointments.filter(
             (apt: any) => apt.isFromBooking === true && !seenIds.has(apt.id)
           )
 
           if (newAppointments.length > 0) {
-            // Показуємо тільки останній новий запис
+            // Показуємо тільки останній новий візит
             const latest = newAppointments[newAppointments.length - 1]
             setNotifications([latest])
             setSeenIds(prev => {
@@ -131,7 +131,7 @@ export function NotificationToast({ businessId, onConfirm, onDismiss }: Notifica
                 </div>
                 <div>
                   <h4 className="text-sm font-black text-foreground dark:text-white">
-                    Новий запис!
+                    Новий візит!
                   </h4>
                   <p className="text-xs text-gray-600 dark:text-gray-400">
                     {format(startTime, 'd MMMM, HH:mm', { locale: uk })}

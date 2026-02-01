@@ -100,7 +100,7 @@ export default function SettingsPage() {
     subcategory: '',
   })
 
-  // Автоматична прокрутка до форми майстра
+  // Автоматична прокрутка до форми спеціаліста
   useEffect(() => {
     if (showMasterForm && masterFormRef.current) {
       setTimeout(() => {
@@ -275,7 +275,7 @@ export default function SettingsPage() {
 
     // Validation
     if (!masterForm.name.trim()) {
-      toast({ title: 'Помилка', description: 'Будь ласка, введіть ім\'я майстра', type: 'error' })
+      toast({ title: 'Помилка', description: 'Будь ласка, введіть ім\'я спеціаліста', type: 'error' })
       return
     }
 
@@ -322,7 +322,7 @@ export default function SettingsPage() {
       setMasterForm({ name: '', bio: '', rating: '0', photo: '' })
       toast({ 
         title: 'Успішно!', 
-        description: editingMaster ? 'Майстра оновлено' : 'Майстра додано', 
+        description: editingMaster ? 'Спеціаліста оновлено' : 'Спеціаліста додано', 
         type: 'success' 
       })
       setShowConfetti(true)
@@ -387,7 +387,7 @@ export default function SettingsPage() {
   }
 
   const handleDeleteMaster = async (id: string) => {
-    if (!window.confirm('Видалити цього майстра?')) return
+    if (!window.confirm('Видалити цього спеціаліста?')) return
 
     try {
       const response = await fetch(`/api/masters/${id}`, {
@@ -396,9 +396,9 @@ export default function SettingsPage() {
 
       if (response.ok) {
         await loadData()
-        toast({ title: 'Успішно!', description: 'Майстра видалено', type: 'success' })
+        toast({ title: 'Успішно!', description: 'Спеціаліста видалено', type: 'success' })
       } else {
-        toast({ title: 'Помилка', description: 'Не вдалося видалити майстра', type: 'error' })
+        toast({ title: 'Помилка', description: 'Не вдалося видалити спеціаліста', type: 'error' })
       }
     } catch (error) {
       toast({ title: 'Помилка', description: 'Помилка при видаленні', type: 'error' })
@@ -508,7 +508,7 @@ export default function SettingsPage() {
                   }`}
                 >
                   {tab === 'info' && 'Інформація'}
-                  {tab === 'masters' && 'Майстри'}
+                  {tab === 'masters' && 'Спеціалісти'}
                   {tab === 'services' && 'Послуги'}
                   {tab === 'businessCard' && 'Візитівка'}
                 </button>
@@ -580,7 +580,7 @@ export default function SettingsPage() {
           {activeTab === 'masters' && (
             <div className="space-y-4">
               <div className="flex justify-between items-center">
-                <h2 className="text-lg md:text-xl font-black text-foreground">Майстри</h2>
+                <h2 className="text-lg md:text-xl font-black text-foreground">Спеціалісти</h2>
                 <Button
                   onClick={() => {
                     setShowMasterForm(true)
@@ -588,7 +588,7 @@ export default function SettingsPage() {
                     setMasterForm({ name: '', bio: '', rating: '0', photo: '' })
                   }}
                 >
-                  + Додати майстра
+                  + Додати спеціаліста
                 </Button>
               </div>
 
@@ -597,12 +597,12 @@ export default function SettingsPage() {
                 <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                   <CardHeader className="p-2 pb-1">
                     <CardTitle className="text-sm font-black text-foreground dark:text-white">
-                      {editingMaster ? 'Редагувати майстра' : 'Новий майстер'}
+                      {editingMaster ? 'Редагувати спеціаліста' : 'Новий спеціаліст'}
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="p-2 space-y-1.5">
                     <Input
-                      placeholder="Ім'я майстра"
+                      placeholder="Ім'я спеціаліста"
                       value={masterForm.name}
                       onChange={(e) => setMasterForm({ ...masterForm, name: e.target.value })}
                       className="text-xs py-1.5 h-auto"

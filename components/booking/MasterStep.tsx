@@ -73,7 +73,7 @@ export function MasterStep({ businessId }: MasterStepProps) {
     <div className="min-h-screen bg-gray-900 dark:bg-gray-950 py-6 px-3">
       <div className="max-w-4xl mx-auto">
         <h2 className="text-2xl md:text-3xl font-black mb-4 text-center text-white">
-          ОБЕРІТЬ МАЙСТРА
+          ОБЕРІТЬ СПЕЦІАЛІСТА
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">

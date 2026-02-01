@@ -110,7 +110,6 @@ export function MobileAppointmentCard({
         return 'text-candy-mint border-candy-mint bg-candy-mint/10 dark:bg-candy-mint/20'
       case 'Arrived':
       case 'Прибув':
-        return 'text-blue-600 dark:text-blue-400 border-blue-500 bg-blue-50 dark:bg-blue-900/30'
       case 'InProgress':
       case 'В роботі':
         return 'text-yellow-600 dark:text-yellow-400 border-yellow-500 bg-yellow-50 dark:bg-yellow-900/30'
@@ -133,11 +132,10 @@ export function MobileAppointmentCard({
       case 'Confirmed':
         return 'Підтверджено'
       case 'Arrived':
-        return 'Прибув'
       case 'InProgress':
         return 'В роботі'
       case 'Done':
-        return 'Виконано'
+        return 'Завершено'
       case 'Cancelled':
         return 'Скасовано'
       default:
@@ -247,11 +245,11 @@ export function MobileAppointmentCard({
               )}
               {appointment.status === 'Confirmed' && (
                 <button
-                  onClick={() => onStatusChange(appointment.id, 'Arrived')}
-                  className="px-2 py-1 rounded-candy-xs border border-blue-500 text-blue-600 dark:text-blue-400 hover:bg-blue-500 hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
-                  title="Прибув"
+                  onClick={() => onStatusChange(appointment.id, 'InProgress')}
+                  className="px-2 py-1 rounded-candy-xs border border-yellow-500 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500 hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
+                  title="В роботі"
                 >
-                  Прибув
+                  В роботі
                 </button>
               )}
               {appointment.status === 'Arrived' && (
@@ -267,9 +265,9 @@ export function MobileAppointmentCard({
                 <button
                   onClick={() => onStatusChange(appointment.id, 'Done')}
                   className="px-2 py-1 rounded-candy-xs border border-candy-blue text-candy-blue hover:bg-candy-blue hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
-                  title="Закінчили"
+                  title="Завершити"
                 >
-                  Закінчили
+                  Завершити
                 </button>
               )}
               {appointment.status !== 'Cancelled' && appointment.status !== 'Done' && (
@@ -333,7 +331,7 @@ export function MobileAppointmentCard({
         <div className="flex items-center gap-1 mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700">
           <RepeatIcon className="w-3 h-3 text-candy-blue" />
           <span className="text-[9px] font-bold text-candy-blue uppercase">
-            Циклічний запис
+            Циклічний візит
           </span>
           {appointment.recurrencePattern && (() => {
             try {
@@ -422,7 +420,7 @@ export function MobileAppointmentCard({
           <button
             onClick={() => onEdit(appointment)}
             className="flex items-center gap-1.5 px-2 py-1 rounded-candy-xs text-xs font-bold text-candy-blue hover:bg-candy-blue/10 dark:hover:bg-candy-blue/20 transition-colors"
-            title="Редагувати запис"
+            title="Редагувати візит"
           >
             <EditIcon className="w-3.5 h-3.5" />
             Редагувати

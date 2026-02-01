@@ -110,7 +110,7 @@ export function LandingStep({ business }: LandingStepProps) {
           className="btn-primary btn-pulse text-sm md:text-base px-8 md:px-12 py-3 md:py-4 hidden md:inline-flex"
           onClick={() => setStep(1)}
         >
-          ЗАПИС ОНЛАЙН
+          БРОНЮВАННЯ ОНЛАЙН
         </Button>
       </div>
 
@@ -121,7 +121,7 @@ export function LandingStep({ business }: LandingStepProps) {
           className="btn-primary btn-pulse w-full text-sm py-4"
           onClick={() => setStep(1)}
         >
-          ЗАПИС ОНЛАЙН
+          БРОНЮВАННЯ ОНЛАЙН
         </Button>
       </div>
 

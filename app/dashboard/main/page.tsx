@@ -94,7 +94,7 @@ export default function MainPage() {
         
         const withMasters = appointmentsArray.map((apt: Appointment) => {
           const master = mastersArray.find((m: any) => m.id === apt.masterId)
-          return { ...apt, masterName: master?.name || 'Невідомий майстер' }
+          return { ...apt, masterName: master?.name || 'Невідомий спеціаліст' }
         })
         setTodayAppointments(withMasters)
         setLoading(false)
@@ -153,7 +153,7 @@ export default function MainPage() {
               </div>
               <div className="w-full md:w-64">
                 <Search 
-                  placeholder="Пошук записів..." 
+                  placeholder="Пошук візитів..." 
                   onSearch={setSearchQuery}
                 />
               </div>
@@ -234,8 +234,8 @@ export default function MainPage() {
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
               <h2 className="text-subheading truncate text-center sm:text-left flex-1 min-w-0">
                 {isToday(selectedDate) 
-                  ? `Записи на сьогодні (${format(selectedDate, 'd MMMM yyyy', { locale: uk })})`
-                  : `Записи на ${format(selectedDate, 'd MMMM yyyy', { locale: uk })}`
+                  ? `Візити на сьогодні (${format(selectedDate, 'd MMMM yyyy', { locale: uk })})`
+                  : `Візити на ${format(selectedDate, 'd MMMM yyyy', { locale: uk })}`
                 }
               </h2>
               <div className="flex items-center gap-1.5 justify-center sm:justify-end">
@@ -319,10 +319,10 @@ export default function MainPage() {
                     {filtered.length === 0 && (
                       <p className="text-gray-500 dark:text-gray-400 text-center py-8 font-medium text-sm">
                         {searchQuery 
-                          ? 'Записів не знайдено'
+                          ? 'Візитів не знайдено'
                           : isToday(selectedDate) 
-                            ? 'Немає записів на сьогодні'
-                            : `Немає записів на ${format(selectedDate, 'd MMMM yyyy', { locale: uk })}`
+                            ? 'Немає візитів на сьогодні'
+                            : `Немає візитів на ${format(selectedDate, 'd MMMM yyyy', { locale: uk })}`
                         }
                       </p>
                     )}
@@ -331,7 +331,7 @@ export default function MainPage() {
                         onClick={() => router.push('/dashboard/appointments')}
                         className="btn-secondary w-full"
                       >
-                        Показати всі записи ({filtered.length})
+                        Показати всі візити ({filtered.length})
                       </button>
                     )}
                   </>

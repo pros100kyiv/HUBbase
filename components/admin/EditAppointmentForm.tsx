@@ -204,7 +204,7 @@ export function EditAppointmentForm({
 
     // Validation
     if (!formData.masterId) {
-      setErrors({ masterId: 'Оберіть майстра' })
+      setErrors({ masterId: 'Оберіть спеціаліста' })
       return
     }
     if (formData.serviceIds.length === 0 && !formData.customService.trim()) {
@@ -280,13 +280,13 @@ export function EditAppointmentForm({
 
       if (!response.ok) {
         const errorData = await response.json()
-        throw new Error(errorData.error || 'Помилка оновлення запису')
+        throw new Error(errorData.error || 'Помилка оновлення візиту')
       }
 
       onSuccess()
     } catch (error) {
       console.error('Error updating appointment:', error)
-      setErrors({ submit: error instanceof Error ? error.message : 'Помилка оновлення запису' })
+      setErrors({ submit: error instanceof Error ? error.message : 'Помилка оновлення візиту' })
     } finally {
       setIsLoading(false)
     }
@@ -300,7 +300,7 @@ export function EditAppointmentForm({
       <Card className="max-w-2xl mx-auto">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-black text-foreground">Редагувати запис</CardTitle>
+            <CardTitle className="text-lg font-black text-foreground">Редагувати візит</CardTitle>
             <button
               onClick={onCancel}
               className="p-1 rounded-candy-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
@@ -313,7 +313,7 @@ export function EditAppointmentForm({
           <form onSubmit={handleSubmit} className="space-y-4">
             {/* Master Selection */}
             <div>
-              <label className="block text-sm font-medium mb-2">Майстер *</label>
+              <label className="block text-sm font-medium mb-2">Спеціаліст *</label>
               <select
                 value={formData.masterId}
                 onChange={(e) => setFormData({ ...formData, masterId: e.target.value })}
@@ -491,7 +491,7 @@ export function EditAppointmentForm({
                 />
                 <div className="flex items-center gap-2">
                   <RepeatIcon className="w-4 h-4 text-candy-blue" />
-                  <span className="text-sm font-medium text-foreground">Циклічний запис</span>
+                  <span className="text-sm font-medium text-foreground">Циклічний візит</span>
                 </div>
               </label>
 
