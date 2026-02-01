@@ -100,17 +100,17 @@ export function Navbar() {
       <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-800/50 shadow-soft">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
           <div className="flex justify-between items-center h-14 md:h-16">
-            {/* Left side - HUBbase Logo (клікабельний для відкриття sidebar) */}
+            {/* Left side - Xbase Logo (клікабельний для відкриття sidebar) */}
             <button
               onClick={toggleSidebar}
               className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer"
               title="Перемкнути меню"
             >
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm candy-purple flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-lg">
-                HUB
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm candy-blue flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-lg">
+                X
               </div>
               <span className="text-xs md:text-sm font-black text-foreground dark:text-white hidden sm:block">
-                HUBbase
+                Xbase
               </span>
             </button>
 
@@ -196,17 +196,17 @@ export function Navbar() {
       <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-800/50 shadow-soft">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
           <div className="flex justify-between items-center h-14 md:h-16">
-            {/* Left side - HUBbase Logo */}
+            {/* Left side - Xbase Logo */}
             <button
               onClick={toggleSidebar}
               className="flex items-center gap-2 flex-shrink-0 hover:opacity-80 transition-opacity cursor-pointer"
               title="Перемкнути меню"
             >
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm candy-purple flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-lg">
-                HUB
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm candy-blue flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-lg">
+                X
               </div>
               <span className="text-xs md:text-sm font-black text-foreground dark:text-white hidden sm:block">
-                HUBbase
+                Xbase
               </span>
             </button>
 

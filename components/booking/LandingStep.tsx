@@ -124,13 +124,13 @@ export function LandingStep({ business }: LandingStepProps) {
         </Button>
       </div>
 
-      {/* HUBbase Logo at top center */}
+      {/* Xbase Logo at top center */}
       <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-20 flex items-center gap-2">
-        <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm candy-purple flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-lg">
-          HUB
+        <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm candy-blue flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-lg">
+          X
         </div>
         <span className="text-xs md:text-sm font-black text-white">
-          HUBbase
+          Xbase
         </span>
       </div>
 

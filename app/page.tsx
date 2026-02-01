@@ -13,13 +13,13 @@ export default function Home() {
         <div className="absolute inset-0 bg-gradient-to-br from-gray-800/95 via-gray-900/95 to-gray-800/95 dark:from-gray-900/95 dark:via-gray-950/95 dark:to-gray-900/95" />
       </div>
 
-      {/* HUBbase Logo at top center */}
+      {/* Xbase Logo at top center */}
       <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-20 flex items-center gap-2">
-        <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm candy-purple flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-lg">
-          HUB
+        <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm candy-blue flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-lg">
+          X
         </div>
         <span className="text-xs md:text-sm font-black text-white">
-          HUBbase
+          Xbase
         </span>
       </div>
 
