@@ -272,7 +272,7 @@ export default function SettingsPage() {
       await loadData()
       setShowMasterForm(false)
       setEditingMaster(null)
-      setMasterForm({ name: '', bio: '', rating: '0' })
+      setMasterForm({ name: '', bio: '', rating: '0', photo: '' })
       toast({ 
         title: 'Успішно!', 
         description: editingMaster ? 'Майстра оновлено' : 'Майстра додано', 
