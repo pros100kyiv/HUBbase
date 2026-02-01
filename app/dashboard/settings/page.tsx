@@ -62,7 +62,7 @@ const getCategoryColor = (index: number) => {
   return colors[index % colors.length]
 }
 
-type Tab = 'info' | 'masters' | 'services' | 'businessCard'
+type Tab = 'info' | 'masters' | 'services' | 'businessCard' | 'telegram'
 
 export default function SettingsPage() {
   const router = useRouter()
