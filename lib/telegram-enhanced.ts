@@ -85,6 +85,11 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
       buttons.push([Markup.button.callback('📋 Мої розсилки', 'menu_broadcasts')])
     }
 
+    if (hasPermission(role, 'create_broadcast')) {
+      buttons.push([Markup.button.callback('⏰ Створити нагадування', 'menu_reminder_create')])
+      buttons.push([Markup.button.callback('📝 Мої нагадування', 'menu_reminders')])
+    }
+
     if (hasPermission(role, 'manage_users')) {
       buttons.push([Markup.button.callback('👥 Користувачі', 'menu_users')])
     }

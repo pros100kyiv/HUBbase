@@ -71,6 +71,7 @@ model Business {
   users                       BusinessUser[] // Користувачі бізнесу
   telegramUsers               TelegramUser[] // Користувачі Telegram бота
   telegramBroadcasts          TelegramBroadcast[] // Розсилки Telegram
+  telegramReminders           TelegramReminder[] // Нагадування Telegram
   clients                     Client[] // Клієнти
   analytics                   AnalyticsReport[] // Аналітичні звіти
   imports                     DataImport[] // Імпорти даних
@@ -382,5 +383,28 @@ model TelegramBroadcast {
   @@index([businessId])
   @@index([status])
   @@index([scheduledAt])
+  @@index([createdAt])
+}
+
+// Нагадування в Telegram
+model TelegramReminder {
+  id          String    @id @default(cuid())
+  businessId  String
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  message     String // Текст нагадування
+  targetType  String    @default("all") // all, client
+  clientId    String? // ID клієнта (якщо персональне)
+  client      Client?  @relation(fields: [clientId], references: [id], onDelete: Cascade)
+  scheduledAt DateTime? // Дата відправки (якщо заплановане)
+  sentAt      DateTime? // Дата відправки
+  status      String    @default("pending") // pending, sent, cancelled
+  createdBy   String? // ID користувача, який створив
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([businessId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@index([clientId])
   @@index([createdAt])
 }
