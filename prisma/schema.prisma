@@ -127,7 +127,7 @@ model Client {
   businessId           String
   business             Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
   name                 String
-  phone                String        @unique // Унікальний телефон в межах бізнесу
+  phone                String // Унікальний телефон в межах бізнесу
   email                String?
   // Аналітичні метрики
   totalAppointments    Int           @default(0) // Загальна кількість записів

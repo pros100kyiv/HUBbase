@@ -34,6 +34,7 @@ export default function MainPage() {
   const [servicesCache, setServicesCache] = useState<any[]>([])
   const [selectedAppointment, setSelectedAppointment] = useState<string | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -152,10 +153,7 @@ export default function MainPage() {
               <div className="w-full md:w-64">
                 <Search 
                   placeholder="Пошук записів..." 
-                  onSearch={(query) => {
-                    // Фільтрація записів по запиту
-                    console.log('Search:', query)
-                  }}
+                  onSearch={setSearchQuery}
                 />
               </div>
             </div>
@@ -269,56 +267,73 @@ export default function MainPage() {
               </div>
             </div>
             <div className="space-y-2">
-              {todayAppointments
-                .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-                .slice(0, 5)
-                .map((appointment) => (
-                  <MobileAppointmentCard
-                    key={appointment.id}
-                    appointment={appointment}
-                    servicesCache={servicesCache}
-                    onStatusChange={async (id, newStatus) => {
-                      try {
-                        const response = await fetch(`/api/appointments/${id}`, {
-                          method: 'PATCH',
-                          headers: { 'Content-Type': 'application/json' },
-                          body: JSON.stringify({ status: newStatus }),
-                        })
-                        if (response.ok) {
-                          setTodayAppointments(prev =>
-                            prev.map(apt => apt.id === id ? { ...apt, status: newStatus } : apt)
-                          )
-                          // Оновити статистику
-                          if (business?.id) {
-                            const statsResponse = await fetch(`/api/statistics?businessId=${business.id}&period=day`)
-                            if (statsResponse.ok) {
-                              const statsData = await statsResponse.json()
-                              setStats(statsData)
+              {(() => {
+                const filtered = todayAppointments.filter((apt) => {
+                  if (!searchQuery) return true
+                  const query = searchQuery.toLowerCase()
+                  return (
+                    apt.clientName.toLowerCase().includes(query) ||
+                    apt.clientPhone.includes(query) ||
+                    apt.masterName?.toLowerCase().includes(query)
+                  )
+                })
+                const sorted = filtered.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                const displayed = sorted.slice(0, 5)
+                
+                return (
+                  <>
+                    {displayed.map((appointment) => (
+                      <MobileAppointmentCard
+                        key={appointment.id}
+                        appointment={appointment}
+                        servicesCache={servicesCache}
+                        onStatusChange={async (id, newStatus) => {
+                          try {
+                            const response = await fetch(`/api/appointments/${id}`, {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({ status: newStatus }),
+                            })
+                            if (response.ok) {
+                              setTodayAppointments(prev =>
+                                prev.map(apt => apt.id === id ? { ...apt, status: newStatus } : apt)
+                              )
+                              // Оновити статистику
+                              if (business?.id) {
+                                const statsResponse = await fetch(`/api/statistics?businessId=${business.id}&period=day`)
+                                if (statsResponse.ok) {
+                                  const statsData = await statsResponse.json()
+                                  setStats(statsData)
+                                }
+                              }
                             }
+                          } catch (error) {
+                            console.error('Error updating appointment status:', error)
                           }
+                        }}
+                      />
+                    ))}
+                    {filtered.length === 0 && (
+                      <p className="text-gray-500 dark:text-gray-400 text-center py-8 font-medium text-sm">
+                        {searchQuery 
+                          ? 'Записів не знайдено'
+                          : isToday(selectedDate) 
+                            ? 'Немає записів на сьогодні'
+                            : `Немає записів на ${format(selectedDate, 'd MMMM yyyy', { locale: uk })}`
                         }
-                      } catch (error) {
-                        console.error('Error updating appointment status:', error)
-                      }
-                    }}
-                  />
-                ))}
-              {todayAppointments.length === 0 && (
-                <p className="text-gray-500 dark:text-gray-400 text-center py-8 font-medium text-sm">
-                  {isToday(selectedDate) 
-                    ? 'Немає записів на сьогодні'
-                    : `Немає записів на ${format(selectedDate, 'd MMMM yyyy', { locale: uk })}`
-                  }
-                </p>
-              )}
-              {todayAppointments.length > 5 && (
-                <button
-                  onClick={() => router.push('/dashboard/appointments')}
-                  className="btn-secondary w-full"
-                >
-                  Показати всі записи ({todayAppointments.length})
-                </button>
-              )}
+                      </p>
+                    )}
+                    {filtered.length > 5 && (
+                      <button
+                        onClick={() => router.push('/dashboard/appointments')}
+                        className="btn-secondary w-full"
+                      >
+                        Показати всі записи ({filtered.length})
+                      </button>
+                    )}
+                  </>
+                )
+              })()}
             </div>
           </div>
         </div>

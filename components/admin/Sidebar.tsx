@@ -60,13 +60,12 @@ export function Sidebar({ className }: SidebarProps) {
   }, [business])
 
   const navItems: NavItem[] = [
-    { id: 'main', label: 'Головна', icon: <HomeIcon />, path: '/dashboard' },
+    { id: 'main', label: 'Головна', icon: <HomeIcon />, path: '/dashboard/main' },
     { id: 'appointments', label: 'Записи', icon: <CalendarIcon />, path: '/dashboard/appointments' },
-    { id: 'schedule', label: 'Графік роботи', icon: <CalendarIcon />, path: '/dashboard/schedule' },
     { id: 'clients', label: 'Клієнти', icon: <UsersIcon />, path: '/dashboard/clients' },
     { id: 'masters', label: 'Майстри', icon: <UserIcon />, path: '/dashboard/masters' },
     { id: 'pricelist', label: 'Прайс-лист', icon: <StarIcon />, path: '/dashboard/pricelist' },
-    { id: 'analytics', label: 'Аналітика', icon: <ChartIcon />, path: '/dashboard/analytics' },
+    { id: 'analytics', label: 'CRM', icon: <ChartIcon />, path: '/dashboard/analytics' },
     { id: 'notifications', label: 'Бронювання', icon: <BellIcon />, path: '#', badge: pendingCount, onClick: () => setShowNotifications(true) },
     { id: 'settings', label: 'Налаштування', icon: <SettingsIcon />, path: '/dashboard/settings' },
   ]
@@ -107,7 +106,7 @@ export function Sidebar({ className }: SidebarProps) {
         
         <nav className="p-1.5 md:p-2 space-y-0.5 md:space-y-1">
           {navItems.map((item) => {
-            const isActive = pathname === item.path || (item.path === '/dashboard' && pathname === '/dashboard')
+            const isActive = pathname === item.path || (item.path === '/dashboard/main' && (pathname === '/dashboard' || pathname === '/dashboard/main'))
             return (
               <button
                 key={item.id}
