@@ -16,16 +16,27 @@ interface TelegramSettingsProps {
 export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) {
   const [telegramBotToken] = useState(business.telegramBotToken || '')
   const [telegramUsers, setTelegramUsers] = useState<any[]>([])
+  const [activePasswords, setActivePasswords] = useState<any[]>([])
   const [adminPassword, setAdminPassword] = useState<string | null>(null)
   const [clientPassword, setClientPassword] = useState<string | null>(null)
 
-  useEffect(() => {
+  const loadData = () => {
     if (business.id) {
-      fetch(`/api/telegram/users?businessId=${business.id}`)
-        .then(res => res.json())
-        .then(data => setTelegramUsers(Array.isArray(data) ? data : []))
-        .catch(() => setTelegramUsers([]))
+      Promise.all([
+        fetch(`/api/telegram/users?businessId=${business.id}`)
+          .then(res => res.json())
+          .then(data => setTelegramUsers(Array.isArray(data) ? data : []))
+          .catch(() => setTelegramUsers([])),
+        fetch(`/api/telegram/passwords?businessId=${business.id}`)
+          .then(res => res.json())
+          .then(data => setActivePasswords(Array.isArray(data) ? data : []))
+          .catch(() => setActivePasswords([]))
+      ])
     }
+  }
+
+  useEffect(() => {
+    loadData()
   }, [business.id])
 
   const generatePassword = async (role: 'ADMIN' | 'CLIENT') => {
@@ -46,6 +57,8 @@ export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) 
         } else {
           setClientPassword(data.password)
         }
+        // Оновлюємо список активних паролів
+        loadData()
         const { toast } = await import('@/components/ui/toast')
         toast({ title: 'Пароль згенеровано!', type: 'success', duration: 3000 })
       } else {
@@ -123,6 +136,42 @@ export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) 
             )}
           </div>
         </div>
+
+        {/* Список активних паролів */}
+        {activePasswords.length > 0 && (
+          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+            <h3 className="text-sm font-black text-foreground mb-3">📋 Активні паролі активації</h3>
+            <div className="space-y-2">
+              {activePasswords.map((user) => (
+                <div key={user.id} className="p-3 bg-gray-50 dark:bg-gray-800 rounded-candy-sm">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="text-sm font-medium text-foreground">
+                        {user.role === 'ADMIN' ? '🔐 Адміністратор' : user.role === 'CLIENT' ? '📢 Клієнт' : user.role}
+                      </p>
+                      {user.firstName && (
+                        <p className="text-xs text-gray-500">
+                          {user.firstName} {user.lastName || ''}
+                        </p>
+                      )}
+                      <p className="text-xs text-gray-500 mt-1">
+                        Створено: {new Date(user.createdAt).toLocaleDateString('uk-UA')}
+                      </p>
+                    </div>
+                    <div className="text-right">
+                      <code className="block text-lg font-black text-candy-blue dark:text-candy-mint">
+                        {user.activationPassword}
+                      </code>
+                      <p className="text-xs text-gray-500 mt-1">
+                        /start {user.activationPassword}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Користувачі */}
