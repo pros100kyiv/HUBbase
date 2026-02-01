@@ -17,6 +17,11 @@ interface Business {
   secondaryColor?: string
   backgroundColor?: string
   surfaceColor?: string
+  businessCardBackgroundImage?: string
+  slogan?: string
+  additionalInfo?: string
+  socialMedia?: string
+  location?: string
 }
 
 export default function BookingPage() {

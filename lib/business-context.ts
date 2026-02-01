@@ -13,6 +13,12 @@ export async function getBusinessBySlug(slug: string) {
       secondaryColor: true,
       backgroundColor: true,
       surfaceColor: true,
+      businessCardBackgroundImage: true,
+      slogan: true,
+      additionalInfo: true,
+      socialMedia: true,
+      workingHours: true,
+      location: true,
     },
   })
 }

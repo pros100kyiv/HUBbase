@@ -6,6 +6,8 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { WorkingHoursEditor } from '@/components/admin/WorkingHoursEditor'
+import { BusinessCardEditor } from '@/components/admin/BusinessCardEditor'
+import { ImageIcon } from '@/components/icons'
 import { toast } from '@/components/ui/toast'
 import { Confetti, triggerConfetti } from '@/components/ui/confetti'
 
@@ -20,6 +22,12 @@ interface Business {
   secondaryColor?: string
   backgroundColor?: string
   surfaceColor?: string
+  businessCardBackgroundImage?: string
+  slogan?: string
+  additionalInfo?: string
+  socialMedia?: string
+  workingHours?: string
+  location?: string
 }
 
 interface Master {
@@ -39,7 +47,7 @@ interface Service {
   category?: string
 }
 
-type Tab = 'info' | 'masters' | 'services'
+type Tab = 'info' | 'masters' | 'services' | 'businessCard'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -61,6 +69,7 @@ export default function SettingsPage() {
     name: '',
     bio: '',
     rating: '0',
+    photo: '',
   })
 
   // Service form
@@ -238,7 +247,7 @@ export default function SettingsPage() {
         ...(editingMaster ? {} : { businessId: business.id }),
         name: masterForm.name.trim(),
         bio: masterForm.bio?.trim() || null,
-        photo: editingMaster?.photo || null,
+        photo: masterForm.photo?.trim() || null,
         rating: ratingValue,
       }
 
@@ -373,6 +382,7 @@ export default function SettingsPage() {
       name: master.name,
       bio: master.bio || '',
       rating: master.rating.toString(),
+      photo: master.photo || '',
     })
     setShowMasterForm(true)
   }
@@ -420,26 +430,28 @@ export default function SettingsPage() {
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1.5 mb-2 bg-gray-100 dark:bg-gray-800 rounded-candy-sm border border-gray-200 dark:border-gray-700 p-1.5 overflow-hidden">
-            {(['info', 'masters', 'services'] as Tab[]).map((tab) => {
+          <div className="flex gap-1.5 mb-2 bg-gray-100 dark:bg-gray-800 rounded-candy-sm border border-gray-200 dark:border-gray-700 p-1.5 overflow-x-auto">
+            {(['info', 'masters', 'services', 'businessCard'] as Tab[]).map((tab) => {
               const tabColors: Record<Tab, string> = {
-                'info': 'hover:bg-blue-50 hover:text-candy-blue',
-                'masters': 'hover:bg-blue-50 hover:text-candy-blue',
-                'services': 'hover:bg-green-50 hover:text-candy-mint',
+                'info': 'hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-candy-blue',
+                'masters': 'hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-candy-blue',
+                'services': 'hover:bg-green-50 dark:hover:bg-gray-700 hover:text-candy-mint',
+                'businessCard': 'hover:bg-pink-50 dark:hover:bg-gray-700 hover:text-candy-pink',
               }
               return (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-candy-xs transition-all duration-200 active:scale-97 whitespace-nowrap ${
+                  className={`px-3 py-1.5 text-xs font-bold rounded-candy-xs transition-all duration-200 active:scale-97 whitespace-nowrap flex-shrink-0 ${
                     activeTab === tab
                       ? 'candy-purple text-white shadow-soft-lg'
-                      : `text-gray-600 ${tabColors[tab]}`
+                      : `text-gray-700 dark:text-gray-300 ${tabColors[tab]}`
                   }`}
                 >
                   {tab === 'info' && 'Інформація'}
                   {tab === 'masters' && 'Майстри'}
                   {tab === 'services' && 'Послуги'}
+                  {tab === 'businessCard' && 'Візитівка'}
                 </button>
               )
             })}
@@ -535,6 +547,57 @@ export default function SettingsPage() {
                       onChange={(e) => setMasterForm({ ...masterForm, name: e.target.value })}
                       className="text-xs py-1.5 h-auto"
                     />
+                    <div>
+                      <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
+                        Фото (URL або завантажити)
+                      </label>
+                      <div className="flex gap-2">
+                        <Input
+                          type="text"
+                          placeholder="https://example.com/photo.jpg"
+                          value={masterForm.photo}
+                          onChange={(e) => setMasterForm({ ...masterForm, photo: e.target.value })}
+                          className="text-xs py-1.5 h-auto flex-1"
+                        />
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          id="master-photo-upload"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0]
+                            if (file) {
+                              const reader = new FileReader()
+                              reader.onloadend = () => {
+                                setMasterForm({ ...masterForm, photo: reader.result as string })
+                              }
+                              reader.readAsDataURL(file)
+                            }
+                          }}
+                        />
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => document.getElementById('master-photo-upload')?.click()}
+                          className="text-xs py-1.5 h-auto"
+                        >
+                          <ImageIcon className="w-3 h-3" />
+                        </Button>
+                      </div>
+                      {masterForm.photo && (
+                        <div className="mt-2">
+                          <img
+                            src={masterForm.photo}
+                            alt="Preview"
+                            className="w-16 h-16 object-cover rounded-candy-xs border border-gray-200 dark:border-gray-700"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = 'none'
+                            }}
+                          />
+                        </div>
+                      )}
+                    </div>
                     <Input
                       placeholder="Біографія"
                       value={masterForm.bio}
@@ -737,6 +800,30 @@ export default function SettingsPage() {
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Візитівка */}
+          {activeTab === 'businessCard' && business && (
+            <BusinessCardEditor
+              business={business}
+              onSave={async (data) => {
+                try {
+                  const response = await fetch(`/api/business/${business.id}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(data),
+                  })
+                  if (!response.ok) throw new Error('Failed to save')
+                  const updated = await response.json()
+                  setBusiness(updated.business)
+                  setFormData(updated.business)
+                  triggerConfetti()
+                  toast.success('Візитівку збережено!')
+                } catch (error) {
+                  toast.error('Помилка збереження візитівки')
+                }
+              }}
+            />
           )}
 
         </div>

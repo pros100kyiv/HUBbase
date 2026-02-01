@@ -27,6 +27,13 @@ model Business {
   surfaceColor String?       @default("#121212")
   hideRevenue  Boolean       @default(false)
   isActive    Boolean       @default(true)
+  // Візитівка
+  businessCardBackgroundImage String?  // URL до фонового зображення
+  slogan      String?        // Слоган бізнесу
+  additionalInfo String?     // Додаткова інформація (JSON або текст)
+  socialMedia String?        // JSON: { "facebook": "...", "instagram": "...", "telegram": "..." }
+  workingHours String?       // JSON: { "monday": { "start": "09:00", "end": "18:00", "enabled": true }, ... }
+  location    String?        // Розташування/адреса для візитівки
   masters     Master[]
   services    Service[]
   appointments Appointment[]

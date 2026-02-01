@@ -37,6 +37,12 @@ export async function GET(
           surfaceColor: true,
           hideRevenue: true,
           isActive: true,
+          businessCardBackgroundImage: true,
+          slogan: true,
+          additionalInfo: true,
+          socialMedia: true,
+          workingHours: true,
+          location: true,
         },
       })
     } else {
@@ -73,7 +79,11 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { name, email, phone, address, description, primaryColor, secondaryColor, backgroundColor, surfaceColor, hideRevenue } = body
+    const { 
+      name, email, phone, address, description, 
+      primaryColor, secondaryColor, backgroundColor, surfaceColor, hideRevenue,
+      businessCardBackgroundImage, slogan, additionalInfo, socialMedia, location
+    } = body
 
     const business = await prisma.business.update({
       where: { id: param },
@@ -88,6 +98,11 @@ export async function PATCH(
         ...(backgroundColor !== undefined && { backgroundColor }),
         ...(surfaceColor !== undefined && { surfaceColor }),
         ...(hideRevenue !== undefined && { hideRevenue }),
+        ...(businessCardBackgroundImage !== undefined && { businessCardBackgroundImage: businessCardBackgroundImage || null }),
+        ...(slogan !== undefined && { slogan: slogan || null }),
+        ...(additionalInfo !== undefined && { additionalInfo: additionalInfo || null }),
+        ...(socialMedia !== undefined && { socialMedia: socialMedia || null }),
+        ...(location !== undefined && { location: location || null }),
       },
       select: {
         id: true,
@@ -103,6 +118,12 @@ export async function PATCH(
         backgroundColor: true,
         surfaceColor: true,
         isActive: true,
+        businessCardBackgroundImage: true,
+        slogan: true,
+        additionalInfo: true,
+        socialMedia: true,
+        workingHours: true,
+        location: true,
       },
     })
 
