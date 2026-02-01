@@ -146,7 +146,8 @@ export function createTelegramBot(config: TelegramBotConfig) {
       await logAction('command', 'stats', null, ctx.from?.id?.toString())
 
       // Завантажуємо статистику
-      const stats = await fetch(`http://localhost:3000/api/statistics?businessId=${config.businessId}&period=month`)
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+      const stats = await fetch(`${baseUrl}/api/statistics?businessId=${config.businessId}&period=month`)
         .then(res => res.json())
         .catch(() => null)
 
