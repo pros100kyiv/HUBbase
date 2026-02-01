@@ -29,11 +29,7 @@ interface AppointmentCardProps {
   servicesCache?: any[]
 }
 
-interface AppointmentCardWithServicesProps extends AppointmentCardProps {
-  servicesCache: any[]
-}
-
-function AppointmentCard({ appointment, onConfirm, onReschedule, processing, servicesCache = [] }: AppointmentCardWithServicesProps) {
+function AppointmentCard({ appointment, onConfirm, onReschedule, processing, servicesCache = [] }: AppointmentCardProps) {
   const startTime = new Date(appointment.startTime)
   const endTime = new Date(appointment.endTime)
   let servicesList: string[] = []
