@@ -449,7 +449,7 @@ export default function SettingsPage() {
     
     setServiceForm({
       name: service.name,
-      price: service.price.toString(),
+      price: (service.price / 100).toString(), // Конвертуємо з копійок в гривні для відображення
       duration: service.duration.toString(),
       category: category,
       subcategory: subcategory,

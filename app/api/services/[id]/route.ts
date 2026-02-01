@@ -10,15 +10,19 @@ export async function PATCH(
     const body = await request.json()
     const { name, price, duration, category, subcategory } = body
 
+    // Конвертуємо ціну з гривень в копійки (користувач вводить в гривнях)
+    const updateData: any = {}
+    if (name) updateData.name = name
+    if (price !== undefined) {
+      updateData.price = Math.round(parseFloat(price) * 100)
+    }
+    if (duration !== undefined) updateData.duration = parseInt(duration)
+    if (category !== undefined) updateData.category = category
+    if (subcategory !== undefined) updateData.subcategory = subcategory
+
     const service = await prisma.service.update({
       where: { id: resolvedParams.id },
-      data: {
-        ...(name && { name }),
-        ...(price !== undefined && { price: parseInt(price) }),
-        ...(duration !== undefined && { duration: parseInt(duration) }),
-        ...(category !== undefined && { category }),
-        ...(subcategory !== undefined && { subcategory }),
-      },
+      data: updateData,
     })
 
     return NextResponse.json(service)

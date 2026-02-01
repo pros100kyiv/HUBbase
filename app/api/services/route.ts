@@ -32,11 +32,14 @@ export async function POST(request: Request) {
       )
     }
 
+    // Конвертуємо ціну з гривень в копійки (користувач вводить в гривнях)
+    const priceInCents = Math.round(parseFloat(price) * 100)
+
     const service = await prisma.service.create({
       data: {
         businessId,
         name,
-        price: parseInt(price),
+        price: priceInCents,
         duration: parseInt(duration),
         category: category || null,
         subcategory: subcategory || null,
