@@ -532,7 +532,8 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
       return
     }
 
-    const reminderId = ctx.match[1]
+    const callbackData = 'data' in ctx.callbackQuery ? ctx.callbackQuery.data : ''
+    const reminderId = callbackData.replace('send_reminder_', '')
     await ctx.answerCbQuery('⏰ Відправка нагадування...')
 
     try {
