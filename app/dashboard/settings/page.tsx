@@ -412,10 +412,15 @@ export default function SettingsPage() {
       <Confetti trigger={showConfetti} />
       <div className="p-3">
         <div className="max-w-7xl mx-auto">
-          <h1 className="text-heading spacing-item">Налаштування</h1>
+          <div className="spacing-item">
+            <div>
+              <h1 className="text-heading">Налаштування</h1>
+              <p className="text-caption font-medium">Управління бізнесом</p>
+            </div>
+          </div>
 
           {/* Tabs */}
-          <div className="flex gap-1.5 mb-2 bg-gray-100 rounded-candy-sm border border-gray-200 p-1.5 overflow-hidden">
+          <div className="flex gap-1.5 mb-2 bg-gray-100 dark:bg-gray-800 rounded-candy-sm border border-gray-200 dark:border-gray-700 p-1.5 overflow-hidden">
             {(['info', 'masters', 'services'] as Tab[]).map((tab) => {
               const tabColors: Record<Tab, string> = {
                 'info': 'hover:bg-blue-50 hover:text-candy-blue',

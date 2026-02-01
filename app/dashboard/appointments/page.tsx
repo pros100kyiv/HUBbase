@@ -201,19 +201,24 @@ export default function AppointmentsPage() {
     <div className="min-h-screen bg-background">
       <div className="p-3">
         <div className="max-w-7xl mx-auto">
-                 <div className="flex items-center justify-between spacing-item">
-                   <h1 className="text-heading">Записи</h1>
-            <button
-              onClick={() => {
-                setShowCreateForm(true)
-                if (!selectedDate) {
-                  setSelectedDate(new Date())
-                }
-              }}
-              className="btn-primary whitespace-nowrap"
-            >
-              + Додати запис
-            </button>
+          <div className="spacing-item">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <div>
+                <h1 className="text-heading">Записи</h1>
+                <p className="text-caption font-medium">Управління записами</p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowCreateForm(true)
+                  if (!selectedDate) {
+                    setSelectedDate(new Date())
+                  }
+                }}
+                className="btn-primary whitespace-nowrap"
+              >
+                + Додати запис
+              </button>
+            </div>
           </div>
 
           {/* Month Navigation */}

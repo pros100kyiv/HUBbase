@@ -80,8 +80,12 @@ export default function AnalyticsPage() {
     <div className="min-h-screen bg-background">
       <div className="p-3">
         <div className="max-w-7xl mx-auto">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between spacing-item gap-2">
-            <h1 className="text-heading">Аналітика</h1>
+          <div className="spacing-item">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <div>
+                <h1 className="text-heading">Аналітика</h1>
+                <p className="text-caption font-medium">Статистика та звіти</p>
+              </div>
             <div className="flex gap-1 bg-gray-100 p-1 rounded-candy-sm border border-gray-200 overflow-hidden">
               {(['day', 'week', 'month'] as const).map((p) => (
                 <button

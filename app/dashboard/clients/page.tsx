@@ -179,21 +179,26 @@ export default function ClientsPage() {
     <div className="min-h-screen bg-background">
       <div className="p-3">
         <div className="max-w-7xl mx-auto">
-                 <div className="flex items-center justify-between spacing-item">
-                   <h1 className="text-heading">Клієнти</h1>
-            <div className="text-[10px] text-gray-500">
-              Всього: <span className="font-bold text-foreground">{clients.length}</span>
+          <div className="spacing-item">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <div>
+                <h1 className="text-heading">Клієнти</h1>
+                <p className="text-caption font-medium">Управління клієнтською базою</p>
+              </div>
+              <div className="text-sm text-gray-600 dark:text-gray-400">
+                Всього: <span className="font-bold text-foreground dark:text-white">{clients.length}</span>
+              </div>
             </div>
           </div>
 
           {/* Search */}
-          <div className="card-candy rounded-candy shadow-soft p-1.5 mb-1.5">
+          <div className="mb-2">
             <input
               type="text"
               placeholder="Пошук за ім'ям або телефоном..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full px-2.5 py-1.5 text-xs rounded-candy border border-gray-200 bg-white focus:outline-none focus:ring-2 focus:ring-candy-purple focus:border-candy-purple"
+              className="w-full px-3 py-2 text-sm rounded-candy-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 placeholder:text-gray-500 dark:placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-candy-blue focus:border-candy-blue transition-all"
             />
           </div>
 
@@ -214,7 +219,7 @@ export default function ClientsPage() {
                   {/* Client Header - Always Visible */}
                   <button
                     onClick={() => handleClientClick(client)}
-                    className="w-full p-2 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
+                    className="w-full p-3 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
                   >
                     <div className="flex items-center justify-between gap-1.5">
                       <div className="flex items-center gap-1.5 flex-1 min-w-0">
@@ -222,17 +227,17 @@ export default function ClientsPage() {
                           {client.name.charAt(0).toUpperCase()}
                         </div>
                         <div className="min-w-0 flex-1 overflow-hidden text-left">
-                          <h3 className="text-xs md:text-sm font-black text-foreground truncate">{client.name}</h3>
-                          <p className="text-[10px] text-gray-600 dark:text-gray-400 truncate">{client.phone}</p>
+                          <h3 className="text-sm md:text-base font-black text-gray-900 dark:text-white truncate">{client.name}</h3>
+                          <p className="text-xs text-gray-700 dark:text-gray-300 truncate">{client.phone}</p>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2 flex-shrink-0">
+                      <div className="flex items-center gap-3 flex-shrink-0">
                         <div className="text-center">
-                          <div className="text-xs font-black text-foreground">
+                          <div className="text-sm font-black text-gray-900 dark:text-white">
                             {client.appointmentsCount}
                           </div>
-                          <div className="text-[9px] text-gray-500 dark:text-gray-400">Візитів</div>
+                          <div className="text-xs text-gray-600 dark:text-gray-400">Візитів</div>
                         </div>
                         {isExpanded ? (
                           <ChevronUpIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
@@ -318,8 +323,8 @@ export default function ClientsPage() {
             })}
 
             {filteredClients.length === 0 && (
-              <div className="card-candy rounded-candy shadow-soft p-6 text-center">
-                <p className="text-gray-500 text-sm">
+              <div className="card-candy rounded-candy-sm shadow-soft p-8 text-center">
+                <p className="text-gray-600 dark:text-gray-400 text-base font-medium">
                   {searchQuery ? 'Клієнтів не знайдено' : 'Немає клієнтів'}
                 </p>
               </div>

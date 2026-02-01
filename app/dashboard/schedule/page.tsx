@@ -142,8 +142,12 @@ export default function SchedulePage() {
     <div className="bg-background">
       <div className="p-3">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between spacing-item">
-            <h1 className="text-heading">Графік роботи</h1>
+          <div className="spacing-item">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <div>
+                <h1 className="text-heading">Графік роботи</h1>
+                <p className="text-caption font-medium">Календар записів</p>
+              </div>
             <div className="flex gap-2">
               <button
                 onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}

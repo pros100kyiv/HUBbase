@@ -100,14 +100,19 @@ export default function MastersPage() {
     <div className="min-h-screen bg-background">
       <div className="p-3">
         <div className="max-w-7xl mx-auto">
-          <div className="flex items-center justify-between spacing-item">
-            <h1 className="text-heading">Майстри</h1>
-            <button
-              onClick={() => router.push('/dashboard/settings?tab=masters')}
-              className="btn-primary"
-            >
-              + Додати майстра
-            </button>
+          <div className="spacing-item">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <div>
+                <h1 className="text-heading">Майстри</h1>
+                <p className="text-caption font-medium">Управління майстрами</p>
+              </div>
+              <button
+                onClick={() => router.push('/dashboard/settings?tab=masters')}
+                className="btn-primary"
+              >
+                + Додати майстра
+              </button>
+            </div>
           </div>
 
           <div className="space-y-1">

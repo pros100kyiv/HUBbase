@@ -84,15 +84,20 @@ export default function ServicesPage() {
     <div className="min-h-screen bg-background">
       <div className="p-3">
         <div className="max-w-7xl mx-auto">
-                 <div className="flex items-center justify-between spacing-item">
-                   <h1 className="text-heading">Послуги</h1>
-                   <button
-                     onClick={() => router.push('/dashboard/settings?tab=services')}
-                     className="btn-primary whitespace-nowrap"
-                   >
-                     + Додати послугу
-                   </button>
-                 </div>
+          <div className="spacing-item">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+              <div>
+                <h1 className="text-heading">Послуги</h1>
+                <p className="text-caption font-medium">Управління послугами</p>
+              </div>
+              <button
+                onClick={() => router.push('/dashboard/settings?tab=services')}
+                className="btn-primary whitespace-nowrap"
+              >
+                + Додати послугу
+              </button>
+            </div>
+          </div>
 
           <div className="space-y-3">
             {Object.entries(groupedServices).map(([category, categoryServices], categoryIndex) => {
