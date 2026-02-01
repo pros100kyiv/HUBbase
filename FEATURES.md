@@ -184,3 +184,4 @@ import { Skeleton, SkeletonCard, SkeletonWidget } from '@/components/ui/skeleton
 - Skeleton loaders можна використовувати скрізь
 
 
+

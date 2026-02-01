@@ -78,3 +78,4 @@ npm run db:check
 - Після зміни `DATABASE_URL` завжди виконуйте `npx prisma generate && npx prisma db push`
 - Не комітьте `.env` файл в git (він вже в `.gitignore`)
 
+

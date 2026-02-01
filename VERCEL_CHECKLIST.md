@@ -63,3 +63,4 @@ npx prisma db push
 3. Перевірте, чи виконана міграція бази даних
 4. Дивіться детальні інструкції в [VERCEL_SETUP.md](./VERCEL_SETUP.md)
 
+

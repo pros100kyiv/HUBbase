@@ -15,15 +15,7 @@ const nextConfig = {
   },
 }
 
-// PWA тільки для production
-if (process.env.NODE_ENV !== 'development') {
-  const withPWA = require('next-pwa')({
-    dest: 'public',
-    register: true,
-    skipWaiting: true,
-  })
-  module.exports = withPWA(nextConfig)
-} else {
-  module.exports = nextConfig
-}
+// PWA тимчасово вимкнено через несумісність з Next.js 15
+// TODO: Оновити next-pwa або використати альтернативу
+module.exports = nextConfig
 

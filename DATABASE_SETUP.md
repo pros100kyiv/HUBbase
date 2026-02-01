@@ -97,3 +97,4 @@ npx prisma db push
 
 Для production обов'язково використовуйте PostgreSQL. SQLite працює тільки локально.
 
+

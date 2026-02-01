@@ -118,3 +118,4 @@ export async function GET() {
 3. Спробуйте виконати міграцію локально з production DATABASE_URL
 4. Перевірте, чи всі змінні оточення додані
 
+
