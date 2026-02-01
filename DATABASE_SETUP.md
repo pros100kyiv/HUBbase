@@ -1,100 +1,116 @@
-# Налаштування DATABASE_URL
+# Налаштування бази даних
 
-## Проблема
+## Помилка: "Помилка підключення до бази даних: Перевірте налаштування DATABASE_URL"
 
-Проект налаштований для PostgreSQL, але локально може використовуватися SQLite. Потрібно правильно налаштувати `DATABASE_URL` для різних середовищ.
+### Швидке вирішення:
 
-## Рішення
+1. **Перевірте наявність файлу `.env`**
+   ```bash
+   # Якщо файлу немає, створіть його
+   ```
 
-### Варіант 1: Локальна розробка з SQLite (швидкий старт)
+2. **Додайте DATABASE_URL в `.env` файл**
 
-Якщо ви хочете швидко почати роботу локально без налаштування PostgreSQL:
+   **Для локальної розробки (SQLite):**
+   ```env
+   DATABASE_URL="file:./prisma/dev.db"
+   ```
 
-1. **Тимчасово змініть `prisma/schema.prisma`:**
-```prisma
-datasource db {
-  provider = "sqlite"  // замість "postgresql"
-  url      = env("DATABASE_URL")
-}
-```
+   **Для production (PostgreSQL):**
+   ```env
+   DATABASE_URL="postgresql://user:password@host:port/database?schema=public"
+   ```
 
-2. **В `.env` файлі:**
-```env
-DATABASE_URL="file:./dev.db"
-```
+3. **Перевірте підключення:**
+   ```bash
+   npm run db:test
+   ```
 
-3. **Виконайте міграцію:**
+4. **Створіть структуру бази даних:**
+   ```bash
+   npx prisma generate
+   npx prisma db push
+   ```
+
+## Детальні інструкції
+
+### Варіант 1: Локальна розробка з SQLite
+
+1. Створіть файл `.env` в корені проекту:
+   ```env
+   DATABASE_URL="file:./prisma/dev.db"
+   ```
+
+2. Виконайте:
+   ```bash
+   npm run db:generate
+   npm run db:push
+   ```
+
+3. Перевірте:
+   ```bash
+   npm run db:test
+   ```
+
+### Варіант 2: PostgreSQL (для production)
+
+1. Створіть базу даних PostgreSQL:
+   - Vercel Postgres
+   - Neon
+   - Supabase
+   - Railway
+   - Або інша
+
+2. Отримайте connection string (DATABASE_URL)
+
+3. Додайте в `.env`:
+   ```env
+   DATABASE_URL="postgresql://user:password@host:port/database?schema=public"
+   ```
+
+4. Виконайте міграцію:
+   ```bash
+   npm run db:generate
+   npm run db:push
+   ```
+
+5. Перевірте:
+   ```bash
+   npm run db:test
+   ```
+
+## Перевірка налаштувань
+
+### Команда для перевірки:
 ```bash
-npx prisma generate
-npx prisma db push
+npm run db:test
 ```
 
-### Варіант 2: Локальна розробка з PostgreSQL (рекомендовано)
-
-Для тестування з тією ж базою, що і на Vercel:
-
-1. **Створіть локальну PostgreSQL базу** (через Docker або встановлений PostgreSQL):
-```bash
-# Через Docker
-docker run --name postgres-dev -e POSTGRES_PASSWORD=password -e POSTGRES_DB=barbershop -p 5432:5432 -d postgres
-```
-
-2. **В `.env` файлі:**
-```env
-DATABASE_URL="postgresql://postgres:password@localhost:5432/barbershop?sslmode=disable"
-```
-
-3. **Виконайте міграцію:**
-```bash
-npx prisma generate
-npx prisma db push
-```
-
-### Варіант 3: Production на Vercel
-
-1. **Створіть PostgreSQL базу даних:**
-   - Vercel Postgres (рекомендовано)
-   - Neon, Supabase, Railway, або інша
-
-2. **Додайте `DATABASE_URL` в Vercel:**
-   - Settings → Environment Variables
-   - Формат: `postgresql://user:password@host:port/database?sslmode=require`
-
-3. **Після деплою виконайте міграцію:**
-```bash
-vercel env pull .env.local
-npx prisma db push
-```
-
-## Перевірка налаштування
-
-### Локально:
-Відкрийте в браузері: `http://localhost:3000/api/test-db`
-
-### На Vercel:
-Відкрийте: `https://ваш-домен.vercel.app/api/test-db`
-
-Це покаже:
-- Чи налаштована `DATABASE_URL`
-- Чи підключена база даних
-- Скільки бізнесів у базі
+Ця команда перевірить:
+- ✅ Наявність DATABASE_URL
+- ✅ Підключення до бази даних
+- ✅ Структуру таблиць
+- ✅ Наявність даних
 
 ## Типові помилки
 
-### "DATABASE_URL is not set"
-- Перевірте, чи є `.env` файл локально
-- Перевірте Environment Variables на Vercel
+### "DATABASE_URL не знайдено"
+**Рішення:** Створіть файл `.env` з DATABASE_URL
 
 ### "Can't reach database server"
-- Перевірте правильність `DATABASE_URL`
-- Перевірте, чи база даних активна
-- Перевірте SSL налаштування (`?sslmode=require` для production)
+**Рішення:** 
+- Перевірте, чи запущена база даних
+- Перевірте правильність DATABASE_URL
+- Перевірте мережеві налаштування
 
 ### "Table does not exist"
-- Виконайте міграцію: `npx prisma db push`
+**Рішення:** Виконайте `npx prisma db push`
 
-## Рекомендація
+### "Column does not exist"
+**Рішення:** Виконайте міграцію з `prisma/migrations/add_business_card_fields.sql`
 
-Для production обов'язково використовуйте PostgreSQL. SQLite працює тільки локально.
+## Додаткова інформація
 
-
+- Документація Prisma: https://www.prisma.io/docs
+- Налаштування Vercel: [VERCEL_SETUP.md](./VERCEL_SETUP.md)
+- Міграція полів візитівки: [MIGRATION_INSTRUCTIONS.md](./MIGRATION_INSTRUCTIONS.md)
