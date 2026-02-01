@@ -70,7 +70,11 @@ export function MobileAppointmentCard({
   }
 
   const standardPrice = calculateStandardPrice()
-  const displayPrice = appointment.customPrice ? appointment.customPrice / 100 : standardPrice / 100
+  // customPrice зберігається в копійках, тому ділимо на 100 для відображення в гривнях
+  // standardPrice також в копійках
+  const displayPrice = appointment.customPrice !== null && appointment.customPrice !== undefined 
+    ? appointment.customPrice / 100 
+    : standardPrice / 100
 
   const handleSavePrice = async () => {
     if (!onPriceChange) return

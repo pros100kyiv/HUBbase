@@ -253,7 +253,16 @@ export async function PATCH(
     if (startTime) updateData.startTime = new Date(startTime)
     if (endTime) updateData.endTime = new Date(endTime)
     if (customPrice !== undefined) {
-      updateData.customPrice = customPrice ? parseInt(customPrice) : null
+      // customPrice приходить в копійках (якщо число) або як рядок
+      // Якщо це число, використовуємо його безпосередньо
+      // Якщо рядок, парсимо його
+      if (customPrice === null || customPrice === '') {
+        updateData.customPrice = null
+      } else if (typeof customPrice === 'number') {
+        updateData.customPrice = customPrice
+      } else {
+        updateData.customPrice = parseInt(String(customPrice))
+      }
     }
     if (masterId) updateData.masterId = masterId
     if (clientName) updateData.clientName = clientName.trim()
