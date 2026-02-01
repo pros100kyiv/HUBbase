@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createTelegramBot } from '@/lib/telegram'
+import { createEnhancedTelegramBot } from '@/lib/telegram-enhanced'
 import { prisma } from '@/lib/prisma'
 
 /**
@@ -25,8 +26,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Telegram bot not configured' }, { status: 400 })
     }
 
-    // Створюємо бота
-    const bot = createTelegramBot({
+    // Створюємо розширеного бота (з активацією через пароль та інтерфейсом)
+    const bot = createEnhancedTelegramBot({
       token: business.telegramBotToken,
       businessId,
     })
