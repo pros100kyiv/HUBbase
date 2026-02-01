@@ -19,7 +19,8 @@
     "business:credentials": "tsx scripts/create-credentials-file.ts",
     "telegram:monitor": "tsx scripts/telegram-monitor.ts",
     "telegram:setup": "tsx scripts/setup-telegram-bot.ts",
-    "telegram:webhook": "tsx scripts/setup-webhook.ts"
+    "telegram:webhook": "tsx scripts/setup-webhook.ts",
+    "telegram:update-tokens": "tsx scripts/update-telegram-token.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
