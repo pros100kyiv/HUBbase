@@ -818,9 +818,9 @@ export default function SettingsPage() {
                   setBusiness(updated.business)
                   setFormData(updated.business)
                   triggerConfetti()
-                  toast.success('Візитівку збережено!')
+                  toast({ title: 'Успішно!', description: 'Візитівку збережено!', type: 'success' })
                 } catch (error) {
-                  toast.error('Помилка збереження візитівки')
+                  toast({ title: 'Помилка', description: 'Помилка збереження візитівки', type: 'error' })
                 }
               }}
             />
