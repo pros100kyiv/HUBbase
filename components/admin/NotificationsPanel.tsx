@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { XIcon, CheckIcon, ClockIcon } from '@/components/icons'
@@ -184,6 +184,7 @@ interface NotificationsPanelProps {
 }
 
 export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: NotificationsPanelProps) {
+  const panelRef = useRef<HTMLDivElement>(null)
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState<string | null>(null)
@@ -268,11 +269,20 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
     }
   }, [isOpen, businessId, loadPendingAppointments])
 
+  // Автоматична прокрутка до панелі при відкритті
+  useEffect(() => {
+    if (isOpen && panelRef.current) {
+      setTimeout(() => {
+        panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 100)
+    }
+  }, [isOpen])
+
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div className="bg-white dark:bg-gray-800 rounded-candy-lg shadow-soft-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div ref={panelRef} className="bg-white dark:bg-gray-800 rounded-candy-lg shadow-soft-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-black text-foreground dark:text-white">

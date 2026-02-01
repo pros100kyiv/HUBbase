@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -79,6 +79,9 @@ export default function SettingsPage() {
   const [editingMaster, setEditingMaster] = useState<Master | null>(null)
   const [editingService, setEditingService] = useState<Service | null>(null)
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
+  const masterFormRef = useRef<HTMLDivElement>(null)
+  const serviceFormRef = useRef<HTMLDivElement>(null)
+  const businessCardRef = useRef<HTMLDivElement>(null)
 
   // Master form
   const [masterForm, setMasterForm] = useState({
@@ -563,6 +566,7 @@ export default function SettingsPage() {
               </div>
 
               {showMasterForm && (
+                <div ref={masterFormRef}>
                 <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
                   <CardHeader className="p-2 pb-1">
                     <CardTitle className="text-sm font-black text-foreground dark:text-white">
@@ -735,6 +739,7 @@ export default function SettingsPage() {
               </div>
 
               {showServiceForm && (
+                <div ref={serviceFormRef}>
                 <Card className="bg-surface border-primary/20">
                   <CardHeader>
                     <CardTitle className="text-primary">
