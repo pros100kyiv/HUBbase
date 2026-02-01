@@ -10,106 +10,301 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// Типи ніш для модульної архітектури
+enum BusinessNiche {
+  SALON // Салон краси
+  BARBERSHOP // Барбершоп
+  STO // СТО (Станція технічного обслуговування)
+  CAR_WASH // Автомийка
+  SPA // СПА
+  FITNESS // Фітнес
+  OTHER // Інше
+}
+
+// Ролі користувачів
+enum UserRole {
+  OWNER // Власник
+  ADMIN // Адміністратор
+  MANAGER // Менеджер
+  EMPLOYEE // Співробітник
+  VIEWER // Переглядач
+}
+
 model Business {
-  id          String        @id @default(cuid())
-  name        String
-  slug        String        @unique // для URL: /booking/[slug]
-  email       String        @unique
-  password    String?       // хешований пароль (опціональний для OAuth)
-  googleId    String?       @unique // Google OAuth ID
-  phone       String?
-  address     String?
-  description String?
-  logo        String?
-  primaryColor String?       @default("#C5A059")
-  secondaryColor String?     @default("#FFFFFF")
-  backgroundColor String?    @default("#050505")
-  surfaceColor String?       @default("#121212")
-  hideRevenue  Boolean       @default(false)
-  isActive    Boolean       @default(true)
+  id                          String            @id @default(cuid())
+  name                        String
+  slug                        String            @unique // для URL: /booking/[slug]
+  email                       String            @unique
+  password                    String? // хешований пароль (опціональний для OAuth)
+  googleId                    String?           @unique // Google OAuth ID
+  phone                       String?
+  address                     String?
+  description                 String?
+  logo                        String?
+  primaryColor                String?           @default("#C5A059")
+  secondaryColor              String?           @default("#FFFFFF")
+  backgroundColor             String?           @default("#050505")
+  surfaceColor                String?           @default("#121212")
+  hideRevenue                 Boolean           @default(false)
+  isActive                    Boolean           @default(true)
+  // Модульна архітектура
+  niche                       BusinessNiche     @default(OTHER) // Ніша бізнесу
+  settings                    String? // JSON: додаткові налаштування для ніші
   // Візитівка
-  businessCardBackgroundImage String?  // URL до фонового зображення
-  slogan      String?        // Слоган бізнесу
-  additionalInfo String?     // Додаткова інформація (JSON або текст)
-  socialMedia String?        // JSON: { "facebook": "...", "instagram": "...", "telegram": "..." }
-  workingHours String?       // JSON: { "monday": { "start": "09:00", "end": "18:00", "enabled": true }, ... }
-  location    String?        // Розташування/адреса для візитівки
-  masters     Master[]
-  services    Service[]
-  appointments Appointment[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  businessCardBackgroundImage String? // URL до фонового зображення
+  slogan                      String? // Слоган бізнесу
+  additionalInfo              String? // Додаткова інформація (JSON або текст)
+  socialMedia                 String? // JSON: { "facebook": "...", "instagram": "...", "telegram": "..." }
+  workingHours                String? // JSON: { "monday": { "start": "09:00", "end": "18:00", "enabled": true }, ... }
+  location                    String? // Розташування/адреса для візитівки
+  // Відносини
+  masters                     Master[]
+  services                    Service[]
+  appointments                Appointment[]
+  users                       BusinessUser[] // Користувачі бізнесу
+  clients                     Client[] // Клієнти
+  analytics                   AnalyticsReport[] // Аналітичні звіти
+  imports                     DataImport[] // Імпорти даних
+  exports                     DataExport[] // Експорти даних
+  createdAt                   DateTime          @default(now())
+  updatedAt                   DateTime          @updatedAt
 
   @@index([slug])
   @@index([email])
   @@index([googleId])
+  @@index([niche])
 }
 
 model Master {
-  id          String        @id @default(cuid())
-  businessId  String
-  business    Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  name        String
-  photo       String?
-  bio         String?
-  rating      Float         @default(0)
-  isActive    Boolean       @default(true)
-  workingHours String?      // JSON: { "monday": { "start": "09:00", "end": "18:00", "enabled": true }, ... }
-  blockedPeriods String?    // JSON: [{ "start": "2024-01-15T10:00:00Z", "end": "2024-01-15T12:00:00Z" }]
-  appointments Appointment[]
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
+  id                 String              @id @default(cuid())
+  businessId         String
+  business           Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name               String
+  photo              String?
+  bio                String?
+  rating             Float               @default(0)
+  isActive           Boolean             @default(true)
+  workingHours       String? // JSON: { "monday": { "start": "09:00", "end": "18:00", "enabled": true }, ... }
+  blockedPeriods     String? // JSON: [{ "start": "2024-01-15T10:00:00Z", "end": "2024-01-15T12:00:00Z" }]
+  // Розширені метрики
+  totalAppointments  Int                 @default(0) // Загальна кількість записів
+  totalRevenue       BigInt              @default(0) // Загальний дохід (в копійках)
+  averageRating      Float               @default(0) // Середній рейтинг
+  utilizationRate    Float               @default(0) // Коефіцієнт використання (0-100%)
+  // Додаткові дані для різних ніш
+  metadata           String? // JSON: додаткові дані залежно від ніші
+  appointments       Appointment[]
+  utilizationMetrics MasterUtilization[] // Метрики використання
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 
   @@index([businessId])
+  @@index([isActive])
 }
 
 model Service {
-  id          String        @id @default(cuid())
-  businessId  String
-  business    Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  name        String
-  price       Int
-  duration    Int           // in minutes
-  category    String?
-  subcategory String?       // Підкатегорія (підпапка)
-  description String?
-  image       String?
-  isActive    Boolean       @default(true)
-  masterIds   String?       // JSON array of master IDs who can perform this service
-  createdAt   DateTime      @default(now())
-  updatedAt   DateTime      @updatedAt
-
-  @@index([businessId])
-}
-
-model Appointment {
   id          String   @id @default(cuid())
   businessId  String
   business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  masterId    String
-  master      Master   @relation(fields: [masterId], references: [id], onDelete: Cascade)
-  clientName  String
-  clientPhone String
-  clientEmail String?
-  startTime   DateTime
-  endTime     DateTime
-  status      String   @default("Pending") // Pending, Confirmed, Done, Cancelled
-  services    String   // JSON array of service IDs
-  customPrice Int?     // Індивідуальна ціна для клієнта (в копійках)
-  notes       String?
-  reminderSent Boolean  @default(false)
-  // Циклічні записи
-  isRecurring Boolean  @default(false)
-  recurrencePattern String? // JSON: { type: "daily"|"weekly"|"monthly", daysOfWeek: [0-6], endDate: "ISO string" }
-  recurrenceEndDate DateTime? // Дата закінчення циклу
-  parentAppointmentId String? // ID батьківського запису (для циклічних)
-  isFromBooking Boolean @default(false) // Чи створено через публічне бронювання (QR/посилання)
+  name        String
+  price       Int
+  duration    Int // in minutes
+  category    String?
+  subcategory String? // Підкатегорія (підпапка)
+  description String?
+  image       String?
+  isActive    Boolean  @default(true)
+  masterIds   String? // JSON array of master IDs who can perform this service
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   @@index([businessId])
-  @@index([masterId])
-  @@index([startTime])
-  @@index([clientPhone])
 }
 
+// Клієнт як окрема сутність для аналітики
+model Client {
+  id                   String        @id @default(cuid())
+  businessId           String
+  business             Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name                 String
+  phone                String        @unique // Унікальний телефон в межах бізнесу
+  email                String?
+  // Аналітичні метрики
+  totalAppointments    Int           @default(0) // Загальна кількість записів
+  totalSpent           BigInt        @default(0) // Загальна сума витрат (в копійках)
+  averageOrderValue    BigInt        @default(0) // Середній чек (в копійках)
+  lifetimeValue        BigInt        @default(0) // Customer Lifetime Value (в копійках)
+  firstAppointmentDate DateTime? // Дата першого запису
+  lastAppointmentDate  DateTime? // Дата останнього запису
+  retentionRate        Float         @default(0) // Коефіцієнт утримання (0-100%)
+  isActive             Boolean       @default(true) // Чи є активним клієнтом
+  // Додаткові дані
+  notes                String?
+  tags                 String? // JSON: масив тегів
+  metadata             String? // JSON: додаткові дані
+  appointments         Appointment[]
+  createdAt            DateTime      @default(now())
+  updatedAt            DateTime      @updatedAt
+
+  @@unique([businessId, phone])
+  @@index([businessId])
+  @@index([phone])
+  @@index([isActive])
+}
+
+model Appointment {
+  id                  String    @id @default(cuid())
+  businessId          String
+  business            Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  masterId            String
+  master              Master    @relation(fields: [masterId], references: [id], onDelete: Cascade)
+  // Зв'язок з клієнтом (опціонально для зворотної сумісності)
+  clientId            String? // ID клієнта, якщо він зареєстрований
+  client              Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  // Зворотна сумісність
+  clientName          String
+  clientPhone         String
+  clientEmail         String?
+  startTime           DateTime
+  endTime             DateTime
+  status              String    @default("Pending") // Pending, Confirmed, Done, Cancelled
+  services            String // JSON array of service IDs
+  customPrice         Int? // Індивідуальна ціна для клієнта (в копійках)
+  notes               String?
+  reminderSent        Boolean   @default(false)
+  // Циклічні записи
+  isRecurring         Boolean   @default(false)
+  recurrencePattern   String? // JSON: { type: "daily"|"weekly"|"monthly", daysOfWeek: [0-6], endDate: "ISO string" }
+  recurrenceEndDate   DateTime? // Дата закінчення циклу
+  parentAppointmentId String? // ID батьківського запису (для циклічних)
+  isFromBooking       Boolean   @default(false) // Чи створено через публічне бронювання (QR/посилання)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  @@index([businessId])
+  @@index([masterId])
+  @@index([clientId])
+  @@index([startTime])
+  @@index([clientPhone])
+  @@index([status])
+}
+
+// Користувачі бізнесу з ролями
+model BusinessUser {
+  id          String    @id @default(cuid())
+  businessId  String
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  email       String
+  password    String? // Хешований пароль
+  name        String
+  role        UserRole  @default(VIEWER)
+  // Права доступу (JSON)
+  permissions String? // JSON: детальні права доступу
+  isActive    Boolean   @default(true)
+  lastLogin   DateTime?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([businessId, email])
+  @@index([businessId])
+  @@index([email])
+}
+
+// Метрики використання співробітників
+model MasterUtilization {
+  id                String   @id @default(cuid())
+  masterId          String
+  master            Master   @relation(fields: [masterId], references: [id], onDelete: Cascade)
+  date              DateTime // Дата для метрики
+  // Метрики за день
+  totalHours        Float    @default(0) // Загальна кількість годин роботи
+  bookedHours       Float    @default(0) // Заброньовані години
+  utilizationRate   Float    @default(0) // Коефіцієнт використання (0-100%)
+  appointmentsCount Int      @default(0) // Кількість записів
+  revenue           BigInt   @default(0) // Дохід за день (в копійках)
+  // Додаткові метрики
+  averageRating     Float    @default(0) // Середній рейтинг за день
+  metadata          String? // JSON: додаткові дані
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([masterId, date])
+  @@index([masterId])
+  @@index([date])
+}
+
+// Аналітичні звіти
+model AnalyticsReport {
+  id         String    @id @default(cuid())
+  businessId String
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name       String // Назва звіту
+  type       String // Тип звіту: revenue, clients, employees, custom
+  // Параметри звіту
+  period     String // Період: day, week, month, quarter, year, custom
+  startDate  DateTime?
+  endDate    DateTime?
+  filters    String? // JSON: фільтри звіту
+  // Дані звіту
+  data       String // JSON: дані звіту
+  // Налаштування
+  isPublic   Boolean   @default(false) // Чи публічний звіт
+  createdBy  String? // ID користувача, який створив
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+
+  @@index([businessId])
+  @@index([type])
+  @@index([createdAt])
+}
+
+// Імпорт даних
+model DataImport {
+  id           String   @id @default(cuid())
+  businessId   String
+  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  filename     String // Назва файлу
+  type         String // Тип імпорту: appointments, clients, services, masters
+  status       String   @default("pending") // pending, processing, completed, failed
+  // Результати
+  totalRows    Int      @default(0)
+  importedRows Int      @default(0)
+  failedRows   Int      @default(0)
+  errors       String? // JSON: масив помилок
+  // Файл
+  fileUrl      String? // URL до файлу (якщо зберігається)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@index([businessId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+// Експорт даних
+model DataExport {
+  id           String    @id @default(cuid())
+  businessId   String
+  business     Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  filename     String // Назва файлу
+  type         String // Тип експорту: appointments, clients, services, masters, analytics
+  format       String    @default("csv") // Формат: csv, xlsx, json
+  status       String    @default("pending") // pending, processing, completed, failed
+  // Параметри експорту
+  filters      String? // JSON: фільтри для експорту
+  startDate    DateTime?
+  endDate      DateTime?
+  // Результати
+  fileUrl      String? // URL до експортованого файлу
+  fileSize     BigInt? // Розмір файлу в байтах
+  rowsExported Int       @default(0)
+  // Метадані
+  createdBy    String? // ID користувача, який створив
+  expiresAt    DateTime? // Дата закінчення терміну дії файлу
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([businessId])
+  @@index([status])
+  @@index([createdAt])
+}
