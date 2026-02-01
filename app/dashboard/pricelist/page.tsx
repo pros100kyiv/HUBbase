@@ -209,8 +209,8 @@ export default function PricelistPage() {
 
           {/* Calculator Modal */}
           {showCalculator && (
-            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-              <div className="bg-white dark:bg-gray-800 rounded-candy-lg shadow-soft-xl w-full max-w-md p-4">
+            <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-3 sm:p-4">
+              <div className="bg-white dark:bg-gray-800 rounded-candy-lg shadow-soft-xl w-full max-w-md p-3 sm:p-4 max-h-[90vh] overflow-y-auto mx-3">
                 <div className="flex items-center justify-between mb-4">
                   <h3 className="text-lg font-black text-foreground dark:text-white flex items-center gap-2">
                     <CalculatorIcon className="w-5 h-5" />

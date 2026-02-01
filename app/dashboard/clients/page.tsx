@@ -252,7 +252,6 @@ export default function ClientsPage() {
                   {isExpanded && (
                     <div className="px-2 pb-2 pt-0 border-t border-gray-200 dark:border-gray-700">
                       {details ? (
-                    <div className="px-2 pb-2 pt-0 border-t border-gray-200 dark:border-gray-700">
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-2">
                         {/* Total Spent */}
                         <div className="p-2 bg-candy-purple/10 dark:bg-candy-purple/20 rounded-candy-xs">
@@ -311,7 +310,6 @@ export default function ClientsPage() {
                           )}
                         </div>
                       </div>
-                    </div>
                       ) : (
                         <div className="py-4 text-center">
                           <p className="text-xs text-gray-500 dark:text-gray-400">Завантаження деталей...</p>

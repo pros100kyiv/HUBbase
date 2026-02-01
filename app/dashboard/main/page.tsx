@@ -231,17 +231,17 @@ export default function MainPage() {
 
           {/* Today's Appointments */}
           <div className="card-candy p-3 mb-3 overflow-hidden">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-subheading truncate">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+              <h2 className="text-subheading truncate text-center sm:text-left flex-1 min-w-0">
                 {isToday(selectedDate) 
                   ? `Записи на сьогодні (${format(selectedDate, 'd MMMM yyyy', { locale: uk })})`
                   : `Записи на ${format(selectedDate, 'd MMMM yyyy', { locale: uk })}`
                 }
               </h2>
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 justify-center sm:justify-end">
                 <button
                   onClick={() => setSelectedDate(subDays(selectedDate, 1))}
-                  className="px-2 py-1 rounded-candy-xs bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-xs font-bold"
+                  className="px-2 py-1 rounded-candy-xs bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-xs font-bold flex-shrink-0"
                   title="Попередній день"
                 >
                   ←
@@ -249,7 +249,7 @@ export default function MainPage() {
                 <button
                   onClick={() => setSelectedDate(new Date())}
                   className={cn(
-                    "px-2 py-1 rounded-candy-xs border text-xs font-bold transition-all",
+                    "px-2 py-1 rounded-candy-xs border text-xs font-bold transition-all whitespace-nowrap flex-shrink-0",
                     isToday(selectedDate)
                       ? "bg-blue-500 text-white border-blue-500"
                       : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
@@ -260,7 +260,7 @@ export default function MainPage() {
                 </button>
                 <button
                   onClick={() => setSelectedDate(addDays(selectedDate, 1))}
-                  className="px-2 py-1 rounded-candy-xs bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-xs font-bold"
+                  className="px-2 py-1 rounded-candy-xs bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-xs font-bold flex-shrink-0"
                   title="Наступний день"
                 >
                   →
