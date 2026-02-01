@@ -813,14 +813,24 @@ export default function SettingsPage() {
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify(data),
                   })
-                  if (!response.ok) throw new Error('Failed to save')
+                  if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ error: 'Failed to save' }))
+                    throw new Error(errorData.error || errorData.details || 'Failed to save')
+                  }
                   const updated = await response.json()
-                  setBusiness(updated.business)
-                  setFormData(updated.business)
-                  triggerConfetti()
-                  toast({ title: 'Успішно!', description: 'Візитівку збережено!', type: 'success' })
+                  if (updated.business) {
+                    setBusiness(updated.business)
+                    setFormData(updated.business)
+                    localStorage.setItem('business', JSON.stringify(updated.business))
+                    triggerConfetti()
+                    toast({ title: 'Успішно!', description: 'Візитівку збережено!', type: 'success' })
+                  } else {
+                    throw new Error('Invalid response format')
+                  }
                 } catch (error) {
-                  toast({ title: 'Помилка', description: 'Помилка збереження візитівки', type: 'error' })
+                  console.error('Error saving business card:', error)
+                  const errorMessage = error instanceof Error ? error.message : 'Помилка збереження візитівки'
+                  toast({ title: 'Помилка', description: errorMessage, type: 'error' })
                 }
               }}
             />
