@@ -100,6 +100,33 @@ export default function SettingsPage() {
     subcategory: '',
   })
 
+  // Автоматична прокрутка до форми майстра
+  useEffect(() => {
+    if (showMasterForm && masterFormRef.current) {
+      setTimeout(() => {
+        masterFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    }
+  }, [showMasterForm])
+
+  // Автоматична прокрутка до форми послуги
+  useEffect(() => {
+    if (showServiceForm && serviceFormRef.current) {
+      setTimeout(() => {
+        serviceFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    }
+  }, [showServiceForm])
+
+  // Автоматична прокрутка до візитівки
+  useEffect(() => {
+    if (activeTab === 'businessCard' && businessCardRef.current) {
+      setTimeout(() => {
+        businessCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }, 100)
+    }
+  }, [activeTab])
+
   const loadData = useCallback(async () => {
     // Перевіряємо чи є дані в localStorage
     if (typeof window === 'undefined') return
