@@ -188,6 +188,19 @@ export async function GET(request: Request) {
       }
     }
 
+    // Автоматично відправляємо сповіщення в Telegram (якщо увімкнено)
+    if (alerts.length > 0) {
+      const criticalAlerts = alerts.filter(a => a.type === 'critical' || a.type === 'warning')
+      if (criticalAlerts.length > 0) {
+        // Асинхронно відправляємо в Telegram (не блокуємо відповідь)
+        fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/telegram/integrate-alerts`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ businessId }),
+        }).catch(err => console.error('Error sending Telegram alerts:', err))
+      }
+    }
+
     return NextResponse.json({ alerts })
   } catch (error) {
     console.error('Error calculating alerts:', error)
