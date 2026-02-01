@@ -43,7 +43,11 @@ export function NotificationToast({ businessId, onConfirm, onDismiss }: Notifica
             // Показуємо тільки останній новий запис
             const latest = newAppointments[newAppointments.length - 1]
             setNotifications([latest])
-            setSeenIds(prev => new Set([...prev, latest.id]))
+            setSeenIds(prev => {
+              const newSet = new Set(prev)
+              newSet.add(latest.id)
+              return newSet
+            })
           }
         }
       } catch (error) {
