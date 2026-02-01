@@ -1,9 +1,10 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
-import { ClockIcon, CheckIcon, XIcon, UserIcon } from '@/components/icons'
+import { ClockIcon, CheckIcon, XIcon, UserIcon, EditIcon, MoneyIcon } from '@/components/icons'
 
 interface Appointment {
   id: string
@@ -15,21 +16,77 @@ interface Appointment {
   endTime: string
   status: string
   services?: string
+  customPrice?: number | null
 }
 
 interface MobileAppointmentCardProps {
   appointment: Appointment
   onStatusChange?: (id: string, status: string) => void
+  onPriceChange?: (id: string, price: number | null) => void
   servicesCache?: any[]
 }
 
 export function MobileAppointmentCard({
   appointment,
   onStatusChange,
+  onPriceChange,
   servicesCache = [],
 }: MobileAppointmentCardProps) {
+  const [isEditingPrice, setIsEditingPrice] = useState(false)
+  const [priceValue, setPriceValue] = useState(
+    appointment.customPrice ? (appointment.customPrice / 100).toFixed(2) : ''
+  )
+  const [isSavingPrice, setIsSavingPrice] = useState(false)
+
+  useEffect(() => {
+    setPriceValue(appointment.customPrice ? (appointment.customPrice / 100).toFixed(2) : '')
+  }, [appointment.customPrice])
+
   const startTime = new Date(appointment.startTime)
   const endTime = new Date(appointment.endTime)
+
+  // Розраховуємо стандартну ціну з послуг
+  const calculateStandardPrice = () => {
+    let total = 0
+    try {
+      if (appointment.services) {
+        const parsed = JSON.parse(appointment.services)
+        const serviceIds = Array.isArray(parsed) ? parsed : (parsed.serviceIds || [])
+        serviceIds.forEach((id: string) => {
+          const service = servicesCache.find((s: any) => s.id === id)
+          if (service) {
+            total += service.price
+          }
+        })
+      }
+    } catch (e) {
+      // Ignore
+    }
+    return total
+  }
+
+  const standardPrice = calculateStandardPrice()
+  const displayPrice = appointment.customPrice ? appointment.customPrice / 100 : standardPrice / 100
+
+  const handleSavePrice = async () => {
+    if (!onPriceChange) return
+    
+    setIsSavingPrice(true)
+    try {
+      const priceInCents = priceValue ? Math.round(parseFloat(priceValue) * 100) : null
+      await onPriceChange(appointment.id, priceInCents)
+      setIsEditingPrice(false)
+    } catch (error) {
+      console.error('Error saving price:', error)
+    } finally {
+      setIsSavingPrice(false)
+    }
+  }
+
+  const handleCancelPriceEdit = () => {
+    setPriceValue(appointment.customPrice ? (appointment.customPrice / 100).toFixed(2) : '')
+    setIsEditingPrice(false)
+  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -258,6 +315,67 @@ export function MobileAppointmentCard({
           </div>
         </div>
       )}
+
+      {/* Price Section */}
+      <div className="flex items-center justify-between gap-2 mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700">
+        <div className="flex items-center gap-1.5 flex-1 min-w-0">
+          <MoneyIcon className="w-3.5 h-3.5 text-candy-blue flex-shrink-0" />
+          {isEditingPrice ? (
+            <div className="flex items-center gap-1 flex-1">
+              <input
+                type="number"
+                value={priceValue}
+                onChange={(e) => setPriceValue(e.target.value)}
+                placeholder="Ціна в грн"
+                min="0"
+                step="0.01"
+                className="flex-1 px-2 py-1 text-xs rounded-candy-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-foreground"
+                autoFocus
+              />
+              <button
+                onClick={handleSavePrice}
+                disabled={isSavingPrice}
+                className="p-1 rounded-candy-xs bg-candy-blue text-white hover:bg-candy-blue/80 transition-colors disabled:opacity-50"
+                title="Зберегти"
+              >
+                <CheckIcon className="w-3 h-3" />
+              </button>
+              <button
+                onClick={handleCancelPriceEdit}
+                disabled={isSavingPrice}
+                className="p-1 rounded-candy-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
+                title="Скасувати"
+              >
+                <XIcon className="w-3 h-3" />
+              </button>
+            </div>
+          ) : (
+            <>
+              <span className="text-[10px] text-gray-600 dark:text-gray-400 font-bold uppercase flex-shrink-0">Ціна:</span>
+              <span className={cn(
+                "text-sm font-black",
+                appointment.customPrice ? "text-candy-blue" : "text-gray-900 dark:text-white"
+              )}>
+                {new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH' }).format(displayPrice)}
+              </span>
+              {appointment.customPrice && (
+                <span className="text-[9px] text-gray-500 dark:text-gray-400 italic">
+                  (індивідуальна)
+                </span>
+              )}
+              {onPriceChange && (
+                <button
+                  onClick={() => setIsEditingPrice(true)}
+                  className="p-1 rounded-candy-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ml-auto"
+                  title="Редагувати ціну"
+                >
+                  <EditIcon className="w-3 h-3 text-gray-500 dark:text-gray-400" />
+                </button>
+              )}
+            </>
+          )}
+        </div>
+      </div>
     </div>
   )
 }

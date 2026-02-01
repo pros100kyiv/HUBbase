@@ -45,6 +45,7 @@ export function CreateAppointmentForm({
     clientEmail: '',
     date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
     time: format(new Date(), 'HH:mm'),
+    customPrice: '',
     notes: '',
   })
   const [availableSlots, setAvailableSlots] = useState<string[]>([])
@@ -156,6 +157,7 @@ export function CreateAppointmentForm({
           startTime: startTime.toISOString(),
           endTime: endTime.toISOString(),
           services: formData.serviceIds,
+          customPrice: formData.customPrice ? Math.round(parseFloat(formData.customPrice) * 100) : undefined,
           notes: formData.notes.trim() || undefined,
         }),
       })
@@ -242,6 +244,25 @@ export function CreateAppointmentForm({
                 <p>Вартість: <span className="font-bold">{new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH' }).format(calculateTotalPrice())}</span></p>
               </div>
             )}
+          </div>
+
+          {/* Custom Price */}
+          <div>
+            <label className="block text-sm font-medium mb-2">
+              Індивідуальна ціна (опціонально)
+            </label>
+            <Input
+              type="number"
+              value={formData.customPrice}
+              onChange={(e) => setFormData({ ...formData, customPrice: e.target.value })}
+              placeholder="Вкажіть ціну в гривнях (замінить стандартну)"
+              min="0"
+              step="0.01"
+              className="w-full"
+            />
+            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+              Якщо вказано, ця ціна буде використовуватися замість суми послуг
+            </p>
           </div>
 
           {/* Client Info */}

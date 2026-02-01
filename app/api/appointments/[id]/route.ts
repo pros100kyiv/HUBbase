@@ -8,12 +8,15 @@ export async function PATCH(
   try {
     const resolvedParams = await params
     const body = await request.json()
-    const { status, startTime, endTime } = body
+    const { status, startTime, endTime, customPrice } = body
 
     const updateData: any = {}
     if (status) updateData.status = status
     if (startTime) updateData.startTime = new Date(startTime)
     if (endTime) updateData.endTime = new Date(endTime)
+    if (customPrice !== undefined) {
+      updateData.customPrice = customPrice ? parseInt(customPrice) : null
+    }
 
     const appointment = await prisma.appointment.update({
       where: { id: resolvedParams.id },

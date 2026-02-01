@@ -31,7 +31,7 @@ function checkConflict(
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { businessId, masterId, clientName, clientPhone, clientEmail, startTime, endTime, services, notes } = body
+    const { businessId, masterId, clientName, clientPhone, clientEmail, startTime, endTime, services, customPrice, notes } = body
 
     if (!businessId || !masterId || !clientName || !clientPhone || !startTime || !endTime || !services) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -64,6 +64,7 @@ export async function POST(request: Request) {
         startTime: start,
         endTime: end,
         services: JSON.stringify(services),
+        customPrice: customPrice ? parseInt(customPrice) : null,
         notes: notes?.trim() || null,
         status: 'Pending',
       },

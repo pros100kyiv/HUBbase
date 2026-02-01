@@ -22,6 +22,7 @@ interface Appointment {
   endTime: string
   status: string
   services?: string
+  customPrice?: number | null
 }
 
 export default function AppointmentsPage() {
@@ -378,6 +379,8 @@ export default function AppointmentsPage() {
                                 key={appointment.id}
                                 appointment={appointment}
                                 onStatusChange={handleStatusChange}
+                                onPriceChange={handlePriceChange}
+                                servicesCache={services}
                               />
                             ))}
                         </div>
