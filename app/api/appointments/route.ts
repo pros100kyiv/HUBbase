@@ -209,7 +209,12 @@ export async function POST(request: Request) {
       startTime: start,
       endTime: end,
       services: JSON.stringify(services),
-      customPrice: customPrice ? parseInt(customPrice) : null,
+      // customPrice приходить в копійках (якщо число) або як рядок
+      // Якщо це число, використовуємо його безпосередньо
+      // Якщо рядок, парсимо його
+      customPrice: customPrice !== null && customPrice !== undefined && customPrice !== ''
+        ? (typeof customPrice === 'number' ? customPrice : parseInt(String(customPrice)))
+        : null,
       notes: notes?.trim() || null,
       status: 'Pending',
       isRecurring: false,
