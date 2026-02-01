@@ -47,7 +47,7 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
             <div
               key={service.id}
               className={`bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-candy-sm p-3 cursor-pointer transition-all hover:bg-white/15 dark:hover:bg-white/10 ${
-                isSelected(service.id) ? 'ring-2 ring-purple-500 dark:ring-purple-400 bg-white/20 dark:bg-white/15' : ''
+                isSelected(service.id) ? 'ring-2 ring-blue-500 dark:ring-blue-400 bg-white/20 dark:bg-white/15' : ''
               }`}
               onClick={() => toggleService(service)}
             >

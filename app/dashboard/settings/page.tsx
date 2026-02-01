@@ -421,7 +421,7 @@ export default function SettingsPage() {
             {(['info', 'masters', 'services'] as Tab[]).map((tab) => {
               const tabColors: Record<Tab, string> = {
                 'info': 'hover:bg-blue-50 hover:text-candy-blue',
-                'masters': 'hover:bg-purple-50 hover:text-candy-purple',
+                'masters': 'hover:bg-blue-50 hover:text-candy-blue',
                 'services': 'hover:bg-green-50 hover:text-candy-mint',
               }
               return (

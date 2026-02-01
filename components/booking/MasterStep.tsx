@@ -84,7 +84,7 @@ export function MasterStep({ businessId }: MasterStepProps) {
               <div
                 key={master.id}
                 className={`bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-candy-sm p-4 cursor-pointer transition-all hover:bg-white/15 dark:hover:bg-white/10 ${
-                  state.selectedMaster?.id === master.id ? 'ring-2 ring-purple-500 dark:ring-purple-400 bg-white/20 dark:bg-white/15' : ''
+                  state.selectedMaster?.id === master.id ? 'ring-2 ring-blue-500 dark:ring-blue-400 bg-white/20 dark:bg-white/15' : ''
                 }`}
                 onClick={() => setMaster(master)}
               >
@@ -92,7 +92,7 @@ export function MasterStep({ businessId }: MasterStepProps) {
                   <div className="relative mb-3">
                     <div
                       className={`w-20 h-20 md:w-24 md:h-24 rounded-full border-2 ${
-                        available ? 'border-purple-400' : 'border-gray-500'
+                        available ? 'border-blue-400' : 'border-gray-500'
                       } flex items-center justify-center bg-gray-800 dark:bg-gray-900 overflow-hidden`}
                     >
                       {master.photo ? (
@@ -121,7 +121,7 @@ export function MasterStep({ businessId }: MasterStepProps) {
                     <p className="text-xs mb-2 line-clamp-2 text-white/70">{master.bio}</p>
                   )}
                   <div className="flex items-center gap-1 mb-2">
-                    <span className="text-purple-400">★</span>
+                    <span className="text-yellow-400 dark:text-yellow-300">★</span>
                     <span className="text-xs text-white/80">{master.rating.toFixed(1)}</span>
                   </div>
                   <p

@@ -68,7 +68,7 @@ export default function RegisterPage() {
 
       <Card className="relative z-10 w-full max-w-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-3xl font-bold text-title text-primary dark:text-purple-400 text-center">
+          <CardTitle className="text-3xl font-bold text-title text-primary dark:text-blue-400 text-center">
             РЕЄСТРАЦІЯ БІЗНЕСУ
           </CardTitle>
         </CardHeader>
@@ -195,7 +195,7 @@ export default function RegisterPage() {
               Вже маєте акаунт?{' '}
               <button
                 onClick={() => router.push('/login')}
-                className="text-primary dark:text-purple-400 hover:underline"
+                className="text-primary dark:text-blue-400 hover:underline"
               >
                 Увійти
               </button>

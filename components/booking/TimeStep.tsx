@@ -120,7 +120,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
                   setCurrentMonth(today)
                   setDate(today)
                 }}
-                className="px-2 py-1 bg-purple-500 hover:bg-purple-600 text-white rounded-candy-xs text-[10px] font-bold transition-all"
+                className="px-2 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded-candy-xs text-[10px] font-bold transition-all"
                 title="Сьогодні"
               >
                 Сьогодні
@@ -166,9 +166,9 @@ export function TimeStep({ businessId }: TimeStepProps) {
                     className={`
                       aspect-square flex items-center justify-center rounded-candy-xs text-[10px] font-bold transition-all
                       ${isSelected
-                        ? 'bg-purple-500 text-white shadow-lg scale-105 ring-2 ring-purple-300'
+                        ? 'bg-blue-500 text-white shadow-lg scale-105 ring-2 ring-blue-300'
                         : isTodayDate && isCurrentMonth
-                        ? 'bg-purple-500/30 text-white border border-purple-400'
+                        ? 'bg-blue-500/30 text-white border border-blue-400'
                         : isPastDate || !isCurrentMonth
                         ? 'text-white/20 cursor-not-allowed bg-white/5'
                         : 'bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 text-white hover:bg-white/20 dark:hover:bg-white/10 hover:scale-105'
@@ -213,7 +213,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
                     className={`
                       px-3 py-2.5 rounded-candy-sm transition-all text-xs font-bold
                       ${isSelected
-                        ? 'bg-purple-500 text-white shadow-lg scale-105 ring-2 ring-purple-300'
+                        ? 'bg-blue-500 text-white shadow-lg scale-105 ring-2 ring-blue-300'
                         : available
                         ? 'bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 text-white hover:bg-white/20 dark:hover:bg-white/10 hover:scale-105'
                         : 'bg-gray-800/50 dark:bg-gray-900/50 border border-gray-700 dark:border-gray-800 text-gray-400 cursor-not-allowed opacity-50'
@@ -228,7 +228,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
             
             {/* Selected time highlight */}
             {state.selectedTime && (
-              <div className="mt-4 p-3 bg-purple-500/20 border border-purple-400/30 rounded-candy-sm">
+              <div className="mt-4 p-3 bg-blue-500/20 border border-blue-400/30 rounded-candy-sm">
                 <p className="text-sm text-white font-bold">
                   Обрано: <span className="text-white">{state.selectedTime}</span>
                 </p>

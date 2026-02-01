@@ -43,7 +43,7 @@ export function Search({ placeholder = 'Пошук...', onSearch, className, deb
       className={cn(
         'relative flex items-center gap-2 rounded-candy-sm border-2 transition-all duration-200',
         'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700',
-        isFocused && 'border-candy-purple dark:border-purple-400 shadow-soft-lg',
+        isFocused && 'border-candy-blue dark:border-blue-400 shadow-soft-lg',
         className
       )}
     >

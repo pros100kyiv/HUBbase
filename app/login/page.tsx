@@ -84,7 +84,7 @@ function LoginPageContent() {
 
       <Card className="relative z-10 w-full max-w-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
         <CardHeader>
-          <CardTitle className="text-3xl font-bold text-title text-primary dark:text-purple-400 text-center">
+          <CardTitle className="text-3xl font-bold text-title text-primary dark:text-blue-400 text-center">
             ВХІД ДЛЯ БІЗНЕСУ
           </CardTitle>
         </CardHeader>
@@ -179,7 +179,7 @@ function LoginPageContent() {
               Немає акаунту?{' '}
               <button
                 onClick={() => router.push('/register')}
-                className="text-primary dark:text-purple-400 hover:underline"
+                className="text-primary dark:text-blue-400 hover:underline"
               >
                 Зареєструватися
               </button>

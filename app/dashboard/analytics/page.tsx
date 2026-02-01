@@ -92,7 +92,7 @@ export default function AnalyticsPage() {
                   className={`px-2 py-1 rounded-candy-xs text-[10px] font-bold transition-all duration-200 active:scale-97 whitespace-nowrap ${
                     period === p
                       ? 'candy-purple text-white shadow-soft-lg'
-                      : 'text-gray-600 dark:text-gray-400 hover:text-candy-purple dark:hover:text-purple-400 hover:bg-white dark:hover:bg-gray-700'
+                      : 'text-gray-600 dark:text-gray-300 hover:text-candy-blue dark:hover:text-blue-400 hover:bg-white dark:hover:bg-gray-700'
                   }`}
                 >
                   {p === 'day' ? 'День' : p === 'week' ? 'Тиждень' : 'Місяць'}
