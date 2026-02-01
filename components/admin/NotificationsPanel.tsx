@@ -26,6 +26,7 @@ interface AppointmentCardProps {
   onConfirm: (id: string) => void
   onReschedule: (id: string, newStartTime: string, newEndTime: string) => void
   processing: string | null
+  servicesCache?: any[]
 }
 
 interface AppointmentCardWithServicesProps extends AppointmentCardProps {
