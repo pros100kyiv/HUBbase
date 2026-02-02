@@ -172,10 +172,10 @@ export default function MainPage() {
               value={stats?.uniqueClients || 0}
               iconColor="purple"
             />
-          </div>
+        </div>
 
-          {/* Revenue Toggle */}
-          <div className="mb-2 flex items-center justify-end">
+        {/* Revenue Toggle */}
+        <div className="mb-2 flex items-center justify-end">
             <button
               onClick={async () => {
                 const newHideRevenue = !hideRevenue
