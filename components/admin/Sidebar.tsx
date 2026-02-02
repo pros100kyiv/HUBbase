@@ -80,7 +80,7 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <>
-      <aside className={cn('bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 w-16 md:w-40 min-h-screen fixed left-0 top-0 pt-14 md:pt-16 z-40 shadow-soft', className)}>
+      <aside className={cn('bg-white/95 dark:bg-gray-900/95 backdrop-blur-lg border-r border-gray-200/50 dark:border-gray-800/50 w-16 md:w-40 min-h-screen fixed left-0 top-16 z-40 shadow-soft-lg', className)}>
         <nav className="p-1.5 md:p-2 space-y-0.5 md:space-y-1">
           {navItems.map((item) => {
             const isActive = pathname === item.path || (item.path === '/dashboard' && pathname === '/dashboard')

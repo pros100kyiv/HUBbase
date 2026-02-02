@@ -1,83 +1,92 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
 
 export default function Home() {
   const router = useRouter()
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden bg-gray-900 dark:bg-gray-950">
-      {/* Background - Soft dark gradient */}
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden py-12 px-4">
+      {/* Blurred Background with Barber/Salon Tools */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-br from-gray-800/95 via-gray-900/95 to-gray-800/95 dark:from-gray-900/95 dark:via-gray-950/95 dark:to-gray-900/95" />
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1920')] bg-cover bg-center" />
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-md" />
       </div>
 
-      {/* HUBbase Logo at top center */}
+      {/* Xbase Logo at top center */}
       <div className="fixed top-4 left-1/2 transform -translate-x-1/2 z-20 flex items-center gap-2">
         <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm candy-purple flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-lg">
-          HUB
+          X
         </div>
         <span className="text-xs md:text-sm font-black text-white">
-          HUBbase
+          Xbase
         </span>
       </div>
 
-      {/* Content */}
-      <div className="relative z-10 text-center px-4 max-w-4xl mx-auto">
-        <h1 className="text-4xl md:text-6xl font-black mb-4 text-white" style={{ color: '#FFFFFF' }}>
-          СИСТЕМА БРОНЮВАННЯ
-        </h1>
-        <p className="text-base md:text-lg mb-8 max-w-2xl mx-auto" style={{ color: 'rgba(255, 255, 255, 0.8)' }}>
-          SaaS платформа для управління записами клієнтів
-        </p>
-        
-        <div className="flex flex-col sm:flex-row gap-3 justify-center items-center mb-6">
-          <Button
-            size="lg"
-            className="btn-primary btn-pulse text-sm md:text-base px-8 md:px-12 py-3 md:py-4"
-            onClick={() => router.push('/register')}
-          >
-            РЕЄСТРАЦІЯ БІЗНЕСУ
-          </Button>
-          <Button
-            size="lg"
-            variant="outline"
-            className="btn-secondary text-sm md:text-base px-8 md:px-12 py-3 md:py-4"
-            onClick={() => router.push('/login')}
-          >
-            ВХІД ДЛЯ БІЗНЕСУ
-          </Button>
-        </div>
+      {/* Main Content Card */}
+      <div className="relative z-10 w-full max-w-4xl mx-auto">
+        <div className="bg-gray-800 dark:bg-gray-900 border border-gray-700 rounded-candy-lg backdrop-blur-sm shadow-soft-xl p-8 md:p-12">
+          {/* Logo */}
+          <div className="flex items-center justify-center gap-2 mb-8">
+            <div className="w-12 h-12 rounded-candy-sm candy-purple flex items-center justify-center text-white font-black text-xl shadow-soft-lg">
+              X
+            </div>
+            <span className="text-2xl font-black text-white">
+              Xbase
+            </span>
+          </div>
 
-        <div className="text-white/60 text-sm space-y-3">
-          <p>Вже маєте бізнес? Увійдіть в панель управління</p>
+          {/* Main Heading */}
+          <h1 className="text-4xl md:text-6xl font-black mb-4 text-candy-blue dark:text-blue-400 text-center">
+            СИСТЕМА БРОНЮВАННЯ
+          </h1>
           
+          {/* Subtitle */}
+          <p className="text-base md:text-lg mb-8 text-gray-300 dark:text-gray-400 text-center">
+            SaaS платформа для управління записами клієнтів
+          </p>
+          
+          {/* Primary Action Buttons */}
+          <div className="flex flex-col sm:flex-row gap-3 mb-6 justify-center">
+            <button
+              onClick={() => router.push('/register')}
+              className="w-full sm:w-auto bg-gradient-to-r from-candy-blue to-candy-purple text-white font-bold py-3 px-8 rounded-candy-sm hover:from-candy-blue/90 hover:to-candy-purple/90 transition-all shadow-soft-lg"
+            >
+              РЕЄСТРАЦІЯ БІЗНЕСУ
+            </button>
+            <button
+              onClick={() => router.push('/login')}
+              className="w-full sm:w-auto bg-gray-700 dark:bg-gray-800 border-2 border-gray-600 dark:border-gray-500 text-white px-8 py-3 font-bold hover:bg-gray-600 dark:hover:bg-gray-700 transition-all rounded-candy-sm"
+            >
+              ВХІД ДЛЯ БІЗНЕСУ
+            </button>
+          </div>
+
+          {/* Login Prompt */}
+          <p className="text-gray-400 dark:text-gray-500 mb-6 text-sm md:text-base text-center">
+            Вже маєте бізнес? Увійдіть в панель управління
+          </p>
+          
+          {/* Informational Links */}
           <div className="flex flex-wrap gap-2 justify-center">
-            <Button
-              variant="outline"
-              size="sm"
+            <button
               onClick={() => router.push('/test-flow')}
-              className="btn-secondary text-xs px-3 py-1.5"
+              className="bg-gray-700 dark:bg-gray-800 border border-gray-600 dark:border-gray-500 text-gray-300 dark:text-gray-300 px-4 py-2 text-xs font-medium hover:bg-gray-600 dark:hover:bg-gray-700 transition-all rounded-candy-xs"
             >
               🧪 Тестовий потік
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+            </button>
+            <button
               onClick={() => router.push('/booking/045-barbershop')}
-              className="btn-secondary text-xs px-3 py-1.5"
+              className="bg-gray-700 dark:bg-gray-800 border border-gray-600 dark:border-gray-500 text-gray-300 dark:text-gray-300 px-4 py-2 text-xs font-medium hover:bg-gray-600 dark:hover:bg-gray-700 transition-all rounded-candy-xs"
             >
               📅 Приклад бронювання
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
+            </button>
+            <button
               onClick={() => router.push('/qr/045-barbershop')}
-              className="btn-secondary text-xs px-3 py-1.5"
+              className="bg-gray-700 dark:bg-gray-800 border border-gray-600 dark:border-gray-500 text-gray-300 dark:text-gray-300 px-4 py-2 text-xs font-medium hover:bg-gray-600 dark:hover:bg-gray-700 transition-all rounded-candy-xs"
             >
               📱 Приклад QR
-            </Button>
+            </button>
           </div>
         </div>
       </div>

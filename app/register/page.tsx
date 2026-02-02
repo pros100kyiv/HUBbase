@@ -2,10 +2,6 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -55,115 +51,125 @@ export default function RegisterPage() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden py-12 px-4">
-      {/* Background */}
+      {/* Blurred Background with Barber/Salon Tools */}
       <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background" />
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1920')] bg-cover bg-center opacity-10" />
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1920')] bg-cover bg-center" />
+        <div className="absolute inset-0 bg-black/40 backdrop-blur-md" />
       </div>
 
-      <Card className="relative z-10 w-full max-w-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 backdrop-blur-sm">
-        <CardHeader>
-          <CardTitle className="text-3xl font-bold text-title text-primary dark:text-purple-400 text-center">
-            РЕЄСТРАЦІЯ БІЗНЕСУ
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+      {/* Dark Gray Form with Rounded Corners */}
+      <div className="relative z-10 w-full max-w-md bg-gray-800 dark:bg-gray-900 border border-gray-700 rounded-candy-lg backdrop-blur-sm shadow-soft-xl p-8">
+        {/* Blue Title */}
+        <h2 className="text-3xl md:text-4xl font-black mb-6 text-candy-blue dark:text-blue-400 text-center uppercase">
+          РЕЄСТРАЦІЯ БІЗНЕСУ
+        </h2>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Назва бізнесу *</label>
-              <Input
+              <label className="block text-sm font-medium mb-2 text-gray-300">Назва бізнесу *</label>
+              <input
+                type="text"
                 value={formData.name}
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Наприклад: 045 Barbershop"
                 required
-                className={errors.name ? 'border-red-500' : ''}
+                className={`w-full px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 border ${
+                  errors.name ? 'border-red-500' : 'border-gray-600'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
               />
               {errors.name && (
-                <p className="text-red-500 text-xs mt-1">{errors.name}</p>
+                <p className="text-red-400 text-xs mt-1">{errors.name}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Email *</label>
-              <Input
+              <label className="block text-sm font-medium mb-2 text-gray-300">Email *</label>
+              <input
                 type="email"
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                 placeholder="your@email.com"
                 required
-                className={errors.email ? 'border-red-500' : ''}
+                className={`w-full px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 border ${
+                  errors.email ? 'border-red-500' : 'border-gray-600'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
               />
               {errors.email && (
-                <p className="text-red-500 text-xs mt-1">{errors.email}</p>
+                <p className="text-red-400 text-xs mt-1">{errors.email}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Пароль *</label>
-              <Input
+              <label className="block text-sm font-medium mb-2 text-gray-300">Пароль *</label>
+              <input
                 type="password"
                 value={formData.password}
                 onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="Мінімум 6 символів"
                 required
-                className={errors.password ? 'border-red-500' : ''}
+                className={`w-full px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 border ${
+                  errors.password ? 'border-red-500' : 'border-gray-600'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
               />
               {errors.password && (
-                <p className="text-red-500 text-xs mt-1">{errors.password}</p>
+                <p className="text-red-400 text-xs mt-1">{errors.password}</p>
               )}
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">
+              <label className="block text-sm font-medium mb-2 text-gray-300">
                 URL slug (опціонально)
               </label>
-              <Input
+              <input
+                type="text"
                 value={formData.slug}
                 onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
                 placeholder="045-barbershop"
-                className={errors.slug ? 'border-red-500' : ''}
+                className={`w-full px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 border ${
+                  errors.slug ? 'border-red-500' : 'border-gray-600'
+                } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
               />
-              <p className="text-xs text-gray-600 dark:text-gray-300 mt-1">
+              <p className="text-xs text-gray-400 mt-1">
                 Якщо не вказано, буде згенеровано автоматично
               </p>
               {errors.slug && (
-                <p className="text-red-500 text-xs mt-1">{errors.slug}</p>
+                <p className="text-red-400 text-xs mt-1">{errors.slug}</p>
               )}
             </div>
 
             {errors.submit && (
-              <div className="bg-red-500/10 border border-red-500 rounded-md p-3">
-                <p className="text-red-500 text-sm">{errors.submit}</p>
+              <div className="bg-red-500/20 border border-red-500 rounded-lg p-3">
+                <p className="text-red-400 text-sm">{errors.submit}</p>
               </div>
             )}
 
-            <Button
+            {/* Blue Gradient Button */}
+            <button
               type="submit"
               disabled={isLoading}
-              className="w-full"
+              className="w-full py-3 rounded-candy-sm bg-gradient-to-r from-candy-blue to-candy-purple text-white font-bold text-lg shadow-soft-lg hover:from-candy-blue/90 hover:to-candy-purple/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isLoading ? 'Реєстрація...' : 'Зареєструватися'}
-            </Button>
+            </button>
 
-            <div className="relative my-4">
+            {/* Divider with "або" */}
+            <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300 dark:border-gray-600"></div>
+                <div className="w-full border-t border-gray-600"></div>
               </div>
               <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white dark:bg-gray-800 text-gray-500 dark:text-gray-400">
-                  або
-                </span>
+                <span className="px-3 bg-gray-800 dark:bg-gray-900 text-gray-400">або</span>
               </div>
             </div>
 
-            <Button
+            {/* Google Login Button - White with Colored Logo */}
+            <button
               type="button"
-              variant="outline"
               disabled={isLoading}
-              className="w-full flex items-center justify-center gap-2"
               onClick={() => {
                 window.location.href = '/api/auth/google'
               }}
+              className="w-full py-3 rounded-lg bg-white text-gray-700 font-medium flex items-center justify-center gap-3 hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
             >
               <svg className="w-5 h-5" viewBox="0 0 24 24">
                 <path
@@ -184,20 +190,21 @@ export default function RegisterPage() {
                 />
               </svg>
               Зареєструватися через Google
-            </Button>
+            </button>
 
-            <div className="text-center text-sm text-gray-600 dark:text-gray-400">
+            {/* Login Link */}
+            <div className="text-center text-sm text-gray-400 pt-2">
               Вже маєте акаунт?{' '}
               <button
+                type="button"
                 onClick={() => router.push('/login')}
-                className="text-primary dark:text-purple-400 hover:underline"
+                className="text-candy-blue hover:text-candy-purple hover:underline font-medium"
               >
                 Увійти
               </button>
             </div>
           </form>
-        </CardContent>
-      </Card>
+      </div>
     </div>
   )
 }

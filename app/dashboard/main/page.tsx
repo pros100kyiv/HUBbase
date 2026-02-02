@@ -3,14 +3,10 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
-import { Sidebar } from '@/components/admin/Sidebar'
 import { MobileWidget } from '@/components/admin/MobileWidget'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
 import { CalendarIcon, UsersIcon, CheckIcon, MoneyIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
-import { Skeleton, SkeletonWidget, SkeletonCard } from '@/components/ui/skeleton'
-import { Search } from '@/components/ui/search'
-import { Badge } from '@/components/ui/badge'
 
 interface Appointment {
   id: string
@@ -92,26 +88,21 @@ export default function MainPage() {
 
   if (!business || loading) {
     return (
-      <div className="bg-background dark:bg-gray-900">
-        <Sidebar />
-        <div className="ml-16 md:ml-40 p-3">
-          <div className="max-w-7xl mx-auto">
-            <div className="spacing-item">
-              <Skeleton className="h-8 w-48 mb-2" />
-              <Skeleton className="h-4 w-32" />
-            </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
-              <SkeletonWidget />
-              <SkeletonWidget />
-              <SkeletonWidget />
-              <SkeletonWidget />
-            </div>
-            <div className="space-y-2">
-              <SkeletonCard />
-              <SkeletonCard />
-              <SkeletonCard />
-            </div>
-          </div>
+      <div className="max-w-7xl mx-auto">
+        <div className="spacing-item">
+          <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-2" />
+          <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
+          <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+          <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
         </div>
       </div>
     )
@@ -126,29 +117,29 @@ export default function MainPage() {
   }
 
   return (
-    <div className="bg-background dark:bg-gray-900">
-      <Sidebar />
-      <div className="ml-16 md:ml-40 p-3">
-        <div className="max-w-7xl mx-auto">
-          <div className="spacing-item">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-              <div>
-                <h1 className="text-heading">Головна панель</h1>
-                <p className="text-caption font-medium">Огляд вашого бізнесу</p>
-              </div>
-              <div className="w-full md:w-64">
-                <Search 
-                  placeholder="Пошук записів..." 
-                  onSearch={(query) => {
-                    // Фільтрація записів по запиту
-                    console.log('Search:', query)
-                  }}
-                />
-              </div>
-            </div>
+    <div className="max-w-7xl mx-auto">
+      <div className="spacing-item">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
+          <div>
+            <h1 className="text-heading">Головна панель</h1>
+            <p className="text-caption font-medium">Огляд вашого бізнесу</p>
+          </div>
+          <div className="w-full md:w-64">
+            <input
+              type="text"
+              placeholder="Пошук записів..."
+              className={cn(
+                'w-full px-3 py-2 rounded-candy-sm border-2 bg-white dark:bg-gray-800',
+                'border-gray-200 dark:border-gray-700 text-foreground',
+                'focus:outline-none focus:ring-2 focus:ring-candy-purple focus:border-transparent'
+              )}
+              onChange={(e) => {
+                // Фільтрація записів по запиту (можна додати функціональність пізніше)
+              }}
+            />
           </div>
 
-          {/* Quick Stats */}
+      {/* Quick Stats */}
           <div className={cn(
             "grid gap-2 mb-2",
             hideRevenue ? "grid-cols-2 md:grid-cols-3" : "grid-cols-2 md:grid-cols-4"
@@ -323,8 +314,6 @@ export default function MainPage() {
               )}
             </div>
           </div>
-        </div>
-      </div>
     </div>
   )
 }

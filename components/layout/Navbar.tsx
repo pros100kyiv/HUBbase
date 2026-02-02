@@ -61,16 +61,16 @@ export function Navbar() {
   // Don't show on dashboard pages (they have sidebar)
   if (pathname?.startsWith('/dashboard')) {
     return (
-      <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-800/50 shadow-soft">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 shadow-soft-lg">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
           <div className="flex justify-between items-center h-14 md:h-16">
-            {/* Left side - HUBbase Logo */}
+            {/* Left side - Xbase Logo */}
             <div className="flex items-center gap-2 flex-shrink-0">
               <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm candy-purple flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-lg">
-                HUB
+                X
               </div>
               <span className="text-xs md:text-sm font-black text-foreground dark:text-white hidden sm:block">
-                HUBbase
+                Xbase
               </span>
             </div>
 
@@ -134,13 +134,13 @@ export function Navbar() {
     <nav className="sticky top-0 z-50 bg-white/80 dark:bg-gray-900/80 backdrop-blur-lg border-b border-gray-200/50 dark:border-gray-800/50 shadow-soft">
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
         <div className="flex justify-between items-center h-14 md:h-16">
-          {/* Left side - HUBbase Logo */}
+          {/* Left side - Xbase Logo */}
           <div className="flex items-center gap-2 flex-shrink-0">
             <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm candy-purple flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-lg">
-              HUB
+              X
             </div>
             <span className="text-xs md:text-sm font-black text-foreground dark:text-white hidden sm:block">
-              HUBbase
+              Xbase
             </span>
           </div>
 
