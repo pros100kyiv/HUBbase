@@ -1,11 +1,33 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { getBusinessBySlug } from '@/lib/business-context'
 
 // Перевіряє чи параметр є UUID (ID) чи slug
 function isUUID(str: string): boolean {
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   return uuidRegex.test(str)
+}
+
+const businessSelect = {
+  id: true,
+  name: true,
+  slug: true,
+  email: true,
+  phone: true,
+  address: true,
+  description: true,
+  logo: true,
+  primaryColor: true,
+  secondaryColor: true,
+  backgroundColor: true,
+  surfaceColor: true,
+  hideRevenue: true,
+  isActive: true,
+  businessCardBackgroundImage: true,
+  slogan: true,
+  additionalInfo: true,
+  socialMedia: true,
+  workingHours: true,
+  location: true,
 }
 
 export async function GET(
@@ -22,26 +44,14 @@ export async function GET(
     if (isUUID(param)) {
       business = await prisma.business.findUnique({
         where: { id: param },
-        select: {
-          id: true,
-          name: true,
-          slug: true,
-          email: true,
-          phone: true,
-          address: true,
-          description: true,
-          logo: true,
-          primaryColor: true,
-          secondaryColor: true,
-          backgroundColor: true,
-          surfaceColor: true,
-          hideRevenue: true,
-          isActive: true,
-        },
+        select: businessSelect,
       })
     } else {
       // Інакше шукаємо по slug
-      business = await getBusinessBySlug(param)
+      business = await prisma.business.findUnique({
+        where: { slug: param },
+        select: businessSelect,
+      })
     }
 
     if (!business) {
