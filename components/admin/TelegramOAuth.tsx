@@ -176,23 +176,30 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
 
   // Завантаження Telegram Widget скрипта
   useEffect(() => {
-    if (!showWidget || !botName || !containerRef.current || typeof window === 'undefined') {
+    if (!showWidget || !botName || !containerRef.current || typeof window === 'undefined' || !widgetIdRef.current) {
       return
     }
 
+    const container = containerRef.current
+    let script: HTMLScriptElement | null = null
+
     // Видаляємо попередній скрипт, якщо він існує
-    if (scriptRef.current && scriptRef.current.parentNode) {
-      scriptRef.current.parentNode.removeChild(scriptRef.current)
+    if (scriptRef.current) {
+      const oldScript = scriptRef.current
+      // Перевіряємо, чи скрипт дійсно є дочірнім елементом перед видаленням
+      if (oldScript.parentNode === container) {
+        try {
+          container.removeChild(oldScript)
+        } catch (e) {
+          // Ігноруємо помилки видалення
+          console.warn('Error removing old script:', e)
+        }
+      }
       scriptRef.current = null
     }
 
-    // Очищаємо контейнер
-    if (containerRef.current) {
-      containerRef.current.innerHTML = ''
-    }
-
     // Створюємо новий скрипт
-    const script = document.createElement('script')
+    script = document.createElement('script')
     script.src = 'https://telegram.org/js/telegram-widget.js?22'
     script.setAttribute('data-telegram-login', botName)
     script.setAttribute('data-size', 'large')
@@ -217,19 +224,20 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
     }
 
     // Додаємо скрипт до контейнера
-    if (containerRef.current) {
-      containerRef.current.appendChild(script)
-      scriptRef.current = script
-    }
+    container.appendChild(script)
+    scriptRef.current = script
 
     return () => {
       // Cleanup: видаляємо скрипт при unmount або зміні залежностей
-      if (scriptRef.current && scriptRef.current.parentNode) {
+      if (script && script.parentNode === container) {
         try {
-          scriptRef.current.parentNode.removeChild(scriptRef.current)
+          container.removeChild(script)
         } catch (e) {
-          // Ігноруємо помилки видалення (може бути вже видалено)
+          // Ігноруємо помилки видалення (може бути вже видалено React)
+          console.warn('Error removing script in cleanup:', e)
         }
+      }
+      if (scriptRef.current === script) {
         scriptRef.current = null
       }
     }
@@ -367,7 +375,7 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
               </p>
             </div>
           )}
-          <div ref={containerRef} className="flex justify-center min-h-[50px]">
+          <div className="flex justify-center min-h-[50px]">
             {!showWidget && !loading && botName && (
               <Button
                 onClick={handleTelegramAuth}
@@ -378,12 +386,18 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
                 Підключити Telegram
               </Button>
             )}
-            {loading && (
+            {loading && !showWidget && (
               <div className="text-center py-4">
                 <div className="inline-block animate-spin rounded-full h-6 w-6 border-b-2 border-candy-purple"></div>
                 <p className="text-xs text-gray-500 mt-2">Підключення...</p>
               </div>
             )}
+            {/* Контейнер для Telegram Widget - React не контролює його вміст */}
+            <div 
+              ref={containerRef} 
+              className="telegram-widget-container"
+              suppressHydrationWarning
+            />
           </div>
         </div>
       )}
