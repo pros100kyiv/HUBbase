@@ -61,15 +61,15 @@ export function Navbar() {
   // Don't show on dashboard pages (they have sidebar)
   if (pathname?.startsWith('/dashboard')) {
     return (
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-200/50 dark:border-gray-800/50 shadow-soft-lg">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-800/95 dark:bg-gray-900/95 backdrop-blur-xl border-b border-gray-700/50 dark:border-gray-800/50 shadow-soft-xl">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
           <div className="flex justify-between items-center h-14 md:h-16">
             {/* Left side - Xbase Logo */}
             <div className="flex items-center gap-2 flex-shrink-0">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm candy-purple flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-lg">
+              <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm bg-gradient-to-r from-candy-blue to-candy-purple flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-xl">
                 X
               </div>
-              <span className="text-xs md:text-sm font-black text-foreground dark:text-white hidden sm:block">
+              <span className="text-xs md:text-sm font-black text-white hidden sm:block">
                 Xbase
               </span>
             </div>
@@ -77,11 +77,11 @@ export function Navbar() {
             {/* Center - Business name */}
             <div className="flex items-center justify-center flex-1 min-w-0">
               <div className="text-center">
-                <h1 className="text-sm md:text-base font-black text-foreground dark:text-white truncate">
+                <h1 className="text-sm md:text-base font-black text-white truncate">
                   {business?.name || 'Dashboard'}
                 </h1>
                 {business?.phone && (
-                  <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate hidden md:block">
+                  <p className="text-[10px] text-gray-400 dark:text-gray-400 truncate hidden md:block">
                     {business.phone}
                   </p>
                 )}
@@ -93,7 +93,7 @@ export function Navbar() {
               {mounted && (
                 <button
                   onClick={toggleTheme}
-                  className="p-1.5 md:p-2 rounded-candy-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 active:scale-95"
+                  className="p-1.5 md:p-2 rounded-candy-xs border border-gray-600 dark:border-gray-700 bg-gray-700 dark:bg-gray-800 text-gray-300 dark:text-gray-300 hover:bg-gray-600 dark:hover:bg-gray-700 transition-all duration-200 active:scale-95"
                   title={theme === 'light' ? 'Увімкнути темну тему' : 'Увімкнути світлу тему'}
                 >
                   {theme === 'light' ? (
@@ -109,7 +109,7 @@ export function Navbar() {
                     variant="outline"
                     size="sm"
                     onClick={() => window.open(`/qr/${business.slug}`, '_blank')}
-                    className="hidden md:flex text-xs px-2 py-1 h-auto"
+                    className="hidden md:flex text-xs px-2 py-1 h-auto border-gray-600 dark:border-gray-700 bg-gray-700 dark:bg-gray-800 text-white hover:bg-gray-600 dark:hover:bg-gray-700"
                   >
                     QR код
                   </Button>
@@ -117,7 +117,7 @@ export function Navbar() {
                     variant="outline"
                     size="sm"
                     onClick={handleLogout}
-                    className="text-xs px-2 py-1 h-auto"
+                    className="text-xs px-2 py-1 h-auto border-gray-600 dark:border-gray-700 bg-gray-700 dark:bg-gray-800 text-white hover:bg-gray-600 dark:hover:bg-gray-700"
                   >
                     Вийти
                   </Button>

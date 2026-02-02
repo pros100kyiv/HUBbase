@@ -26,8 +26,8 @@
   }
   
   body {
-    background: #E5E5E5;
-    color: #1A1A1A;
+    background: #0F0F0F;
+    color: #FFFFFF;
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -35,7 +35,7 @@
   }
   
   .dark body {
-    background: #121212;
+    background: #0A0A0A;
     color: #FFFFFF;
   }
 }
@@ -47,12 +47,12 @@
   
   /* Unified Card Styles */
   .card-candy {
-    @apply bg-gray-800 dark:bg-gray-900 border border-gray-700 rounded-candy-sm shadow-soft-xl backdrop-blur-sm;
+    @apply bg-gray-800/95 dark:bg-gray-900/95 border border-gray-700/50 dark:border-gray-800/50 rounded-candy-sm shadow-soft-xl backdrop-blur-xl;
     @apply transition-all duration-300;
   }
   
   .card-candy-hover {
-    @apply transition-all duration-200 hover:shadow-soft-lg hover:-translate-y-0.5;
+    @apply transition-all duration-200 hover:shadow-soft-2xl hover:-translate-y-1;
     @apply hover-lift;
   }
   
@@ -62,8 +62,8 @@
   
   /* Unified Button Styles */
   .btn-primary {
-    @apply px-3 py-1.5 text-xs font-bold text-white rounded-candy-sm shadow-soft hover:shadow-soft-lg transition-all;
-    background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
+    @apply px-3 py-1.5 text-xs font-black text-white rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all;
+    background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
   }
   
   .btn-primary:active {
@@ -86,7 +86,7 @@
   }
   
   .btn-secondary {
-    @apply px-3 py-1.5 text-xs font-bold rounded-candy-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all;
+    @apply px-3 py-1.5 text-xs font-black rounded-candy-sm border border-gray-600 dark:border-gray-700 bg-gray-700 dark:bg-gray-800 text-white hover:bg-gray-600 dark:hover:bg-gray-700 transition-all shadow-soft-xl;
   }
   
   .btn-secondary:active {
@@ -95,19 +95,19 @@
   
   /* Unified Text Styles */
   .text-heading {
-    @apply text-lg md:text-xl font-black text-foreground dark:text-white;
+    @apply text-lg md:text-xl font-black text-white;
   }
   
   .text-subheading {
-    @apply text-base md:text-lg font-black text-foreground dark:text-white;
+    @apply text-base md:text-lg font-black text-white;
   }
   
   .text-body {
-    @apply text-sm text-foreground dark:text-white;
+    @apply text-sm text-gray-200 dark:text-gray-200;
   }
   
   .text-caption {
-    @apply text-xs text-gray-600 dark:text-gray-400;
+    @apply text-xs text-gray-400 dark:text-gray-400;
   }
   
   .text-small {

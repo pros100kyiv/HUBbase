@@ -134,7 +134,7 @@ export default function SchedulePage() {
   if (!business || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-gray-500">Завантаження...</p>
+        <p className="text-gray-300">Завантаження...</p>
       </div>
     )
   }
@@ -145,7 +145,7 @@ export default function SchedulePage() {
       <div className="ml-16 md:ml-40 p-3">
         <div className="max-w-7xl mx-auto">
           <div className="flex items-center justify-between spacing-item">
-            <h1 className="text-heading">Графік роботи</h1>
+            <h1 className="text-heading text-candy-blue dark:text-blue-400">Графік роботи</h1>
             <div className="flex gap-2">
               <button
                 onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
@@ -170,14 +170,14 @@ export default function SchedulePage() {
 
           {/* Calendar */}
           <div className="card-candy p-3 spacing-section overflow-hidden">
-            <h2 className="text-subheading mb-3 text-center">
+            <h2 className="text-subheading mb-3 text-center text-candy-blue dark:text-blue-400">
               {format(currentMonth, 'LLLL yyyy', { locale: uk })}
             </h2>
 
             {/* Day Names */}
             <div className="grid grid-cols-7 gap-1 mb-2">
               {dayNames.map((day) => (
-                <div key={day} className="text-center text-xs font-bold text-gray-600 dark:text-gray-400 py-1">
+                <div key={day} className="text-center text-xs font-black text-gray-300 dark:text-gray-300 py-1">
                   {day}
                 </div>
               ))}
@@ -194,12 +194,12 @@ export default function SchedulePage() {
                   <div
                     key={day.toISOString()}
                     className={cn(
-                      'relative p-2 rounded-candy-sm border min-h-[80px] flex flex-col',
+                      'relative p-2 rounded-candy-sm border min-h-[80px] flex flex-col backdrop-blur-sm',
                       isCurrentMonth
-                        ? 'bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700'
-                        : 'bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-800 opacity-50',
-                      isTodayDate && 'ring-2 ring-candy-purple/50',
-                      workingMasters.length > 0 && 'bg-candy-purple/5 dark:bg-candy-purple/10'
+                        ? 'bg-gray-700/50 dark:bg-gray-800/50 border-gray-600 dark:border-gray-700'
+                        : 'bg-gray-800/30 dark:bg-gray-900/30 border-gray-700 dark:border-gray-800 opacity-50',
+                      isTodayDate && 'ring-2 ring-candy-blue',
+                      workingMasters.length > 0 && 'bg-candy-purple/10 dark:bg-candy-purple/20'
                     )}
                   >
                     {/* Date Number */}
@@ -207,9 +207,9 @@ export default function SchedulePage() {
                       'text-sm font-black mb-1',
                       isCurrentMonth
                         ? isTodayDate
-                          ? 'text-candy-purple'
-                          : 'text-foreground dark:text-white'
-                        : 'text-gray-400 dark:text-gray-600'
+                          ? 'text-candy-blue'
+                          : 'text-white dark:text-white'
+                        : 'text-gray-500 dark:text-gray-600'
                     )}>
                       {format(day, 'd')}
                     </div>
@@ -232,12 +232,12 @@ export default function SchedulePage() {
                         )
                       })}
                       {workingMasters.length > 3 && (
-                        <div className="px-1.5 py-0.5 rounded-candy-xs bg-gray-300 dark:bg-gray-700 text-[9px] font-bold text-gray-700 dark:text-gray-300 text-center">
+                        <div className="px-1.5 py-0.5 rounded-candy-xs bg-gray-600 dark:bg-gray-700 text-[9px] font-bold text-white dark:text-white text-center">
                           +{workingMasters.length - 3}
                         </div>
                       )}
                       {workingMasters.length === 0 && isCurrentMonth && (
-                        <div className="text-[9px] text-gray-400 dark:text-gray-600 text-center mt-auto">
+                        <div className="text-[9px] text-gray-400 dark:text-gray-500 text-center mt-auto">
                           Вихідний
                         </div>
                       )}
