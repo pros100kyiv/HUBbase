@@ -1,6 +1,19 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+interface SMSMessageWithClient {
+  id: string
+  phone: string
+  message: string
+  status: string
+  createdAt: Date
+  client: {
+    id: string
+    name: string
+    phone: string
+  } | null
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -28,10 +41,10 @@ export async function GET(request: Request) {
       },
       orderBy: { createdAt: 'desc' },
       take: limit
-    })
+    }) as SMSMessageWithClient[]
 
     // Формуємо повідомлення
-    const messages = smsMessages.map(msg => ({
+    const messages = smsMessages.map((msg: SMSMessageWithClient) => ({
       id: msg.id,
       phone: msg.phone,
       message: msg.message,
