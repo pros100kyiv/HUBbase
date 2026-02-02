@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { BotIcon, CheckIcon, XIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -26,7 +26,53 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
   const [loading, setLoading] = useState(false)
   const [botName, setBotName] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-  const scriptLoadedRef = useRef(false)
+  const [showWidget, setShowWidget] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
+  const scriptRef = useRef<HTMLScriptElement | null>(null)
+  const widgetIdRef = useRef<string | null>(null)
+
+  const checkConnection = useCallback(async () => {
+    if (!businessId) return
+    
+    try {
+      const response = await fetch(`/api/telegram/connection?businessId=${businessId}`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.connected && data.user) {
+          setIsConnected(true)
+          setUserData(data.user)
+        } else {
+          setIsConnected(false)
+          setUserData(null)
+        }
+      }
+    } catch (error) {
+      console.error('Error checking connection:', error)
+      setIsConnected(false)
+    }
+  }, [businessId])
+
+  const fetchBotName = useCallback(async () => {
+    if (!businessId) return
+    
+    try {
+      const response = await fetch(`/api/telegram/bot-name?businessId=${businessId}`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.botName) {
+          setBotName(data.botName)
+          setError(null)
+        } else {
+          setError('Telegram бот не налаштований. Будь ласка, налаштуйте бота в налаштуваннях.')
+        }
+      } else {
+        setError('Не вдалося завантажити налаштування бота')
+      }
+    } catch (error) {
+      console.error('Error fetching bot name:', error)
+      setError('Не вдалося завантажити налаштування бота')
+    }
+  }, [businessId])
 
   useEffect(() => {
     if (!businessId) return
@@ -51,50 +97,143 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
     return () => {
       mounted = false
     }
-  }, [businessId])
+  }, [businessId, checkConnection, fetchBotName])
 
-  const fetchBotName = async () => {
-    if (!businessId) return
-    
-    try {
-      const response = await fetch(`/api/telegram/bot-name?businessId=${businessId}`)
-      if (response.ok) {
-        const data = await response.json()
-        if (data.botName) {
-          setBotName(data.botName)
-          setError(null)
-        } else {
-          setError('Telegram бот не налаштований. Будь ласка, налаштуйте бота в налаштуваннях.')
+  // Налаштування глобальної функції для Telegram OAuth
+  useEffect(() => {
+    if (typeof window === 'undefined' || !businessId) return
+
+    // Створюємо унікальний ID для цього екземпляра компонента
+    const widgetId = `telegram-auth-${businessId}-${Math.random().toString(36).substr(2, 9)}`
+    widgetIdRef.current = widgetId
+
+    // Глобальна функція для обробки авторизації
+    const authHandler = async (user: any) => {
+      try {
+        if (!user || !user.id) {
+          throw new Error('Некоректні дані від Telegram')
         }
-      } else {
-        setError('Не вдалося завантажити налаштування бота')
-      }
-    } catch (error) {
-      console.error('Error fetching bot name:', error)
-      setError('Не вдалося завантажити налаштування бота')
-    }
-  }
 
-  const checkConnection = async () => {
-    if (!businessId) return
-    
-    try {
-      const response = await fetch(`/api/telegram/connection?businessId=${businessId}`)
-      if (response.ok) {
-        const data = await response.json()
-        if (data.connected && data.user) {
+        setLoading(true)
+        const response = await fetch('/api/telegram/oauth', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            businessId,
+            telegramData: user
+          })
+        })
+        
+        if (response.ok) {
+          const data = await response.json()
           setIsConnected(true)
-          setUserData(data.user)
+          setUserData(data.user || data.telegramUser)
+          onConnected(data)
+          setShowWidget(false)
+          try {
+            const toastModule = await import('@/components/ui/toast')
+            toastModule.toast({ title: 'Telegram підключено!', type: 'success' })
+          } catch (e) {
+            console.error('Error showing success toast:', e)
+          }
+          await checkConnection()
         } else {
-          setIsConnected(false)
-          setUserData(null)
+          const errorData = await response.json().catch(() => ({ error: 'Не вдалося підключити' }))
+          const errorMessage = errorData.error || 'Не вдалося підключити'
+          setError(errorMessage)
+          try {
+            const toastModule = await import('@/components/ui/toast')
+            toastModule.toast({ title: 'Помилка', description: errorMessage, type: 'error' })
+          } catch (e) {
+            console.error('Error showing error toast:', e)
+          }
         }
+      } catch (error: any) {
+        console.error('Error connecting Telegram:', error)
+        const errorMessage = error.message || 'Помилка підключення'
+        setError(errorMessage)
+        try {
+          const toastModule = await import('@/components/ui/toast')
+          toastModule.toast({ title: 'Помилка', description: errorMessage, type: 'error' })
+        } catch (e) {
+          console.error('Error showing error toast:', e)
+        }
+      } finally {
+        setLoading(false)
       }
-    } catch (error) {
-      console.error('Error checking connection:', error)
-      setIsConnected(false)
     }
-  }
+
+    ;(window as any)[`onTelegramAuth_${widgetId}`] = authHandler
+
+    return () => {
+      // Cleanup: видаляємо глобальну функцію
+      if (typeof window !== 'undefined' && widgetIdRef.current) {
+        delete (window as any)[`onTelegramAuth_${widgetIdRef.current}`]
+        widgetIdRef.current = null
+      }
+    }
+  }, [businessId, onConnected, checkConnection])
+
+  // Завантаження Telegram Widget скрипта
+  useEffect(() => {
+    if (!showWidget || !botName || !containerRef.current || typeof window === 'undefined') {
+      return
+    }
+
+    // Видаляємо попередній скрипт, якщо він існує
+    if (scriptRef.current && scriptRef.current.parentNode) {
+      scriptRef.current.parentNode.removeChild(scriptRef.current)
+      scriptRef.current = null
+    }
+
+    // Очищаємо контейнер
+    if (containerRef.current) {
+      containerRef.current.innerHTML = ''
+    }
+
+    // Створюємо новий скрипт
+    const script = document.createElement('script')
+    script.src = 'https://telegram.org/js/telegram-widget.js?22'
+    script.setAttribute('data-telegram-login', botName)
+    script.setAttribute('data-size', 'large')
+    script.setAttribute('data-onauth', `onTelegramAuth_${widgetIdRef.current}(user)`)
+    script.setAttribute('data-request-access', 'write')
+    script.async = true
+    
+    script.onerror = async () => {
+      setError('Не вдалося завантажити Telegram Widget')
+      setLoading(false)
+      setShowWidget(false)
+      try {
+        const toastModule = await import('@/components/ui/toast')
+        toastModule.toast({ title: 'Помилка', description: 'Не вдалося завантажити Telegram Widget', type: 'error' })
+      } catch (e) {
+        console.error('Error showing toast:', e)
+      }
+    }
+    
+    script.onload = () => {
+      setLoading(false)
+    }
+
+    // Додаємо скрипт до контейнера
+    if (containerRef.current) {
+      containerRef.current.appendChild(script)
+      scriptRef.current = script
+    }
+
+    return () => {
+      // Cleanup: видаляємо скрипт при unmount або зміні залежностей
+      if (scriptRef.current && scriptRef.current.parentNode) {
+        try {
+          scriptRef.current.parentNode.removeChild(scriptRef.current)
+        } catch (e) {
+          // Ігноруємо помилки видалення (може бути вже видалено)
+        }
+        scriptRef.current = null
+      }
+    }
+  }, [showWidget, botName])
 
   const handleTelegramAuth = () => {
     if (typeof window === 'undefined') return
@@ -124,115 +263,7 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
 
     setLoading(true)
     setError(null)
-    
-    try {
-      // Очищаємо попередній контейнер
-      const container = document.getElementById('telegram-login-container')
-      if (!container) {
-        setError('Контейнер для Telegram Widget не знайдено')
-        setLoading(false)
-        return
-      }
-      
-      container.innerHTML = ''
-
-      // Видаляємо попередню глобальну функцію, якщо вона існує
-      if ((window as any).onTelegramAuth) {
-        delete (window as any).onTelegramAuth
-      }
-      
-      // Глобальна функція для обробки авторизації
-      ;(window as any).onTelegramAuth = async (user: any) => {
-        try {
-          if (!user || !user.id) {
-            throw new Error('Некоректні дані від Telegram')
-          }
-
-          const response = await fetch('/api/telegram/oauth', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              businessId,
-              telegramData: user
-            })
-          })
-          
-          if (response.ok) {
-            const data = await response.json()
-            setIsConnected(true)
-            setUserData(data.user || data.telegramUser)
-            onConnected(data)
-            try {
-              const toastModule = await import('@/components/ui/toast')
-              toastModule.toast({ title: 'Telegram підключено!', type: 'success' })
-            } catch (e) {
-              console.error('Error showing success toast:', e)
-            }
-            // Оновлюємо статус після успішного підключення
-            await checkConnection()
-          } else {
-            const errorData = await response.json().catch(() => ({ error: 'Не вдалося підключити' }))
-            const errorMessage = errorData.error || 'Не вдалося підключити'
-            setError(errorMessage)
-            try {
-              const toastModule = await import('@/components/ui/toast')
-              toastModule.toast({ title: 'Помилка', description: errorMessage, type: 'error' })
-            } catch (e) {
-              console.error('Error showing error toast:', e)
-            }
-          }
-        } catch (error: any) {
-          console.error('Error connecting Telegram:', error)
-          const errorMessage = error.message || 'Помилка підключення'
-          setError(errorMessage)
-          try {
-            const toastModule = await import('@/components/ui/toast')
-            toastModule.toast({ title: 'Помилка', description: errorMessage, type: 'error' })
-          } catch (e) {
-            console.error('Error showing error toast:', e)
-          }
-        } finally {
-          setLoading(false)
-        }
-      }
-      
-      // Створюємо Telegram Login Widget
-      const script = document.createElement('script')
-      script.src = 'https://telegram.org/js/telegram-widget.js?22'
-      script.setAttribute('data-telegram-login', botName)
-      script.setAttribute('data-size', 'large')
-      script.setAttribute('data-onauth', 'onTelegramAuth(user)')
-      script.setAttribute('data-request-access', 'write')
-      script.async = true
-      
-      script.onerror = async () => {
-        setError('Не вдалося завантажити Telegram Widget')
-        setLoading(false)
-        try {
-          const toastModule = await import('@/components/ui/toast')
-          toastModule.toast({ title: 'Помилка', description: 'Не вдалося завантажити Telegram Widget', type: 'error' })
-        } catch (e) {
-          console.error('Error showing toast:', e)
-        }
-      }
-      
-      // Додаємо скрипт
-      container.appendChild(script)
-      scriptLoadedRef.current = true
-    } catch (error: any) {
-      console.error('Error setting up Telegram auth:', error)
-      setError(error.message || 'Помилка налаштування')
-      setLoading(false)
-      try {
-        import('@/components/ui/toast').then((module) => {
-          module.toast({ title: 'Помилка', description: 'Помилка налаштування Telegram авторизації', type: 'error' })
-        }).catch((e) => {
-          console.error('Error showing toast:', e)
-        })
-      } catch (e) {
-        console.error('Error showing toast:', e)
-      }
-    }
+    setShowWidget(true)
   }
 
   const handleDisconnect = async () => {
@@ -336,8 +367,8 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
               </p>
             </div>
           )}
-          <div id="telegram-login-container" className="flex justify-center min-h-[50px]">
-            {!loading && botName && (
+          <div ref={containerRef} className="flex justify-center min-h-[50px]">
+            {!showWidget && !loading && botName && (
               <Button
                 onClick={handleTelegramAuth}
                 className="w-full bg-gradient-to-r from-candy-blue to-candy-purple text-white"
