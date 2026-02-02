@@ -210,10 +210,10 @@ export default function ClientsPage() {
             </div>
           </div>
           <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">
-            {searchQuery ? 'Клієнтів не знайдено' : 'Немає клієнтів'}
+            {searchQuery ? "Клієнтів не знайдено" : "Немає клієнтів"}
           </h3>
           <p className="text-gray-600 dark:text-gray-400 mb-6">
-            {searchQuery ? 'Спробуйте інший пошуковий запит' : "Клієнти з'являться після перших записів"}
+            {searchQuery ? "Спробуйте інший пошуковий запит" : "Клієнти з'являться після перших записів"}
           </p>
           {!searchQuery && (
             <button
@@ -344,5 +344,6 @@ export default function ClientsPage() {
     </div>
   )
 }
+
 
 
