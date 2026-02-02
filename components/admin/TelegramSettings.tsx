@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
+import { TelegramOAuth } from './TelegramOAuth'
 
 interface TelegramSettingsProps {
   business: {
@@ -84,6 +85,17 @@ export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) 
 
   return (
     <div className="space-y-4">
+      {/* Telegram OAuth */}
+      <TelegramOAuth
+        businessId={business.id}
+        onConnected={(data) => {
+          onUpdate({
+            ...business,
+            telegramChatId: data.user?.telegramId?.toString()
+          })
+        }}
+      />
+
       {/* Інформація про токен */}
       {telegramBotToken && (
         <div className="card-candy p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">

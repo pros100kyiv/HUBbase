@@ -74,6 +74,24 @@ export async function POST(request: Request) {
       const result = await smsService.sendBulk(phones, message)
       smsCount = result.sent
       failedCount += result.failed
+      
+      // Зберігаємо SMS повідомлення в базу даних
+      const smsMessages = recipients
+        .filter(r => r.phone)
+        .map(recipient => ({
+          businessId,
+          phone: recipient.phone!,
+          message,
+          status: 'sent' as const,
+          clientId: recipient.id,
+          broadcastId: broadcast.id
+        }))
+      
+      if (smsMessages.length > 0) {
+        await (prisma as any).sMSMessage.createMany({
+          data: smsMessages
+        })
+      }
     }
     
     if ((type === 'email' || type === 'both') && business.emailProvider && business.emailApiKey) {

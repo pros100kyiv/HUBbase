@@ -6,6 +6,7 @@ import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isToday, is
 import { uk } from 'date-fns/locale'
 import { MobileWidget } from '@/components/admin/MobileWidget'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
+import { SMSMessagesCard } from '@/components/admin/SMSMessagesCard'
 import { CalendarIcon, UsersIcon, CheckIcon, MoneyIcon, LightBulbIcon, ChevronUpIcon, ChevronDownIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 
@@ -410,6 +411,9 @@ export default function MainPage() {
               </div>
             )}
           </div>
+
+          {/* SMS Messages Section */}
+          {business?.id && <SMSMessagesCard businessId={business.id} />}
         </div>
       </div>
     </div>
