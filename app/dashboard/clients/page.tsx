@@ -70,8 +70,8 @@ export default function ClientsPage() {
               appointmentsCount: 0,
               lastVisit: apt.startTime,
               totalSpent: 0,
-              appointments: [],
-              servicesUsed: [],
+              appointments: [] as any[],
+              servicesUsed: [] as string[],
             }
 
             existing.appointmentsCount++
