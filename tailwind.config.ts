@@ -77,6 +77,7 @@ const config = {
         'soft': '0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.08)',
         'soft-lg': '0 4px 16px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.12)',
         'soft-xl': '0 8px 24px rgba(0, 0, 0, 0.12), 0 4px 12px rgba(0, 0, 0, 0.16)',
+        'soft-2xl': '0 12px 32px rgba(0, 0, 0, 0.16), 0 6px 16px rgba(0, 0, 0, 0.2)',
         'inner': 'inset 0 2px 4px rgba(0, 0, 0, 0.06)',
         'neon-orange': '0 0 20px rgba(255, 149, 0, 0.3), 0 4px 16px rgba(255, 149, 0, 0.2)',
         'neon-pink': '0 0 20px rgba(255, 45, 85, 0.3), 0 4px 16px rgba(255, 45, 85, 0.2)',
