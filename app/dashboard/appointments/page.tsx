@@ -6,7 +6,7 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, ea
 import { uk } from 'date-fns/locale'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
 import { CreateAppointmentForm } from '@/components/admin/CreateAppointmentForm'
-import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon, FilterIcon, DownloadIcon, CheckSquareIcon } from '@/components/icons'
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon, FilterIcon, DownloadIcon, CheckIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 
 interface Appointment {
@@ -142,10 +142,133 @@ export default function AppointmentsPage() {
     }
   }
 
+  const handleBulkStatusChange = async (status: string) => {
+    if (selectedAppointments.size === 0) return
+    
+    try {
+      const promises = Array.from(selectedAppointments).map(id =>
+        fetch(`/api/appointments/${id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status }),
+        })
+      )
+      
+      await Promise.all(promises)
+      setAppointments((prev) =>
+        prev.map((apt) => 
+          selectedAppointments.has(apt.id) ? { ...apt, status } : apt
+        )
+      )
+      setSelectedAppointments(new Set())
+    } catch (error) {
+      console.error('Error updating appointments:', error)
+    }
+  }
+
+  const handleExportCSV = () => {
+    const csvHeaders = ['Дата', 'Час', 'Клієнт', 'Телефон', 'Спеціаліст', 'Послуги', 'Статус', 'Примітки']
+    const csvRows = filteredAppointments.map(apt => {
+      const start = new Date(apt.startTime)
+      const end = new Date(apt.endTime)
+      let servicesList: string[] = []
+      try {
+        if (apt.services) {
+          servicesList = JSON.parse(apt.services)
+        }
+      } catch (e) {
+        // Ignore
+      }
+      return [
+        format(start, 'dd.MM.yyyy'),
+        `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`,
+        apt.clientName,
+        apt.clientPhone,
+        apt.masterName || 'Невідомий',
+        servicesList.join(', '),
+        apt.status,
+        (apt as any).notes || ''
+      ]
+    })
+    
+    const csvContent = [
+      csvHeaders.join(','),
+      ...csvRows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n')
+    
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `записи_${format(currentMonth, 'MM_yyyy', { locale: uk })}.csv`
+    link.click()
+  }
+
+  const toggleSelectAppointment = (id: string) => {
+    setSelectedAppointments(prev => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedAppointments.size === filteredAppointments.length) {
+      setSelectedAppointments(new Set())
+    } else {
+      setSelectedAppointments(new Set(filteredAppointments.map(apt => apt.id)))
+    }
+  }
+
   const filteredAppointments = appointments.filter((apt) => {
     if (filterStatus !== 'all' && apt.status !== filterStatus) return false
+    if (filterMaster !== 'all' && apt.masterId !== filterMaster) return false
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase()
+      const matchesName = apt.clientName.toLowerCase().includes(query)
+      const matchesPhone = apt.clientPhone.includes(query)
+      let matchesService = false
+      try {
+        if (apt.services) {
+          const servicesList = JSON.parse(apt.services)
+          matchesService = servicesList.some((s: string) => s.toLowerCase().includes(query))
+        }
+      } catch (e) {
+        // Ignore
+      }
+      if (!matchesName && !matchesPhone && !matchesService) return false
+    }
     return true
   })
+
+  // Calculate statistics
+  const stats = {
+    total: filteredAppointments.length,
+    pending: filteredAppointments.filter(a => a.status === 'Pending').length,
+    confirmed: filteredAppointments.filter(a => a.status === 'Confirmed').length,
+    done: filteredAppointments.filter(a => a.status === 'Done').length,
+    cancelled: filteredAppointments.filter(a => a.status === 'Cancelled').length,
+    revenue: filteredAppointments
+      .filter(a => a.status === 'Done')
+      .reduce((sum, apt) => {
+        try {
+          if (apt.services) {
+            const servicesList = JSON.parse(apt.services)
+            const total = servicesList.reduce((acc: number, serviceName: string) => {
+              const service = services.find(s => s.name === serviceName)
+              return acc + (service?.price || 0)
+            }, 0)
+            return sum + total
+          }
+        } catch (e) {
+          // Ignore
+        }
+        return sum
+      }, 0)
+  }
 
   const monthStart = startOfMonth(currentMonth)
   const monthEnd = endOfMonth(currentMonth)
