@@ -171,17 +171,23 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
       }
     }
 
-    // Зберігаємо функцію глобально
+    // Зберігаємо функцію глобально з унікальним ім'ям
     const functionName = `onTelegramAuth_${widgetId}`
     ;(window as any)[functionName] = authHandler
+    
+    // Також зберігаємо посилання на businessId для доступу
+    ;(window as any)[`${functionName}_businessId`] = businessId
+    
     console.log('[TelegramOAuth] Global function registered:', functionName)
     console.log('[TelegramOAuth] Function available:', typeof (window as any)[functionName])
+    console.log('[TelegramOAuth] BusinessId stored:', businessId)
 
     return () => {
       // Cleanup: видаляємо глобальну функцію
       if (typeof window !== 'undefined' && widgetIdRef.current) {
         const cleanupFunctionName = `onTelegramAuth_${widgetIdRef.current}`
         delete (window as any)[cleanupFunctionName]
+        delete (window as any)[`${cleanupFunctionName}_businessId`]
         console.log('[TelegramOAuth] Cleanup: removed function', cleanupFunctionName)
         widgetIdRef.current = null
       }
@@ -231,9 +237,13 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
     script.src = 'https://telegram.org/js/telegram-widget.js?22'
     script.setAttribute('data-telegram-login', botName)
     script.setAttribute('data-size', 'large')
+    // Використовуємо унікальне ім'я функції
     script.setAttribute('data-onauth', `${functionName}(user)`)
     script.setAttribute('data-request-access', 'write')
     script.async = true
+    
+    // Додаємо data-корінь для правильного виклику
+    script.setAttribute('data-auth-url', window.location.origin)
     
     script.onerror = async () => {
       console.error('[TelegramOAuth] Script load error')
