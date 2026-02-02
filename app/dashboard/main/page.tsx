@@ -125,26 +125,26 @@ export default function MainPage() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-2">
+      <div className="mb-3">
+        <h1 className="text-lg md:text-xl font-black text-gray-900 dark:text-white mb-1">
           Daily Dashboard Overview
         </h1>
-        <p className="text-base text-gray-600 dark:text-gray-400">
+        <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
           {hasAppointments ? `Сьогодні у вас ${todayAppointments.length} ${todayAppointments.length === 1 ? 'запис' : 'записів'}` : 'Сьогодні в тебе нічого немає'}
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Main Content Area */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="lg:col-span-2 space-y-3">
           {/* Tabs */}
-          <div className="flex gap-2">
+          <div className="flex gap-1.5">
             <button
               onClick={() => setActiveTab('working')}
               className={cn(
-                'px-6 py-3 rounded-candy-sm font-bold text-sm transition-all',
+                'px-3 py-1.5 rounded-candy-xs font-bold text-xs transition-all',
                 activeTab === 'working'
-                  ? 'bg-gradient-to-r from-candy-purple to-candy-blue text-white shadow-soft-xl'
+                  ? 'bg-gradient-to-r from-candy-purple to-candy-blue text-white shadow-soft-lg'
                   : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
               )}
             >
@@ -153,9 +153,9 @@ export default function MainPage() {
             <button
               onClick={() => setActiveTab('overdue')}
               className={cn(
-                'px-6 py-3 rounded-candy-sm font-bold text-sm transition-all',
+                'px-3 py-1.5 rounded-candy-xs font-bold text-xs transition-all',
                 activeTab === 'overdue'
-                  ? 'bg-gradient-to-r from-candy-purple to-candy-blue text-white shadow-soft-xl'
+                  ? 'bg-gradient-to-r from-candy-purple to-candy-blue text-white shadow-soft-lg'
                   : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
               )}
             >
@@ -167,11 +167,11 @@ export default function MainPage() {
           {activeTab === 'working' && (
             <>
               {hasAppointments ? (
-                <div className="card-candy p-6">
-                  <h2 className="text-xl font-black text-gray-900 dark:text-white mb-4">
+                <div className="card-candy p-3">
+                  <h2 className="text-base font-black text-gray-900 dark:text-white mb-2">
                     Записи на сьогодні
                   </h2>
-                  <div className="space-y-3">
+                  <div className="space-y-2">
                     {todayAppointments
                       .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
                       .map((appointment) => {
@@ -223,27 +223,27 @@ export default function MainPage() {
                         return (
                           <div
                             key={appointment.id}
-                            className="p-4 rounded-candy-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-soft-xl transition-all"
+                            className="p-2 rounded-candy-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-soft-lg transition-all"
                           >
-                            <div className="flex items-center gap-4">
-                              <div className="flex flex-col items-center justify-center w-16 h-16 rounded-candy-sm bg-gradient-to-r from-candy-blue to-candy-purple text-white flex-shrink-0">
-                                <span className="text-lg font-black">
+                            <div className="flex items-center gap-2">
+                              <div className="flex flex-col items-center justify-center w-12 h-12 rounded-candy-xs bg-gradient-to-r from-candy-blue to-candy-purple text-white flex-shrink-0">
+                                <span className="text-sm font-black">
                                   {format(startTime, 'HH:mm')}
                                 </span>
-                                <span className="text-xs font-bold">
+                                <span className="text-[10px] font-bold">
                                   {format(endTime, 'HH:mm')}
                                 </span>
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2 mb-1">
-                                  <p className="text-base font-black text-gray-900 dark:text-white">
+                                <div className="flex items-center gap-1.5 mb-0.5">
+                                  <p className="text-sm font-black text-gray-900 dark:text-white">
                                     {appointment.clientName}
                                   </p>
-                                  <span className={cn('px-2 py-1 rounded-full text-xs font-bold border', getStatusColor(appointment.status))}>
+                                  <span className={cn('px-1.5 py-0.5 rounded-full text-[10px] font-bold border', getStatusColor(appointment.status))}>
                                     {getStatusLabel(appointment.status)}
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                                <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                                   {appointment.masterName && (
                                     <span>Спеціаліст: {appointment.masterName}</span>
                                   )}
@@ -259,39 +259,39 @@ export default function MainPage() {
                   </div>
                 </div>
               ) : (
-                <div className="card-candy p-8 md:p-12 text-center">
+                <div className="card-candy p-4 md:p-6 text-center">
                   {/* Empty State Illustration */}
-                  <div className="mb-8 flex justify-center">
-                    <div className="relative w-64 h-64">
+                  <div className="mb-4 flex justify-center">
+                    <div className="relative w-48 h-48">
                       {/* Computer */}
-                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-24 bg-gradient-to-br from-candy-purple/20 to-candy-blue/20 rounded-candy-sm border-2 border-candy-purple/30">
-                        <div className="p-2 space-y-1">
-                          <div className="flex gap-1">
-                            <div className="w-2 h-2 rounded-full bg-candy-purple/40"></div>
-                            <div className="w-2 h-2 rounded-full bg-candy-blue/40"></div>
-                            <div className="w-2 h-2 rounded-full bg-candy-mint/40"></div>
+                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-24 h-18 bg-gradient-to-br from-candy-purple/20 to-candy-blue/20 rounded-candy-xs border-2 border-candy-purple/30">
+                        <div className="p-1.5 space-y-0.5">
+                          <div className="flex gap-0.5">
+                            <div className="w-1.5 h-1.5 rounded-full bg-candy-purple/40"></div>
+                            <div className="w-1.5 h-1.5 rounded-full bg-candy-blue/40"></div>
+                            <div className="w-1.5 h-1.5 rounded-full bg-candy-mint/40"></div>
                           </div>
                         </div>
                       </div>
                       {/* Plant */}
-                      <div className="absolute top-1/2 left-1/4 transform -translate-x-1/2 -translate-y-1/2 w-8 h-12 bg-gradient-to-b from-candy-mint/30 to-candy-green/30 rounded-full"></div>
+                      <div className="absolute top-1/2 left-1/4 transform -translate-x-1/2 -translate-y-1/2 w-6 h-9 bg-gradient-to-b from-candy-mint/30 to-candy-green/30 rounded-full"></div>
                       {/* Coffee */}
-                      <div className="absolute top-1/2 right-1/4 transform translate-x-1/2 -translate-y-1/2 w-6 h-8 bg-gradient-to-b from-amber-400/30 to-amber-600/30 rounded-full"></div>
+                      <div className="absolute top-1/2 right-1/4 transform translate-x-1/2 -translate-y-1/2 w-4.5 h-6 bg-gradient-to-b from-amber-400/30 to-amber-600/30 rounded-full"></div>
                       {/* Dots */}
-                      <div className="absolute top-1/4 left-1/4 w-2 h-2 rounded-full bg-candy-purple/30"></div>
-                      <div className="absolute bottom-1/4 right-1/4 w-2 h-2 rounded-full bg-candy-blue/30"></div>
+                      <div className="absolute top-1/4 left-1/4 w-1.5 h-1.5 rounded-full bg-candy-purple/30"></div>
+                      <div className="absolute bottom-1/4 right-1/4 w-1.5 h-1.5 rounded-full bg-candy-blue/30"></div>
                     </div>
                   </div>
                   
-                  <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">
+                  <h3 className="text-base font-black text-gray-900 dark:text-white mb-1.5">
                     Сьогодні без завдань 🌙
                   </h3>
-                  <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                  <p className="text-xs text-gray-600 dark:text-gray-400 mb-3 max-w-md mx-auto">
                     Можеш використати момент і додати справи на день
                   </p>
                   <button
                     onClick={() => router.push('/dashboard/appointments')}
-                    className="px-6 py-3 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
+                    className="px-3 py-1.5 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-xs text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95"
                   >
                     Згенерувати план на день
                   </button>
@@ -301,8 +301,8 @@ export default function MainPage() {
           )}
 
           {activeTab === 'overdue' && (
-            <div className="card-candy p-8 md:p-12 text-center">
-              <p className="text-gray-600 dark:text-gray-400">
+            <div className="card-candy p-4 md:p-6 text-center">
+              <p className="text-xs text-gray-600 dark:text-gray-400">
                 Немає протермінованих записів
               </p>
             </div>
@@ -310,28 +310,28 @@ export default function MainPage() {
         </div>
 
         {/* Right Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-3">
           {/* Calendar Section */}
-          <div className="card-candy p-6 bg-gradient-to-br from-candy-purple/10 to-candy-blue/10 border-candy-purple/20">
-            <div className="flex items-center justify-between mb-4">
-              <ChevronUpIcon className="w-5 h-5 text-candy-purple" />
-              <CalendarIcon className="w-6 h-6 text-candy-purple" />
+          <div className="card-candy p-3 bg-gradient-to-br from-candy-purple/10 to-candy-blue/10 border-candy-purple/20">
+            <div className="flex items-center justify-between mb-2">
+              <ChevronUpIcon className="w-4 h-4 text-candy-purple" />
+              <CalendarIcon className="w-5 h-5 text-candy-purple" />
             </div>
             
-            <div className="space-y-3 mb-4">
+            <div className="space-y-2 mb-2">
               {calendarDates.map((date) => {
                 const isTodayDate = isToday(date)
                 return (
                   <div
                     key={date.toISOString()}
                     className={cn(
-                      'p-3 rounded-candy-sm transition-all',
+                      'p-2 rounded-candy-xs transition-all',
                       isTodayDate
-                        ? 'bg-gradient-to-r from-candy-purple to-candy-blue text-white shadow-soft-xl'
+                        ? 'bg-gradient-to-r from-candy-purple to-candy-blue text-white shadow-soft-lg'
                         : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
                     )}
                   >
-                    <p className="font-bold text-sm">
+                    <p className="font-bold text-xs">
                       {format(date, 'EEEE d MMMM', { locale: uk })}
                     </p>
                   </div>
@@ -339,72 +339,72 @@ export default function MainPage() {
               })}
             </div>
 
-            <div className="flex items-center justify-between mb-4">
-              <ChevronDownIcon className="w-5 h-5 text-candy-purple" />
+            <div className="flex items-center justify-between mb-2">
+              <ChevronDownIcon className="w-4 h-4 text-candy-purple" />
             </div>
 
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
               У календарі поки тихо
             </p>
-            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
               Саме час запланувати щось цікаве
             </p>
             <button
               onClick={() => router.push('/dashboard/appointments')}
-              className="w-full px-4 py-2 bg-gradient-to-r from-candy-blue to-candy-purple text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
+              className="w-full px-2.5 py-1.5 bg-gradient-to-r from-candy-blue to-candy-purple text-white font-bold rounded-candy-xs text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95"
             >
               Створити справи
             </button>
           </div>
 
           {/* Insights Section */}
-          <div className="card-candy p-6">
-            <div className="flex gap-2 mb-4">
+          <div className="card-candy p-3">
+            <div className="flex gap-1.5 mb-2">
               <button
                 onClick={() => setInsightsTab('insights')}
                 className={cn(
-                  'flex-1 px-3 py-2 rounded-candy-sm text-sm font-bold transition-all',
+                  'flex-1 px-2 py-1 rounded-candy-xs text-xs font-bold transition-all',
                   insightsTab === 'insights'
                     ? 'bg-gradient-to-r from-candy-purple to-candy-blue text-white shadow-soft-lg'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                 )}
               >
-                <LightBulbIcon className="w-4 h-4 inline mr-1" />
-                Інсайти цього дня
+                <LightBulbIcon className="w-3 h-3 inline mr-0.5" />
+                Інсайти
               </button>
               <button
                 onClick={() => setInsightsTab('dates')}
                 className={cn(
-                  'flex-1 px-3 py-2 rounded-candy-sm text-sm font-bold transition-all',
+                  'flex-1 px-2 py-1 rounded-candy-xs text-xs font-bold transition-all',
                   insightsTab === 'dates'
                     ? 'bg-gradient-to-r from-candy-purple to-candy-blue text-white shadow-soft-lg'
                     : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
                 )}
               >
-                <CalendarIcon className="w-4 h-4 inline mr-1" />
-                Важливі дати
+                <CalendarIcon className="w-3 h-3 inline mr-0.5" />
+                Дати
               </button>
             </div>
 
             {insightsTab === 'insights' && (
-              <div className="text-center py-8">
-                <div className="mb-4 flex justify-center">
-                  <div className="w-24 h-24 bg-gradient-to-br from-candy-purple/20 to-candy-blue/20 rounded-full flex items-center justify-center">
-                    <LightBulbIcon className="w-12 h-12 text-candy-purple" />
+              <div className="text-center py-4">
+                <div className="mb-2 flex justify-center">
+                  <div className="w-16 h-16 bg-gradient-to-br from-candy-purple/20 to-candy-blue/20 rounded-full flex items-center justify-center">
+                    <LightBulbIcon className="w-8 h-8 text-candy-purple" />
                   </div>
                 </div>
-                <p className="text-gray-600 dark:text-gray-400 mb-2">
+                <p className="text-xs text-gray-600 dark:text-gray-400 mb-1">
                   Ще нічого не проаналізовано
                 </p>
-                <p className="text-sm text-gray-500 dark:text-gray-500">
+                <p className="text-[10px] text-gray-500 dark:text-gray-500">
                   Як тільки буде більше активності — система підкаже цікаві інсайти
                 </p>
               </div>
             )}
 
             {insightsTab === 'dates' && (
-              <div className="text-center py-8">
-                <p className="text-gray-600 dark:text-gray-400">
+              <div className="text-center py-4">
+                <p className="text-xs text-gray-600 dark:text-gray-400">
                   Немає важливих дат
                 </p>
               </div>

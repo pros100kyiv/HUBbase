@@ -43,8 +43,8 @@ export default function DashboardLayout({
       <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       
       {/* Main Content Area */}
-      <main className="relative z-10 ml-0 md:ml-64 pt-14 md:pt-16 min-h-screen">
-        <div className="p-4 md:p-6">
+      <main className="relative z-10 ml-0 md:ml-56 pt-10 md:pt-12 min-h-screen">
+        <div className="p-2 md:p-3">
           {children}
         </div>
       </main>

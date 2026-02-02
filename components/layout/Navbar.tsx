@@ -75,24 +75,24 @@ export function Navbar() {
       <>
         <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-700/50 shadow-soft-xl">
           <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
-            <div className="flex justify-between items-center h-14 md:h-16">
+            <div className="flex justify-between items-center h-10 md:h-12">
               {/* Left side - Menu button (mobile) and Logo */}
-              <div className="flex items-center gap-2 flex-shrink-0">
+              <div className="flex items-center gap-1.5 flex-shrink-0">
                 <button
                   onClick={() => {
                     const newState = !mobileMenuOpen
                     setMobileMenuOpen(newState)
                     setMobileMenuState(newState)
                   }}
-                  className="md:hidden p-2.5 rounded-candy-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors active:scale-95"
+                  className="md:hidden p-1.5 rounded-candy-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors active:scale-95"
                   aria-label="Відкрити меню"
                 >
-                  <MenuIcon className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                  <MenuIcon className="w-4 h-4 text-gray-700 dark:text-gray-300" />
                 </button>
-                <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm bg-gradient-to-r from-candy-blue to-candy-purple flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-xl">
+                <div className="w-6 h-6 md:w-7 md:h-7 rounded-candy-xs bg-gradient-to-r from-candy-blue to-candy-purple flex items-center justify-center text-white font-black text-[10px] md:text-xs shadow-soft-lg">
                   X
                 </div>
-                <span className="text-xs md:text-sm font-black text-gray-900 dark:text-white hidden sm:block">
+                <span className="text-[10px] md:text-xs font-black text-gray-900 dark:text-white hidden sm:block">
                   Xbase
                 </span>
               </div>
@@ -100,11 +100,11 @@ export function Navbar() {
             {/* Center - Business name */}
             <div className="flex items-center justify-center flex-1 min-w-0">
               <div className="text-center">
-                <h1 className="text-sm md:text-base font-black text-gray-900 dark:text-white truncate">
+                <h1 className="text-xs md:text-sm font-black text-gray-900 dark:text-white truncate">
                   {business?.name || 'Dashboard'}
                 </h1>
                 {business?.phone && (
-                  <p className="text-[10px] text-gray-600 dark:text-gray-400 truncate hidden md:block">
+                  <p className="text-[9px] text-gray-600 dark:text-gray-400 truncate hidden md:block">
                     {business.phone}
                   </p>
                 )}

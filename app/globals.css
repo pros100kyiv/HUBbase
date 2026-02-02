@@ -60,9 +60,9 @@
     transform: scale(0.97);
   }
   
-  /* Unified Button Styles */
+  /* Unified Button Styles - Reduced Scale */
   .btn-primary {
-    @apply px-3 py-1.5 text-xs font-black text-white rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all;
+    @apply px-2.5 py-1 text-[10px] font-black text-white rounded-candy-xs shadow-soft-lg hover:shadow-soft-xl transition-all;
     background: linear-gradient(135deg, #3B82F6 0%, #8B5CF6 100%);
   }
   
@@ -86,45 +86,45 @@
   }
   
   .btn-secondary {
-    @apply px-3 py-1.5 text-xs font-black rounded-candy-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-soft-xl;
+    @apply px-2.5 py-1 text-[10px] font-black rounded-candy-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-soft-lg;
   }
   
   .btn-secondary:active {
     transform: scale(0.97);
   }
   
-  /* Unified Text Styles - Mobile First */
+  /* Unified Text Styles - Mobile First - Reduced Scale */
   .text-heading {
-    @apply text-xl md:text-lg font-black text-gray-900 dark:text-white;
-  }
-  
-  .text-subheading {
     @apply text-lg md:text-base font-black text-gray-900 dark:text-white;
   }
   
+  .text-subheading {
+    @apply text-base md:text-sm font-black text-gray-900 dark:text-white;
+  }
+  
   .text-body {
-    @apply text-base md:text-sm text-gray-700 dark:text-gray-200;
+    @apply text-sm md:text-xs text-gray-700 dark:text-gray-200;
   }
   
   .text-caption {
-    @apply text-sm md:text-xs text-gray-600 dark:text-gray-400;
+    @apply text-xs md:text-[10px] text-gray-600 dark:text-gray-400;
   }
   
   .text-small {
-    @apply text-xs md:text-[10px] text-gray-500 dark:text-gray-500;
+    @apply text-[10px] md:text-[9px] text-gray-500 dark:text-gray-500;
   }
   
-  /* Unified Spacing */
+  /* Unified Spacing - Reduced */
   .spacing-section {
-    @apply mb-3;
-  }
-  
-  .spacing-item {
     @apply mb-2;
   }
   
-  .spacing-small {
+  .spacing-item {
     @apply mb-1.5;
+  }
+  
+  .spacing-small {
+    @apply mb-1;
   }
   
   /* Candy Colors */
