@@ -604,15 +604,16 @@ export default function SettingsPage() {
 
           {/* Майстри */}
           {activeTab === 'masters' && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg md:text-xl font-black text-foreground">Спеціалісти</h2>
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2 className="text-xl font-black text-gray-900 dark:text-white">Спеціалісти</h2>
                 <Button
                   onClick={() => {
                     setShowMasterForm(true)
                     setEditingMaster(null)
                     setMasterForm({ name: '', bio: '', rating: '0', photo: '' })
                   }}
+                  className="px-6 py-3 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
                 >
                   + Додати спеціаліста
                 </Button>
@@ -620,13 +621,11 @@ export default function SettingsPage() {
 
               {showMasterForm && (
                 <div ref={masterFormRef}>
-                <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                  <CardHeader className="p-2 pb-1">
-                    <CardTitle className="text-sm font-black text-foreground dark:text-white">
-                      {editingMaster ? 'Редагувати спеціаліста' : 'Новий спеціаліст'}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="p-2 space-y-1.5">
+                <div className="card-candy p-6">
+                  <h3 className="text-lg font-black text-gray-900 dark:text-white mb-4">
+                    {editingMaster ? 'Редагувати спеціаліста' : 'Новий спеціаліст'}
+                  </h3>
+                  <div className="space-y-4">
                     <Input
                       placeholder="Ім'я спеціаліста"
                       value={masterForm.name}
@@ -700,8 +699,12 @@ export default function SettingsPage() {
                       step="0.1"
                       className="text-xs py-1.5 h-auto"
                     />
-                    <div className="flex gap-1.5 pt-1">
-                      <Button onClick={handleSaveMaster} className="flex-1 text-xs py-1.5 h-auto" disabled={isSaving}>
+                    <div className="flex gap-3 pt-2">
+                      <Button 
+                        onClick={handleSaveMaster} 
+                        className="flex-1 px-6 py-3 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95" 
+                        disabled={isSaving}
+                      >
                         {isSaving ? 'Збереження...' : 'Зберегти'}
                       </Button>
                       <Button
@@ -710,21 +713,20 @@ export default function SettingsPage() {
                           setShowMasterForm(false)
                           setEditingMaster(null)
                         }}
-                        className="text-xs py-1.5 h-auto"
+                        className="px-6 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-sm font-bold"
                       >
                         Скасувати
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
                 </div>
               )}
 
-              <div className="space-y-1.5">
+              <div className="space-y-4">
                 {masters.map((master) => (
-                  <div key={master.id} className="space-y-1.5">
-                    <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                      <CardContent className="p-2">
+                  <div key={master.id} className="space-y-4">
+                    <div className="card-candy p-6">
                         <div className="flex justify-between items-start mb-1.5">
                           <div className="flex-1 min-w-0">
                             <h3 className="text-sm font-black text-foreground dark:text-white mb-0.5 truncate">
@@ -738,26 +740,22 @@ export default function SettingsPage() {
                             </p>
                           </div>
                         </div>
-                        <div className="flex gap-1.5">
+                        <div className="flex gap-3">
                           <Button
-                            size="sm"
-                            variant="outline"
                             onClick={() => startEditMaster(master)}
-                            className="flex-1 text-xs py-1 h-auto"
+                            className="flex-1 px-4 py-2 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
                           >
                             Редагувати
                           </Button>
                           <Button
-                            size="sm"
                             variant="outline"
                             onClick={() => handleDeleteMaster(master.id)}
-                            className="text-xs py-1 h-auto text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:text-red-300"
+                            className="px-4 py-2 border border-red-300 dark:border-red-700 bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95 rounded-candy-sm font-bold"
                           >
                             Видалити
                           </Button>
                         </div>
-                      </CardContent>
-                    </Card>
+                    </div>
                     <WorkingHoursEditor
                       masterId={master.id}
                       businessId={business.id}
@@ -778,15 +776,16 @@ export default function SettingsPage() {
 
           {/* Послуги */}
           {activeTab === 'services' && (
-            <div className="space-y-4">
-              <div className="flex justify-between items-center">
-                <h2 className="text-lg md:text-xl font-black text-foreground">Послуги</h2>
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h2 className="text-xl font-black text-gray-900 dark:text-white">Послуги</h2>
                 <Button
                   onClick={() => {
                     setShowServiceForm(true)
                     setEditingService(null)
                     setServiceForm({ name: '', price: '', duration: '', category: '', subcategory: '' })
                   }}
+                  className="px-6 py-3 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
                 >
                   + Додати послугу
                 </Button>
@@ -794,13 +793,11 @@ export default function SettingsPage() {
 
               {showServiceForm && (
                 <div ref={serviceFormRef}>
-                <Card className="bg-surface border-primary/20">
-                  <CardHeader>
-                    <CardTitle className="text-primary">
-                      {editingService ? 'Редагувати послугу' : 'Нова послуга'}
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
+                <div className="card-candy p-6">
+                  <h3 className="text-lg font-black text-gray-900 dark:text-white mb-4">
+                    {editingService ? 'Редагувати послугу' : 'Нова послуга'}
+                  </h3>
+                  <div className="space-y-4">
                     <Input
                       placeholder="Назва послуги"
                       value={serviceForm.name}
@@ -890,8 +887,11 @@ export default function SettingsPage() {
                         </div>
                       )}
                     </div>
-                    <div className="flex gap-2">
-                      <Button onClick={handleSaveService} className="flex-1">
+                    <div className="flex gap-3 pt-2">
+                      <Button 
+                        onClick={handleSaveService} 
+                        className="flex-1 px-6 py-3 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
+                      >
                         Зберегти
                       </Button>
                       <Button
@@ -900,12 +900,13 @@ export default function SettingsPage() {
                           setShowServiceForm(false)
                           setEditingService(null)
                         }}
+                        className="px-6 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-sm font-bold"
                       >
                         Скасувати
                       </Button>
                     </div>
-                  </CardContent>
-                </Card>
+                  </div>
+                </div>
                 </div>
               )}
 
@@ -979,12 +980,12 @@ export default function SettingsPage() {
                       )
                       
                       return (
-                        <Card key={category} className="overflow-hidden">
+                        <div key={category} className="card-candy overflow-hidden">
                           {/* Category Header - Clickable */}
                           <button
                             onClick={() => toggleCategory(category)}
                             className={cn(
-                              'w-full p-3 border-b-2 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors',
+                              'w-full p-4 border-b-2 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors',
                               categoryColor.border
                             )}
                           >
@@ -1068,7 +1069,7 @@ export default function SettingsPage() {
                               ))}
                             </div>
                           )}
-                        </Card>
+                        </div>
                       )
                     })}
                   </div>
@@ -1079,7 +1080,7 @@ export default function SettingsPage() {
 
           {/* Візитівка */}
           {activeTab === 'businessCard' && business && (
-            <div ref={businessCardRef}>
+            <div ref={businessCardRef} className="card-candy p-6">
             <BusinessCardEditor
               business={business}
               onSave={async (data) => {
@@ -1115,6 +1116,7 @@ export default function SettingsPage() {
 
           {/* Telegram Tab */}
           {activeTab === 'telegram' && business && (
+            <div className="card-candy p-6">
             <TelegramSettings
               business={business}
               onUpdate={(updated) => {
