@@ -253,22 +253,46 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
     })
     
     script.onerror = async () => {
-      console.error('[TelegramOAuth] Script load error')
-      setError('Не вдалося завантажити Telegram Widget')
+      console.error('[TelegramOAuth] ❌ Script load error')
+      setError('Не вдалося завантажити Telegram Widget. Переконайтеся, що домен налаштований в @BotFather.')
       setLoading(false)
       setShowWidget(false)
       try {
         const toastModule = await import('@/components/ui/toast')
-        toastModule.toast({ title: 'Помилка', description: 'Не вдалося завантажити Telegram Widget', type: 'error' })
+        toastModule.toast({ 
+          title: 'Помилка', 
+          description: 'Не вдалося завантажити Telegram Widget. Перевірте налаштування домену в @BotFather.', 
+          type: 'error' 
+        })
       } catch (e) {
         console.error('Error showing toast:', e)
       }
     }
     
     script.onload = () => {
-      console.log('[TelegramOAuth] Widget script loaded')
+      console.log('[TelegramOAuth] ✅ Widget script loaded')
       setLoading(false)
+      
+      // Перевіряємо, чи iframe створено
+      setTimeout(() => {
+        const iframe = container.querySelector('iframe')
+        if (iframe) {
+          console.log('[TelegramOAuth] ✅ Telegram iframe created:', iframe.id)
+        } else {
+          console.warn('[TelegramOAuth] ⚠️ Telegram iframe not found')
+        }
+      }, 1000)
     }
+    
+    // Обробка помилок безпеки (CORS)
+    window.addEventListener('error', (event) => {
+      if (event.message && event.message.includes('Blocked a frame with origin')) {
+        console.error('[TelegramOAuth] ❌ SecurityError detected:', event.message)
+        setError('Помилка безпеки: домен не налаштований в @BotFather. Додайте xbase.online в Edit Domains.')
+        setLoading(false)
+        setShowWidget(false)
+      }
+    }, true)
 
     // Додаємо скрипт до контейнера
     console.log('[TelegramOAuth] Appending script to container')
@@ -290,7 +314,7 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
         scriptRef.current = null
       }
     }
-  }, [showWidget, botName])
+  }, [showWidget, botName, businessId])
 
   const handleTelegramAuth = () => {
     if (typeof window === 'undefined') return
@@ -387,9 +411,21 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
 
       {error && (
         <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-candy-xs mb-4">
-          <p className="text-sm font-medium text-red-800 dark:text-red-200">
+          <p className="text-sm font-medium text-red-800 dark:text-red-200 mb-2">
             ⚠️ {error}
           </p>
+          {error.includes('домен') || error.includes('@BotFather') && (
+            <div className="text-xs text-red-700 dark:text-red-300 space-y-1 mt-2">
+              <p><strong>Як виправити:</strong></p>
+              <ol className="list-decimal list-inside space-y-1 ml-2">
+                <li>Відкрийте <a href="https://t.me/botfather" target="_blank" rel="noopener noreferrer" className="underline">@BotFather</a> в Telegram</li>
+                <li>Виберіть вашого бота (@xbasesbot)</li>
+                <li>Оберіть "Edit Bot" → "Edit Domains"</li>
+                <li>Додайте домен: <code className="bg-red-100 dark:bg-red-900 px-1 rounded">xbase.online</code></li>
+                <li>Оновіть сторінку та спробуйте знову</li>
+              </ol>
+            </div>
+          )}
         </div>
       )}
 
