@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameDay, eachDayOfInterval, getDay, isToday, addMonths, subMonths } from 'date-fns'
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, getDay, isToday, addMonths, subMonths } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
-import { ChevronLeftIcon, ChevronRightIcon } from '@/components/icons'
+import { ChevronLeftIcon, ChevronRightIcon, CalendarIcon, UserIcon } from '@/components/icons'
 
 interface Master {
   id: string
@@ -85,17 +85,7 @@ export default function SchedulePage() {
 
   const getDayName = (date: Date): string => {
     const dayIndex = getDay(date) === 0 ? 6 : getDay(date) - 1
-    const dayNamesMap: Record<string, string> = {
-      'понеділок': 'monday',
-      'вівторок': 'tuesday',
-      'середа': 'wednesday',
-      'четвер': 'thursday',
-      'п\'ятниця': 'friday',
-      'субота': 'saturday',
-      'неділя': 'sunday',
-    }
-    const ukDayName = dayNamesFull[dayIndex].toLowerCase()
-    return dayNamesMap[ukDayName] || ukDayName
+    return dayNamesFull[dayIndex]
   }
 
   const isMasterWorking = (master: Master, date: Date): boolean => {
@@ -116,11 +106,11 @@ export default function SchedulePage() {
 
   const getMasterColor = (masterId: string, index: number): string => {
     const colors = [
-      'bg-candy-purple',
-      'bg-candy-blue',
-      'bg-candy-mint',
-      'bg-candy-pink',
-      'bg-candy-orange',
+      'bg-gradient-to-r from-candy-purple to-candy-blue',
+      'bg-gradient-to-r from-candy-blue to-candy-mint',
+      'bg-gradient-to-r from-candy-mint to-candy-pink',
+      'bg-gradient-to-r from-candy-pink to-candy-orange',
+      'bg-gradient-to-r from-candy-orange to-candy-purple',
     ]
     return colors[index % colors.length]
   }
@@ -133,54 +123,66 @@ export default function SchedulePage() {
   if (!business || loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-gray-300">Завантаження...</p>
+        <p className="text-gray-500">Завантаження...</p>
       </div>
     )
   }
 
   return (
-    <div className="max-w-7xl mx-auto w-full">
-          <div className="flex items-center justify-between spacing-item">
-            <h1 className="text-heading text-candy-blue dark:text-blue-400">Графік роботи</h1>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                className="btn-secondary"
-              >
-                <ChevronLeftIcon className="w-4 h-4" />
-              </button>
-              <button
-                onClick={() => setCurrentMonth(new Date())}
-                className="btn-primary"
-              >
-                Сьогодні
-              </button>
-              <button
-                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                className="btn-secondary"
-              >
-                <ChevronRightIcon className="w-4 h-4" />
-              </button>
-            </div>
+    <div className="max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-2">
+              Графік роботи
+            </h1>
+            <p className="text-base text-gray-600 dark:text-gray-400">
+              Розклад роботи спеціалістів
+            </p>
           </div>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+              className="p-2 rounded-candy-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
+            >
+              <ChevronLeftIcon className="w-5 h-5" />
+            </button>
+            <button
+              onClick={() => setCurrentMonth(new Date())}
+              className="px-4 py-2 bg-gradient-to-r from-candy-blue to-candy-purple text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
+            >
+              Сьогодні
+            </button>
+            <button
+              onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+              className="p-2 rounded-candy-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
+            >
+              <ChevronRightIcon className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+      </div>
 
-          {/* Calendar */}
-          <div className="card-candy p-3 spacing-section overflow-hidden">
-            <h2 className="text-subheading mb-3 text-center text-candy-blue dark:text-blue-400">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Calendar */}
+        <div className="lg:col-span-2">
+          <div className="card-candy p-6">
+            <h2 className="text-xl font-black text-gray-900 dark:text-white mb-6 text-center">
               {format(currentMonth, 'LLLL yyyy', { locale: uk })}
             </h2>
 
             {/* Day Names */}
-            <div className="grid grid-cols-7 gap-1 mb-2">
+            <div className="grid grid-cols-7 gap-2 mb-2">
               {dayNames.map((day) => (
-                <div key={day} className="text-center text-xs font-black text-gray-300 dark:text-gray-300 py-1">
+                <div key={day} className="text-center text-sm font-bold text-gray-500 dark:text-gray-400 py-2">
                   {day}
                 </div>
               ))}
             </div>
 
             {/* Calendar Grid */}
-            <div className="grid grid-cols-7 gap-1">
+            <div className="grid grid-cols-7 gap-2">
               {daysInMonth.map((day) => {
                 const isCurrentMonth = day.getMonth() === currentMonth.getMonth()
                 const isTodayDate = isToday(day)
@@ -190,27 +192,25 @@ export default function SchedulePage() {
                   <div
                     key={day.toISOString()}
                     className={cn(
-                      'relative p-2 rounded-candy-sm border min-h-[80px] flex flex-col backdrop-blur-sm',
+                      'relative p-3 rounded-candy-sm border min-h-[100px] flex flex-col backdrop-blur-sm',
                       isCurrentMonth
-                        ? 'bg-gray-700/50 dark:bg-gray-800/50 border-gray-600 dark:border-gray-700'
-                        : 'bg-gray-800/30 dark:bg-gray-900/30 border-gray-700 dark:border-gray-800 opacity-50',
-                      isTodayDate && 'ring-2 ring-candy-blue',
-                      workingMasters.length > 0 && 'bg-candy-purple/10 dark:bg-candy-purple/20'
+                        ? 'bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
+                        : 'bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-800 opacity-50',
+                      isTodayDate && 'ring-2 ring-candy-purple/50',
+                      workingMasters.length > 0 && 'bg-gradient-to-br from-candy-purple/5 to-candy-blue/5'
                     )}
                   >
-                    {/* Date Number */}
                     <div className={cn(
-                      'text-sm font-black mb-1',
+                      'text-base font-black mb-2',
                       isCurrentMonth
                         ? isTodayDate
-                          ? 'text-candy-blue'
-                          : 'text-white dark:text-white'
-                        : 'text-gray-500 dark:text-gray-600'
+                          ? 'text-candy-purple'
+                          : 'text-gray-900 dark:text-white'
+                        : 'text-gray-400 dark:text-gray-600'
                     )}>
                       {format(day, 'd')}
                     </div>
 
-                    {/* Working Masters */}
                     <div className="flex-1 flex flex-col gap-1 mt-auto">
                       {workingMasters.slice(0, 3).map((master, idx) => {
                         const masterIndex = masters.findIndex((m) => m.id === master.id)
@@ -218,7 +218,7 @@ export default function SchedulePage() {
                           <div
                             key={master.id}
                             className={cn(
-                              'px-1.5 py-0.5 rounded-candy-xs text-[9px] font-bold text-white truncate',
+                              'px-2 py-1 rounded-candy-xs text-xs font-bold text-white truncate',
                               getMasterColor(master.id, masterIndex)
                             )}
                             title={master.name}
@@ -228,12 +228,12 @@ export default function SchedulePage() {
                         )
                       })}
                       {workingMasters.length > 3 && (
-                        <div className="px-1.5 py-0.5 rounded-candy-xs bg-gray-600 dark:bg-gray-700 text-[9px] font-bold text-white dark:text-white text-center">
+                        <div className="px-2 py-1 rounded-candy-xs bg-gray-300 dark:bg-gray-700 text-xs font-bold text-gray-700 dark:text-gray-300 text-center">
                           +{workingMasters.length - 3}
                         </div>
                       )}
                       {workingMasters.length === 0 && isCurrentMonth && (
-                        <div className="text-[9px] text-gray-400 dark:text-gray-500 text-center mt-auto">
+                        <div className="text-xs text-gray-400 dark:text-gray-600 text-center mt-auto">
                           Вихідний
                         </div>
                       )}
@@ -243,58 +243,94 @@ export default function SchedulePage() {
               })}
             </div>
           </div>
+        </div>
 
-          {/* Legend */}
-          <div className="card-candy p-3">
-            <h3 className="text-subheading mb-2">Майстри</h3>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2">
-              {masters.map((master, idx) => {
-                const workingHours = parseWorkingHours(master.workingHours)
-                const dayNamesMap: Record<string, string> = {
-                  'monday': 'Пн',
-                  'tuesday': 'Вт',
-                  'wednesday': 'Ср',
-                  'thursday': 'Чт',
-                  'friday': 'Пт',
-                  'saturday': 'Сб',
-                  'sunday': 'Нд',
-                }
-                const workingDays = workingHours
-                  ? Object.entries(workingHours)
-                      .filter(([_, schedule]) => schedule.enabled)
-                      .map(([day]) => dayNamesMap[day.toLowerCase()])
-                      .filter((day) => day !== undefined)
-                  : []
-
-                return (
-                  <div
-                    key={master.id}
-                    className="flex items-center gap-2 p-2 rounded-candy-sm bg-gray-50 dark:bg-gray-700/50"
-                  >
-                    <div className={cn(
-                      'w-4 h-4 rounded-full flex-shrink-0',
-                      getMasterColor(master.id, idx)
-                    )} />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-black text-foreground dark:text-white truncate">
-                        {master.name}
-                      </p>
-                      {workingDays.length > 0 ? (
-                        <p className="text-[10px] text-gray-600 dark:text-gray-400">
-                          {workingDays.join(', ')}
-                        </p>
-                      ) : (
-                        <p className="text-[10px] text-gray-400 dark:text-gray-500">
-                          Графік не налаштовано
-                        </p>
-                      )}
-                    </div>
+        {/* Right Sidebar */}
+        <div className="space-y-6">
+          {/* Masters List */}
+          <div className="card-candy p-6">
+            <h2 className="text-xl font-black text-gray-900 dark:text-white mb-4">
+              Спеціалісти та їх графік
+            </h2>
+            {masters.length === 0 ? (
+              <div className="text-center py-8">
+                <div className="mb-4 flex justify-center">
+                  <div className="w-24 h-24 bg-gradient-to-br from-candy-purple/20 to-candy-blue/20 rounded-full flex items-center justify-center">
+                    <UserIcon className="w-12 h-12 text-candy-purple" />
                   </div>
-                )
-              })}
+                </div>
+                <p className="text-gray-600 dark:text-gray-400 mb-4">
+                  Немає спеціалістів
+                </p>
+                <button
+                  onClick={() => router.push('/dashboard/settings?tab=masters')}
+                  className="px-4 py-2 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
+                >
+                  Додати спеціаліста
+                </button>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {masters.map((master, idx) => {
+                  const workingHours = parseWorkingHours(master.workingHours)
+                  const workingDays = workingHours
+                    ? Object.entries(workingHours)
+                        .filter(([, schedule]) => schedule.enabled)
+                        .map(([dayName]) => dayName.substring(0, 2))
+                    : []
+
+                  return (
+                    <div
+                      key={master.id}
+                      className="flex items-center gap-3 p-3 rounded-candy-sm bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 border border-gray-200 dark:border-gray-700"
+                    >
+                      <div className={cn(
+                        'w-10 h-10 rounded-full flex-shrink-0',
+                        getMasterColor(master.id, idx)
+                      )} />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-base font-black text-gray-900 dark:text-white truncate mb-1">
+                          {master.name}
+                        </p>
+                        {workingDays.length > 0 ? (
+                          <p className="text-sm text-gray-600 dark:text-gray-400">
+                            {workingDays.join(', ')}
+                          </p>
+                        ) : (
+                          <p className="text-sm text-gray-400 dark:text-gray-500">
+                            Графік не налаштовано
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Quick Actions */}
+          <div className="card-candy p-6 bg-gradient-to-br from-candy-purple/10 to-candy-blue/10">
+            <h3 className="text-lg font-black text-gray-900 dark:text-white mb-4">
+              Швидкі дії
+            </h3>
+            <div className="space-y-2">
+              <button
+                onClick={() => router.push('/dashboard/settings?tab=masters')}
+                className="w-full px-4 py-3 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95 text-left"
+              >
+                Налаштувати графік
+              </button>
+              <button
+                onClick={() => router.push('/dashboard/masters')}
+                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-sm font-bold text-left"
+              >
+                Переглянути спеціалістів
+              </button>
             </div>
           </div>
+        </div>
+      </div>
     </div>
   )
 }
-

@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { MasterProfileCard } from '@/components/admin/MasterProfileCard'
+import { UserIcon } from '@/components/icons'
 
 interface Master {
   id: string
@@ -45,7 +46,6 @@ export default function MastersPage() {
         return res.json()
       })
       .then((data) => {
-        // Ensure data is an array
         const mastersArray = Array.isArray(data) ? data : []
         setMasters(mastersArray)
         setLoading(false)
@@ -97,31 +97,63 @@ export default function MastersPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto w-full">
-          <div className="flex items-center justify-between spacing-item">
-            <h1 className="text-heading">Майстри</h1>
-            <button
-              onClick={() => router.push('/dashboard/settings?tab=masters')}
-              className="btn-primary"
-            >
-              + Додати майстра
-            </button>
+    <div className="max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-2">
+              Спеціалісти
+            </h1>
+            <p className="text-base text-gray-600 dark:text-gray-400">
+              Управління командою спеціалістів
+            </p>
           </div>
+          <button
+            onClick={() => router.push('/dashboard/settings?tab=masters')}
+            className="px-6 py-3 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95 whitespace-nowrap"
+          >
+            + Додати спеціаліста
+          </button>
+        </div>
+      </div>
 
-          <div className="space-y-1">
-            {Array.isArray(masters) && masters.map((master) => {
-              const stats = masterStats[master.id] || {
-                visits: 0,
-                earned: 0,
-                reviews: 0,
-                clients: 0,
-                services: 0,
-                branches: 1,
-              }
+      {/* Masters List */}
+      {(!Array.isArray(masters) || masters.length === 0) ? (
+        <div className="card-candy p-12 text-center">
+          <div className="mb-6 flex justify-center">
+            <div className="w-32 h-32 bg-gradient-to-br from-candy-purple/20 to-candy-blue/20 rounded-full flex items-center justify-center">
+              <UserIcon className="w-16 h-16 text-candy-purple" />
+            </div>
+          </div>
+          <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">
+            Немає спеціалістів
+          </h3>
+          <p className="text-gray-600 dark:text-gray-400 mb-6">
+            Додайте першого спеціаліста, щоб почати працювати
+          </p>
+          <button
+            onClick={() => router.push('/dashboard/settings?tab=masters')}
+            className="px-6 py-3 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
+          >
+            Додати першого спеціаліста
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {masters.map((master) => {
+            const stats = masterStats[master.id] || {
+              visits: 0,
+              earned: 0,
+              reviews: 0,
+              clients: 0,
+              services: 0,
+              branches: 1,
+            }
 
-              return (
+            return (
+              <div key={master.id} className="card-candy p-6 hover:shadow-soft-2xl transition-all">
                 <MasterProfileCard
-                  key={master.id}
                   master={master}
                   stats={stats}
                   onScheduleClick={() => router.push(`/dashboard/settings?tab=masters&master=${master.id}`)}
@@ -132,7 +164,6 @@ export default function MastersPage() {
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ isActive }),
                       })
-                      // Оновлюємо локальний стан
                       setMasters((prev) =>
                         prev.map((m) => (m.id === master.id ? { ...m, isActive } : m))
                       )
@@ -141,24 +172,11 @@ export default function MastersPage() {
                     }
                   }}
                 />
-              )
-            })}
-
-            {(!Array.isArray(masters) || masters.length === 0) && (
-              <div className="card-candy rounded-candy shadow-soft p-6 text-center">
-                <p className="text-gray-500 text-sm mb-3">Немає майстрів</p>
-                <button
-                  onClick={() => router.push('/dashboard/settings?tab=masters')}
-                  className="px-3 py-1.5 text-xs font-bold candy-purple text-white rounded-candy shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-97"
-                >
-                  Додати першого майстра
-                </button>
               </div>
-            )}
-          </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
-
-
-

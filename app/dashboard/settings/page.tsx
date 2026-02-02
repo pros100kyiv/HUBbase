@@ -501,34 +501,33 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen bg-background">
       <Confetti trigger={showConfetti} />
-      <div className="p-3">
-        <div className="max-w-7xl mx-auto">
-          <div className="spacing-item">
+      <div className="max-w-7xl mx-auto">
+        {/* Header */}
+        <div className="mb-6">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
             <div>
-              <h1 className="text-heading">Налаштування</h1>
-              <p className="text-caption font-medium">Управління бізнесом</p>
+              <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-2">
+                Налаштування
+              </h1>
+              <p className="text-base text-gray-600 dark:text-gray-400">
+                Управління бізнесом та налаштування
+              </p>
             </div>
           </div>
 
           {/* Tabs */}
-          <div className="flex gap-1.5 mb-2 bg-gray-100 dark:bg-gray-800 rounded-candy-sm border border-gray-200 dark:border-gray-700 p-1.5 overflow-x-auto">
+          <div className="flex gap-2 flex-wrap">
             {(['info', 'masters', 'services', 'businessCard', 'telegram'] as Tab[]).map((tab) => {
-              const tabColors: Record<Tab, string> = {
-                'info': 'hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-candy-blue',
-                'masters': 'hover:bg-blue-50 dark:hover:bg-gray-700 hover:text-candy-blue',
-                'services': 'hover:bg-green-50 dark:hover:bg-gray-700 hover:text-candy-mint',
-                'businessCard': 'hover:bg-pink-50 dark:hover:bg-gray-700 hover:text-candy-pink',
-                'telegram': 'hover:bg-cyan-50 dark:hover:bg-gray-700 hover:text-cyan-500',
-              }
               return (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
-                  className={`px-3 py-1.5 text-xs font-bold rounded-candy-xs transition-all duration-200 active:scale-97 whitespace-nowrap flex-shrink-0 ${
+                  className={cn(
+                    'px-6 py-3 rounded-candy-sm font-bold text-sm transition-all active:scale-95 whitespace-nowrap',
                     activeTab === tab
-                      ? 'candy-purple text-white shadow-soft-lg'
-                      : `text-gray-700 dark:text-gray-300 ${tabColors[tab]}`
-                  }`}
+                      ? 'bg-gradient-to-r from-candy-purple to-candy-blue text-white shadow-soft-xl'
+                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  )}
                 >
                   {tab === 'info' && 'Інформація'}
                   {tab === 'masters' && 'Спеціалісти'}
@@ -539,16 +538,15 @@ export default function SettingsPage() {
               )
             })}
           </div>
+        </div>
 
         {/* Tab Content */}
-        <div className="space-y-2">
+        <div className="space-y-6">
           {/* Інформація */}
           {activeTab === 'info' && (
-            <Card>
-              <CardHeader>
-                <CardTitle>Основна інформація</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
+            <div className="card-candy p-6">
+              <h2 className="text-xl font-black text-gray-900 dark:text-white mb-6">Основна інформація</h2>
+              <div className="space-y-4">
                 <div>
                   <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Назва бізнесу</label>
                   <Input
@@ -593,11 +591,15 @@ export default function SettingsPage() {
                 </div>
 
 
-                <Button onClick={handleSaveBusiness} disabled={isSaving} className="w-full">
+                <Button 
+                  onClick={handleSaveBusiness} 
+                  disabled={isSaving} 
+                  className="w-full px-6 py-3 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
+                >
                   {isSaving ? 'Збереження...' : 'Зберегти'}
                 </Button>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           )}
 
           {/* Майстри */}
