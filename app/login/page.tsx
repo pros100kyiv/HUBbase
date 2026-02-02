@@ -5,8 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { TelegramLoginButton } from '@/components/auth/TelegramLoginButton'
 
 function LoginForm() {
-
-function LoginForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
