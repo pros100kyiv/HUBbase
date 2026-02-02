@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { TelegramAuthButton } from '@/components/auth/TelegramAuthButton'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -191,6 +192,12 @@ export default function RegisterPage() {
               </svg>
               Зареєструватися через Google
             </button>
+
+            {/* Telegram Login Button - White with Telegram Logo */}
+            <TelegramAuthButton 
+              text="Зареєструватися через Telegram"
+              isRegister={true}
+            />
 
             {/* Login Link */}
             <div className="text-center text-sm text-gray-400 pt-2">

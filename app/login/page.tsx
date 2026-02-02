@@ -2,7 +2,7 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { TelegramLoginButton } from '@/components/auth/TelegramLoginButton'
+import { TelegramAuthButton } from '@/components/auth/TelegramAuthButton'
 
 function LoginForm() {
   const router = useRouter()
@@ -175,10 +175,11 @@ function LoginForm() {
             Увійти через Google
           </button>
 
-          {/* Telegram Login */}
-          <div className="pt-2">
-            <TelegramLoginButton />
-          </div>
+          {/* Telegram Login Button - White with Telegram Logo */}
+          <TelegramAuthButton 
+            text="Увійти через Telegram"
+            isRegister={false}
+          />
 
           {/* Registration Link */}
           <div className="text-center text-sm text-gray-400 pt-2">
