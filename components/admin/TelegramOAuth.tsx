@@ -125,12 +125,14 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
         }
 
         setLoading(true)
-        console.log('[TelegramOAuth] Sending request to /api/telegram/oauth')
-        const response = await fetch('/api/telegram/oauth', {
+        console.log('[TelegramOAuth] Sending request to /api/auth/telegram-oauth')
+        
+        // Використовуємо новий API для автоматичної реєстрації/входу
+        const response = await fetch('/api/auth/telegram-oauth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            businessId: currentBusinessId,
+            businessId: currentBusinessId || undefined, // Якщо є - прив'язуємо, якщо ні - створюємо новий
             telegramData: user
           })
         })
@@ -139,18 +141,49 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
         
         if (response.ok) {
           const data = await response.json()
-          console.log('[TelegramOAuth] ✅ Success, data:', data)
+          console.log('[TelegramOAuth] ✅ Success, action:', data.action, 'data:', data)
+          
           setIsConnected(true)
-          setUserData(data.user || data.telegramUser)
+          setUserData(data.user)
           onConnected(data)
           setShowWidget(false)
+          
+          // Якщо це автоматична реєстрація - зберігаємо бізнес в localStorage
+          if (data.action === 'register' && data.business) {
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('business', JSON.stringify(data.business))
+              console.log('[TelegramOAuth] ✅ Business saved to localStorage')
+            }
+          }
+          
+          // Якщо це вхід - оновлюємо localStorage
+          if (data.action === 'login' && data.business) {
+            if (typeof window !== 'undefined') {
+              localStorage.setItem('business', JSON.stringify(data.business))
+              console.log('[TelegramOAuth] ✅ Business updated in localStorage')
+            }
+          }
+          
           try {
             const toastModule = await import('@/components/ui/toast')
-            toastModule.toast({ title: 'Telegram підключено!', type: 'success' })
+            const message = data.action === 'register' 
+              ? 'Бізнес автоматично створено через Telegram!'
+              : data.action === 'login'
+              ? 'Вхід через Telegram успішний!'
+              : 'Telegram підключено!'
+            toastModule.toast({ title: 'Успішно!', description: message, type: 'success' })
           } catch (e) {
             console.error('Error showing success toast:', e)
           }
+          
           await checkConnection()
+          
+          // Якщо це нова реєстрація - перенаправляємо на dashboard
+          if (data.action === 'register' && typeof window !== 'undefined') {
+            setTimeout(() => {
+              window.location.href = '/dashboard'
+            }, 1500)
+          }
         } else {
           const errorData = await response.json().catch(() => ({ error: 'Не вдалося підключити' }))
           const errorMessage = errorData.error || 'Не вдалося підключити'

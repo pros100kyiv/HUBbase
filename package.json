@@ -22,6 +22,7 @@
     "telegram:setup-token": "tsx scripts/setup-telegram-bot-token.ts",
     "telegram:oauth": "tsx scripts/setup-telegram-oauth.ts",
     "telegram:webhook": "tsx scripts/setup-webhook.ts",
+    "telegram:webhook-all": "tsx scripts/setup-webhook-all.ts",
     "telegram:update-tokens": "tsx scripts/update-telegram-token.ts"
   },
   "dependencies": {
