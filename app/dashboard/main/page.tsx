@@ -121,16 +121,16 @@ export default function MainPage() {
       <div className="spacing-item">
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
           <div>
-            <h1 className="text-heading">Головна панель</h1>
-            <p className="text-caption font-medium">Огляд вашого бізнесу</p>
+            <h1 className="text-xl md:text-lg font-black text-gray-900 dark:text-white mb-1">Головна панель</h1>
+            <p className="text-sm md:text-xs text-gray-600 dark:text-gray-400 font-medium">Огляд вашого бізнесу</p>
           </div>
           <div className="w-full md:w-64">
             <input
               type="text"
               placeholder="Пошук записів..."
               className={cn(
-                'w-full px-3 py-2 rounded-candy-sm border-2 bg-white dark:bg-gray-800',
-                'border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400',
+                'w-full px-4 py-3 md:px-3 md:py-2 rounded-candy-sm border-2 bg-white dark:bg-gray-800',
+                'border-gray-200 dark:border-gray-700 text-base md:text-sm text-gray-900 dark:text-white placeholder-gray-400',
                 'focus:outline-none focus:ring-2 focus:ring-candy-blue focus:border-transparent'
               )}
               onChange={(e) => {
@@ -141,10 +141,10 @@ export default function MainPage() {
         </div>
       </div>
 
-      {/* Quick Stats - Draggable Cards */}
+      {/* Quick Stats */}
       <div className={cn(
-            "relative gap-2 mb-2",
-            hideRevenue ? "grid grid-cols-2 md:grid-cols-3" : "grid grid-cols-2 md:grid-cols-4"
+            "grid gap-3 md:gap-2 mb-4 md:mb-2",
+            hideRevenue ? "grid-cols-2 md:grid-cols-3" : "grid-cols-2 md:grid-cols-4"
           )}>
             <div className="relative">
               <MobileWidget
@@ -209,7 +209,7 @@ export default function MainPage() {
                   }
                 }
               }}
-              className="px-3 py-1.5 text-xs font-bold rounded-candy-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+              className="px-4 py-2.5 md:px-3 md:py-1.5 text-sm md:text-xs font-bold rounded-candy-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-[0.98]"
             >
               <span>{hideRevenue ? '👁️ Показати дохід' : '🙈 Приховати дохід'}</span>
             </button>
@@ -287,22 +287,22 @@ export default function MainPage() {
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
                             <p className="text-sm font-black text-gray-900 dark:text-white truncate">{appointment.clientName}</p>
-                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex-shrink-0 whitespace-nowrap ${getStatusColor(appointment.status)}`}>
+                            <span className={`px-2.5 py-1 md:px-2 md:py-0.5 rounded-full text-xs md:text-[10px] font-bold border flex-shrink-0 whitespace-nowrap ${getStatusColor(appointment.status)}`}>
                               {getStatusLabel(appointment.status)}
                             </span>
                           </div>
                           <div className="flex items-center gap-2 flex-wrap">
                             {appointment.masterName && (
-                              <span className="text-xs text-gray-600 dark:text-gray-400 font-medium truncate">
-                                Майстер: {appointment.masterName}
+                              <span className="text-sm md:text-xs text-gray-600 dark:text-gray-400 font-medium truncate">
+                                Спеціаліст: {appointment.masterName}
                               </span>
                             )}
                             {servicesList.length > 0 && (
-                              <span className="text-xs text-gray-500 dark:text-gray-500">
+                              <span className="text-sm md:text-xs text-gray-500 dark:text-gray-500">
                                 • {servicesList.length} {servicesList.length === 1 ? 'послуга' : 'послуг'}
                               </span>
                             )}
-                            <span className="text-xs text-gray-500 dark:text-gray-500">
+                            <span className="text-sm md:text-xs text-gray-500 dark:text-gray-500">
                               • {Math.round((endTime.getTime() - startTime.getTime()) / 60000)} хв
                             </span>
                           </div>
@@ -312,12 +312,12 @@ export default function MainPage() {
                   )
                 })}
               {todayAppointments.length === 0 && (
-                <p className="text-gray-400 dark:text-gray-400 text-center py-8 font-medium text-sm">Немає записів на сьогодні</p>
+                <p className="text-gray-400 dark:text-gray-400 text-center py-12 md:py-8 font-medium text-base md:text-sm">Немає записів на сьогодні</p>
               )}
               {todayAppointments.length > 5 && (
                 <button
                   onClick={() => router.push('/dashboard/appointments')}
-                  className="w-full px-3 py-2 text-xs font-bold rounded-candy-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+                  className="w-full px-4 py-3 md:px-3 md:py-2 text-sm md:text-xs font-bold rounded-candy-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-[0.98]"
                 >
                   Показати всі записи ({todayAppointments.length})
                 </button>

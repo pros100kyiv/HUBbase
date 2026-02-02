@@ -4,7 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { useEffect, useState } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
-import { SunIcon, MoonIcon } from '@/components/icons'
+import { SunIcon, MoonIcon, MenuIcon } from '@/components/icons'
 
 // Оновлюємо бізнес при зміні localStorage
 if (typeof window !== 'undefined') {
@@ -58,21 +58,30 @@ export function Navbar() {
     return null
   }
 
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
   // Don't show on dashboard pages (they have sidebar)
   if (pathname?.startsWith('/dashboard')) {
     return (
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-700/50 shadow-soft-xl">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
-          <div className="flex justify-between items-center h-14 md:h-16">
-            {/* Left side - Xbase Logo */}
-            <div className="flex items-center gap-2 flex-shrink-0">
-              <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm bg-gradient-to-r from-candy-blue to-candy-purple flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-xl">
-                X
+      <>
+        <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-700/50 shadow-soft-xl">
+          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
+            <div className="flex justify-between items-center h-14 md:h-16">
+              {/* Left side - Menu button (mobile) and Logo */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <button
+                  onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                  className="md:hidden p-2 rounded-candy-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                >
+                  <MenuIcon className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+                </button>
+                <div className="w-8 h-8 md:w-10 md:h-10 rounded-candy-sm bg-gradient-to-r from-candy-blue to-candy-purple flex items-center justify-center text-white font-black text-xs md:text-sm shadow-soft-xl">
+                  X
+                </div>
+                <span className="text-xs md:text-sm font-black text-gray-900 dark:text-white hidden sm:block">
+                  Xbase
+                </span>
               </div>
-              <span className="text-xs md:text-sm font-black text-gray-900 dark:text-white hidden sm:block">
-                Xbase
-              </span>
-            </div>
 
             {/* Center - Business name */}
             <div className="flex items-center justify-center flex-1 min-w-0">

@@ -93,25 +93,25 @@
     transform: scale(0.97);
   }
   
-  /* Unified Text Styles */
+  /* Unified Text Styles - Mobile First */
   .text-heading {
-    @apply text-lg md:text-xl font-black text-gray-900 dark:text-white;
+    @apply text-xl md:text-lg font-black text-gray-900 dark:text-white;
   }
   
   .text-subheading {
-    @apply text-base md:text-lg font-black text-gray-900 dark:text-white;
+    @apply text-lg md:text-base font-black text-gray-900 dark:text-white;
   }
   
   .text-body {
-    @apply text-sm text-gray-700 dark:text-gray-200;
+    @apply text-base md:text-sm text-gray-700 dark:text-gray-200;
   }
   
   .text-caption {
-    @apply text-xs text-gray-600 dark:text-gray-400;
+    @apply text-sm md:text-xs text-gray-600 dark:text-gray-400;
   }
   
   .text-small {
-    @apply text-[10px] text-gray-500 dark:text-gray-500;
+    @apply text-xs md:text-[10px] text-gray-500 dark:text-gray-500;
   }
   
   /* Unified Spacing */

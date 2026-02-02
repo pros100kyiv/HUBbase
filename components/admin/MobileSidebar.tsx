@@ -3,7 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
-import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, BellIcon } from '@/components/icons'
+import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, BellIcon, XIcon } from '@/components/icons'
 import { NotificationsPanel } from './NotificationsPanel'
 
 interface NavItem {
@@ -15,11 +15,12 @@ interface NavItem {
   onClick?: () => void
 }
 
-interface SidebarProps {
-  className?: string
+interface MobileSidebarProps {
+  isOpen: boolean
+  onClose: () => void
 }
 
-export function Sidebar({ className }: SidebarProps) {
+export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
   const [business, setBusiness] = useState<any>(null)
@@ -52,7 +53,7 @@ export function Sidebar({ className }: SidebarProps) {
         }
       }
       fetchPendingCount()
-      const interval = setInterval(fetchPendingCount, 30000) // Оновлюємо кожні 30 секунд
+      const interval = setInterval(fetchPendingCount, 30000)
       return () => clearInterval(interval)
     }
   }, [business])
@@ -67,51 +68,75 @@ export function Sidebar({ className }: SidebarProps) {
     { id: 'settings', label: 'Налаштування', icon: <SettingsIcon />, path: '/dashboard/settings' },
   ]
 
-  const handleNotificationUpdate = () => {
-    if (business?.id) {
-      fetch(`/api/appointments?businessId=${business.id}&status=Pending`)
-        .then((res) => res.json())
-        .then((data) => setPendingCount(Array.isArray(data) ? data.length : 0))
-        .catch((error) => console.error('Error fetching pending count:', error))
+  const handleNavClick = (item: NavItem) => {
+    if (item.onClick) {
+      item.onClick()
+    } else {
+      router.push(item.path)
     }
+    onClose()
   }
 
   return (
     <>
-      <aside className={cn('bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border-r border-gray-200 dark:border-gray-700/50 w-0 md:w-64 min-h-screen fixed left-0 top-16 z-40 shadow-soft-xl hidden md:block', className)}>
-        <nav className="p-2 space-y-1">
+      {/* Mobile Sidebar Overlay */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={onClose}
+        />
+      )}
+
+      {/* Mobile Sidebar */}
+      <aside
+        className={cn(
+          'fixed top-0 left-0 h-full w-72 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 z-50 transform transition-transform duration-300 ease-in-out md:hidden',
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        )}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between p-4 border-b border-gray-200 dark:border-gray-700">
+          <div className="flex items-center gap-2">
+            <div className="w-10 h-10 rounded-candy-sm bg-gradient-to-r from-candy-blue to-candy-purple flex items-center justify-center text-white font-black text-sm shadow-soft-xl">
+              X
+            </div>
+            <span className="text-base font-black text-gray-900 dark:text-white">Xbase</span>
+          </div>
+          <button
+            onClick={onClose}
+            className="p-2 rounded-candy-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          >
+            <XIcon className="w-6 h-6 text-gray-700 dark:text-gray-300" />
+          </button>
+        </div>
+
+        {/* Navigation */}
+        <nav className="p-2 space-y-1 overflow-y-auto h-[calc(100vh-80px)]">
           {navItems.map((item) => {
             const isActive = pathname === item.path || (item.path === '/dashboard' && pathname === '/dashboard')
             return (
               <button
                 key={item.id}
-                onClick={() => {
-                  if (item.onClick) {
-                    item.onClick()
-                  } else {
-                    router.push(item.path)
-                  }
-                }}
+                onClick={() => handleNavClick(item)}
                 className={cn(
                   'w-full flex items-center gap-3 px-4 py-3 rounded-candy-sm text-left transition-all duration-200 active:scale-[0.98] relative',
                   isActive
                     ? 'bg-gradient-to-r from-candy-blue to-candy-purple text-white shadow-soft-xl'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700'
                 )}
-                title={item.label}
               >
                 <div className={cn('w-6 h-6 flex-shrink-0', isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300')}>
                   {item.icon}
                 </div>
-                <span className={cn("text-sm font-bold flex-1", isActive ? 'text-white' : 'text-gray-900 dark:text-white')}>
+                <span className={cn('text-base font-bold flex-1', isActive ? 'text-white' : 'text-gray-900 dark:text-white')}>
                   {item.label}
                 </span>
                 {item.badge && item.badge > 0 && (
                   <span className={cn(
-                    "text-xs font-black px-2 py-0.5 rounded-full min-w-[24px] text-center",
-                    isActive 
-                      ? "bg-white text-candy-purple" 
-                      : "bg-gradient-to-r from-candy-pink to-red-500 text-white"
+                    'text-xs font-black px-2 py-0.5 rounded-full min-w-[24px] text-center',
+                    isActive
+                      ? 'bg-white text-candy-purple'
+                      : 'bg-gradient-to-r from-candy-pink to-red-500 text-white'
                   )}>
                     {item.badge}
                   </span>
@@ -121,12 +146,20 @@ export function Sidebar({ className }: SidebarProps) {
           })}
         </nav>
       </aside>
+
       {business?.id && (
         <NotificationsPanel
           businessId={business.id}
           isOpen={showNotifications}
           onClose={() => setShowNotifications(false)}
-          onUpdate={handleNotificationUpdate}
+          onUpdate={() => {
+            if (business?.id) {
+              fetch(`/api/appointments?businessId=${business.id}&status=Pending`)
+                .then((res) => res.json())
+                .then((data) => setPendingCount(Array.isArray(data) ? data.length : 0))
+                .catch((error) => console.error('Error fetching pending count:', error))
+            }
+          }}
         />
       )}
     </>

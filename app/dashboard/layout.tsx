@@ -1,13 +1,17 @@
 'use client'
 
+import { useState } from 'react'
 import { Navbar } from '@/components/layout/Navbar'
 import { Sidebar } from '@/components/admin/Sidebar'
+import { MobileSidebar } from '@/components/admin/MobileSidebar'
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+
   return (
     <div className="relative min-h-screen overflow-hidden">
       {/* Blurred Background */}
@@ -19,12 +23,15 @@ export default function DashboardLayout({
       {/* Top Navbar */}
       <Navbar />
       
-      {/* Sidebar */}
+      {/* Desktop Sidebar */}
       <Sidebar />
       
+      {/* Mobile Sidebar */}
+      <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
+      
       {/* Main Content Area */}
-      <main className="relative z-10 ml-16 md:ml-40 pt-14 md:pt-16 min-h-screen">
-        <div className="p-3 md:p-4 lg:p-6">
+      <main className="relative z-10 ml-0 md:ml-64 pt-14 md:pt-16 min-h-screen">
+        <div className="p-4 md:p-6">
           {children}
         </div>
       </main>

@@ -26,7 +26,7 @@ export function MobileWidget({
   trend,
   iconColor = 'orange',
 }: MobileWidgetProps) {
-  const baseClasses = 'rounded-candy-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 backdrop-blur-sm p-3 shadow-soft-xl transition-all duration-200 active:scale-[0.97] overflow-hidden'
+  const baseClasses = 'rounded-candy-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 backdrop-blur-sm p-4 md:p-3 shadow-soft-xl transition-all duration-200 active:scale-[0.97] overflow-hidden min-h-[100px] md:min-h-0'
   const clickableClasses = onClick ? 'cursor-pointer hover:shadow-soft-xl hover:-translate-y-0.5' : ''
 
   const iconGradientClasses = {
@@ -76,7 +76,7 @@ export function MobileWidget({
         )}
         {title && (
           <div className="mb-1.5">
-            <p className="text-xs text-gray-700 dark:text-gray-300 font-bold uppercase tracking-wider mb-0.5">
+            <p className="text-sm md:text-xs text-gray-700 dark:text-gray-300 font-bold uppercase tracking-wider mb-1 md:mb-0.5">
               {title}
             </p>
             {subtitle && (
@@ -85,7 +85,7 @@ export function MobileWidget({
           </div>
         )}
         {value !== undefined && (
-          <p className={cn("text-lg md:text-xl font-black", valueGradientClasses[iconColor])}>
+          <p className={cn("text-2xl md:text-xl font-black", valueGradientClasses[iconColor])}>
             {value}
           </p>
         )}
