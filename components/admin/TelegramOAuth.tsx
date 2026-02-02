@@ -107,14 +107,18 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
     const widgetId = `telegram-auth-${businessId}-${Math.random().toString(36).substr(2, 9)}`
     widgetIdRef.current = widgetId
 
+    console.log('[TelegramOAuth] Setting up auth handler with widgetId:', widgetId)
+
     // Глобальна функція для обробки авторизації
     const authHandler = async (user: any) => {
+      console.log('[TelegramOAuth] Auth handler called with user:', user)
       try {
         if (!user || !user.id) {
           throw new Error('Некоректні дані від Telegram')
         }
 
         setLoading(true)
+        console.log('[TelegramOAuth] Sending request to /api/telegram/oauth')
         const response = await fetch('/api/telegram/oauth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -124,8 +128,11 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
           })
         })
         
+        console.log('[TelegramOAuth] Response status:', response.status)
+        
         if (response.ok) {
           const data = await response.json()
+          console.log('[TelegramOAuth] Success, data:', data)
           setIsConnected(true)
           setUserData(data.user || data.telegramUser)
           onConnected(data)
@@ -140,6 +147,7 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
         } else {
           const errorData = await response.json().catch(() => ({ error: 'Не вдалося підключити' }))
           const errorMessage = errorData.error || 'Не вдалося підключити'
+          console.error('[TelegramOAuth] Error response:', errorData)
           setError(errorMessage)
           try {
             const toastModule = await import('@/components/ui/toast')
@@ -149,7 +157,7 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
           }
         }
       } catch (error: any) {
-        console.error('Error connecting Telegram:', error)
+        console.error('[TelegramOAuth] Error connecting Telegram:', error)
         const errorMessage = error.message || 'Помилка підключення'
         setError(errorMessage)
         try {
@@ -163,12 +171,18 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
       }
     }
 
-    ;(window as any)[`onTelegramAuth_${widgetId}`] = authHandler
+    // Зберігаємо функцію глобально
+    const functionName = `onTelegramAuth_${widgetId}`
+    ;(window as any)[functionName] = authHandler
+    console.log('[TelegramOAuth] Global function registered:', functionName)
+    console.log('[TelegramOAuth] Function available:', typeof (window as any)[functionName])
 
     return () => {
       // Cleanup: видаляємо глобальну функцію
       if (typeof window !== 'undefined' && widgetIdRef.current) {
-        delete (window as any)[`onTelegramAuth_${widgetIdRef.current}`]
+        const cleanupFunctionName = `onTelegramAuth_${widgetIdRef.current}`
+        delete (window as any)[cleanupFunctionName]
+        console.log('[TelegramOAuth] Cleanup: removed function', cleanupFunctionName)
         widgetIdRef.current = null
       }
     }
@@ -181,6 +195,20 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
     }
 
     const container = containerRef.current
+    const widgetId = widgetIdRef.current
+    const functionName = `onTelegramAuth_${widgetId}`
+    
+    console.log('[TelegramOAuth] Loading widget with:', { botName, widgetId, functionName })
+    
+    // Перевіряємо, чи функція доступна перед завантаженням скрипта
+    if (typeof (window as any)[functionName] !== 'function') {
+      console.error('[TelegramOAuth] Auth handler function not found!', functionName)
+      setError('Помилка налаштування. Спробуйте оновити сторінку.')
+      setLoading(false)
+      setShowWidget(false)
+      return
+    }
+
     let script: HTMLScriptElement | null = null
 
     // Видаляємо попередній скрипт, якщо він існує
@@ -192,7 +220,7 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
           container.removeChild(oldScript)
         } catch (e) {
           // Ігноруємо помилки видалення
-          console.warn('Error removing old script:', e)
+          console.warn('[TelegramOAuth] Error removing old script:', e)
         }
       }
       scriptRef.current = null
@@ -203,11 +231,12 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
     script.src = 'https://telegram.org/js/telegram-widget.js?22'
     script.setAttribute('data-telegram-login', botName)
     script.setAttribute('data-size', 'large')
-    script.setAttribute('data-onauth', `onTelegramAuth_${widgetIdRef.current}(user)`)
+    script.setAttribute('data-onauth', `${functionName}(user)`)
     script.setAttribute('data-request-access', 'write')
     script.async = true
     
     script.onerror = async () => {
+      console.error('[TelegramOAuth] Script load error')
       setError('Не вдалося завантажити Telegram Widget')
       setLoading(false)
       setShowWidget(false)
@@ -220,10 +249,12 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
     }
     
     script.onload = () => {
+      console.log('[TelegramOAuth] Widget script loaded')
       setLoading(false)
     }
 
     // Додаємо скрипт до контейнера
+    console.log('[TelegramOAuth] Appending script to container')
     container.appendChild(script)
     scriptRef.current = script
 
@@ -232,9 +263,10 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
       if (script && script.parentNode === container) {
         try {
           container.removeChild(script)
+          console.log('[TelegramOAuth] Script removed in cleanup')
         } catch (e) {
           // Ігноруємо помилки видалення (може бути вже видалено React)
-          console.warn('Error removing script in cleanup:', e)
+          console.warn('[TelegramOAuth] Error removing script in cleanup:', e)
         }
       }
       if (scriptRef.current === script) {
