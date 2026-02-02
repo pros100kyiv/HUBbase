@@ -1117,18 +1117,18 @@ export default function SettingsPage() {
           {/* Telegram Tab */}
           {activeTab === 'telegram' && business && (
             <div className="card-candy p-6">
-            <TelegramSettings
-              business={business}
-              onUpdate={(updated) => {
-                setBusiness(updated)
-                setTelegramBotToken(updated.telegramBotToken || '')
-                setTelegramChatId(updated.telegramChatId || '')
-                setTelegramNotificationsEnabled(updated.telegramNotificationsEnabled || false)
-              }}
-            />
+              <TelegramSettings
+                business={business}
+                onUpdate={(updated) => {
+                  setBusiness(updated)
+                  setTelegramBotToken(updated.telegramBotToken || '')
+                  setTelegramChatId(updated.telegramChatId || '')
+                  setTelegramNotificationsEnabled(updated.telegramNotificationsEnabled || false)
+                }}
+              />
+            </div>
           )}
 
-        </div>
         </div>
       </div>
     </div>
