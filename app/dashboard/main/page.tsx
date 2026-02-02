@@ -7,7 +7,6 @@ import { MobileWidget } from '@/components/admin/MobileWidget'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
 import { CalendarIcon, UsersIcon, CheckIcon, MoneyIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
-import { useState } from 'react'
 
 interface Appointment {
   id: string
