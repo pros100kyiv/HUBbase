@@ -47,7 +47,7 @@
   
   /* Unified Card Styles */
   .card-candy {
-    @apply bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/50 rounded-candy-sm shadow-soft;
+    @apply bg-gray-800 dark:bg-gray-900 border border-gray-700 rounded-candy-sm shadow-soft-xl backdrop-blur-sm;
     @apply transition-all duration-300;
   }
   
