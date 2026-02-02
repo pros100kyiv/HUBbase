@@ -6,7 +6,7 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, ea
 import { uk } from 'date-fns/locale'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
 import { CreateAppointmentForm } from '@/components/admin/CreateAppointmentForm'
-import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon } from '@/components/icons'
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon, FilterIcon, DownloadIcon, CheckSquareIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 
 interface Appointment {
@@ -36,9 +36,13 @@ export default function AppointmentsPage() {
   })
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
   const [filterStatus, setFilterStatus] = useState<string>('all')
+  const [filterMaster, setFilterMaster] = useState<string>('all')
+  const [searchQuery, setSearchQuery] = useState<string>('')
+  const [selectedAppointments, setSelectedAppointments] = useState<Set<string>>(new Set())
   const [masters, setMasters] = useState<any[]>([])
   const [services, setServices] = useState<any[]>([])
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar')
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -191,17 +195,120 @@ export default function AppointmentsPage() {
               Управління записами та розкладом
             </p>
           </div>
-          <button
-            onClick={() => {
-              setShowCreateForm(true)
-              if (!selectedDate) {
-                setSelectedDate(new Date())
-              }
-            }}
-            className="px-3 py-1.5 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-xs text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95 whitespace-nowrap"
-          >
-            + Додати запис
-          </button>
+          <div className="flex gap-1.5">
+            <button
+              onClick={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
+              className="px-2.5 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-xs text-xs font-bold"
+            >
+              {viewMode === 'calendar' ? '📋 Список' : '📅 Календар'}
+            </button>
+            <button
+              onClick={handleExportCSV}
+              className="px-2.5 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-xs text-xs font-bold flex items-center gap-1"
+            >
+              <DownloadIcon className="w-3 h-3" />
+              Експорт
+            </button>
+            <button
+              onClick={() => {
+                setShowCreateForm(true)
+                if (!selectedDate) {
+                  setSelectedDate(new Date())
+                }
+              }}
+              className="px-3 py-1.5 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-xs text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95 whitespace-nowrap"
+            >
+              + Додати запис
+            </button>
+          </div>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="card-candy p-2 mb-2">
+          <div className="flex flex-col sm:flex-row gap-2">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <SearchIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Пошук по клієнту, телефону, послузі..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
+              />
+            </div>
+            
+            {/* Master Filter */}
+            <select
+              value={filterMaster}
+              onChange={(e) => setFilterMaster(e.target.value)}
+              className="px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
+            >
+              <option value="all">Всі спеціалісти</option>
+              {masters.map((master) => (
+                <option key={master.id} value={master.id}>{master.name}</option>
+              ))}
+            </select>
+          </div>
+
+          {/* Bulk Actions */}
+          {selectedAppointments.size > 0 && (
+            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-gray-600 dark:text-gray-400">
+                Вибрано: {selectedAppointments.size}
+              </span>
+              <div className="flex gap-1.5">
+                <button
+                  onClick={() => handleBulkStatusChange('Confirmed')}
+                  className="px-2 py-1 text-[10px] bg-candy-mint text-white rounded-candy-xs font-bold hover:opacity-80 transition-all"
+                >
+                  Підтвердити
+                </button>
+                <button
+                  onClick={() => handleBulkStatusChange('Done')}
+                  className="px-2 py-1 text-[10px] bg-candy-blue text-white rounded-candy-xs font-bold hover:opacity-80 transition-all"
+                >
+                  Виконано
+                </button>
+                <button
+                  onClick={() => handleBulkStatusChange('Cancelled')}
+                  className="px-2 py-1 text-[10px] bg-red-500 text-white rounded-candy-xs font-bold hover:opacity-80 transition-all"
+                >
+                  Скасувати
+                </button>
+                <button
+                  onClick={() => setSelectedAppointments(new Set())}
+                  className="px-2 py-1 text-[10px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white rounded-candy-xs font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+                >
+                  Скасувати вибір
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-2">
+          <div className="card-candy p-2 text-center">
+            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Всього</div>
+            <div className="text-sm font-black text-gray-900 dark:text-white">{stats.total}</div>
+          </div>
+          <div className="card-candy p-2 text-center">
+            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Очікує</div>
+            <div className="text-sm font-black text-candy-orange">{stats.pending}</div>
+          </div>
+          <div className="card-candy p-2 text-center">
+            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Підтверджено</div>
+            <div className="text-sm font-black text-candy-mint">{stats.confirmed}</div>
+          </div>
+          <div className="card-candy p-2 text-center">
+            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Виконано</div>
+            <div className="text-sm font-black text-candy-blue">{stats.done}</div>
+          </div>
+          <div className="card-candy p-2 text-center">
+            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Дохід</div>
+            <div className="text-sm font-black text-candy-purple">{stats.revenue} грн</div>
+          </div>
         </div>
       </div>
 
