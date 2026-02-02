@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { format, isAfter } from 'date-fns'
 import { cn } from '@/lib/utils'
-import { ChevronDownIcon, ChevronUpIcon, UsersIcon, SearchIcon } from '@/components/icons'
+import { ChevronDownIcon, ChevronUpIcon, UsersIcon, SearchIcon, DownloadIcon, FilterIcon, CheckIcon, CalendarIcon, PhoneIcon } from '@/components/icons'
 
 interface Client {
   phone: string
@@ -33,6 +33,11 @@ export default function ClientsPage() {
   const [loading, setLoading] = useState(true)
   const [expandedClient, setExpandedClient] = useState<string | null>(null)
   const [clientDetails, setClientDetails] = useState<Record<string, ClientDetails>>({})
+  const [filterSegment, setFilterSegment] = useState<string>('all') // all, vip, active, inactive
+  const [sortBy, setSortBy] = useState<string>('name') // name, visits, spent, lastVisit
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
+  const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set())
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards')
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -154,11 +159,119 @@ export default function ClientsPage() {
     }
   }
 
-  const filteredClients = clients.filter(
-    (client) =>
-      client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      client.phone.includes(searchQuery)
-  )
+  const filteredClients = clients
+    .filter((client) => {
+      // Search filter
+      if (searchQuery) {
+        const query = searchQuery.toLowerCase()
+        const matchesName = client.name.toLowerCase().includes(query)
+        const matchesPhone = client.phone.includes(query)
+        if (!matchesName && !matchesPhone) return false
+      }
+
+      // Segment filter
+      if (filterSegment !== 'all') {
+        const daysSinceLastVisit = Math.floor((new Date().getTime() - new Date(client.lastVisit).getTime()) / (1000 * 60 * 60 * 24))
+        switch (filterSegment) {
+          case 'vip':
+            if (client.totalSpent < 5000 || client.appointmentsCount < 10) return false
+            break
+          case 'active':
+            if (daysSinceLastVisit > 30) return false
+            break
+          case 'inactive':
+            if (daysSinceLastVisit <= 90) return false
+            break
+        }
+      }
+
+      return true
+    })
+    .sort((a, b) => {
+      let comparison = 0
+      switch (sortBy) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name)
+          break
+        case 'visits':
+          comparison = a.appointmentsCount - b.appointmentsCount
+          break
+        case 'spent':
+          comparison = a.totalSpent - b.totalSpent
+          break
+        case 'lastVisit':
+          comparison = new Date(a.lastVisit).getTime() - new Date(b.lastVisit).getTime()
+          break
+        default:
+          comparison = 0
+      }
+      return sortOrder === 'asc' ? comparison : -comparison
+    })
+
+  const handleExportCSV = () => {
+    const csvHeaders = ['Ім\'я', 'Телефон', 'Кількість візитів', 'Зароблено', 'Останній візит', 'Наступний візит', 'Послуги']
+    const csvRows = filteredClients.map(client => {
+      const details = clientDetails[client.phone] || calculateClientDetails(client)
+      const servicesList = details.servicesUsed.map(s => `${s.name} (${s.count})`).join('; ')
+      return [
+        client.name,
+        client.phone,
+        client.appointmentsCount,
+        client.totalSpent,
+        format(new Date(client.lastVisit), 'dd.MM.yyyy HH:mm'),
+        client.nextAppointment ? format(new Date(client.nextAppointment), 'dd.MM.yyyy HH:mm') : 'Немає',
+        servicesList
+      ]
+    })
+    
+    const csvContent = [
+      csvHeaders.join(','),
+      ...csvRows.map(row => row.map(cell => `"${cell}"`).join(','))
+    ].join('\n')
+    
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
+    const link = document.createElement('a')
+    link.href = URL.createObjectURL(blob)
+    link.download = `клієнти_${format(new Date(), 'dd_MM_yyyy')}.csv`
+    link.click()
+  }
+
+  const toggleSelectClient = (phone: string) => {
+    setSelectedClients(prev => {
+      const next = new Set(prev)
+      if (next.has(phone)) {
+        next.delete(phone)
+      } else {
+        next.add(phone)
+      }
+      return next
+    })
+  }
+
+  const toggleSelectAll = () => {
+    if (selectedClients.size === filteredClients.length) {
+      setSelectedClients(new Set())
+    } else {
+      setSelectedClients(new Set(filteredClients.map(c => c.phone)))
+    }
+  }
+
+  // Calculate statistics
+  const stats = {
+    total: filteredClients.length,
+    vip: filteredClients.filter(c => c.totalSpent >= 5000 && c.appointmentsCount >= 10).length,
+    active: filteredClients.filter(c => {
+      const daysSinceLastVisit = Math.floor((new Date().getTime() - new Date(c.lastVisit).getTime()) / (1000 * 60 * 60 * 24))
+      return daysSinceLastVisit <= 30
+    }).length,
+    inactive: filteredClients.filter(c => {
+      const daysSinceLastVisit = Math.floor((new Date().getTime() - new Date(c.lastVisit).getTime()) / (1000 * 60 * 60 * 24))
+      return daysSinceLastVisit > 90
+    }).length,
+    totalRevenue: filteredClients.reduce((sum, c) => sum + c.totalSpent, 0),
+    avgRevenue: filteredClients.length > 0 ? filteredClients.reduce((sum, c) => sum + c.totalSpent, 0) / filteredClients.length : 0,
+    avgVisits: filteredClients.length > 0 ? filteredClients.reduce((sum, c) => sum + c.appointmentsCount, 0) / filteredClients.length : 0,
+  }
 
   if (!business || loading) {
     return (
@@ -203,75 +316,198 @@ export default function ClientsPage() {
 
       {/* Clients List */}
       {filteredClients.length === 0 ? (
-        <div className="card-candy p-12 text-center">
-          <div className="mb-6 flex justify-center">
-            <div className="w-32 h-32 bg-gradient-to-br from-candy-purple/20 to-candy-blue/20 rounded-full flex items-center justify-center">
-              <UsersIcon className="w-16 h-16 text-candy-purple" />
+        <div className="card-candy p-6 text-center">
+          <div className="mb-4 flex justify-center">
+            <div className="w-20 h-20 bg-gradient-to-br from-candy-purple/20 to-candy-blue/20 rounded-full flex items-center justify-center">
+              <UsersIcon className="w-10 h-10 text-candy-purple" />
             </div>
           </div>
-          <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">
+          <h3 className="text-base font-black text-gray-900 dark:text-white mb-1.5">
             {searchQuery ? "Клієнтів не знайдено" : "Немає клієнтів"}
           </h3>
-          <p className="text-gray-600 dark:text-gray-400 mb-6">
+          <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
             {searchQuery ? "Спробуйте інший пошуковий запит" : "Клієнти з'являться після перших записів"}
           </p>
           {!searchQuery && (
             <button
               onClick={() => router.push('/dashboard/appointments')}
-              className="px-6 py-3 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
+              className="px-3 py-1.5 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-xs text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95"
             >
               Створити перший запис
             </button>
           )}
         </div>
       ) : (
-        <div className="space-y-4">
-          {filteredClients.map((client) => {
+        <div className="space-y-3">
+          {viewMode === 'table' && (
+            <div className="card-candy p-2 overflow-x-auto">
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="border-b border-gray-200 dark:border-gray-700">
+                    <th className="text-left p-2">
+                      <button
+                        onClick={toggleSelectAll}
+                        className="w-4 h-4 rounded border-2 border-gray-300 dark:border-gray-600 flex items-center justify-center"
+                      >
+                        {selectedClients.size === filteredClients.length && filteredClients.length > 0 && (
+                          <CheckIcon className="w-3 h-3 text-candy-purple" />
+                        )}
+                      </button>
+                    </th>
+                    <th className="text-left p-2 font-black">Ім'я</th>
+                    <th className="text-left p-2 font-black">Телефон</th>
+                    <th className="text-center p-2 font-black">Візити</th>
+                    <th className="text-right p-2 font-black">Зароблено</th>
+                    <th className="text-left p-2 font-black">Останній візит</th>
+                    <th className="text-center p-2 font-black">Дії</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredClients.map((client) => {
+                    const isSelected = selectedClients.has(client.phone)
+                    return (
+                      <tr
+                        key={client.phone}
+                        className={cn(
+                          "border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50",
+                          isSelected && "bg-gradient-to-r from-candy-purple/10 to-candy-blue/10"
+                        )}
+                      >
+                        <td className="p-2">
+                          <button
+                            onClick={() => toggleSelectClient(client.phone)}
+                            className={cn(
+                              "w-4 h-4 rounded border-2 flex items-center justify-center transition-all",
+                              isSelected
+                                ? "bg-candy-purple border-candy-purple"
+                                : "border-gray-300 dark:border-gray-600"
+                            )}
+                          >
+                            {isSelected && <CheckIcon className="w-3 h-3 text-white" />}
+                          </button>
+                        </td>
+                        <td className="p-2 font-bold">{client.name}</td>
+                        <td className="p-2">{client.phone}</td>
+                        <td className="p-2 text-center">{client.appointmentsCount}</td>
+                        <td className="p-2 text-right font-black text-candy-purple">
+                          {Math.round(client.totalSpent)} грн
+                        </td>
+                        <td className="p-2">
+                          {format(new Date(client.lastVisit), 'dd.MM.yyyy')}
+                        </td>
+                        <td className="p-2">
+                          <div className="flex gap-1 justify-center">
+                            <button
+                              onClick={() => window.open(`tel:${client.phone}`)}
+                              className="p-1 text-candy-blue hover:bg-candy-blue/10 rounded-candy-xs transition-all"
+                              title="Дзвінок"
+                            >
+                              <PhoneIcon className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => {
+                                router.push(`/dashboard/appointments?clientPhone=${client.phone}`)
+                              }}
+                              className="p-1 text-candy-mint hover:bg-candy-mint/10 rounded-candy-xs transition-all"
+                              title="Створити запис"
+                            >
+                              <CalendarIcon className="w-3 h-3" />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+
+          {viewMode === 'cards' && filteredClients.map((client) => {
             const isExpanded = expandedClient === client.phone
             const details = clientDetails[client.phone]
+            const isSelected = selectedClients.has(client.phone)
 
             return (
               <div
                 key={client.phone}
                 className={cn(
                   "card-candy overflow-hidden transition-all",
-                  isExpanded && "shadow-soft-2xl"
+                  isExpanded && "shadow-soft-2xl",
+                  isSelected && "ring-2 ring-candy-purple"
                 )}
               >
-                <button
-                  onClick={() => handleClientClick(client)}
-                  className="w-full p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors"
-                >
+                <div className="w-full p-3">
                   <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 flex-1 min-w-0">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-r from-candy-purple to-candy-blue flex items-center justify-center text-white font-black text-lg flex-shrink-0">
+                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                      <button
+                        onClick={() => toggleSelectClient(client.phone)}
+                        className={cn(
+                          "w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all",
+                          isSelected
+                            ? "bg-candy-purple border-candy-purple"
+                            : "border-gray-300 dark:border-gray-600"
+                        )}
+                      >
+                        {isSelected && <CheckIcon className="w-3 h-3 text-white" />}
+                      </button>
+                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-candy-purple to-candy-blue flex items-center justify-center text-white font-black text-sm flex-shrink-0">
                         {client.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="text-lg font-black text-gray-900 dark:text-white truncate mb-1">
+                        <h3 className="text-sm font-black text-gray-900 dark:text-white truncate mb-0.5">
                           {client.name}
                         </h3>
-                        <p className="text-sm text-gray-600 dark:text-gray-400 truncate">
+                        <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
                           {client.phone}
                         </p>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-4 flex-shrink-0">
+                    <div className="flex items-center gap-3 flex-shrink-0">
                       <div className="text-center">
-                        <div className="text-xl font-black text-candy-purple">
+                        <div className="text-sm font-black text-candy-purple">
                           {client.appointmentsCount}
                         </div>
-                        <div className="text-xs text-gray-500 dark:text-gray-400">Візитів</div>
+                        <div className="text-[10px] text-gray-500 dark:text-gray-400">Візитів</div>
                       </div>
-                      {isExpanded ? (
-                        <ChevronUpIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                      ) : (
-                        <ChevronDownIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
-                      )}
+                      <div className="text-center">
+                        <div className="text-sm font-black text-candy-blue">
+                          {Math.round(client.totalSpent)} грн
+                        </div>
+                        <div className="text-[10px] text-gray-500 dark:text-gray-400">Зароблено</div>
+                      </div>
+                      <div className="flex gap-1">
+                        <button
+                          onClick={() => window.open(`tel:${client.phone}`)}
+                          className="p-1.5 text-candy-blue hover:bg-candy-blue/10 rounded-candy-xs transition-all"
+                          title="Дзвінок"
+                        >
+                          <PhoneIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            router.push(`/dashboard/appointments?clientPhone=${client.phone}`)
+                          }}
+                          className="p-1.5 text-candy-mint hover:bg-candy-mint/10 rounded-candy-xs transition-all"
+                          title="Створити запис"
+                        >
+                          <CalendarIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleClientClick(client)}
+                          className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-candy-xs transition-all"
+                        >
+                          {isExpanded ? (
+                            <ChevronUpIcon className="w-4 h-4" />
+                          ) : (
+                            <ChevronDownIcon className="w-4 h-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
                   </div>
-                </button>
+                </div>
 
                 {isExpanded && (
                   <div className="px-4 pb-4 pt-0 border-t border-gray-200 dark:border-gray-700">
