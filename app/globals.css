@@ -86,7 +86,7 @@
   }
   
   .btn-secondary {
-    @apply px-3 py-1.5 text-xs font-black rounded-candy-sm border border-gray-600 dark:border-gray-700 bg-gray-700 dark:bg-gray-800 text-white hover:bg-gray-600 dark:hover:bg-gray-700 transition-all shadow-soft-xl;
+    @apply px-3 py-1.5 text-xs font-black rounded-candy-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all shadow-soft-xl;
   }
   
   .btn-secondary:active {
