@@ -1141,18 +1141,18 @@ export default function SettingsPage() {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(data)
                 })
-                if (response.ok) {
-                  const updated = await response.json()
-                  setBusiness(updated)
-                  const businessData = localStorage.getItem('business')
-                  if (businessData) {
-                    const parsed = JSON.parse(businessData)
-                    localStorage.setItem('business', JSON.stringify({ ...parsed, ...updated }))
+                  if (response.ok) {
+                    const updated = await response.json()
+                    setBusiness(updated)
+                    const businessData = localStorage.getItem('business')
+                    if (businessData) {
+                      const parsed = JSON.parse(businessData)
+                      localStorage.setItem('business', JSON.stringify({ ...parsed, ...updated }))
+                    }
+                    toast({ title: 'Налаштування збережено', type: 'success' })
+                  } else {
+                    toast({ title: 'Помилка збереження', type: 'error' })
                   }
-                  toast.success('Налаштування збережено')
-                } else {
-                  toast.error('Помилка збереження')
-                }
               }}
             />
           )}
