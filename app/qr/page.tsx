@@ -17,7 +17,7 @@ export default function QRPage() {
     <div className="min-h-screen bg-background flex items-center justify-center py-12 px-4">
       <Card className="max-w-md w-full">
         <CardContent className="p-8">
-          <h1 className="text-3xl font-bold text-title text-primary dark:text-blue-400 mb-6 text-center">
+          <h1 className="text-3xl font-bold text-title text-primary dark:text-purple-400 mb-6 text-center">
             QR КОД ДЛЯ БРОНЮВАННЯ
           </h1>
           <div className="flex justify-center mb-6">

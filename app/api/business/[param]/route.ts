@@ -10,69 +10,35 @@ function isUUID(str: string): boolean {
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ param: string }> }
+  { params }: { params: Promise<{ param: string }> | { param: string } }
 ) {
   try {
-    const resolvedParams = await params
+    const resolvedParams = await Promise.resolve(params)
     const { param } = resolvedParams
 
     let business
 
     // Якщо це UUID, шукаємо по ID
     if (isUUID(param)) {
-      try {
-        business = await prisma.business.findUnique({
-          where: { id: param },
-          select: {
-            id: true,
-            name: true,
-            slug: true,
-            email: true,
-            phone: true,
-            address: true,
-            description: true,
-            logo: true,
-            primaryColor: true,
-            secondaryColor: true,
-            backgroundColor: true,
-            surfaceColor: true,
-            hideRevenue: true,
-            isActive: true,
-            businessCardBackgroundImage: true,
-            slogan: true,
-            additionalInfo: true,
-            socialMedia: true,
-            workingHours: true,
-            location: true,
-          },
-        })
-      } catch (error: any) {
-        // Якщо поля відсутні в БД, використовуємо базовий select
-        if (error?.message?.includes('does not exist')) {
-          console.warn('Business card fields not found in database, using basic select')
-          business = await prisma.business.findUnique({
-            where: { id: param },
-            select: {
-              id: true,
-              name: true,
-              slug: true,
-              email: true,
-              phone: true,
-              address: true,
-              description: true,
-              logo: true,
-              primaryColor: true,
-              secondaryColor: true,
-              backgroundColor: true,
-              surfaceColor: true,
-              hideRevenue: true,
-              isActive: true,
-            },
-          })
-        } else {
-          throw error
-        }
-      }
+      business = await prisma.business.findUnique({
+        where: { id: param },
+        select: {
+          id: true,
+          name: true,
+          slug: true,
+          email: true,
+          phone: true,
+          address: true,
+          description: true,
+          logo: true,
+          primaryColor: true,
+          secondaryColor: true,
+          backgroundColor: true,
+          surfaceColor: true,
+          hideRevenue: true,
+          isActive: true,
+        },
+      })
     } else {
       // Інакше шукаємо по slug
       business = await getBusinessBySlug(param)
@@ -91,10 +57,10 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ param: string }> }
+  { params }: { params: Promise<{ param: string }> | { param: string } }
 ) {
   try {
-    const resolvedParams = await params
+    const resolvedParams = await Promise.resolve(params)
     const { param } = resolvedParams
 
     console.log('PATCH request received with param:', param)
@@ -107,11 +73,7 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { 
-      name, email, phone, address, description, 
-      primaryColor, secondaryColor, backgroundColor, surfaceColor, hideRevenue,
-      businessCardBackgroundImage, slogan, additionalInfo, socialMedia, location
-    } = body
+    const { name, email, phone, address, description, primaryColor, secondaryColor, backgroundColor, surfaceColor, hideRevenue } = body
 
     const business = await prisma.business.update({
       where: { id: param },
@@ -126,11 +88,6 @@ export async function PATCH(
         ...(backgroundColor !== undefined && { backgroundColor }),
         ...(surfaceColor !== undefined && { surfaceColor }),
         ...(hideRevenue !== undefined && { hideRevenue }),
-        ...(businessCardBackgroundImage !== undefined && { businessCardBackgroundImage: businessCardBackgroundImage || null }),
-        ...(slogan !== undefined && { slogan: slogan || null }),
-        ...(additionalInfo !== undefined && { additionalInfo: additionalInfo || null }),
-        ...(socialMedia !== undefined && { socialMedia: socialMedia || null }),
-        ...(location !== undefined && { location: location || null }),
       },
       select: {
         id: true,
@@ -146,13 +103,6 @@ export async function PATCH(
         backgroundColor: true,
         surfaceColor: true,
         isActive: true,
-        hideRevenue: true,
-        businessCardBackgroundImage: true,
-        slogan: true,
-        additionalInfo: true,
-        socialMedia: true,
-        workingHours: true,
-        location: true,
       },
     })
 

@@ -3,10 +3,10 @@ import { prisma } from '@/lib/prisma'
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    const resolvedParams = await params
+    const resolvedParams = await Promise.resolve(params)
     const body = await request.json()
     const { name, photo, bio, rating, isActive, workingHours, blockedPeriods } = body
 
@@ -31,10 +31,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    const resolvedParams = await params
+    const resolvedParams = await Promise.resolve(params)
     await prisma.master.delete({
       where: { id: resolvedParams.id },
     })

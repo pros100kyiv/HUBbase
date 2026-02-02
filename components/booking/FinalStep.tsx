@@ -48,14 +48,6 @@ export function FinalStep({ businessId }: FinalStepProps) {
       startTime.setHours(hours, minutes, 0, 0)
       const endTime = new Date(startTime.getTime() + totalDuration * 60000)
 
-      // Формуємо services: якщо є кастомна послуга, зберігаємо її разом з ID послуг
-      const servicesData = state.customService.trim().length > 0
-        ? JSON.stringify({
-            serviceIds: state.selectedServices.map(s => s.id),
-            customService: state.customService.trim(),
-          })
-        : JSON.stringify(state.selectedServices.map(s => s.id))
-
       const response = await fetch('/api/appointments', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -66,14 +58,13 @@ export function FinalStep({ businessId }: FinalStepProps) {
           clientPhone: state.clientPhone,
           startTime: startTime.toISOString(),
           endTime: endTime.toISOString(),
-          services: servicesData,
-          isFromBooking: true, // Позначаємо, що запис створено через публічне бронювання
+          services: state.selectedServices.map(s => s.id),
         }),
       })
 
       if (response.ok) {
         reset()
-        const confirmed = window.confirm('Візит успішно створено! Хочете створити ще один?')
+        const confirmed = window.confirm('Запис успішно створено! Хочете створити ще один?')
         if (confirmed) {
           setStep(0)
         } else {
@@ -84,10 +75,10 @@ export function FinalStep({ businessId }: FinalStepProps) {
         }
       } else {
         const data = await response.json()
-        alert(data.error || 'Помилка при створенні візиту')
+        alert(data.error || 'Помилка при створенні запису')
       }
     } catch (error) {
-      alert('Помилка при створенні візиту')
+      alert('Помилка при створенні запису')
     } finally {
       setIsSubmitting(false)
     }
@@ -105,7 +96,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
         <div className="bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-candy-sm p-3 mb-3">
           <div className="space-y-3">
             <div>
-              <label className="block text-sm font-bold mb-1.5 text-white">Ім&apos;я *</label>
+              <label className="block text-sm font-bold mb-1.5 text-white">Ім'я *</label>
               <Input
                 value={state.clientName}
                 onChange={(e) => setClientName(e.target.value)}
@@ -134,10 +125,10 @@ export function FinalStep({ businessId }: FinalStepProps) {
 
         {/* Summary */}
         <div className="bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-candy-sm p-3 mb-4">
-          <h3 className="text-base font-black mb-3 text-white">Деталі візиту:</h3>
+          <h3 className="text-base font-black mb-3 text-white">Деталі запису:</h3>
           <div className="space-y-1.5 text-xs">
             <div className="flex justify-between">
-              <span className="text-white/70">Спеціаліст:</span>
+              <span className="text-white/70">Майстер:</span>
               <span className="font-bold text-white">{state.selectedMaster?.name}</span>
             </div>
             <div className="flex justify-between">
@@ -150,15 +141,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
             </div>
             <div className="flex justify-between">
               <span className="text-white/70">Послуги:</span>
-              <span className="font-bold text-white text-right max-w-[60%]">
-                {state.selectedServices.map(s => s.name).join(', ')}
-                {state.customService.trim().length > 0 && (
-                  <>
-                    {state.selectedServices.length > 0 ? ', ' : ''}
-                    <span className="italic text-blue-300">{state.customService}</span>
-                  </>
-                )}
-              </span>
+              <span className="font-bold text-white text-right max-w-[60%]">{state.selectedServices.map(s => s.name).join(', ')}</span>
             </div>
             <div className="flex justify-between pt-2 border-t border-white/20">
               <span className="font-bold text-white">Всього:</span>
@@ -176,7 +159,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
             disabled={isSubmitting}
             className="btn-primary flex-1"
           >
-            {isSubmitting ? 'Відправка...' : 'Підтвердити візит'}
+            {isSubmitting ? 'Відправка...' : 'Підтвердити запис'}
           </Button>
         </div>
       </div>

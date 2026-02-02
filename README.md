@@ -22,9 +22,9 @@ Production-ready SaaS платформа для бронювання запис�
 
 ## 🛠 Технології
 
-- **Next.js 15** (App Router)
+- **Next.js 14** (App Router)
 - **TypeScript**
-- **Prisma** (PostgreSQL для production)
+- **Prisma** (SQLite для dev, PostgreSQL для prod)
 - **Tailwind CSS**
 - **Google Gemini AI**
 - **bcryptjs** (хешування паролів)
@@ -115,38 +115,24 @@ GEMINI_API_KEY=your_key_here
 - Встановлення на пристрій
 - Швидкий доступ
 
-## 🚀 Production Deployment на Vercel
+## 🚀 Production Deployment
 
-**⚠️ Важливо:** Проект налаштований для PostgreSQL. SQLite працює тільки локально.
-
-### Швидкий старт на Vercel:
-
-1. **Створіть PostgreSQL базу даних:**
-   - Vercel Postgres (рекомендовано)
-   - Neon, Supabase, Railway або інша
-
-2. **Додайте змінні оточення в Vercel:**
-   - `DATABASE_URL` - обов'язково (PostgreSQL connection string)
-   - `GOOGLE_CLIENT_ID` - опціонально (для Google OAuth)
-   - `GOOGLE_CLIENT_SECRET` - опціонально (для Google OAuth)
-   - `GOOGLE_GENERATIVE_AI_API_KEY` - опціонально (для Gemini AI)
-
-3. **Після деплою виконайте міграцію:**
-   ```bash
-   vercel env pull .env.local
-   npx prisma db push
-   ```
-
-**Детальні інструкції:** Дивіться [VERCEL_SETUP.md](./VERCEL_SETUP.md)
-
-### Локальна розробка:
-
-Для локальної розробки можна використати SQLite:
+1. **Змініть базу даних на PostgreSQL:**
 ```env
-DATABASE_URL="file:./dev.db"
+DATABASE_URL="postgresql://user:password@host:5432/dbname"
 ```
 
-Але для production обов'язково PostgreSQL!
+2. **Додайте змінні оточення:**
+```env
+GEMINI_API_KEY=your_key
+NEXT_PUBLIC_APP_URL=https://yourdomain.com
+```
+
+3. **Зберіть проект:**
+```bash
+npm run build
+npm start
+```
 
 ## 📝 API Endpoints
 

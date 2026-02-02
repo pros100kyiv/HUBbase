@@ -55,9 +55,7 @@ export function Statistics({ businessId }: StatisticsProps) {
     return new Intl.NumberFormat('uk-UA', {
       style: 'currency',
       currency: 'UAH',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount / 100)
+    }).format(amount)
   }
 
   return (
@@ -71,7 +69,7 @@ export function Statistics({ businessId }: StatisticsProps) {
             className={`px-5 py-2.5 rounded-candy text-sm font-bold transition-all duration-200 active:scale-97 ${
               period === 'day'
                 ? 'candy-purple text-white shadow-soft-lg'
-                : 'text-gray-600 dark:text-gray-300 hover:text-candy-blue dark:hover:text-blue-400 hover:bg-white dark:hover:bg-gray-700'
+                : 'text-gray-600 dark:text-gray-400 hover:text-candy-purple dark:hover:text-purple-400 hover:bg-white dark:hover:bg-gray-700'
             }`}
           >
             День
@@ -81,7 +79,7 @@ export function Statistics({ businessId }: StatisticsProps) {
             className={`px-5 py-2.5 rounded-candy text-sm font-bold transition-all duration-200 active:scale-97 ${
               period === 'week'
                 ? 'candy-purple text-white shadow-soft-lg'
-                : 'text-gray-600 dark:text-gray-300 hover:text-candy-blue dark:hover:text-blue-400 hover:bg-white dark:hover:bg-gray-700'
+                : 'text-gray-600 dark:text-gray-400 hover:text-candy-purple dark:hover:text-purple-400 hover:bg-white dark:hover:bg-gray-700'
             }`}
           >
             Тиждень
@@ -91,7 +89,7 @@ export function Statistics({ businessId }: StatisticsProps) {
             className={`px-5 py-2.5 rounded-candy text-sm font-bold transition-all duration-200 active:scale-97 ${
               period === 'month'
                 ? 'candy-purple text-white shadow-soft-lg'
-                : 'text-gray-600 dark:text-gray-300 hover:text-candy-blue dark:hover:text-blue-400 hover:bg-white dark:hover:bg-gray-700'
+                : 'text-gray-600 dark:text-gray-400 hover:text-candy-purple dark:hover:text-purple-400 hover:bg-white dark:hover:bg-gray-700'
             }`}
           >
             Місяць
@@ -103,7 +101,7 @@ export function Statistics({ businessId }: StatisticsProps) {
       <div className="grid grid-cols-2 gap-1.5">
         <MobileWidget
           icon={<CalendarIcon />}
-          title="Всього візитів"
+          title="Всього записів"
           value={stats.totalAppointments}
           iconColor="orange"
         />
@@ -132,7 +130,7 @@ export function Statistics({ businessId }: StatisticsProps) {
           icon={<UsersIcon />}
           title="Клієнти"
           value={stats.uniqueClients}
-          iconColor="blue"
+          iconColor="purple"
         />
         <MobileWidget
           icon={<MoneyIcon />}

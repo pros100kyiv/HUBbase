@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import Image from 'next/image'
 import { useBooking, Master } from '@/contexts/BookingContext'
 import { Button } from '@/components/ui/button'
 
@@ -29,18 +28,18 @@ const AvatarIcon = ({ gender, size = 64 }: { gender: 'male' | 'female', size?: n
   if (gender === 'female') {
     return (
       <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-        <circle cx="32" cy="20" r="12" fill="#60A5FA" />
-        <path d="M16 52 C16 42, 24 36, 32 36 C40 36, 48 42, 48 52" stroke="#60A5FA" strokeWidth="4" fill="none" />
-        <path d="M20 24 Q24 20, 28 24" stroke="#3B82F6" strokeWidth="2" fill="none" />
-        <path d="M36 24 Q40 20, 44 24" stroke="#3B82F6" strokeWidth="2" fill="none" />
+        <circle cx="32" cy="20" r="12" fill="#A78BFA" />
+        <path d="M16 52 C16 42, 24 36, 32 36 C40 36, 48 42, 48 52" stroke="#A78BFA" strokeWidth="4" fill="none" />
+        <path d="M20 24 Q24 20, 28 24" stroke="#8B5CF6" strokeWidth="2" fill="none" />
+        <path d="M36 24 Q40 20, 44 24" stroke="#8B5CF6" strokeWidth="2" fill="none" />
       </svg>
     )
   }
   return (
     <svg width={size} height={size} viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <circle cx="32" cy="18" r="12" fill="#60A5FA" />
-      <path d="M16 52 C16 42, 24 36, 32 36 C40 36, 48 42, 48 52" stroke="#60A5FA" strokeWidth="4" fill="none" />
-      <rect x="26" y="22" width="12" height="4" rx="2" fill="#3B82F6" />
+      <circle cx="32" cy="18" r="12" fill="#A78BFA" />
+      <path d="M16 52 C16 42, 24 36, 32 36 C40 36, 48 42, 48 52" stroke="#A78BFA" strokeWidth="4" fill="none" />
+      <rect x="26" y="22" width="12" height="4" rx="2" fill="#8B5CF6" />
     </svg>
   )
 }
@@ -73,7 +72,7 @@ export function MasterStep({ businessId }: MasterStepProps) {
     <div className="min-h-screen bg-gray-900 dark:bg-gray-950 py-6 px-3">
       <div className="max-w-4xl mx-auto">
         <h2 className="text-2xl md:text-3xl font-black mb-4 text-center text-white">
-          ОБЕРІТЬ СПЕЦІАЛІСТА
+          ОБЕРІТЬ МАЙСТРА
         </h2>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
@@ -84,7 +83,7 @@ export function MasterStep({ businessId }: MasterStepProps) {
               <div
                 key={master.id}
                 className={`bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-candy-sm p-4 cursor-pointer transition-all hover:bg-white/15 dark:hover:bg-white/10 ${
-                  state.selectedMaster?.id === master.id ? 'ring-2 ring-blue-500 dark:ring-blue-400 bg-white/20 dark:bg-white/15' : ''
+                  state.selectedMaster?.id === master.id ? 'ring-2 ring-purple-500 dark:ring-purple-400 bg-white/20 dark:bg-white/15' : ''
                 }`}
                 onClick={() => setMaster(master)}
               >
@@ -92,15 +91,13 @@ export function MasterStep({ businessId }: MasterStepProps) {
                   <div className="relative mb-3">
                     <div
                       className={`w-20 h-20 md:w-24 md:h-24 rounded-full border-2 ${
-                        available ? 'border-blue-400' : 'border-gray-500'
+                        available ? 'border-purple-400' : 'border-gray-500'
                       } flex items-center justify-center bg-gray-800 dark:bg-gray-900 overflow-hidden`}
                     >
                       {master.photo ? (
-                        <Image
+                        <img
                           src={master.photo}
                           alt={master.name}
-                          width={96}
-                          height={96}
                           className="w-full h-full object-cover"
                         />
                       ) : (
@@ -121,7 +118,7 @@ export function MasterStep({ businessId }: MasterStepProps) {
                     <p className="text-xs mb-2 line-clamp-2 text-white/70">{master.bio}</p>
                   )}
                   <div className="flex items-center gap-1 mb-2">
-                    <span className="text-yellow-400 dark:text-yellow-300">★</span>
+                    <span className="text-purple-400">★</span>
                     <span className="text-xs text-white/80">{master.rating.toFixed(1)}</span>
                   </div>
                   <p

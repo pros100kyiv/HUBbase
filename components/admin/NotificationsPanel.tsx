@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useCallback, useRef } from 'react'
+import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { XIcon, CheckIcon, ClockIcon } from '@/components/icons'
@@ -26,39 +26,19 @@ interface AppointmentCardProps {
   onConfirm: (id: string) => void
   onReschedule: (id: string, newStartTime: string, newEndTime: string) => void
   processing: string | null
-  servicesCache?: any[]
 }
 
-function AppointmentCard({ appointment, onConfirm, onReschedule, processing, servicesCache = [] }: AppointmentCardProps) {
+function AppointmentCard({ appointment, onConfirm, onReschedule, processing }: AppointmentCardProps) {
   const startTime = new Date(appointment.startTime)
   const endTime = new Date(appointment.endTime)
   let servicesList: string[] = []
-  let serviceNames: string[] = []
-  let customService: string | null = null
-  
   try {
     if (appointment.services) {
-      const parsed = JSON.parse(appointment.services)
-      if (Array.isArray(parsed)) {
-        // Старий формат - просто масив ID
-        servicesList = parsed
-      } else if (typeof parsed === 'object' && parsed.serviceIds) {
-        // Новий формат з кастомною послугою
-        servicesList = parsed.serviceIds || []
-        customService = parsed.customService || null
-      }
+      servicesList = JSON.parse(appointment.services)
     }
   } catch (e) {
     // Ignore
   }
-  
-  // Отримуємо назви послуг
-  serviceNames = servicesList
-    .map((id: string) => {
-      const service = servicesCache.find((s: any) => s.id === id)
-      return service ? service.name : null
-    })
-    .filter((name: string | null) => name !== null) as string[]
 
   const [newDate, setNewDate] = useState(format(startTime, 'yyyy-MM-dd'))
   const [newStartTime, setNewStartTime] = useState(format(startTime, 'HH:mm'))
@@ -75,24 +55,13 @@ function AppointmentCard({ appointment, onConfirm, onReschedule, processing, ser
           <div className="space-y-0.5 text-xs text-gray-600 dark:text-gray-400">
             <p>📞 {appointment.clientPhone}</p>
             {appointment.clientEmail && <p>✉️ {appointment.clientEmail}</p>}
-            <p>👤 Спеціаліст: {appointment.masterName}</p>
+            <p>👤 Майстер: {appointment.masterName}</p>
             <p className="flex items-center gap-1">
               <ClockIcon className="w-3 h-3" />
               {format(startTime, 'd MMMM yyyy, HH:mm', { locale: uk })} - {format(endTime, 'HH:mm')}
             </p>
-            {(serviceNames.length > 0 || customService) && (
-              <p className="text-xs">
-                <span className="font-semibold">📋 Послуги:</span>{' '}
-                {serviceNames.length > 0 && (
-                  <span>{serviceNames.join(', ')}</span>
-                )}
-                {customService && (
-                  <span>
-                    {serviceNames.length > 0 ? ', ' : ''}
-                    <span className="italic text-candy-blue dark:text-blue-400">{customService}</span>
-                  </span>
-                )}
-              </p>
+            {servicesList.length > 0 && (
+              <p>📋 Послуги: {servicesList.length}</p>
             )}
             {appointment.notes && (
               <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-1">
@@ -184,33 +153,30 @@ interface NotificationsPanelProps {
 }
 
 export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: NotificationsPanelProps) {
-  const panelRef = useRef<HTMLDivElement>(null)
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState<string | null>(null)
-  const [servicesCache, setServicesCache] = useState<any[]>([])
 
-  const loadPendingAppointments = useCallback(async () => {
+  useEffect(() => {
+    if (isOpen && businessId) {
+      loadPendingAppointments()
+    }
+  }, [isOpen, businessId])
+
+  const loadPendingAppointments = async () => {
     setLoading(true)
     try {
       const response = await fetch(`/api/appointments?businessId=${businessId}&status=Pending`)
       if (!response.ok) throw new Error('Failed to fetch appointments')
       const data = await response.json()
       
-      // Get masters and services for names
-      const [mastersRes, servicesRes] = await Promise.all([
-        fetch(`/api/masters?businessId=${businessId}`),
-        fetch(`/api/services?businessId=${businessId}`),
-      ])
-      
+      // Get masters for names
+      const mastersRes = await fetch(`/api/masters?businessId=${businessId}`)
       const masters = mastersRes.ok ? await mastersRes.json() : []
-      const services = servicesRes.ok ? await servicesRes.json() : []
-      
-      setServicesCache(services)
       
       const withMasters = (data || []).map((apt: Appointment) => {
         const master = masters.find((m: any) => m.id === apt.masterId)
-        return { ...apt, masterName: master?.name || 'Невідомий спеціаліст' }
+        return { ...apt, masterName: master?.name || 'Невідомий майстер' }
       })
       
       setAppointments(withMasters)
@@ -220,7 +186,7 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
     } finally {
       setLoading(false)
     }
-  }, [businessId])
+  }
 
   const handleConfirm = async (appointmentId: string) => {
     setProcessing(appointmentId)
@@ -263,26 +229,11 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
     }
   }
 
-  useEffect(() => {
-    if (isOpen && businessId) {
-      loadPendingAppointments()
-    }
-  }, [isOpen, businessId, loadPendingAppointments])
-
-  // Автоматична прокрутка до панелі при відкритті
-  useEffect(() => {
-    if (isOpen && panelRef.current) {
-      setTimeout(() => {
-        panelRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }, 100)
-    }
-  }, [isOpen])
-
   if (!isOpen) return null
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4">
-      <div ref={panelRef} className="bg-white dark:bg-gray-800 rounded-candy-lg shadow-soft-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
+      <div className="bg-white dark:bg-gray-800 rounded-candy-lg shadow-soft-xl w-full max-w-2xl max-h-[90vh] overflow-hidden flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-3 border-b border-gray-200 dark:border-gray-700">
           <h2 className="text-lg font-black text-foreground dark:text-white">
@@ -315,7 +266,6 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
                   onConfirm={handleConfirm}
                   onReschedule={handleReschedule}
                   processing={processing}
-                  servicesCache={servicesCache}
                 />
               ))}
             </div>

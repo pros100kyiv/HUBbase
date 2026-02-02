@@ -3,26 +3,21 @@ import { prisma } from '@/lib/prisma'
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    const resolvedParams = await params
+    const resolvedParams = await Promise.resolve(params)
     const body = await request.json()
-    const { name, price, duration, category, subcategory } = body
-
-    // Конвертуємо ціну з гривень в копійки (користувач вводить в гривнях)
-    const updateData: any = {}
-    if (name) updateData.name = name
-    if (price !== undefined) {
-      updateData.price = Math.round(parseFloat(price) * 100)
-    }
-    if (duration !== undefined) updateData.duration = parseInt(duration)
-    if (category !== undefined) updateData.category = category
-    if (subcategory !== undefined) updateData.subcategory = subcategory
+    const { name, price, duration, category } = body
 
     const service = await prisma.service.update({
       where: { id: resolvedParams.id },
-      data: updateData,
+      data: {
+        ...(name && { name }),
+        ...(price !== undefined && { price: parseInt(price) }),
+        ...(duration !== undefined && { duration: parseInt(duration) }),
+        ...(category !== undefined && { category }),
+      },
     })
 
     return NextResponse.json(service)
@@ -33,10 +28,10 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    const resolvedParams = await params
+    const resolvedParams = await Promise.resolve(params)
     await prisma.service.delete({
       where: { id: resolvedParams.id },
     })

@@ -10,7 +10,7 @@
     --foreground: 26 26 26;
     --border: 0 0 0 / 0.08;
     --input: 255 255 255;
-    --ring: 59 130 246;
+    --ring: 139 92 246;
   }
   
   .dark {
@@ -18,7 +18,7 @@
     --foreground: 255 255 255;
     --border: 255 255 255 / 0.1;
     --input: 38 38 38;
-    --ring: 59 130 246;
+    --ring: 139 92 246;
   }
   
   * {
@@ -26,7 +26,7 @@
   }
   
   body {
-    background: #F5F5F5;
+    background: #E5E5E5;
     color: #1A1A1A;
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
@@ -35,7 +35,7 @@
   }
   
   .dark body {
-    background: #0F0F0F;
+    background: #121212;
     color: #FFFFFF;
   }
 }
@@ -47,7 +47,7 @@
   
   /* Unified Card Styles */
   .card-candy {
-    @apply bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-candy-sm shadow-soft;
+    @apply bg-white dark:bg-gray-800 border border-gray-200/50 dark:border-gray-700/50 rounded-candy-sm shadow-soft;
     @apply transition-all duration-300;
   }
   
@@ -56,10 +56,14 @@
     @apply hover-lift;
   }
   
+  .card-candy-hover:active {
+    transform: scale(0.97);
+  }
+  
   /* Unified Button Styles */
   .btn-primary {
     @apply px-3 py-1.5 text-xs font-bold text-white rounded-candy-sm shadow-soft hover:shadow-soft-lg transition-all;
-    background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
+    background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
   }
   
   .btn-primary:active {
@@ -103,11 +107,11 @@
   }
   
   .text-caption {
-    @apply text-xs text-gray-700 dark:text-gray-300 font-medium;
+    @apply text-xs text-gray-600 dark:text-gray-400;
   }
   
   .text-small {
-    @apply text-[10px] text-gray-600 dark:text-gray-400 font-medium;
+    @apply text-[10px] text-gray-500 dark:text-gray-500;
   }
   
   /* Unified Spacing */
@@ -125,7 +129,7 @@
   
   /* Candy Colors */
   .candy-purple {
-    background: linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%);
+    background: linear-gradient(135deg, #8B5CF6 0%, #A78BFA 100%);
     color: #FFFFFF;
   }
   
@@ -150,7 +154,7 @@
   }
   
   .text-candy-purple {
-    color: #3B82F6;
+    color: #8B5CF6;
   }
   
   .text-candy-blue {

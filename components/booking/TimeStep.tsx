@@ -90,27 +90,27 @@ export function TimeStep({ businessId }: TimeStepProps) {
   const totalDuration = state.selectedServices.reduce((sum, s) => sum + s.duration, 0)
 
   return (
-    <div className="min-h-screen bg-gray-900 dark:bg-gray-950 py-4 px-3">
-      <div className="max-w-3xl mx-auto">
-        <h2 className="text-xl md:text-2xl font-black mb-3 text-center text-white">
+    <div className="min-h-screen bg-gray-900 dark:bg-gray-950 py-6 px-3">
+      <div className="max-w-4xl mx-auto">
+        <h2 className="text-2xl md:text-3xl font-black mb-4 text-center text-white">
           ОБЕРІТЬ ЧАС
         </h2>
 
-        {/* Date Selection with Month Navigation - Compact */}
-        <div className="mb-3">
-          <h3 className="text-sm font-black text-white mb-1.5">Оберіть дату:</h3>
+        {/* Date Selection with Month Navigation */}
+        <div className="mb-4">
+          <h3 className="text-base font-black text-white mb-2">Оберіть дату:</h3>
           
           {/* Month Navigation */}
-          <div className="bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-candy-sm p-1.5 mb-1.5">
+          <div className="bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-candy-sm p-2 mb-2">
             <div className="flex items-center justify-between">
               <button
                 onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                className="px-1.5 py-0.5 bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 text-white rounded-candy-xs text-[10px] font-bold hover:bg-white/20 dark:hover:bg-white/10 transition-all"
+                className="px-2 py-1 bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 text-white rounded-candy-xs text-xs font-bold hover:bg-white/20 dark:hover:bg-white/10 transition-all"
                 title="Попередній місяць"
               >
                 ←
               </button>
-              <h4 className="text-[11px] font-black text-white">
+              <h4 className="text-xs font-black text-white">
                 {format(currentMonth, 'MMMM yyyy', { locale: uk })}
               </h4>
               <button
@@ -120,14 +120,14 @@ export function TimeStep({ businessId }: TimeStepProps) {
                   setCurrentMonth(today)
                   setDate(today)
                 }}
-                className="px-1.5 py-0.5 bg-blue-500 hover:bg-blue-600 text-white rounded-candy-xs text-[9px] font-bold transition-all"
+                className="px-2 py-1 bg-purple-500 hover:bg-purple-600 text-white rounded-candy-xs text-[10px] font-bold transition-all"
                 title="Сьогодні"
               >
                 Сьогодні
               </button>
               <button
                 onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                className="px-1.5 py-0.5 bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 text-white rounded-candy-xs text-[10px] font-bold hover:bg-white/20 dark:hover:bg-white/10 transition-all"
+                className="px-2 py-1 bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 text-white rounded-candy-xs text-xs font-bold hover:bg-white/20 dark:hover:bg-white/10 transition-all"
                 title="Наступний місяць"
               >
                 →
@@ -135,19 +135,19 @@ export function TimeStep({ businessId }: TimeStepProps) {
             </div>
           </div>
 
-          {/* Date Selection Grid - Compact */}
-          <div className="bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-candy-sm p-1.5">
+          {/* Date Selection Grid */}
+          <div className="bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-candy-sm p-2">
             {/* Weekday Headers */}
-            <div className="grid grid-cols-7 gap-0.5 mb-0.5">
+            <div className="grid grid-cols-7 gap-1 mb-1">
               {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
-                <div key={day} className="text-center text-[9px] font-bold text-white/60">
+                <div key={day} className="text-center text-[10px] font-bold text-white/60">
                   {day}
                 </div>
               ))}
             </div>
 
-            {/* Calendar Grid - Smaller */}
-            <div className="grid grid-cols-7 gap-0.5">
+            {/* Calendar Grid */}
+            <div className="grid grid-cols-7 gap-1">
               {calendarDays.map((day, idx) => {
                 const isCurrentMonth = day >= monthStart && day <= monthEnd
                 const isPastDate = isPast(day) && !isToday(day)
@@ -164,11 +164,11 @@ export function TimeStep({ businessId }: TimeStepProps) {
                     }}
                     disabled={isPastDate || !isCurrentMonth}
                     className={`
-                      h-8 flex items-center justify-center rounded-candy-xs text-[9px] font-bold transition-all
+                      aspect-square flex items-center justify-center rounded-candy-xs text-[10px] font-bold transition-all
                       ${isSelected
-                        ? 'bg-blue-500 text-white shadow-lg scale-105 ring-1 ring-blue-300'
+                        ? 'bg-purple-500 text-white shadow-lg scale-105 ring-2 ring-purple-300'
                         : isTodayDate && isCurrentMonth
-                        ? 'bg-blue-500/30 text-white border border-blue-400'
+                        ? 'bg-purple-500/30 text-white border border-purple-400'
                         : isPastDate || !isCurrentMonth
                         ? 'text-white/20 cursor-not-allowed bg-white/5'
                         : 'bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 text-white hover:bg-white/20 dark:hover:bg-white/10 hover:scale-105'
@@ -184,23 +184,23 @@ export function TimeStep({ businessId }: TimeStepProps) {
         </div>
 
         {state.selectedDate && (
-          <div className="mb-3">
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-xs font-bold text-white">Оберіть час:</h3>
-              <div className="flex items-center gap-1.5 text-[10px] text-white/60">
-                <div className="flex items-center gap-0.5">
-                  <div className="w-2 h-2 rounded bg-green-500"></div>
+          <div className="mb-4">
+            <div className="flex items-center justify-between mb-3">
+              <h3 className="text-sm font-bold text-white">Оберіть час:</h3>
+              <div className="flex items-center gap-2 text-xs text-white/60">
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded bg-green-500"></div>
                   <span>Доступно</span>
                 </div>
-                <div className="flex items-center gap-0.5">
-                  <div className="w-2 h-2 rounded bg-gray-600 border border-gray-500"></div>
+                <div className="flex items-center gap-1">
+                  <div className="w-3 h-3 rounded bg-gray-600 border border-gray-500"></div>
                   <span>Зайнято</span>
                 </div>
               </div>
             </div>
 
-            {/* Time slots grid - more compact */}
-            <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 lg:grid-cols-8 gap-1.5">
+            {/* Time slots grid - more compact and intuitive */}
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
               {allTimeSlots.map((time) => {
                 const available = isSlotAvailable(time)
                 const isSelected = state.selectedTime === time
@@ -211,9 +211,9 @@ export function TimeStep({ businessId }: TimeStepProps) {
                     onClick={() => handleTimeSelect(time)}
                     disabled={!available}
                     className={`
-                      px-2 py-1.5 rounded-candy-xs transition-all text-[10px] font-bold
+                      px-3 py-2.5 rounded-candy-sm transition-all text-xs font-bold
                       ${isSelected
-                        ? 'bg-blue-500 text-white shadow-lg scale-105 ring-1 ring-blue-300'
+                        ? 'bg-purple-500 text-white shadow-lg scale-105 ring-2 ring-purple-300'
                         : available
                         ? 'bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 text-white hover:bg-white/20 dark:hover:bg-white/10 hover:scale-105'
                         : 'bg-gray-800/50 dark:bg-gray-900/50 border border-gray-700 dark:border-gray-800 text-gray-400 cursor-not-allowed opacity-50'
@@ -228,8 +228,8 @@ export function TimeStep({ businessId }: TimeStepProps) {
             
             {/* Selected time highlight */}
             {state.selectedTime && (
-              <div className="mt-2 p-2 bg-blue-500/20 border border-blue-400/30 rounded-candy-xs">
-                <p className="text-xs text-white font-bold">
+              <div className="mt-4 p-3 bg-purple-500/20 border border-purple-400/30 rounded-candy-sm">
+                <p className="text-sm text-white font-bold">
                   Обрано: <span className="text-white">{state.selectedTime}</span>
                 </p>
               </div>
@@ -238,12 +238,12 @@ export function TimeStep({ businessId }: TimeStepProps) {
         )}
 
         {state.selectedTime && state.selectedDate && (
-          <div className="bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-candy-sm p-2 mb-3">
-            <p className="text-[10px] mb-0.5 text-white/70">Обрано:</p>
-            <p className="text-xs font-bold text-white">
+          <div className="bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-candy-sm p-3 mb-4">
+            <p className="text-xs mb-1 text-white/70">Обрано:</p>
+            <p className="text-sm font-bold text-white">
               {format(state.selectedDate, 'd MMMM yyyy', { locale: uk })}, {state.selectedTime}
             </p>
-            <p className="text-[10px] mt-0.5 text-white/60">
+            <p className="text-xs mt-1 text-white/60">
               Тривалість: {totalDuration} хв
             </p>
           </div>

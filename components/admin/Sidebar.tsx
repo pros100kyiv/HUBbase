@@ -3,9 +3,8 @@
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
-import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, StarIcon, ChartIcon, SettingsIcon, BellIcon, XIcon } from '@/components/icons'
+import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, StarIcon, ChartIcon, SettingsIcon, BellIcon } from '@/components/icons'
 import { NotificationsPanel } from './NotificationsPanel'
-import { useSidebar } from '@/contexts/SidebarContext'
 
 interface NavItem {
   id: string
@@ -23,7 +22,6 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
-  const { isOpen, close } = useSidebar()
   const [business, setBusiness] = useState<any>(null)
   const [pendingCount, setPendingCount] = useState(0)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -60,12 +58,13 @@ export function Sidebar({ className }: SidebarProps) {
   }, [business])
 
   const navItems: NavItem[] = [
-    { id: 'main', label: 'Головна', icon: <HomeIcon />, path: '/dashboard/main' },
-    { id: 'appointments', label: 'Візити', icon: <CalendarIcon />, path: '/dashboard/appointments' },
+    { id: 'main', label: 'Головна', icon: <HomeIcon />, path: '/dashboard' },
+    { id: 'appointments', label: 'Записи', icon: <CalendarIcon />, path: '/dashboard/appointments' },
+    { id: 'schedule', label: 'Графік роботи', icon: <CalendarIcon />, path: '/dashboard/schedule' },
     { id: 'clients', label: 'Клієнти', icon: <UsersIcon />, path: '/dashboard/clients' },
-    { id: 'masters', label: 'Спеціалісти', icon: <UserIcon />, path: '/dashboard/masters' },
-    { id: 'pricelist', label: 'Прайс-лист', icon: <StarIcon />, path: '/dashboard/pricelist' },
-    { id: 'analytics', label: 'CRM', icon: <ChartIcon />, path: '/dashboard/analytics' },
+    { id: 'masters', label: 'Майстри', icon: <UserIcon />, path: '/dashboard/masters' },
+    { id: 'services', label: 'Послуги', icon: <StarIcon />, path: '/dashboard/services' },
+    { id: 'analytics', label: 'Аналітика', icon: <ChartIcon />, path: '/dashboard/analytics' },
     { id: 'notifications', label: 'Бронювання', icon: <BellIcon />, path: '#', badge: pendingCount, onClick: () => setShowNotifications(true) },
     { id: 'settings', label: 'Налаштування', icon: <SettingsIcon />, path: '/dashboard/settings' },
   ]
@@ -81,32 +80,10 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <>
-      {/* Overlay для закриття sidebar на всіх пристроях */}
-      {isOpen && (
-        <div 
-          className="fixed inset-0 bg-black/50 z-30"
-          onClick={close}
-        />
-      )}
-      
-      <aside className={cn(
-        'bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 w-16 md:w-40 h-screen fixed left-0 top-0 pt-14 md:pt-16 z-40 shadow-soft transition-transform duration-300 ease-in-out overflow-y-auto',
-        isOpen ? 'translate-x-0' : '-translate-x-full',
-        className
-      )}>
-        {/* Кнопка закриття */}
-        {isOpen && (
-          <button
-            onClick={close}
-            className="absolute top-2 right-2 p-1 rounded-candy-xs bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
-          >
-            <XIcon className="w-4 h-4" />
-          </button>
-        )}
-        
+      <aside className={cn('bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 w-16 md:w-40 min-h-screen fixed left-0 top-0 pt-14 md:pt-16 z-40 shadow-soft', className)}>
         <nav className="p-1.5 md:p-2 space-y-0.5 md:space-y-1">
           {navItems.map((item) => {
-            const isActive = pathname === item.path || (item.path === '/dashboard/main' && (pathname === '/dashboard' || pathname === '/dashboard/main'))
+            const isActive = pathname === item.path || (item.path === '/dashboard' && pathname === '/dashboard')
             return (
               <button
                 key={item.id}

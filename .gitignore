@@ -1,44 +1,26 @@
-# See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
+node_modules
+.next
+.turbo
 
-# dependencies
-/node_modules
-/.pwd
-/.next
-/out
+# Env files
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
 
-# production
-/build
-
-# misc
-.DS_Store
-*.pem
-
-# debug
+# Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
-# local env files
-.env*.local
-.env
+# Editor
+.vscode
+.idea
 
-# vercel
-.vercel
-
-# typescript
-*.tsbuildinfo
-next-env.d.ts
-
-# prisma
-/dev.db
-/dev.db-journal
-
-# business credentials (не комітити логіни/паролі!)
-business-credentials/*.md
-!business-credentials/README.md
-
-
-
-
+# OS
+.DS_Store
+Thumbs.db
 
 

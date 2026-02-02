@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSameDay, eachDayOfInterval, getDay, isToday, addMonths, subMonths } from 'date-fns'
 import { uk } from 'date-fns/locale'
+import { Sidebar } from '@/components/admin/Sidebar'
 import { cn } from '@/lib/utils'
 import { ChevronLeftIcon, ChevronRightIcon } from '@/components/icons'
 
@@ -140,34 +141,30 @@ export default function SchedulePage() {
 
   return (
     <div className="bg-background">
-      <div className="p-3">
+      <Sidebar />
+      <div className="ml-16 md:ml-40 p-3">
         <div className="max-w-7xl mx-auto">
-          <div className="spacing-item">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-              <div>
-                <h1 className="text-heading">Графік роботи</h1>
-                <p className="text-caption font-medium">Календар записів</p>
-              </div>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-                  className="btn-secondary"
-                >
-                  <ChevronLeftIcon className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => setCurrentMonth(new Date())}
+          <div className="flex items-center justify-between spacing-item">
+            <h1 className="text-heading">Графік роботи</h1>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
+                className="btn-secondary"
+              >
+                <ChevronLeftIcon className="w-4 h-4" />
+              </button>
+              <button
+                onClick={() => setCurrentMonth(new Date())}
                 className="btn-primary"
               >
                 Сьогодні
               </button>
-                <button
-                  onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-                  className="btn-secondary"
-                >
-                  <ChevronRightIcon className="w-4 h-4" />
-                </button>
-              </div>
+              <button
+                onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
+                className="btn-secondary"
+              >
+                <ChevronRightIcon className="w-4 h-4" />
+              </button>
             </div>
           </div>
 

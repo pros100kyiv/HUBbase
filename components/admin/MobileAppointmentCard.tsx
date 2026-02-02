@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
-import { ClockIcon, CheckIcon, XIcon, UserIcon, EditIcon, MoneyIcon, RepeatIcon } from '@/components/icons'
+import { ClockIcon, CheckIcon, XIcon, UserIcon } from '@/components/icons'
 
 interface Appointment {
   id: string
@@ -16,112 +15,36 @@ interface Appointment {
   endTime: string
   status: string
   services?: string
-  customPrice?: number | null
-  isRecurring?: boolean
-  recurrencePattern?: string | null
 }
 
 interface MobileAppointmentCardProps {
   appointment: Appointment
   onStatusChange?: (id: string, status: string) => void
-  onPriceChange?: (id: string, price: number | null) => void
-  onEdit?: (appointment: Appointment) => void
-  servicesCache?: any[]
 }
 
 export function MobileAppointmentCard({
   appointment,
   onStatusChange,
-  onPriceChange,
-  onEdit,
-  servicesCache = [],
 }: MobileAppointmentCardProps) {
-  const [isEditingPrice, setIsEditingPrice] = useState(false)
-  const [priceValue, setPriceValue] = useState(
-    appointment.customPrice ? (appointment.customPrice / 100).toFixed(2) : ''
-  )
-  const [isSavingPrice, setIsSavingPrice] = useState(false)
-
-  useEffect(() => {
-    setPriceValue(appointment.customPrice ? (appointment.customPrice / 100).toFixed(2) : '')
-  }, [appointment.customPrice])
-
   const startTime = new Date(appointment.startTime)
   const endTime = new Date(appointment.endTime)
-
-  // Розраховуємо стандартну ціну з послуг
-  const calculateStandardPrice = () => {
-    let total = 0
-    try {
-      if (appointment.services) {
-        const parsed = JSON.parse(appointment.services)
-        const serviceIds = Array.isArray(parsed) ? parsed : (parsed.serviceIds || [])
-        serviceIds.forEach((id: string) => {
-          const service = servicesCache.find((s: any) => s.id === id)
-          if (service) {
-            total += service.price
-          }
-        })
-      }
-    } catch (e) {
-      // Ignore
-    }
-    return total
-  }
-
-  const standardPrice = calculateStandardPrice()
-  // customPrice зберігається в копійках, тому ділимо на 100 для відображення в гривнях
-  // standardPrice також в копійках
-  const displayPrice = appointment.customPrice !== null && appointment.customPrice !== undefined 
-    ? appointment.customPrice / 100 
-    : standardPrice / 100
-
-  const handleSavePrice = async () => {
-    if (!onPriceChange) return
-
-    setIsSavingPrice(true)
-    try {
-      const priceInCents = priceValue ? Math.round(parseFloat(priceValue) * 100) : null
-      await onPriceChange(appointment.id, priceInCents)
-      setIsEditingPrice(false)
-      const { toast } = await import('@/components/ui/toast')
-      toast({ title: 'Збережено', type: 'success', duration: 1500 })
-    } catch (error) {
-      console.error('Error saving price:', error)
-      const { toast } = await import('@/components/ui/toast')
-      toast({ title: 'Помилка', description: 'Не вдалося зберегти', type: 'error', duration: 2000 })
-    } finally {
-      setIsSavingPrice(false)
-    }
-  }
-
-  const handleCancelPriceEdit = () => {
-    setPriceValue(appointment.customPrice ? (appointment.customPrice / 100).toFixed(2) : '')
-    setIsEditingPrice(false)
-  }
 
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Pending':
       case 'Очікує':
-        return 'text-candy-orange border-candy-orange bg-candy-orange/10 dark:bg-candy-orange/20'
+        return 'text-candy-orange border-candy-orange bg-candy-orange/10'
       case 'Confirmed':
       case 'Підтверджено':
-        return 'text-candy-mint border-candy-mint bg-candy-mint/10 dark:bg-candy-mint/20'
-      case 'Arrived':
-      case 'Прибув':
-      case 'InProgress':
-      case 'В роботі':
-        return 'text-yellow-600 dark:text-yellow-400 border-yellow-500 bg-yellow-50 dark:bg-yellow-900/30'
+        return 'text-candy-mint border-candy-mint bg-candy-mint/10'
       case 'Done':
       case 'Виконано':
-      case 'Закінчили':
-        return 'text-candy-blue border-candy-blue bg-candy-blue/10 dark:bg-candy-blue/20'
+        return 'text-candy-blue border-candy-blue bg-candy-blue/10'
       case 'Cancelled':
       case 'Скасовано':
-        return 'text-red-600 dark:text-red-400 border-red-500 bg-red-50 dark:bg-red-900/30'
+        return 'text-red-500 border-red-500 bg-red-50'
       default:
-        return 'text-gray-600 dark:text-gray-400 border-gray-400 bg-gray-50 dark:bg-gray-700'
+        return 'text-gray-500 border-gray-400 bg-gray-50'
     }
   }
 
@@ -131,11 +54,8 @@ export function MobileAppointmentCard({
         return 'Очікує'
       case 'Confirmed':
         return 'Підтверджено'
-      case 'Arrived':
-      case 'InProgress':
-        return 'В роботі'
       case 'Done':
-        return 'Завершено'
+        return 'Виконано'
       case 'Cancelled':
         return 'Скасовано'
       default:
@@ -144,32 +64,13 @@ export function MobileAppointmentCard({
   }
 
   let servicesList: string[] = []
-  let serviceNames: string[] = []
-  let customService: string | null = null
-  
   try {
     if (appointment.services) {
-      const parsed = JSON.parse(appointment.services)
-      if (Array.isArray(parsed)) {
-        // Старий формат - просто масив ID
-        servicesList = parsed
-      } else if (typeof parsed === 'object' && parsed.serviceIds) {
-        // Новий формат з кастомною послугою
-        servicesList = parsed.serviceIds || []
-        customService = parsed.customService || null
-      }
+      servicesList = JSON.parse(appointment.services)
     }
   } catch (e) {
     // Ignore
   }
-  
-  // Отримуємо назви послуг
-  serviceNames = servicesList
-    .map((id: string) => {
-      const service = servicesCache.find((s: any) => s.id === id)
-      return service ? service.name : null
-    })
-    .filter((name: string | null) => name !== null) as string[]
 
   const getStatusBorderColor = (status: string) => {
     switch (status) {
@@ -179,15 +80,8 @@ export function MobileAppointmentCard({
       case 'Confirmed':
       case 'Підтверджено':
         return 'border-l-4 border-candy-mint'
-      case 'Arrived':
-      case 'Прибув':
-        return 'border-l-4 border-blue-500'
-      case 'InProgress':
-      case 'В роботі':
-        return 'border-l-4 border-yellow-500'
       case 'Done':
       case 'Виконано':
-      case 'Закінчили':
         return 'border-l-4 border-candy-blue'
       case 'Cancelled':
       case 'Скасовано':
@@ -211,12 +105,12 @@ export function MobileAppointmentCard({
             </span>
           </div>
           <div className="flex-1 min-w-0 overflow-hidden">
-            <p className="font-black text-gray-900 dark:text-white text-sm mb-0.5 truncate">{appointment.clientName}</p>
-            <p className="text-xs text-gray-700 dark:text-gray-300 font-semibold mb-0.5 truncate">{appointment.clientPhone}</p>
+            <p className="font-black text-foreground dark:text-white text-sm mb-0.5 truncate">{appointment.clientName}</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-0.5 truncate">{appointment.clientPhone}</p>
             {appointment.masterName && (
               <div className="flex items-center gap-1 min-w-0">
                 <UserIcon className="w-3 h-3 text-gray-500 flex-shrink-0" />
-                <p className="text-[10px] text-gray-600 dark:text-gray-400 font-semibold truncate min-w-0">
+                <p className="text-[10px] text-gray-500 font-semibold truncate min-w-0">
                   {appointment.masterName}
                 </p>
               </div>
@@ -233,50 +127,32 @@ export function MobileAppointmentCard({
             {getStatusLabel(appointment.status)}
           </span>
           {onStatusChange && (
-            <div className="flex gap-1 flex-wrap justify-end">
-              {appointment.status === 'Pending' && (
+            <div className="flex gap-1">
+              {appointment.status !== 'Confirmed' && (
                 <button
                   onClick={() => onStatusChange(appointment.id, 'Confirmed')}
-                  className="px-2 py-1 rounded-candy-xs border border-candy-mint text-candy-mint hover:bg-candy-mint hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
+                  className="w-6 h-6 rounded-candy-xs border border-candy-mint text-candy-mint hover:bg-candy-mint hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0"
                   title="Підтвердити"
                 >
-                  Підтвердити
+                  <CheckIcon className="w-3 h-3" />
                 </button>
               )}
-              {appointment.status === 'Confirmed' && (
-                <button
-                  onClick={() => onStatusChange(appointment.id, 'InProgress')}
-                  className="px-2 py-1 rounded-candy-xs border border-yellow-500 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500 hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
-                  title="В роботі"
-                >
-                  В роботі
-                </button>
-              )}
-              {appointment.status === 'Arrived' && (
-                <button
-                  onClick={() => onStatusChange(appointment.id, 'InProgress')}
-                  className="px-2 py-1 rounded-candy-xs border border-yellow-500 text-yellow-600 dark:text-yellow-400 hover:bg-yellow-500 hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
-                  title="В роботі"
-                >
-                  В роботі
-                </button>
-              )}
-              {(appointment.status === 'InProgress' || appointment.status === 'Arrived') && (
+              {appointment.status !== 'Done' && appointment.status !== 'Cancelled' && (
                 <button
                   onClick={() => onStatusChange(appointment.id, 'Done')}
-                  className="px-2 py-1 rounded-candy-xs border border-candy-blue text-candy-blue hover:bg-candy-blue hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
-                  title="Завершити"
+                  className="w-6 h-6 rounded-candy-xs border border-candy-blue text-candy-blue hover:bg-candy-blue hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0"
+                  title="Виконано"
                 >
-                  Завершити
+                  <CheckIcon className="w-3 h-3" />
                 </button>
               )}
-              {appointment.status !== 'Cancelled' && appointment.status !== 'Done' && (
+              {appointment.status !== 'Cancelled' && (
                 <button
                   onClick={() => onStatusChange(appointment.id, 'Cancelled')}
-                  className="px-2 py-1 rounded-candy-xs border border-red-500 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white transition-all duration-200 flex items-center justify-center flex-shrink-0 text-[10px] font-bold whitespace-nowrap"
+                  className="w-6 h-6 rounded-candy-xs border border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center flex-shrink-0"
                   title="Скасувати"
                 >
-                  Скасувати
+                  <XIcon className="w-3 h-3" />
                 </button>
               )}
             </div>
@@ -285,146 +161,34 @@ export function MobileAppointmentCard({
       </div>
 
       {/* Services and Time */}
-      {(serviceNames.length > 0 || customService) && (
-        <div className="flex items-center justify-between gap-1.5 mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700">
-          <div className="flex items-center gap-1 flex-wrap flex-1 min-w-0">
-            <span className="text-[9px] text-gray-600 dark:text-gray-400 font-bold uppercase flex-shrink-0">Послуги:</span>
-            <div className="flex items-center gap-1 flex-wrap flex-1 min-w-0">
-              {serviceNames.length > 0 && (
-                <>
-                  {serviceNames.map((name, idx) => (
-                    <span
-                      key={idx}
-                      className="px-1.5 py-0.5 rounded-full bg-gray-100 dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-[9px] font-bold text-gray-900 dark:text-gray-100 truncate max-w-[120px]"
-                      title={name}
-                    >
-                      {name}
-                    </span>
-                  ))}
-                </>
-              )}
-              {customService && (
+      {(servicesList.length > 0 || true) && (
+        <div className="flex items-center justify-between gap-1.5 mt-1.5 pt-1.5 border-t border-gray-100">
+          {servicesList.length > 0 && (
+            <div className="flex items-center gap-1 flex-wrap">
+              <span className="text-[9px] text-gray-400 font-bold uppercase">Послуги:</span>
+              {servicesList.slice(0, 2).map((serviceId, idx) => (
                 <span
-                  className="px-1.5 py-0.5 rounded-full bg-blue-50 dark:bg-blue-900/30 border border-blue-300 dark:border-blue-600 text-[9px] font-bold text-blue-700 dark:text-blue-300 italic truncate max-w-[120px]"
-                  title={customService}
+                  key={idx}
+                  className="px-1.5 py-0.5 rounded-full bg-gray-50 border border-gray-200 text-[9px] font-bold text-foreground"
                 >
-                  {customService}
+                  {idx + 1}
                 </span>
+              ))}
+              {servicesList.length > 2 && (
+                <span className="text-[9px] text-gray-500 font-bold">+{servicesList.length - 2}</span>
               )}
             </div>
-          </div>
+          )}
           <div className="flex items-center gap-1 flex-shrink-0">
             <ClockIcon className="w-3 h-3 text-gray-400" />
-            <span className="text-[10px] font-bold text-gray-700 dark:text-gray-300">
+            <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400">
               {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
             </span>
-            <span className="text-[9px] text-gray-500 dark:text-gray-500">•</span>
-            <span className="text-[10px] text-gray-600 dark:text-gray-400 font-semibold">
+            <span className="text-[9px] text-gray-400">•</span>
+            <span className="text-[10px] text-gray-500 font-semibold">
               {Math.round((endTime.getTime() - startTime.getTime()) / 60000)} хв
             </span>
           </div>
-        </div>
-      )}
-
-      {/* Recurring Badge */}
-      {appointment.isRecurring && (
-        <div className="flex items-center gap-1 mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700">
-          <RepeatIcon className="w-3 h-3 text-candy-blue" />
-          <span className="text-[9px] font-bold text-candy-blue uppercase">
-            Циклічний візит
-          </span>
-          {appointment.recurrencePattern && (() => {
-            try {
-              const pattern = JSON.parse(appointment.recurrencePattern)
-              const typeLabels: Record<string, string> = {
-                daily: 'Щодня',
-                weekly: 'Щотижня',
-                monthly: 'Щомісяця',
-              }
-              return (
-                <span className="text-[9px] text-gray-600 dark:text-gray-400">
-                  • {typeLabels[pattern.type] || pattern.type}
-                </span>
-              )
-            } catch {
-              return null
-            }
-          })()}
-        </div>
-      )}
-
-      {/* Price Section */}
-      <div className="flex items-center justify-between gap-2 mt-1.5 pt-1.5 border-t border-gray-100 dark:border-gray-700">
-        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-          <MoneyIcon className="w-3.5 h-3.5 text-candy-blue flex-shrink-0" />
-          {isEditingPrice ? (
-            <div className="flex items-center gap-1 flex-1">
-              <input
-                type="number"
-                value={priceValue}
-                onChange={(e) => setPriceValue(e.target.value)}
-                placeholder="Ціна в грн"
-                min="0"
-                step="0.01"
-                className="flex-1 px-2 py-1 text-xs rounded-candy-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-800 text-foreground"
-                autoFocus
-              />
-              <button
-                onClick={handleSavePrice}
-                disabled={isSavingPrice}
-                className="p-1 rounded-candy-xs bg-candy-blue text-white hover:bg-candy-blue/80 transition-colors disabled:opacity-50"
-                title="Зберегти"
-              >
-                <CheckIcon className="w-3 h-3" />
-              </button>
-              <button
-                onClick={handleCancelPriceEdit}
-                disabled={isSavingPrice}
-                className="p-1 rounded-candy-xs bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-300 dark:hover:bg-gray-600 transition-colors disabled:opacity-50"
-                title="Скасувати"
-              >
-                <XIcon className="w-3 h-3" />
-              </button>
-            </div>
-          ) : (
-            <>
-              <span className="text-[10px] text-gray-600 dark:text-gray-400 font-bold uppercase flex-shrink-0">Ціна:</span>
-              <span className={cn(
-                "text-sm font-black",
-                appointment.customPrice ? "text-candy-blue" : "text-gray-900 dark:text-white"
-              )}>
-                {new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(displayPrice)}
-              </span>
-              {appointment.customPrice && (
-                <span className="text-[9px] text-gray-500 dark:text-gray-400 italic">
-                  (індивідуальна)
-                </span>
-              )}
-              {onPriceChange && (
-                <button
-                  onClick={() => setIsEditingPrice(true)}
-                  className="p-1 rounded-candy-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors ml-auto"
-                  title="Редагувати ціну"
-                >
-                  <EditIcon className="w-3 h-3 text-gray-500 dark:text-gray-400" />
-                </button>
-              )}
-            </>
-          )}
-        </div>
-      </div>
-
-      {/* Edit Button */}
-      {onEdit && (
-        <div className="flex justify-end mt-2 pt-2 border-t border-gray-100 dark:border-gray-700">
-          <button
-            onClick={() => onEdit(appointment)}
-            className="flex items-center gap-1.5 px-2 py-1 rounded-candy-xs text-xs font-bold text-candy-blue hover:bg-candy-blue/10 dark:hover:bg-candy-blue/20 transition-colors"
-            title="Редагувати візит"
-          >
-            <EditIcon className="w-3.5 h-3.5" />
-            Редагувати
-          </button>
         </div>
       )}
     </div>

@@ -6,7 +6,7 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSa
 import { uk } from 'date-fns/locale'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
 import { CreateAppointmentForm } from '@/components/admin/CreateAppointmentForm'
-import { EditAppointmentForm } from '@/components/admin/EditAppointmentForm'
+import { Sidebar } from '@/components/admin/Sidebar'
 import { cn } from '@/lib/utils'
 
 interface Appointment {
@@ -19,13 +19,10 @@ interface Appointment {
   }
   clientName: string
   clientPhone: string
-  clientEmail?: string | null
   startTime: string
   endTime: string
   status: string
   services?: string
-  customPrice?: number | null
-  notes?: string | null
 }
 
 export default function AppointmentsPage() {
@@ -42,7 +39,6 @@ export default function AppointmentsPage() {
   const [masters, setMasters] = useState<any[]>([])
   const [services, setServices] = useState<any[]>([])
   const [showCreateForm, setShowCreateForm] = useState(false)
-  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -89,19 +85,13 @@ export default function AppointmentsPage() {
   useEffect(() => {
     if (!business) return
 
-    // Load appointments for current month and extended range to include recurring appointments
+    // Load appointments for current month
     const start = startOfMonth(currentMonth)
     const end = endOfMonth(currentMonth)
     
-    // Extend range to 3 months before and after to catch all recurring appointments
-    const extendedStart = new Date(start)
-    extendedStart.setMonth(extendedStart.getMonth() - 3)
-    const extendedEnd = new Date(end)
-    extendedEnd.setMonth(extendedEnd.getMonth() + 3)
-    
     // Format dates properly for API
-    const startStr = format(extendedStart, 'yyyy-MM-dd')
-    const endStr = format(extendedEnd, 'yyyy-MM-dd')
+    const startStr = format(start, 'yyyy-MM-dd')
+    const endStr = format(end, 'yyyy-MM-dd')
     
     fetch(`/api/appointments?businessId=${business.id}&startDate=${startStr}&endDate=${endStr}`)
       .then((res) => {
@@ -114,7 +104,7 @@ export default function AppointmentsPage() {
         // Map appointments with master names
         const withMasters = (data || []).map((apt: Appointment) => {
           const master = masters.find((m) => m.id === apt.masterId)
-          return { ...apt, masterName: master?.name || apt.master?.name || 'Невідомий спеціаліст' }
+          return { ...apt, masterName: master?.name || apt.master?.name || 'Невідомий майстер' }
         })
         setAppointments(withMasters)
       })
@@ -124,30 +114,20 @@ export default function AppointmentsPage() {
       })
   }, [business, currentMonth, masters])
 
-  const handleAppointmentCreated = async () => {
+  const handleAppointmentCreated = () => {
     setShowCreateForm(false)
-    const { toast } = await import('@/components/ui/toast')
-    toast({ title: 'Візит створено', type: 'success', duration: 1500 })
-    
-    // Reload appointments with extended range
+    // Reload appointments
     const start = startOfMonth(currentMonth)
     const end = endOfMonth(currentMonth)
-    
-    // Extend range to 3 months before and after to catch all recurring appointments
-    const extendedStart = new Date(start)
-    extendedStart.setMonth(extendedStart.getMonth() - 3)
-    const extendedEnd = new Date(end)
-    extendedEnd.setMonth(extendedEnd.getMonth() + 3)
-    
-    const startStr = format(extendedStart, 'yyyy-MM-dd')
-    const endStr = format(extendedEnd, 'yyyy-MM-dd')
+    const startStr = format(start, 'yyyy-MM-dd')
+    const endStr = format(end, 'yyyy-MM-dd')
     
     fetch(`/api/appointments?businessId=${business.id}&startDate=${startStr}&endDate=${endStr}`)
       .then((res) => res.json())
       .then((data) => {
         const withMasters = (data || []).map((apt: Appointment) => {
           const master = masters.find((m) => m.id === apt.masterId)
-          return { ...apt, masterName: master?.name || apt.master?.name || 'Невідомий спеціаліст' }
+          return { ...apt, masterName: master?.name || apt.master?.name || 'Невідомий майстер' }
         })
         setAppointments(withMasters)
       })
@@ -168,71 +148,10 @@ export default function AppointmentsPage() {
         setAppointments((prev) =>
           prev.map((apt) => (apt.id === id ? { ...apt, status } : apt))
         )
-        const { toast } = await import('@/components/ui/toast')
-        toast({ title: 'Збережено', type: 'success', duration: 1500 })
       }
     } catch (error) {
       console.error('Error updating appointment:', error)
-      const { toast } = await import('@/components/ui/toast')
-      toast({ title: 'Помилка', description: 'Не вдалося зберегти', type: 'error', duration: 2000 })
     }
-  }
-
-  const handlePriceChange = async (id: string, price: number | null) => {
-    try {
-      const response = await fetch(`/api/appointments/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customPrice: price }),
-      })
-
-      if (response.ok) {
-        const updated = await response.json()
-        setAppointments((prev) =>
-          prev.map((apt) => (apt.id === id ? { ...apt, customPrice: updated.customPrice } : apt))
-        )
-        const { toast } = await import('@/components/ui/toast')
-        toast({ title: 'Збережено', type: 'success', duration: 1500 })
-      }
-    } catch (error) {
-      console.error('Error updating price:', error)
-      const { toast } = await import('@/components/ui/toast')
-      toast({ title: 'Помилка', description: 'Не вдалося зберегти', type: 'error', duration: 2000 })
-      throw error
-    }
-  }
-
-  const handleEdit = (appointment: Appointment) => {
-    setEditingAppointment(appointment)
-  }
-
-  const handleEditSuccess = () => {
-    setEditingAppointment(null)
-    // Reload appointments with extended range
-    const start = startOfMonth(currentMonth)
-    const end = endOfMonth(currentMonth)
-    
-    // Extend range to 3 months before and after to catch all recurring appointments
-    const extendedStart = new Date(start)
-    extendedStart.setMonth(extendedStart.getMonth() - 3)
-    const extendedEnd = new Date(end)
-    extendedEnd.setMonth(extendedEnd.getMonth() + 3)
-    
-    const startStr = format(extendedStart, 'yyyy-MM-dd')
-    const endStr = format(extendedEnd, 'yyyy-MM-dd')
-    
-    fetch(`/api/appointments?businessId=${business.id}&startDate=${startStr}&endDate=${endStr}`)
-      .then((res) => res.json())
-      .then((data) => {
-        const withMasters = (data || []).map((apt: Appointment) => {
-          const master = masters.find((m) => m.id === apt.masterId)
-          return { ...apt, masterName: master?.name || apt.master?.name || 'Невідомий спеціаліст' }
-        })
-        setAppointments(withMasters)
-      })
-      .catch((error) => {
-        console.error('Error reloading appointments:', error)
-      })
   }
 
   const filteredAppointments = appointments.filter((apt) => {
@@ -281,35 +200,31 @@ export default function AppointmentsPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="p-3">
+      <Sidebar />
+      <div className="ml-16 md:ml-40 p-3">
         <div className="max-w-7xl mx-auto">
-          <div className="spacing-item">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-              <div>
-                <h1 className="text-heading">Візити</h1>
-                <p className="text-caption font-medium">Управління візитами</p>
-              </div>
-              <button
-                onClick={() => {
-                  setShowCreateForm(true)
-                  if (!selectedDate) {
-                    setSelectedDate(new Date())
-                  }
-                }}
-                className="btn-primary whitespace-nowrap"
-              >
-                + Додати візит
-              </button>
-            </div>
+                 <div className="flex items-center justify-between spacing-item">
+                   <h1 className="text-heading">Записи</h1>
+            <button
+              onClick={() => {
+                setShowCreateForm(true)
+                if (!selectedDate) {
+                  setSelectedDate(new Date())
+                }
+              }}
+              className="btn-primary whitespace-nowrap"
+            >
+              + Додати запис
+            </button>
           </div>
 
           {/* Month Navigation */}
           <div className="card-candy p-3 spacing-section overflow-hidden">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-              <h2 className="text-subheading text-center sm:text-left">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-subheading">
                 {format(currentMonth, 'LLLL yyyy', { locale: uk })}
               </h2>
-              <div className="flex gap-1.5 justify-center sm:justify-end flex-wrap">
+              <div className="flex gap-2">
                 <button
                   onClick={() => {
                     const prev = new Date(currentMonth)
@@ -317,7 +232,7 @@ export default function AppointmentsPage() {
                     setCurrentMonth(prev)
                     setSelectedDate(null)
                   }}
-                  className="btn-secondary text-xs px-2 py-1.5 whitespace-nowrap"
+                  className="btn-secondary"
                 >
                   ← Попередній
                 </button>
@@ -328,7 +243,7 @@ export default function AppointmentsPage() {
                     setCurrentMonth(today)
                     setSelectedDate(today)
                   }}
-                  className="btn-primary text-xs px-2 py-1.5 whitespace-nowrap"
+                  className="btn-primary"
                 >
                   Сьогодні
                 </button>
@@ -339,7 +254,7 @@ export default function AppointmentsPage() {
                     setCurrentMonth(next)
                     setSelectedDate(null)
                   }}
-                  className="btn-secondary text-xs px-2 py-1.5 whitespace-nowrap"
+                  className="btn-secondary"
                 >
                   Наступний →
                 </button>
@@ -359,16 +274,16 @@ export default function AppointmentsPage() {
                       : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
                   )}
                 >
-                  {status === 'all' ? 'Всі' : status === 'Pending' ? 'Очікує' : status === 'Confirmed' ? 'Підтверджено' : status === 'Done' ? 'Завершено' : 'Скасовано'}
+                  {status === 'all' ? 'Всі' : status === 'Pending' ? 'Очікує' : status === 'Confirmed' ? 'Підтверджено' : status === 'Done' ? 'Виконано' : 'Скасовано'}
                 </button>
               ))}
             </div>
 
             {/* Month Calendar Grid */}
-            <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
+            <div className="grid grid-cols-7 gap-1">
               {/* Day headers */}
               {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
-                <div key={day} className="text-center text-[10px] sm:text-xs font-bold text-gray-500 dark:text-gray-400 py-1">
+                <div key={day} className="text-center text-xs font-bold text-gray-500 dark:text-gray-400 py-1">
                   {day}
                 </div>
               ))}
@@ -389,7 +304,7 @@ export default function AppointmentsPage() {
                       }
                     }}
                     className={cn(
-                      'relative p-1 sm:p-2 rounded-candy-xs border transition-all min-h-[40px] sm:min-h-[60px] flex flex-col items-center justify-start',
+                      'relative p-2 rounded-candy-xs border transition-all min-h-[60px] flex flex-col items-center justify-start',
                       !isCurrentMonth && 'opacity-30',
                       isSelected
                         ? 'border-candy-purple bg-candy-purple/10 dark:bg-candy-purple/20'
@@ -399,14 +314,14 @@ export default function AppointmentsPage() {
                     )}
                   >
                     <div className={cn(
-                      'text-[10px] sm:text-sm font-black mb-0.5 sm:mb-1',
+                      'text-sm font-black mb-1',
                       isToday ? 'text-candy-purple' : 'text-foreground'
                     )}>
                       {format(day, 'd')}
                     </div>
                     {dayAppointments.length > 0 && (
                       <div className="w-full mt-auto">
-                        <div className="text-[8px] sm:text-[10px] font-black text-candy-purple text-center bg-candy-purple/10 dark:bg-candy-purple/20 rounded-full py-0.5 px-1">
+                        <div className="text-[10px] font-black text-candy-purple text-center bg-candy-purple/10 dark:bg-candy-purple/20 rounded-full py-0.5">
                           {dayAppointments.length}
                         </div>
                       </div>
@@ -440,7 +355,7 @@ export default function AppointmentsPage() {
                 if (hours.length === 0) {
                   return (
                     <div className="text-center py-8">
-                      <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Немає візитів на цей день</p>
+                      <p className="text-gray-500 dark:text-gray-400 text-sm font-medium">Немає записів на цей день</p>
                     </div>
                   )
                 }
@@ -460,9 +375,6 @@ export default function AppointmentsPage() {
                                 key={appointment.id}
                                 appointment={appointment}
                                 onStatusChange={handleStatusChange}
-                                onPriceChange={handlePriceChange}
-                                onEdit={handleEdit}
-                                servicesCache={services}
                               />
                             ))}
                         </div>
@@ -477,7 +389,7 @@ export default function AppointmentsPage() {
           {!selectedDate && !showCreateForm && (
             <div className="card-candy p-6 text-center">
               <p className="text-caption font-medium">
-                Оберіть дату в календарі, щоб переглянути візити
+                Оберіть дату в календарі, щоб переглянути записи
               </p>
             </div>
           )}
@@ -492,20 +404,6 @@ export default function AppointmentsPage() {
                 selectedDate={selectedDate || undefined}
                 onSuccess={handleAppointmentCreated}
                 onCancel={() => setShowCreateForm(false)}
-              />
-            </div>
-          )}
-
-          {/* Edit Appointment Form */}
-          {editingAppointment && (
-            <div className="mb-4">
-              <EditAppointmentForm
-                appointment={editingAppointment}
-                businessId={business.id}
-                masters={masters}
-                services={services}
-                onSuccess={handleEditSuccess}
-                onCancel={() => setEditingAppointment(null)}
               />
             </div>
           )}

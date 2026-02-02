@@ -16,14 +16,12 @@ export interface Master {
   photo?: string
   bio?: string
   rating: number
-  isActive?: boolean
 }
 
 export interface BookingState {
   businessId: string | null
   step: number
   selectedServices: Service[]
-  customService: string // Кастомна послуга, якщо клієнт не вибрав зі списку
   selectedMaster: Master | null
   selectedDate: Date | null
   selectedTime: string | null
@@ -37,7 +35,6 @@ interface BookingContextType {
   setStep: (step: number) => void
   addService: (service: Service) => void
   removeService: (serviceId: string) => void
-  setCustomService: (service: string) => void
   setMaster: (master: Master | null) => void
   setDate: (date: Date | null) => void
   setTime: (time: string | null) => void
@@ -50,7 +47,6 @@ const initialState: BookingState = {
   businessId: null,
   step: 0,
   selectedServices: [],
-  customService: '',
   selectedMaster: null,
   selectedDate: null,
   selectedTime: null,
@@ -101,10 +97,6 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     setState(prev => ({ ...prev, clientPhone: phone }))
   }
 
-  const setCustomService = (service: string) => {
-    setState(prev => ({ ...prev, customService: service }))
-  }
-
   const setBusinessId = useCallback((id: string | null) => {
     setState(prev => {
       // Оновлюємо тільки якщо значення змінилося
@@ -125,7 +117,6 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         setStep,
         addService,
         removeService,
-        setCustomService,
         setMaster,
         setDate,
         setTime,

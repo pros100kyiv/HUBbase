@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { format, addDays, subDays, isToday, isSameDay } from 'date-fns'
-import { uk } from 'date-fns/locale'
+import { format } from 'date-fns'
+import { Sidebar } from '@/components/admin/Sidebar'
 import { MobileWidget } from '@/components/admin/MobileWidget'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
-import { CalendarIcon, UsersIcon, CheckIcon, MoneyIcon, StarIcon } from '@/components/icons'
+import { CalendarIcon, UsersIcon, CheckIcon, MoneyIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { Skeleton, SkeletonWidget, SkeletonCard } from '@/components/ui/skeleton'
 import { Search } from '@/components/ui/search'
@@ -31,10 +31,6 @@ export default function MainPage() {
   const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [hideRevenue, setHideRevenue] = useState(false)
-  const [servicesCache, setServicesCache] = useState<any[]>([])
-  const [selectedAppointment, setSelectedAppointment] = useState<string | null>(null)
-  const [selectedDate, setSelectedDate] = useState<Date>(new Date())
-  const [searchQuery, setSearchQuery] = useState('')
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -58,43 +54,31 @@ export default function MainPage() {
     fetch(`/api/statistics?businessId=${business.id}&period=day`)
       .then((res) => res.json())
       .then((data) => setStats(data))
-  }, [business])
 
-  useEffect(() => {
-    if (!business) return
-
-    // Load appointments for selected date
-    const dateStr = format(selectedDate, 'yyyy-MM-dd')
+    // Load today's appointments
+    const today = format(new Date(), 'yyyy-MM-dd')
     
-    // Load masters, services and appointments in parallel
+    // Load masters and appointments in parallel
     Promise.all([
       fetch(`/api/masters?businessId=${business.id}`)
         .then((res) => {
           if (!res.ok) throw new Error('Failed to fetch masters')
           return res.json()
         }),
-      fetch(`/api/services?businessId=${business.id}`)
-        .then((res) => {
-          if (!res.ok) throw new Error('Failed to fetch services')
-          return res.json()
-        }),
-      fetch(`/api/appointments?date=${dateStr}&businessId=${business.id}`)
+      fetch(`/api/appointments?date=${today}&businessId=${business.id}`)
         .then((res) => {
           if (!res.ok) throw new Error('Failed to fetch appointments')
           return res.json()
         })
     ])
-      .then(([masters, services, data]) => {
-        // Ensure arrays
+      .then(([masters, data]) => {
+        // Ensure masters is an array
         const mastersArray = Array.isArray(masters) ? masters : []
-        const servicesArray = Array.isArray(services) ? services : []
         const appointmentsArray = Array.isArray(data) ? data : []
-        
-        setServicesCache(servicesArray)
         
         const withMasters = appointmentsArray.map((apt: Appointment) => {
           const master = mastersArray.find((m: any) => m.id === apt.masterId)
-          return { ...apt, masterName: master?.name || 'Невідомий спеціаліст' }
+          return { ...apt, masterName: master?.name || apt.master?.name || 'Невідомий майстер' }
         })
         setTodayAppointments(withMasters)
         setLoading(false)
@@ -104,12 +88,13 @@ export default function MainPage() {
         setTodayAppointments([])
         setLoading(false)
       })
-  }, [business, selectedDate])
+  }, [business])
 
   if (!business || loading) {
     return (
       <div className="bg-background dark:bg-gray-900">
-        <div className="p-3">
+        <Sidebar />
+        <div className="ml-16 md:ml-40 p-3">
           <div className="max-w-7xl mx-auto">
             <div className="spacing-item">
               <Skeleton className="h-8 w-48 mb-2" />
@@ -137,13 +122,13 @@ export default function MainPage() {
       style: 'currency',
       currency: 'UAH',
       minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount / 100)
+    }).format(amount)
   }
 
   return (
     <div className="bg-background dark:bg-gray-900">
-      <div className="p-3">
+      <Sidebar />
+      <div className="ml-16 md:ml-40 p-3">
         <div className="max-w-7xl mx-auto">
           <div className="spacing-item">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
@@ -153,8 +138,11 @@ export default function MainPage() {
               </div>
               <div className="w-full md:w-64">
                 <Search 
-                  placeholder="Пошук візитів..." 
-                  onSearch={setSearchQuery}
+                  placeholder="Пошук записів..." 
+                  onSearch={(query) => {
+                    // Фільтрація записів по запиту
+                    console.log('Search:', query)
+                  }}
                 />
               </div>
             </div>
@@ -170,14 +158,13 @@ export default function MainPage() {
               title="Сьогодні"
               value={stats?.totalAppointments || 0}
               iconColor="orange"
-              onClick={() => router.push('/dashboard/appointments')}
             />
             <MobileWidget
-              icon={<StarIcon />}
-              title="Прайс-лист"
-              value={servicesCache.length || 0}
+              icon={<CheckIcon />}
+              title="Підтверджено"
+              value={stats?.confirmedAppointments || 0}
+              trend="up"
               iconColor="green"
-              onClick={() => router.push('/dashboard/pricelist')}
             />
             {!hideRevenue && (
               <MobileWidget
@@ -185,15 +172,13 @@ export default function MainPage() {
                 title="Дохід"
                 value={formatCurrency(stats?.totalRevenue || 0)}
                 iconColor="blue"
-                onClick={() => router.push('/dashboard/analytics')}
               />
             )}
             <MobileWidget
               icon={<UsersIcon />}
               title="Клієнти"
               value={stats?.uniqueClients || 0}
-              iconColor="blue"
-              onClick={() => router.push('/dashboard/clients')}
+              iconColor="purple"
             />
           </div>
 
@@ -231,112 +216,111 @@ export default function MainPage() {
 
           {/* Today's Appointments */}
           <div className="card-candy p-3 mb-3 overflow-hidden">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
-              <h2 className="text-subheading truncate text-center sm:text-left flex-1 min-w-0">
-                {isToday(selectedDate) 
-                  ? `Візити на сьогодні (${format(selectedDate, 'd MMMM yyyy', { locale: uk })})`
-                  : `Візити на ${format(selectedDate, 'd MMMM yyyy', { locale: uk })}`
-                }
-              </h2>
-              <div className="flex items-center gap-1.5 justify-center sm:justify-end">
-                <button
-                  onClick={() => setSelectedDate(subDays(selectedDate, 1))}
-                  className="px-2 py-1 rounded-candy-xs bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-xs font-bold flex-shrink-0"
-                  title="Попередній день"
-                >
-                  ←
-                </button>
-                <button
-                  onClick={() => setSelectedDate(new Date())}
-                  className={cn(
-                    "px-2 py-1 rounded-candy-xs border text-xs font-bold transition-all whitespace-nowrap flex-shrink-0",
-                    isToday(selectedDate)
-                      ? "bg-blue-500 text-white border-blue-500"
-                      : "bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
-                  )}
-                  title="Сьогодні"
-                >
-                  Сьогодні
-                </button>
-                <button
-                  onClick={() => setSelectedDate(addDays(selectedDate, 1))}
-                  className="px-2 py-1 rounded-candy-xs bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 text-gray-700 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-700 transition-all text-xs font-bold flex-shrink-0"
-                  title="Наступний день"
-                >
-                  →
-                </button>
-              </div>
-            </div>
+            <h2 className="text-subheading mb-3 truncate">
+              Записи на сьогодні ({format(new Date(), 'd MMMM yyyy')})
+            </h2>
             <div className="space-y-2">
-              {(() => {
-                const filtered = todayAppointments.filter((apt) => {
-                  if (!searchQuery) return true
-                  const query = searchQuery.toLowerCase()
+              {todayAppointments
+                .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                .slice(0, 5)
+                .map((appointment) => {
+                  const startTime = new Date(appointment.startTime)
+                  const endTime = new Date(appointment.endTime)
+                  let servicesList: string[] = []
+                  try {
+                    if (appointment.services) {
+                      servicesList = JSON.parse(appointment.services)
+                    }
+                  } catch (e) {
+                    // Ignore
+                  }
+
+                  const getStatusColor = (status: string) => {
+                    switch (status) {
+                      case 'Pending':
+                      case 'Очікує':
+                        return 'bg-candy-orange/10 text-candy-orange border-candy-orange'
+                      case 'Confirmed':
+                      case 'Підтверджено':
+                        return 'bg-candy-mint/10 text-candy-mint border-candy-mint'
+                      case 'Done':
+                      case 'Виконано':
+                        return 'bg-candy-blue/10 text-candy-blue border-candy-blue'
+                      case 'Cancelled':
+                      case 'Скасовано':
+                        return 'bg-red-50 text-red-500 border-red-500'
+                      default:
+                        return 'bg-gray-50 text-gray-500 border-gray-400'
+                    }
+                  }
+
+                  const getStatusLabel = (status: string) => {
+                    switch (status) {
+                      case 'Pending':
+                        return 'Очікує'
+                      case 'Confirmed':
+                        return 'Підтверджено'
+                      case 'Done':
+                        return 'Виконано'
+                      case 'Cancelled':
+                        return 'Скасовано'
+                      default:
+                        return status
+                    }
+                  }
+
                   return (
-                    apt.clientName.toLowerCase().includes(query) ||
-                    apt.clientPhone.includes(query) ||
-                    apt.masterName?.toLowerCase().includes(query)
+                    <div
+                      key={appointment.id}
+                      className="card-candy card-candy-hover p-2.5 flex items-center justify-between gap-2.5"
+                    >
+                      <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                        <div className="flex flex-col items-center justify-center w-14 h-14 rounded-candy-sm bg-candy-blue/10 dark:bg-candy-blue/20 text-candy-blue flex-shrink-0 border border-candy-blue/20">
+                          <span className="text-sm font-black leading-tight">
+                            {format(startTime, 'HH:mm')}
+                          </span>
+                          <span className="text-[10px] font-bold leading-tight text-gray-500 dark:text-gray-400">
+                            {format(endTime, 'HH:mm')}
+                          </span>
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <p className="text-sm font-black text-foreground dark:text-white truncate">{appointment.clientName}</p>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex-shrink-0 whitespace-nowrap ${getStatusColor(appointment.status)}`}>
+                              {getStatusLabel(appointment.status)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {appointment.masterName && (
+                              <span className="text-xs text-gray-600 dark:text-gray-400 font-medium truncate">
+                                Майстер: {appointment.masterName}
+                              </span>
+                            )}
+                            {servicesList.length > 0 && (
+                              <span className="text-xs text-gray-500 dark:text-gray-500">
+                                • {servicesList.length} {servicesList.length === 1 ? 'послуга' : 'послуг'}
+                              </span>
+                            )}
+                            <span className="text-xs text-gray-500 dark:text-gray-500">
+                              • {Math.round((endTime.getTime() - startTime.getTime()) / 60000)} хв
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   )
-                })
-                const sorted = filtered.sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-                const displayed = sorted.slice(0, 5)
-                
-                return (
-                  <>
-                    {displayed.map((appointment) => (
-                      <MobileAppointmentCard
-                        key={appointment.id}
-                        appointment={appointment}
-                        servicesCache={servicesCache}
-                        onStatusChange={async (id, newStatus) => {
-                          const { toast } = await import('@/components/ui/toast')
-                          toast({ title: 'Збережено', type: 'success', duration: 1500 })
-                          try {
-                            const response = await fetch(`/api/appointments/${id}`, {
-                              method: 'PATCH',
-                              headers: { 'Content-Type': 'application/json' },
-                              body: JSON.stringify({ status: newStatus }),
-                            })
-                            if (response.ok) {
-                              setTodayAppointments(prev =>
-                                prev.map(apt => apt.id === id ? { ...apt, status: newStatus } : apt)
-                              )
-                              // Оновити статистику
-                              if (business?.id) {
-                                const statsResponse = await fetch(`/api/statistics?businessId=${business.id}&period=day`)
-                                if (statsResponse.ok) {
-                                  const statsData = await statsResponse.json()
-                                  setStats(statsData)
-                                }
-                              }
-                            }
-                          } catch (error) {
-                            console.error('Error updating appointment status:', error)
-                          }
-                        }}
-                      />
-                    ))}
-                    {filtered.length === 0 && (
-                      <p className="text-gray-500 dark:text-gray-400 text-center py-8 font-medium text-sm">
-                        {searchQuery 
-                          ? 'Візитів не знайдено'
-                          : isToday(selectedDate) 
-                            ? 'Немає візитів на сьогодні'
-                            : `Немає візитів на ${format(selectedDate, 'd MMMM yyyy', { locale: uk })}`
-                        }
-                      </p>
-                    )}
-                    {filtered.length > 5 && (
-                      <button
-                        onClick={() => router.push('/dashboard/appointments')}
-                        className="btn-secondary w-full"
-                      >
-                        Показати всі візити ({filtered.length})
-                      </button>
-                    )}
-                  </>
-                )
-              })()}
+                })}
+              {todayAppointments.length === 0 && (
+                <p className="text-gray-500 dark:text-gray-400 text-center py-8 font-medium text-sm">Немає записів на сьогодні</p>
+              )}
+              {todayAppointments.length > 5 && (
+                <button
+                  onClick={() => router.push('/dashboard/appointments')}
+                  className="btn-secondary w-full"
+                >
+                  Показати всі записи ({todayAppointments.length})
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -20,7 +20,6 @@ export function MastersList({ businessId }: MastersListProps) {
   const router = useRouter()
   const [masters, setMasters] = useState<Master[]>([])
   const [loading, setLoading] = useState(true)
-  const [masterStats, setMasterStats] = useState<Record<string, any>>({})
 
   useEffect(() => {
     fetch(`/api/masters?businessId=${businessId}`)
@@ -31,6 +30,30 @@ export function MastersList({ businessId }: MastersListProps) {
       })
       .catch(() => setLoading(false))
   }, [businessId])
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-3xl shadow-lg p-6">
+        <p className="text-gray-500 text-center">Завантаження...</p>
+      </div>
+    )
+  }
+
+  if (masters.length === 0) {
+    return (
+      <div className="bg-white rounded-3xl shadow-lg p-6 text-center">
+        <p className="text-gray-500 mb-4">Немає майстрів</p>
+        <button
+          onClick={() => router.push('/dashboard/settings')}
+          className="px-4 py-2 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-all active:scale-95"
+        >
+          Додати майстра
+        </button>
+      </div>
+    )
+  }
+
+  const [masterStats, setMasterStats] = useState<Record<string, any>>({})
 
   useEffect(() => {
     masters.forEach((master) => {

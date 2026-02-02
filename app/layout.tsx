@@ -1,8 +1,7 @@
-import type { Metadata, Viewport } from 'next'
+import type { Metadata } from 'next'
 import './globals.css'
 import { BookingProvider } from '@/contexts/BookingContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
-import { SidebarProvider } from '@/contexts/SidebarContext'
 import { Navbar } from '@/components/layout/Navbar'
 import { ToastContainer } from '@/components/ui/toast'
 import { KeyboardShortcutsHelper } from '@/components/ui/keyboard-shortcuts'
@@ -11,9 +10,6 @@ export const metadata: Metadata = {
   title: 'Система Бронювання - SaaS Платформа',
   description: 'Професійна система бронювання записів',
   manifest: '/manifest.json',
-}
-
-export const viewport: Viewport = {
   themeColor: '#050505',
 }
 
@@ -46,13 +42,11 @@ export default function RootLayout({
       </head>
       <body suppressHydrationWarning>
         <ThemeProvider>
-          <SidebarProvider>
-            <BookingProvider>
-              <KeyboardShortcutsHelper />
-              <ToastContainer />
-              {children}
-            </BookingProvider>
-          </SidebarProvider>
+          <BookingProvider>
+            <KeyboardShortcutsHelper />
+            <ToastContainer />
+            {children}
+          </BookingProvider>
         </ThemeProvider>
       </body>
     </html>

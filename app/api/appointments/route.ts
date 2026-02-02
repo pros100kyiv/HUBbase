@@ -1,7 +1,5 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { addDays, addWeeks, addMonths, getDay, startOfDay, isBefore, isAfter } from 'date-fns'
-import { upsertClient } from '@/lib/client-utils'
 
 function checkConflict(
   businessId: string,
@@ -30,59 +28,10 @@ function checkConflict(
     .then((conflict) => !!conflict)
 }
 
-function generateRecurringDates(
-  startDate: Date,
-  endDate: Date,
-  recurrenceType: 'daily' | 'weekly' | 'monthly',
-  daysOfWeek?: number[]
-): Date[] {
-  const dates: Date[] = []
-  let currentDate = new Date(startDate)
-
-  while (isBefore(currentDate, endDate) || currentDate.getTime() === startDate.getTime()) {
-    if (recurrenceType === 'daily') {
-      dates.push(new Date(currentDate))
-      currentDate = addDays(currentDate, 1)
-    } else if (recurrenceType === 'weekly') {
-      const dayOfWeek = getDay(currentDate) // 0 = Sunday, 1 = Monday, ..., 6 = Saturday
-      if (daysOfWeek && daysOfWeek.includes(dayOfWeek)) {
-        dates.push(new Date(currentDate))
-      }
-      currentDate = addDays(currentDate, 1)
-      // Якщо пройшли всі дні тижня, переходимо на наступний тиждень
-      if (getDay(currentDate) === 1) {
-        // Понеділок - початок нового тижня
-      }
-    } else if (recurrenceType === 'monthly') {
-      dates.push(new Date(currentDate))
-      currentDate = addMonths(currentDate, 1)
-    }
-
-    if (isAfter(currentDate, endDate)) break
-  }
-
-  return dates
-}
-
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { 
-      businessId, 
-      masterId, 
-      clientName, 
-      clientPhone, 
-      clientEmail, 
-      startTime, 
-      endTime, 
-      services, 
-      customPrice, 
-      notes,
-      isRecurring,
-      recurrencePattern,
-      recurrenceEndDate,
-      isFromBooking // Чи створено через публічне бронювання
-    } = body
+    const { businessId, masterId, clientName, clientPhone, clientEmail, startTime, endTime, services, notes } = body
 
     if (!businessId || !masterId || !clientName || !clientPhone || !startTime || !endTime || !services) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -90,100 +39,13 @@ export async function POST(request: Request) {
 
     const start = new Date(startTime)
     const end = new Date(endTime)
-    const duration = end.getTime() - start.getTime()
 
     // Validate dates
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
       return NextResponse.json({ error: 'Invalid date format' }, { status: 400 })
     }
 
-    // Handle recurring appointments
-    if (isRecurring && recurrencePattern && recurrenceEndDate) {
-      const pattern = JSON.parse(recurrencePattern)
-      const endDate = new Date(recurrenceEndDate)
-      
-      // Generate all dates for recurring appointments
-      const dates = generateRecurringDates(
-        start,
-        endDate,
-        pattern.type,
-        pattern.daysOfWeek
-      )
-
-      if (dates.length === 0) {
-        return NextResponse.json({ error: 'No valid dates found for recurrence pattern' }, { status: 400 })
-      }
-
-      // Check for conflicts for all dates
-      for (const date of dates) {
-        const appointmentStart = new Date(date)
-        appointmentStart.setHours(start.getHours(), start.getMinutes(), start.getSeconds(), start.getMilliseconds())
-        const appointmentEnd = new Date(appointmentStart.getTime() + duration)
-
-        const hasConflict = await checkConflict(businessId, masterId, appointmentStart, appointmentEnd)
-        if (hasConflict) {
-          return NextResponse.json(
-            { error: `Time slot on ${date.toLocaleDateString()} is already booked` },
-            { status: 409 }
-          )
-        }
-      }
-
-      // Create all recurring appointments
-      const createdAppointments = []
-      let parentAppointmentId: string | null = null
-
-      for (let i = 0; i < dates.length; i++) {
-        const appointmentStart = new Date(dates[i])
-        appointmentStart.setHours(start.getHours(), start.getMinutes(), start.getSeconds(), start.getMilliseconds())
-        const appointmentEnd = new Date(appointmentStart.getTime() + duration)
-
-        const appointmentData: any = {
-          businessId,
-          masterId,
-          clientName: clientName.trim(),
-          clientPhone: clientPhone.trim(),
-          clientEmail: clientEmail?.trim() || null,
-          startTime: appointmentStart,
-          endTime: appointmentEnd,
-          services: JSON.stringify(services),
-          // customPrice приходить в копійках (якщо число) або як рядок
-          // Якщо це число, використовуємо його безпосередньо
-          // Якщо рядок, парсимо його
-          customPrice: customPrice !== null && customPrice !== undefined && customPrice !== ''
-            ? (typeof customPrice === 'number' ? customPrice : parseInt(String(customPrice)))
-            : null,
-          notes: notes?.trim() || null,
-          status: 'Pending',
-          isRecurring: true,
-          recurrencePattern: recurrencePattern,
-          recurrenceEndDate: endDate,
-          isFromBooking: isFromBooking === true, // Тільки якщо явно вказано true
-        }
-
-        if (parentAppointmentId) {
-          appointmentData.parentAppointmentId = parentAppointmentId
-        }
-
-        const appointment: any = await prisma.appointment.create({
-          data: appointmentData as any,
-        })
-
-        if (i === 0) {
-          parentAppointmentId = appointment.id
-        }
-
-        createdAppointments.push(appointment)
-      }
-
-      return NextResponse.json({ 
-        appointments: createdAppointments,
-        count: createdAppointments.length,
-        message: `Created ${createdAppointments.length} recurring appointments`
-      }, { status: 201 })
-    }
-
-    // Single appointment (non-recurring)
+    // Check for conflicts
     const hasConflict = await checkConflict(businessId, masterId, start, end)
     if (hasConflict) {
       return NextResponse.json(
@@ -192,37 +54,19 @@ export async function POST(request: Request) {
       )
     }
 
-    // Створюємо або оновлюємо клієнта
-    const client = await upsertClient(businessId, {
-      name: clientName,
-      phone: clientPhone,
-      email: clientEmail,
-    })
-
-    const appointmentData: any = {
-      businessId,
-      masterId,
-      clientId: client?.id || null,
-      clientName: clientName.trim(),
-      clientPhone: clientPhone.trim(),
-      clientEmail: clientEmail?.trim() || null,
-      startTime: start,
-      endTime: end,
-      services: JSON.stringify(services),
-      // customPrice приходить в копійках (якщо число) або як рядок
-      // Якщо це число, використовуємо його безпосередньо
-      // Якщо рядок, парсимо його
-      customPrice: customPrice !== null && customPrice !== undefined && customPrice !== ''
-        ? (typeof customPrice === 'number' ? customPrice : parseInt(String(customPrice)))
-        : null,
-      notes: notes?.trim() || null,
-      status: 'Pending',
-      isRecurring: false,
-      isFromBooking: isFromBooking === true, // Тільки якщо явно вказано true
-    }
-
     const appointment = await prisma.appointment.create({
-      data: appointmentData,
+      data: {
+        businessId,
+        masterId,
+        clientName: clientName.trim(),
+        clientPhone: clientPhone.trim(),
+        clientEmail: clientEmail?.trim() || null,
+        startTime: start,
+        endTime: end,
+        services: JSON.stringify(services),
+        notes: notes?.trim() || null,
+        status: 'Pending',
+      },
     })
 
     return NextResponse.json(appointment, { status: 201 })

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { Sidebar } from '@/components/admin/Sidebar'
 import { MasterProfileCard } from '@/components/admin/MasterProfileCard'
 
 interface Master {
@@ -98,21 +99,17 @@ export default function MastersPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <div className="p-3">
+      <Sidebar />
+      <div className="ml-16 md:ml-40 p-3">
         <div className="max-w-7xl mx-auto">
-          <div className="spacing-item">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-              <div>
-                <h1 className="text-heading">Спеціалісти</h1>
-                <p className="text-caption font-medium">Управління спеціалістами</p>
-              </div>
-              <button
-                onClick={() => router.push('/dashboard/settings?tab=masters')}
-                className="btn-primary"
-              >
-                + Додати спеціаліста
-              </button>
-            </div>
+          <div className="flex items-center justify-between spacing-item">
+            <h1 className="text-heading">Майстри</h1>
+            <button
+              onClick={() => router.push('/dashboard/settings?tab=masters')}
+              className="btn-primary"
+            >
+              + Додати майстра
+            </button>
           </div>
 
           <div className="space-y-1">
@@ -153,12 +150,12 @@ export default function MastersPage() {
 
             {(!Array.isArray(masters) || masters.length === 0) && (
               <div className="card-candy rounded-candy shadow-soft p-6 text-center">
-                <p className="text-gray-500 text-sm mb-3">Немає спеціалістів</p>
+                <p className="text-gray-500 text-sm mb-3">Немає майстрів</p>
                 <button
                   onClick={() => router.push('/dashboard/settings?tab=masters')}
                   className="px-3 py-1.5 text-xs font-bold candy-purple text-white rounded-candy shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-97"
                 >
-                  Додати першого спеціаліста
+                  Додати першого майстра
                 </button>
               </div>
             )}
