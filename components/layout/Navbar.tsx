@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { useEffect, useState } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { SunIcon, MoonIcon, MenuIcon } from '@/components/icons'
+import { useMobileMenu } from '@/app/dashboard/layout'
 
 // Оновлюємо бізнес при зміні localStorage
 if (typeof window !== 'undefined') {
@@ -58,7 +59,15 @@ export function Navbar() {
     return null
   }
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  let mobileMenuContext: { isOpen: boolean; setIsOpen: (open: boolean) => void } | null = null
+  try {
+    mobileMenuContext = useMobileMenu()
+  } catch (e) {
+    // Context not available, use local state
+  }
+  const [localMobileMenuOpen, setLocalMobileMenuOpen] = useState(false)
+  const mobileMenuOpen = mobileMenuContext?.isOpen ?? localMobileMenuOpen
+  const setMobileMenuOpen = mobileMenuContext?.setIsOpen ?? setLocalMobileMenuOpen
 
   // Don't show on dashboard pages (they have sidebar)
   if (pathname?.startsWith('/dashboard')) {
@@ -71,7 +80,8 @@ export function Navbar() {
               <div className="flex items-center gap-2 flex-shrink-0">
                 <button
                   onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-                  className="md:hidden p-2 rounded-candy-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+                  className="md:hidden p-2 rounded-candy-sm hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors active:scale-95"
+                  aria-label="Відкрити меню"
                 >
                   <MenuIcon className="w-6 h-6 text-gray-700 dark:text-gray-300" />
                 </button>
