@@ -19,6 +19,7 @@
     "business:credentials": "tsx scripts/create-credentials-file.ts",
     "telegram:monitor": "tsx scripts/telegram-monitor.ts",
     "telegram:setup": "tsx scripts/setup-telegram-bot.ts",
+    "telegram:setup-token": "tsx scripts/setup-telegram-bot-token.ts",
     "telegram:oauth": "tsx scripts/setup-telegram-oauth.ts",
     "telegram:webhook": "tsx scripts/setup-webhook.ts",
     "telegram:update-tokens": "tsx scripts/update-telegram-token.ts"
