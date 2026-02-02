@@ -6,7 +6,6 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, isSa
 import { uk } from 'date-fns/locale'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
 import { CreateAppointmentForm } from '@/components/admin/CreateAppointmentForm'
-import { Sidebar } from '@/components/admin/Sidebar'
 import { cn } from '@/lib/utils'
 
 interface Appointment {
@@ -199,91 +198,90 @@ export default function AppointmentsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar />
-      <div className="ml-16 md:ml-40 p-3">
-        <div className="max-w-7xl mx-auto">
-                 <div className="flex items-center justify-between spacing-item">
-                   <h1 className="text-heading">Записи</h1>
-            <button
-              onClick={() => {
-                setShowCreateForm(true)
-                if (!selectedDate) {
-                  setSelectedDate(new Date())
-                }
-              }}
-              className="btn-primary whitespace-nowrap"
-            >
-              + Додати запис
-            </button>
+    <div className="min-h-screen bg-background overflow-x-hidden">
+      <div className="max-w-7xl mx-auto px-4 md:px-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 md:mb-2">
+          <h1 className="text-xl md:text-lg font-black text-gray-900 dark:text-white">Записи</h1>
+          <button
+            onClick={() => {
+              setShowCreateForm(true)
+              if (!selectedDate) {
+                setSelectedDate(new Date())
+              }
+            }}
+            className="w-full sm:w-auto px-4 py-3 md:px-3 md:py-1.5 text-sm md:text-xs font-bold rounded-candy-sm bg-gradient-to-r from-candy-blue to-candy-purple text-white hover:shadow-soft-2xl transition-all active:scale-[0.98] whitespace-nowrap"
+          >
+            + Додати запис
+          </button>
+        </div>
+
+        {/* Month Navigation */}
+        <div className="card-candy p-4 md:p-3 mb-4 md:mb-3 overflow-hidden">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 md:mb-3">
+            <h2 className="text-lg md:text-base font-black text-gray-900 dark:text-white">
+              {format(currentMonth, 'LLLL yyyy', { locale: uk })}
+            </h2>
+            <div className="flex gap-2 w-full sm:w-auto">
+              <button
+                onClick={() => {
+                  const prev = new Date(currentMonth)
+                  prev.setMonth(prev.getMonth() - 1)
+                  setCurrentMonth(prev)
+                  setSelectedDate(null)
+                }}
+                className="flex-1 sm:flex-none px-3 py-2 md:px-2 md:py-1 text-sm md:text-xs font-bold rounded-candy-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-[0.98]"
+              >
+                Попередній
+              </button>
+              <button
+                onClick={() => {
+                  const today = new Date()
+                  today.setHours(0, 0, 0, 0)
+                  setCurrentMonth(today)
+                  setSelectedDate(today)
+                }}
+                className="flex-1 sm:flex-none px-3 py-2 md:px-2 md:py-1 text-sm md:text-xs font-bold rounded-candy-sm bg-gradient-to-r from-candy-blue to-candy-purple text-white hover:shadow-soft-2xl transition-all active:scale-[0.98]"
+              >
+                Сьогодні
+              </button>
+              <button
+                onClick={() => {
+                  const next = new Date(currentMonth)
+                  next.setMonth(next.getMonth() + 1)
+                  setCurrentMonth(next)
+                  setSelectedDate(null)
+                }}
+                className="flex-1 sm:flex-none px-3 py-2 md:px-2 md:py-1 text-sm md:text-xs font-bold rounded-candy-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-[0.98]"
+              >
+                Наступний
+              </button>
+            </div>
           </div>
 
-          {/* Month Navigation */}
-          <div className="card-candy p-3 spacing-section overflow-hidden">
-            <div className="flex items-center justify-between mb-3">
-              <h2 className="text-subheading">
-                {format(currentMonth, 'LLLL yyyy', { locale: uk })}
-              </h2>
-              <div className="flex gap-2">
-                <button
-                  onClick={() => {
-                    const prev = new Date(currentMonth)
-                    prev.setMonth(prev.getMonth() - 1)
-                    setCurrentMonth(prev)
-                    setSelectedDate(null)
-                  }}
-                  className="btn-secondary"
-                >
-                  ← Попередній
-                </button>
-                <button
-                  onClick={() => {
-                    const today = new Date()
-                    today.setHours(0, 0, 0, 0)
-                    setCurrentMonth(today)
-                    setSelectedDate(today)
-                  }}
-                  className="btn-primary"
-                >
-                  Сьогодні
-                </button>
-                <button
-                  onClick={() => {
-                    const next = new Date(currentMonth)
-                    next.setMonth(next.getMonth() + 1)
-                    setCurrentMonth(next)
-                    setSelectedDate(null)
-                  }}
-                  className="btn-secondary"
-                >
-                  Наступний →
-                </button>
-              </div>
-            </div>
+          {/* Status Filters */}
+          <div className="flex gap-1.5 mb-4 md:mb-3 flex-wrap overflow-x-auto pb-1">
+            {['all', 'Pending', 'Confirmed', 'Done', 'Cancelled'].map((status) => (
+              <button
+                key={status}
+                onClick={() => setFilterStatus(status)}
+                className={cn(
+                  'px-3 py-1.5 md:px-2 md:py-1 text-xs md:text-[10px] font-bold rounded-candy-xs transition-all active:scale-97 whitespace-nowrap flex-shrink-0',
+                  filterStatus === status
+                    ? 'bg-gradient-to-r from-candy-purple to-candy-blue text-white shadow-soft-lg'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                )}
+              >
+                {status === 'all' ? 'Всі' : status === 'Pending' ? 'Очікує' : status === 'Confirmed' ? 'Підтверджено' : status === 'Done' ? 'Виконано' : 'Скасовано'}
+              </button>
+            ))}
+          </div>
 
-            {/* Status Filters */}
-            <div className="flex gap-1 mb-3 flex-wrap">
-              {['all', 'Pending', 'Confirmed', 'Done', 'Cancelled'].map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setFilterStatus(status)}
-                  className={cn(
-                    'px-2 py-1 text-[10px] font-bold rounded-candy-xs transition-all active:scale-97 whitespace-nowrap',
-                    filterStatus === status
-                      ? 'candy-purple text-white shadow-soft-lg'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  )}
-                >
-                  {status === 'all' ? 'Всі' : status === 'Pending' ? 'Очікує' : status === 'Confirmed' ? 'Підтверджено' : status === 'Done' ? 'Виконано' : 'Скасовано'}
-                </button>
-              ))}
-            </div>
-
-            {/* Month Calendar Grid */}
+          {/* Month Calendar Grid */}
+          <div className="w-full overflow-x-hidden">
             <div className="grid grid-cols-7 gap-1">
               {/* Day headers */}
               {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
-                <div key={day} className="text-center text-xs font-bold text-gray-500 dark:text-gray-400 py-1">
+                <div key={day} className="text-center text-xs md:text-[10px] font-bold text-gray-500 dark:text-gray-400 py-1">
                   {day}
                 </div>
               ))}
@@ -304,7 +302,7 @@ export default function AppointmentsPage() {
                       }
                     }}
                     className={cn(
-                      'relative p-2 rounded-candy-xs border transition-all min-h-[60px] flex flex-col items-center justify-start',
+                      'relative p-1.5 md:p-2 rounded-candy-xs border transition-all min-h-[50px] md:min-h-[60px] flex flex-col items-center justify-start',
                       !isCurrentMonth && 'opacity-30',
                       isSelected
                         ? 'border-candy-purple bg-candy-purple/10 dark:bg-candy-purple/20'
@@ -314,8 +312,8 @@ export default function AppointmentsPage() {
                     )}
                   >
                     <div className={cn(
-                      'text-sm font-black mb-1',
-                      isToday ? 'text-candy-purple' : 'text-foreground'
+                      'text-xs md:text-sm font-black mb-1',
+                      isToday ? 'text-candy-purple' : 'text-gray-900 dark:text-white'
                     )}>
                       {format(day, 'd')}
                     </div>
@@ -331,21 +329,22 @@ export default function AppointmentsPage() {
               })}
             </div>
           </div>
+        </div>
 
-          {/* Selected Date Details */}
-          {selectedDate && (
-            <div className="card-candy p-4 spacing-section">
-              <div className="flex items-center justify-between spacing-item">
-                <h3 className="text-subheading">
-                  {format(selectedDate, 'd MMMM yyyy', { locale: uk })}
-                </h3>
-                <button
-                  onClick={() => setSelectedDate(null)}
-                  className="btn-secondary"
-                >
-                  ✕ Закрити
-                </button>
-              </div>
+        {/* Selected Date Details */}
+        {selectedDate && (
+          <div className="card-candy p-4 md:p-3 mb-4 md:mb-3">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4 md:mb-3">
+              <h3 className="text-lg md:text-base font-black text-gray-900 dark:text-white">
+                {format(selectedDate, 'd MMMM yyyy', { locale: uk })}
+              </h3>
+              <button
+                onClick={() => setSelectedDate(null)}
+                className="w-full sm:w-auto px-4 py-2 md:px-3 md:py-1.5 text-sm md:text-xs font-bold rounded-candy-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-[0.98]"
+              >
+                ✕ Закрити
+              </button>
+            </div>
 
               {/* Appointments by Hour */}
               {(() => {
@@ -386,28 +385,27 @@ export default function AppointmentsPage() {
             </div>
           )}
 
-          {!selectedDate && !showCreateForm && (
-            <div className="card-candy p-6 text-center">
-              <p className="text-caption font-medium">
-                Оберіть дату в календарі, щоб переглянути записи
-              </p>
-            </div>
-          )}
+        {!selectedDate && !showCreateForm && (
+          <div className="card-candy p-6 md:p-4 text-center">
+            <p className="text-sm md:text-xs text-gray-600 dark:text-gray-400 font-medium">
+              Оберіть дату в календарі, щоб переглянути записи
+            </p>
+          </div>
+        )}
 
-          {/* Create Appointment Form */}
-          {showCreateForm && (
-            <div className="mb-4">
-              <CreateAppointmentForm
-                businessId={business.id}
-                masters={masters}
-                services={services}
-                selectedDate={selectedDate || undefined}
-                onSuccess={handleAppointmentCreated}
-                onCancel={() => setShowCreateForm(false)}
-              />
-            </div>
-          )}
-        </div>
+        {/* Create Appointment Form */}
+        {showCreateForm && (
+          <div className="mb-4 md:mb-3">
+            <CreateAppointmentForm
+              businessId={business.id}
+              masters={masters}
+              services={services}
+              selectedDate={selectedDate || undefined}
+              onSuccess={handleAppointmentCreated}
+              onCancel={() => setShowCreateForm(false)}
+            />
+          </div>
+        )}
       </div>
     </div>
   )
