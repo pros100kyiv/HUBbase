@@ -12,7 +12,8 @@ export async function GET(request: Request) {
     }
 
     // Отримуємо останні SMS повідомлення
-    const smsMessages = await prisma.sMSMessage.findMany({
+    // Prisma генерує sMSMessage для моделі SMSMessage
+    const smsMessages = await (prisma as any).sMSMessage.findMany({
       where: {
         businessId
       },
