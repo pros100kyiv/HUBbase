@@ -141,38 +141,46 @@ export default function MainPage() {
         </div>
       </div>
 
-      {/* Quick Stats */}
+      {/* Quick Stats - Draggable Cards */}
       <div className={cn(
-            "grid gap-2 mb-2",
-            hideRevenue ? "grid-cols-2 md:grid-cols-3" : "grid-cols-2 md:grid-cols-4"
+            "relative gap-2 mb-2",
+            hideRevenue ? "grid grid-cols-2 md:grid-cols-3" : "grid grid-cols-2 md:grid-cols-4"
           )}>
-            <MobileWidget
-              icon={<CalendarIcon />}
-              title="Сьогодні"
-              value={stats?.totalAppointments || 0}
-              iconColor="orange"
-            />
-            <MobileWidget
-              icon={<CheckIcon />}
-              title="Підтверджено"
-              value={stats?.confirmedAppointments || 0}
-              trend="up"
-              iconColor="green"
-            />
-            {!hideRevenue && (
+            <div className="relative">
               <MobileWidget
-                icon={<MoneyIcon />}
-                title="Дохід"
-                value={formatCurrency(stats?.totalRevenue || 0)}
-                iconColor="blue"
+                icon={<CalendarIcon />}
+                title="Сьогодні"
+                value={stats?.totalAppointments || 0}
+                iconColor="orange"
               />
+            </div>
+            <div className="relative">
+              <MobileWidget
+                icon={<CheckIcon />}
+                title="Підтверджено"
+                value={stats?.confirmedAppointments || 0}
+                trend="up"
+                iconColor="green"
+              />
+            </div>
+            {!hideRevenue && (
+              <div className="relative">
+                <MobileWidget
+                  icon={<MoneyIcon />}
+                  title="Дохід"
+                  value={formatCurrency(stats?.totalRevenue || 0)}
+                  iconColor="blue"
+                />
+              </div>
             )}
-            <MobileWidget
-              icon={<UsersIcon />}
-              title="Клієнти"
-              value={stats?.uniqueClients || 0}
-              iconColor="purple"
-            />
+            <div className="relative">
+              <MobileWidget
+                icon={<UsersIcon />}
+                title="Клієнти"
+                value={stats?.uniqueClients || 0}
+                iconColor="purple"
+              />
+            </div>
       </div>
 
       {/* Revenue Toggle */}
@@ -201,7 +209,7 @@ export default function MainPage() {
                   }
                 }
               }}
-              className="btn-secondary"
+              className="px-3 py-1.5 text-xs font-bold rounded-candy-sm border border-gray-600 dark:border-gray-700 bg-gray-700 dark:bg-gray-800 text-white hover:bg-gray-600 dark:hover:bg-gray-700 transition-all"
             >
               <span>{hideRevenue ? '👁️ Показати дохід' : '🙈 Приховати дохід'}</span>
             </button>
