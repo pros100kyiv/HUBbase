@@ -2,10 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { format } from 'date-fns'
+import { format, addDays, startOfWeek, endOfWeek, eachDayOfInterval, isToday, isSameDay } from 'date-fns'
+import { uk } from 'date-fns/locale'
 import { MobileWidget } from '@/components/admin/MobileWidget'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
-import { CalendarIcon, UsersIcon, CheckIcon, MoneyIcon } from '@/components/icons'
+import { CalendarIcon, UsersIcon, CheckIcon, MoneyIcon, LightBulbIcon, ChevronUpIcon, ChevronDownIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 
 interface Appointment {
@@ -26,7 +27,8 @@ export default function MainPage() {
   const [stats, setStats] = useState<any>(null)
   const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
-  const [hideRevenue, setHideRevenue] = useState(false)
+  const [activeTab, setActiveTab] = useState<'working' | 'overdue'>('working')
+  const [insightsTab, setInsightsTab] = useState<'insights' | 'dates'>('insights')
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -37,7 +39,6 @@ export default function MainPage() {
     try {
       const parsed = JSON.parse(businessData)
       setBusiness(parsed)
-      setHideRevenue(parsed.hideRevenue === true)
     } catch {
       router.push('/login')
     }
@@ -54,7 +55,6 @@ export default function MainPage() {
     // Load today's appointments
     const today = format(new Date(), 'yyyy-MM-dd')
     
-    // Load masters and appointments in parallel
     Promise.all([
       fetch(`/api/masters?businessId=${business.id}`)
         .then((res) => {
@@ -68,13 +68,12 @@ export default function MainPage() {
         })
     ])
       .then(([masters, data]) => {
-        // Ensure masters is an array
         const mastersArray = Array.isArray(masters) ? masters : []
         const appointmentsArray = Array.isArray(data) ? data : []
         
         const withMasters = appointmentsArray.map((apt: Appointment) => {
           const master = mastersArray.find((m: any) => m.id === apt.masterId)
-          return { ...apt, masterName: master?.name || 'Невідомий майстер' }
+          return { ...apt, masterName: master?.name || 'Невідомий спеціаліст' }
         })
         setTodayAppointments(withMasters)
         setLoading(false)
@@ -86,26 +85,13 @@ export default function MainPage() {
       })
   }, [business])
 
-  if (!business || loading) {
-    return (
-      <div className="max-w-7xl mx-auto">
-        <div className="spacing-item">
-          <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-2" />
-          <div className="h-4 w-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-        </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-2 mb-2">
-          <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-          <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-          <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-          <div className="h-24 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-        </div>
-        <div className="space-y-2">
-          <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-          <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-          <div className="h-32 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
-        </div>
-      </div>
-    )
+  // Get calendar dates for sidebar
+  const getCalendarDates = () => {
+    const today = new Date()
+    const weekStart = startOfWeek(today, { weekStartsOn: 1 })
+    const weekEnd = endOfWeek(today, { weekStartsOn: 1 })
+    const days = eachDayOfInterval({ start: weekStart, end: weekEnd })
+    return days.slice(0, 3) // Show next 3 days
   }
 
   const formatCurrency = (amount: number) => {
@@ -116,217 +102,316 @@ export default function MainPage() {
     }).format(amount)
   }
 
-  return (
-    <div className="max-w-7xl mx-auto">
-      <div className="spacing-item">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-2">
-          <div>
-            <h1 className="text-xl md:text-lg font-black text-gray-900 dark:text-white mb-1">Головна панель</h1>
-            <p className="text-sm md:text-xs text-gray-600 dark:text-gray-400 font-medium">Огляд вашого бізнесу</p>
+  if (!business || loading) {
+    return (
+      <div className="max-w-7xl mx-auto">
+        <div className="h-8 w-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse mb-4" />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="lg:col-span-2 space-y-4">
+            <div className="h-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
           </div>
-          <div className="w-full md:w-64">
-            <input
-              type="text"
-              placeholder="Пошук записів..."
-              className={cn(
-                'w-full px-4 py-3 md:px-3 md:py-2 rounded-candy-sm border-2 bg-white dark:bg-gray-800',
-                'border-gray-200 dark:border-gray-700 text-base md:text-sm text-gray-900 dark:text-white placeholder-gray-400',
-                'focus:outline-none focus:ring-2 focus:ring-candy-blue focus:border-transparent'
-              )}
-              onChange={(e) => {
-                // Фільтрація записів по запиту (можна додати функціональність пізніше)
-              }}
-            />
+          <div className="space-y-4">
+            <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
+            <div className="h-48 bg-gray-200 dark:bg-gray-700 rounded animate-pulse" />
           </div>
         </div>
       </div>
+    )
+  }
 
-      {/* Quick Stats */}
-      <div className={cn(
-            "grid gap-3 md:gap-2 mb-4 md:mb-2",
-            hideRevenue ? "grid-cols-2 md:grid-cols-3" : "grid-cols-2 md:grid-cols-4"
-          )}>
-            <div className="relative">
-              <MobileWidget
-                icon={<CalendarIcon />}
-                title="Сьогодні"
-                value={stats?.totalAppointments || 0}
-                iconColor="orange"
-              />
-            </div>
-            <div className="relative">
-              <MobileWidget
-                icon={<CheckIcon />}
-                title="Підтверджено"
-                value={stats?.confirmedAppointments || 0}
-                trend="up"
-                iconColor="green"
-              />
-            </div>
-            {!hideRevenue && (
-              <div className="relative">
-                <MobileWidget
-                  icon={<MoneyIcon />}
-                  title="Дохід"
-                  value={formatCurrency(stats?.totalRevenue || 0)}
-                  iconColor="blue"
-                />
-              </div>
-            )}
-            <div className="relative">
-              <MobileWidget
-                icon={<UsersIcon />}
-                title="Клієнти"
-                value={stats?.uniqueClients || 0}
-                iconColor="purple"
-              />
-            </div>
+  const calendarDates = getCalendarDates()
+  const hasAppointments = todayAppointments.length > 0
+
+  return (
+    <div className="max-w-7xl mx-auto">
+      {/* Header */}
+      <div className="mb-6">
+        <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-2">
+          Daily Dashboard Overview
+        </h1>
+        <p className="text-base text-gray-600 dark:text-gray-400">
+          {hasAppointments ? `Сьогодні у вас ${todayAppointments.length} ${todayAppointments.length === 1 ? 'запис' : 'записів'}` : 'Сьогодні в тебе нічого немає'}
+        </p>
       </div>
 
-      {/* Revenue Toggle */}
-      <div className="mb-2 flex items-center justify-end">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Main Content Area */}
+        <div className="lg:col-span-2 space-y-6">
+          {/* Tabs */}
+          <div className="flex gap-2">
             <button
-              onClick={async () => {
-                const newHideRevenue = !hideRevenue
-                setHideRevenue(newHideRevenue)
-                
-                // Update in database
-                if (business?.id) {
-                  try {
-                    const response = await fetch(`/api/business/${business.id}`, {
-                      method: 'PATCH',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ hideRevenue: newHideRevenue }),
-                    })
-                    if (response.ok) {
-                      const updated = await response.json()
-                      const updatedBusiness = { ...business, hideRevenue: newHideRevenue }
-                      localStorage.setItem('business', JSON.stringify(updatedBusiness))
-                      setBusiness(updatedBusiness)
-                    }
-                  } catch (error) {
-                    console.error('Error updating hideRevenue:', error)
-                  }
-                }
-              }}
-              className="px-4 py-2.5 md:px-3 md:py-1.5 text-sm md:text-xs font-bold rounded-candy-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-[0.98]"
+              onClick={() => setActiveTab('working')}
+              className={cn(
+                'px-6 py-3 rounded-candy-sm font-bold text-sm transition-all',
+                activeTab === 'working'
+                  ? 'bg-gradient-to-r from-candy-purple to-candy-blue text-white shadow-soft-xl'
+                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+              )}
             >
-              <span>{hideRevenue ? '👁️ Показати дохід' : '🙈 Приховати дохід'}</span>
+              Робочий день
             </button>
-      </div>
+            <button
+              onClick={() => setActiveTab('overdue')}
+              className={cn(
+                'px-6 py-3 rounded-candy-sm font-bold text-sm transition-all',
+                activeTab === 'overdue'
+                  ? 'bg-gradient-to-r from-candy-purple to-candy-blue text-white shadow-soft-xl'
+                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+              )}
+            >
+              Протерміновані
+            </button>
+          </div>
 
-      {/* Today's Appointments */}
-      <div className="card-candy p-3 mb-3 overflow-hidden">
-            <h2 className="text-subheading mb-3 truncate">
-              Записи на сьогодні ({format(new Date(), 'd MMMM yyyy')})
-            </h2>
-            <div className="space-y-2">
-              {todayAppointments
-                .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-                .slice(0, 5)
-                .map((appointment) => {
-                  const startTime = new Date(appointment.startTime)
-                  const endTime = new Date(appointment.endTime)
-                  let servicesList: string[] = []
-                  try {
-                    if (appointment.services) {
-                      servicesList = JSON.parse(appointment.services)
-                    }
-                  } catch (e) {
-                    // Ignore
-                  }
+          {/* Content based on tab */}
+          {activeTab === 'working' && (
+            <>
+              {hasAppointments ? (
+                <div className="card-candy p-6">
+                  <h2 className="text-xl font-black text-gray-900 dark:text-white mb-4">
+                    Записи на сьогодні
+                  </h2>
+                  <div className="space-y-3">
+                    {todayAppointments
+                      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                      .map((appointment) => {
+                        const startTime = new Date(appointment.startTime)
+                        const endTime = new Date(appointment.endTime)
+                        let servicesList: string[] = []
+                        try {
+                          if (appointment.services) {
+                            servicesList = JSON.parse(appointment.services)
+                          }
+                        } catch (e) {
+                          // Ignore
+                        }
 
-                  const getStatusColor = (status: string) => {
-                    switch (status) {
-                      case 'Pending':
-                      case 'Очікує':
-                        return 'bg-candy-orange/10 text-candy-orange border-candy-orange'
-                      case 'Confirmed':
-                      case 'Підтверджено':
-                        return 'bg-candy-mint/10 text-candy-mint border-candy-mint'
-                      case 'Done':
-                      case 'Виконано':
-                        return 'bg-candy-blue/10 text-candy-blue border-candy-blue'
-                      case 'Cancelled':
-                      case 'Скасовано':
-                        return 'bg-red-50 text-red-500 border-red-500'
-                      default:
-                        return 'bg-gray-50 text-gray-500 border-gray-400'
-                    }
-                  }
+                        const getStatusColor = (status: string) => {
+                          switch (status) {
+                            case 'Pending':
+                            case 'Очікує':
+                              return 'bg-candy-orange/10 text-candy-orange border-candy-orange'
+                            case 'Confirmed':
+                            case 'Підтверджено':
+                              return 'bg-candy-mint/10 text-candy-mint border-candy-mint'
+                            case 'Done':
+                            case 'Виконано':
+                              return 'bg-candy-blue/10 text-candy-blue border-candy-blue'
+                            case 'Cancelled':
+                            case 'Скасовано':
+                              return 'bg-red-50 text-red-500 border-red-500'
+                            default:
+                              return 'bg-gray-50 text-gray-500 border-gray-400'
+                          }
+                        }
 
-                  const getStatusLabel = (status: string) => {
-                    switch (status) {
-                      case 'Pending':
-                        return 'Очікує'
-                      case 'Confirmed':
-                        return 'Підтверджено'
-                      case 'Done':
-                        return 'Виконано'
-                      case 'Cancelled':
-                        return 'Скасовано'
-                      default:
-                        return status
-                    }
-                  }
+                        const getStatusLabel = (status: string) => {
+                          switch (status) {
+                            case 'Pending':
+                              return 'Очікує'
+                            case 'Confirmed':
+                              return 'Підтверджено'
+                            case 'Done':
+                              return 'Виконано'
+                            case 'Cancelled':
+                              return 'Скасовано'
+                            default:
+                              return status
+                          }
+                        }
 
-                  return (
-                    <div
-                      key={appointment.id}
-                      className="card-candy card-candy-hover p-2.5 flex items-center justify-between gap-2.5 bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
-                    >
-                      <div className="flex items-center gap-2.5 flex-1 min-w-0">
-                        <div className="flex flex-col items-center justify-center w-14 h-14 rounded-candy-sm bg-candy-blue/10 dark:bg-candy-blue/20 text-candy-blue flex-shrink-0 border border-candy-blue/20">
-                          <span className="text-sm font-black leading-tight">
-                            {format(startTime, 'HH:mm')}
-                          </span>
-                          <span className="text-[10px] font-bold leading-tight text-gray-500 dark:text-gray-400">
-                            {format(endTime, 'HH:mm')}
-                          </span>
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
-                            <p className="text-sm font-black text-gray-900 dark:text-white truncate">{appointment.clientName}</p>
-                            <span className={`px-2.5 py-1 md:px-2 md:py-0.5 rounded-full text-xs md:text-[10px] font-bold border flex-shrink-0 whitespace-nowrap ${getStatusColor(appointment.status)}`}>
-                              {getStatusLabel(appointment.status)}
-                            </span>
+                        return (
+                          <div
+                            key={appointment.id}
+                            className="p-4 rounded-candy-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-soft-xl transition-all"
+                          >
+                            <div className="flex items-center gap-4">
+                              <div className="flex flex-col items-center justify-center w-16 h-16 rounded-candy-sm bg-gradient-to-r from-candy-blue to-candy-purple text-white flex-shrink-0">
+                                <span className="text-lg font-black">
+                                  {format(startTime, 'HH:mm')}
+                                </span>
+                                <span className="text-xs font-bold">
+                                  {format(endTime, 'HH:mm')}
+                                </span>
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p className="text-base font-black text-gray-900 dark:text-white">
+                                    {appointment.clientName}
+                                  </p>
+                                  <span className={cn('px-2 py-1 rounded-full text-xs font-bold border', getStatusColor(appointment.status))}>
+                                    {getStatusLabel(appointment.status)}
+                                  </span>
+                                </div>
+                                <div className="flex items-center gap-3 text-sm text-gray-600 dark:text-gray-400">
+                                  {appointment.masterName && (
+                                    <span>Спеціаліст: {appointment.masterName}</span>
+                                  )}
+                                  {servicesList.length > 0 && (
+                                    <span>• {servicesList.length} послуг</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
                           </div>
-                          <div className="flex items-center gap-2 flex-wrap">
-                            {appointment.masterName && (
-                              <span className="text-sm md:text-xs text-gray-600 dark:text-gray-400 font-medium truncate">
-                                Спеціаліст: {appointment.masterName}
-                              </span>
-                            )}
-                            {servicesList.length > 0 && (
-                              <span className="text-sm md:text-xs text-gray-500 dark:text-gray-500">
-                                • {servicesList.length} {servicesList.length === 1 ? 'послуга' : 'послуг'}
-                              </span>
-                            )}
-                            <span className="text-sm md:text-xs text-gray-500 dark:text-gray-500">
-                              • {Math.round((endTime.getTime() - startTime.getTime()) / 60000)} хв
-                            </span>
+                        )
+                      })}
+                  </div>
+                </div>
+              ) : (
+                <div className="card-candy p-8 md:p-12 text-center">
+                  {/* Empty State Illustration */}
+                  <div className="mb-8 flex justify-center">
+                    <div className="relative w-64 h-64">
+                      {/* Computer */}
+                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-32 h-24 bg-gradient-to-br from-candy-purple/20 to-candy-blue/20 rounded-candy-sm border-2 border-candy-purple/30">
+                        <div className="p-2 space-y-1">
+                          <div className="flex gap-1">
+                            <div className="w-2 h-2 rounded-full bg-candy-purple/40"></div>
+                            <div className="w-2 h-2 rounded-full bg-candy-blue/40"></div>
+                            <div className="w-2 h-2 rounded-full bg-candy-mint/40"></div>
                           </div>
                         </div>
                       </div>
+                      {/* Plant */}
+                      <div className="absolute top-1/2 left-1/4 transform -translate-x-1/2 -translate-y-1/2 w-8 h-12 bg-gradient-to-b from-candy-mint/30 to-candy-green/30 rounded-full"></div>
+                      {/* Coffee */}
+                      <div className="absolute top-1/2 right-1/4 transform translate-x-1/2 -translate-y-1/2 w-6 h-8 bg-gradient-to-b from-amber-400/30 to-amber-600/30 rounded-full"></div>
+                      {/* Dots */}
+                      <div className="absolute top-1/4 left-1/4 w-2 h-2 rounded-full bg-candy-purple/30"></div>
+                      <div className="absolute bottom-1/4 right-1/4 w-2 h-2 rounded-full bg-candy-blue/30"></div>
                     </div>
-                  )
-                })}
-              {todayAppointments.length === 0 && (
-                <p className="text-gray-400 dark:text-gray-400 text-center py-12 md:py-8 font-medium text-base md:text-sm">Немає записів на сьогодні</p>
+                  </div>
+                  
+                  <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">
+                    Сьогодні без завдань 🌙
+                  </h3>
+                  <p className="text-gray-600 dark:text-gray-400 mb-6 max-w-md mx-auto">
+                    Можеш використати момент і додати справи на день
+                  </p>
+                  <button
+                    onClick={() => router.push('/dashboard/appointments')}
+                    className="px-6 py-3 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
+                  >
+                    Згенерувати план на день
+                  </button>
+                </div>
               )}
-              {todayAppointments.length > 5 && (
-                <button
-                  onClick={() => router.push('/dashboard/appointments')}
-                  className="w-full px-4 py-3 md:px-3 md:py-2 text-sm md:text-xs font-bold rounded-candy-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-[0.98]"
-                >
-                  Показати всі записи ({todayAppointments.length})
-                </button>
-              )}
+            </>
+          )}
+
+          {activeTab === 'overdue' && (
+            <div className="card-candy p-8 md:p-12 text-center">
+              <p className="text-gray-600 dark:text-gray-400">
+                Немає протермінованих записів
+              </p>
             </div>
+          )}
+        </div>
+
+        {/* Right Sidebar */}
+        <div className="space-y-6">
+          {/* Calendar Section */}
+          <div className="card-candy p-6 bg-gradient-to-br from-candy-purple/10 to-candy-blue/10 border-candy-purple/20">
+            <div className="flex items-center justify-between mb-4">
+              <ChevronUpIcon className="w-5 h-5 text-candy-purple" />
+              <CalendarIcon className="w-6 h-6 text-candy-purple" />
+            </div>
+            
+            <div className="space-y-3 mb-4">
+              {calendarDates.map((date) => {
+                const isTodayDate = isToday(date)
+                return (
+                  <div
+                    key={date.toISOString()}
+                    className={cn(
+                      'p-3 rounded-candy-sm transition-all',
+                      isTodayDate
+                        ? 'bg-gradient-to-r from-candy-purple to-candy-blue text-white shadow-soft-xl'
+                        : 'bg-white dark:bg-gray-800 text-gray-900 dark:text-white'
+                    )}
+                  >
+                    <p className="font-bold text-sm">
+                      {format(date, 'EEEE d MMMM', { locale: uk })}
+                    </p>
+                  </div>
+                )
+              })}
+            </div>
+
+            <div className="flex items-center justify-between mb-4">
+              <ChevronDownIcon className="w-5 h-5 text-candy-purple" />
+            </div>
+
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+              У календарі поки тихо
+            </p>
+            <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+              Саме час запланувати щось цікаве
+            </p>
+            <button
+              onClick={() => router.push('/dashboard/appointments')}
+              className="w-full px-4 py-2 bg-gradient-to-r from-candy-blue to-candy-purple text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
+            >
+              Створити справи
+            </button>
           </div>
+
+          {/* Insights Section */}
+          <div className="card-candy p-6">
+            <div className="flex gap-2 mb-4">
+              <button
+                onClick={() => setInsightsTab('insights')}
+                className={cn(
+                  'flex-1 px-3 py-2 rounded-candy-sm text-sm font-bold transition-all',
+                  insightsTab === 'insights'
+                    ? 'bg-gradient-to-r from-candy-purple to-candy-blue text-white shadow-soft-lg'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                )}
+              >
+                <LightBulbIcon className="w-4 h-4 inline mr-1" />
+                Інсайти цього дня
+              </button>
+              <button
+                onClick={() => setInsightsTab('dates')}
+                className={cn(
+                  'flex-1 px-3 py-2 rounded-candy-sm text-sm font-bold transition-all',
+                  insightsTab === 'dates'
+                    ? 'bg-gradient-to-r from-candy-purple to-candy-blue text-white shadow-soft-lg'
+                    : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-400'
+                )}
+              >
+                <CalendarIcon className="w-4 h-4 inline mr-1" />
+                Важливі дати
+              </button>
+            </div>
+
+            {insightsTab === 'insights' && (
+              <div className="text-center py-8">
+                <div className="mb-4 flex justify-center">
+                  <div className="w-24 h-24 bg-gradient-to-br from-candy-purple/20 to-candy-blue/20 rounded-full flex items-center justify-center">
+                    <LightBulbIcon className="w-12 h-12 text-candy-purple" />
+                  </div>
+                </div>
+                <p className="text-gray-600 dark:text-gray-400 mb-2">
+                  Ще нічого не проаналізовано
+                </p>
+                <p className="text-sm text-gray-500 dark:text-gray-500">
+                  Як тільки буде більше активності — система підкаже цікаві інсайти
+                </p>
+              </div>
+            )}
+
+            {insightsTab === 'dates' && (
+              <div className="text-center py-8">
+                <p className="text-gray-600 dark:text-gray-400">
+                  Немає важливих дат
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
-
-
-
