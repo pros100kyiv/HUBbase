@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { format, isAfter } from 'date-fns'
-import { Sidebar } from '@/components/admin/Sidebar'
 import { cn } from '@/lib/utils'
 import { ChevronDownIcon, ChevronUpIcon } from '@/components/icons'
 
@@ -177,10 +176,7 @@ export default function ClientsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar />
-      <div className="ml-16 md:ml-40 p-3">
-        <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto w-full">
                  <div className="flex items-center justify-between spacing-item">
                    <h1 className="text-heading">Клієнти</h1>
             <div className="text-[10px] text-gray-500">
@@ -327,8 +323,6 @@ export default function ClientsPage() {
               </div>
             )}
           </div>
-        </div>
-      </div>
     </div>
   )
 }

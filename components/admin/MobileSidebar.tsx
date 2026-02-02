@@ -27,6 +27,13 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const [pendingCount, setPendingCount] = useState(0)
   const [showNotifications, setShowNotifications] = useState(false)
 
+  // Close sidebar when pathname changes
+  useEffect(() => {
+    if (isOpen) {
+      onClose()
+    }
+  }, [pathname])
+
   useEffect(() => {
     const businessData = localStorage.getItem('business')
     if (businessData) {

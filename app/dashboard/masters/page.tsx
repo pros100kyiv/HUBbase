@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Sidebar } from '@/components/admin/Sidebar'
 import { MasterProfileCard } from '@/components/admin/MasterProfileCard'
 
 interface Master {
@@ -98,10 +97,7 @@ export default function MastersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <Sidebar />
-      <div className="ml-16 md:ml-40 p-3">
-        <div className="max-w-7xl mx-auto">
+    <div className="max-w-7xl mx-auto w-full">
           <div className="flex items-center justify-between spacing-item">
             <h1 className="text-heading">Майстри</h1>
             <button
@@ -160,8 +156,6 @@ export default function MastersPage() {
               </div>
             )}
           </div>
-        </div>
-      </div>
     </div>
   )
 }
