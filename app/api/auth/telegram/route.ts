@@ -126,6 +126,9 @@ export async function POST(request: NextRequest) {
           role: UserRole.OWNER,
           activatedAt: new Date(),
         },
+        include: {
+          business: true,
+        },
       })
 
       isNewBusiness = true
