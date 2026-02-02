@@ -284,33 +284,142 @@ export default function ClientsPage() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
+      <div className="mb-3">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
           <div>
-            <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-2">
+            <h1 className="text-lg md:text-xl font-black text-gray-900 dark:text-white mb-1">
               Клієнти
             </h1>
-            <p className="text-base text-gray-600 dark:text-gray-400">
+            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
               Управління базою клієнтів та їх історією
             </p>
           </div>
-          <div className="text-sm text-gray-600 dark:text-gray-400">
-            Всього: <span className="font-black text-candy-purple text-lg">{clients.length}</span>
+          <div className="flex gap-1.5">
+            <button
+              onClick={() => setViewMode(viewMode === 'cards' ? 'table' : 'cards')}
+              className="px-2.5 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-xs text-xs font-bold"
+            >
+              {viewMode === 'cards' ? '📊 Таблиця' : '📋 Картки'}
+            </button>
+            <button
+              onClick={handleExportCSV}
+              className="px-2.5 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-xs text-xs font-bold flex items-center gap-1"
+            >
+              <DownloadIcon className="w-3 h-3" />
+              Експорт
+            </button>
           </div>
         </div>
 
-        {/* Search */}
-        <div className="card-candy p-4">
-          <div className="relative">
-            <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="Пошук за ім'ям або телефоном..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 rounded-candy-sm border-2 border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-candy-purple focus:border-transparent"
-            />
+        {/* Quick Stats */}
+        <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 mb-2">
+          <div className="card-candy p-2 text-center">
+            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Всього</div>
+            <div className="text-sm font-black text-gray-900 dark:text-white">{stats.total}</div>
           </div>
+          <div className="card-candy p-2 text-center">
+            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">VIP</div>
+            <div className="text-sm font-black text-candy-purple">{stats.vip}</div>
+          </div>
+          <div className="card-candy p-2 text-center">
+            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Активні</div>
+            <div className="text-sm font-black text-candy-mint">{stats.active}</div>
+          </div>
+          <div className="card-candy p-2 text-center">
+            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Неактивні</div>
+            <div className="text-sm font-black text-candy-orange">{stats.inactive}</div>
+          </div>
+          <div className="card-candy p-2 text-center">
+            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Дохід</div>
+            <div className="text-sm font-black text-candy-blue">{Math.round(stats.totalRevenue)} грн</div>
+          </div>
+          <div className="card-candy p-2 text-center">
+            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Середній чек</div>
+            <div className="text-sm font-black text-candy-pink">{Math.round(stats.avgRevenue)} грн</div>
+          </div>
+        </div>
+
+        {/* Search and Filters */}
+        <div className="card-candy p-2 mb-2">
+          <div className="flex flex-col sm:flex-row gap-2">
+            {/* Search */}
+            <div className="flex-1 relative">
+              <SearchIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Пошук за ім'ям або телефоном..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
+              />
+            </div>
+            
+            {/* Segment Filter */}
+            <select
+              value={filterSegment}
+              onChange={(e) => setFilterSegment(e.target.value)}
+              className="px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
+            >
+              <option value="all">Всі клієнти</option>
+              <option value="vip">VIP клієнти</option>
+              <option value="active">Активні</option>
+              <option value="inactive">Неактивні</option>
+            </select>
+
+            {/* Sort By */}
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value)}
+              className="px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
+            >
+              <option value="name">За ім'ям</option>
+              <option value="visits">За візитами</option>
+              <option value="spent">За витратами</option>
+              <option value="lastVisit">За датою візиту</option>
+            </select>
+
+            {/* Sort Order */}
+            <button
+              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+              className="px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+            >
+              {sortOrder === 'asc' ? '↑' : '↓'}
+            </button>
+          </div>
+
+          {/* Bulk Actions */}
+          {selectedClients.size > 0 && (
+            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-gray-600 dark:text-gray-400">
+                Вибрано: {selectedClients.size}
+              </span>
+              <div className="flex gap-1.5">
+                <button
+                  onClick={() => {
+                    const phones = Array.from(selectedClients).join(', ')
+                    window.open(`tel:${phones.split(',')[0]}`)
+                  }}
+                  className="px-2 py-1 text-[10px] bg-candy-blue text-white rounded-candy-xs font-bold hover:opacity-80 transition-all"
+                >
+                  📞 Дзвінок
+                </button>
+                <button
+                  onClick={() => {
+                    router.push(`/dashboard/appointments?clientPhone=${Array.from(selectedClients)[0]}`)
+                  }}
+                  className="px-2 py-1 text-[10px] bg-candy-mint text-white rounded-candy-xs font-bold hover:opacity-80 transition-all"
+                >
+                  📅 Запис
+                </button>
+                <button
+                  onClick={() => setSelectedClients(new Set())}
+                  className="px-2 py-1 text-[10px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white rounded-candy-xs font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+                >
+                  Скасувати вибір
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
