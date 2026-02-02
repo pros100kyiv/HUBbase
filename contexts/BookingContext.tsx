@@ -16,6 +16,7 @@ export interface Master {
   photo?: string
   bio?: string
   rating: number
+  isActive?: boolean
 }
 
 export interface BookingState {
