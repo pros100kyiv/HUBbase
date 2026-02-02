@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { BotIcon, CheckIcon, XIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -15,10 +15,31 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
   const [isConnected, setIsConnected] = useState(false)
   const [userData, setUserData] = useState<any>(null)
   const [loading, setLoading] = useState(false)
+  const [botName, setBotName] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const scriptLoadedRef = useRef(false)
 
   useEffect(() => {
     checkConnection()
+    fetchBotName()
   }, [businessId])
+
+  const fetchBotName = async () => {
+    try {
+      const response = await fetch(`/api/telegram/bot-name?businessId=${businessId}`)
+      if (response.ok) {
+        const data = await response.json()
+        if (data.botName) {
+          setBotName(data.botName)
+        } else {
+          setError('Telegram бот не налаштований. Будь ласка, налаштуйте бота в налаштуваннях.')
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching bot name:', error)
+      setError('Не вдалося завантажити налаштування бота')
+    }
+  }
 
   const checkConnection = async () => {
     try {
@@ -36,52 +57,98 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
   }
 
   const handleTelegramAuth = () => {
+    if (!botName) {
+      toast({ 
+        title: 'Помилка', 
+        description: 'Telegram бот не налаштований. Будь ласка, налаштуйте бота спочатку.', 
+        type: 'error' 
+      })
+      return
+    }
+
     setLoading(true)
+    setError(null)
     
-    // Створюємо Telegram Login Widget
-    const script = document.createElement('script')
-    script.src = 'https://telegram.org/js/telegram-widget.js?22'
-    script.setAttribute('data-telegram-login', process.env.NEXT_PUBLIC_TELEGRAM_BOT_NAME || 'your_bot')
-    script.setAttribute('data-size', 'large')
-    script.setAttribute('data-onauth', 'onTelegramAuth(user)')
-    script.setAttribute('data-request-access', 'write')
-    script.async = true
-    
-    // Глобальна функція для обробки авторизації
-    ;(window as any).onTelegramAuth = async (user: any) => {
-      try {
-        const response = await fetch('/api/telegram/oauth', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            businessId,
-            telegramData: user
+    try {
+      // Очищаємо попередній контейнер
+      const container = document.getElementById('telegram-login-container')
+      if (container) {
+        container.innerHTML = ''
+      }
+
+      // Видаляємо попередню глобальну функцію, якщо вона існує
+      if ((window as any).onTelegramAuth) {
+        delete (window as any).onTelegramAuth
+      }
+      
+      // Глобальна функція для обробки авторизації
+      ;(window as any).onTelegramAuth = async (user: any) => {
+        try {
+          if (!user || !user.id) {
+            throw new Error('Некоректні дані від Telegram')
+          }
+
+          const response = await fetch('/api/telegram/oauth', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              businessId,
+              telegramData: user
+            })
           })
-        })
-        
-        if (response.ok) {
-          const data = await response.json()
-          setIsConnected(true)
-          setUserData(data.user)
-          onConnected(data)
-          toast({ title: 'Telegram підключено!', type: 'success' })
-        } else {
-          const error = await response.json()
-          toast({ title: 'Помилка', description: error.error || 'Не вдалося підключити', type: 'error' })
+          
+          if (response.ok) {
+            const data = await response.json()
+            setIsConnected(true)
+            setUserData(data.user || data.telegramUser)
+            onConnected(data)
+            toast({ title: 'Telegram підключено!', type: 'success' })
+            // Оновлюємо статус після успішного підключення
+            await checkConnection()
+          } else {
+            const errorData = await response.json().catch(() => ({ error: 'Не вдалося підключити' }))
+            const errorMessage = errorData.error || 'Не вдалося підключити'
+            setError(errorMessage)
+            toast({ title: 'Помилка', description: errorMessage, type: 'error' })
+          }
+        } catch (error: any) {
+          console.error('Error connecting Telegram:', error)
+          const errorMessage = error.message || 'Помилка підключення'
+          setError(errorMessage)
+          toast({ title: 'Помилка', description: errorMessage, type: 'error' })
+        } finally {
+          setLoading(false)
         }
-      } catch (error) {
-        console.error('Error connecting Telegram:', error)
-        toast({ title: 'Помилка', description: 'Помилка підключення', type: 'error' })
-      } finally {
+      }
+      
+      // Створюємо Telegram Login Widget
+      const script = document.createElement('script')
+      script.src = 'https://telegram.org/js/telegram-widget.js?22'
+      script.setAttribute('data-telegram-login', botName)
+      script.setAttribute('data-size', 'large')
+      script.setAttribute('data-onauth', 'onTelegramAuth(user)')
+      script.setAttribute('data-request-access', 'write')
+      script.async = true
+      
+      script.onerror = () => {
+        setError('Не вдалося завантажити Telegram Widget')
+        setLoading(false)
+        toast({ title: 'Помилка', description: 'Не вдалося завантажити Telegram Widget', type: 'error' })
+      }
+      
+      // Додаємо скрипт
+      if (container) {
+        container.appendChild(script)
+        scriptLoadedRef.current = true
+      } else {
+        setError('Контейнер для Telegram Widget не знайдено')
         setLoading(false)
       }
-    }
-    
-    // Додаємо скрипт
-    const container = document.getElementById('telegram-login-container')
-    if (container) {
-      container.innerHTML = ''
-      container.appendChild(script)
+    } catch (error: any) {
+      console.error('Error setting up Telegram auth:', error)
+      setError(error.message || 'Помилка налаштування')
+      setLoading(false)
+      toast({ title: 'Помилка', description: 'Помилка налаштування Telegram авторизації', type: 'error' })
     }
   }
 
@@ -124,6 +191,14 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
         )}
       </div>
 
+      {error && (
+        <div className="p-3 bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-candy-xs mb-4">
+          <p className="text-sm font-medium text-red-800 dark:text-red-200">
+            ⚠️ {error}
+          </p>
+        </div>
+      )}
+
       {isConnected && userData ? (
         <div className="space-y-3">
           <div className="p-3 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 rounded-candy-xs">
@@ -131,9 +206,9 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
               ✅ Telegram успішно підключено
             </p>
             <div className="text-xs text-green-700 dark:text-green-300 space-y-1">
-              <p><strong>Ім'я:</strong> {userData.firstName} {userData.lastName || ''}</p>
+              <p><strong>Ім'я:</strong> {userData.firstName || ''} {userData.lastName || ''}</p>
               <p><strong>Username:</strong> @{userData.username || 'не вказано'}</p>
-              <p><strong>ID:</strong> {userData.telegramId?.toString()}</p>
+              <p><strong>ID:</strong> {userData.telegramId?.toString() || userData.id}</p>
             </div>
           </div>
           <Button
@@ -148,11 +223,19 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
           <p className="text-sm text-gray-600 dark:text-gray-400">
             Швидко підключіть свій Telegram акаунт для отримання сповіщень та управління ботом
           </p>
-          <div id="telegram-login-container" className="flex justify-center">
-            {!loading && (
+          {!botName && !error && (
+            <div className="p-3 bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-800 rounded-candy-xs">
+              <p className="text-xs text-yellow-800 dark:text-yellow-200">
+                ⏳ Завантаження налаштувань бота...
+              </p>
+            </div>
+          )}
+          <div id="telegram-login-container" className="flex justify-center min-h-[50px]">
+            {!loading && botName && (
               <Button
                 onClick={handleTelegramAuth}
                 className="w-full bg-gradient-to-r from-candy-blue to-candy-purple text-white"
+                disabled={!botName}
               >
                 <BotIcon className="w-4 h-4 mr-2" />
                 Підключити Telegram

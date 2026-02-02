@@ -5,8 +5,18 @@ export async function POST(request: Request) {
   try {
     const { businessId, telegramData } = await request.json()
     
-    if (!businessId || !telegramData) {
-      return NextResponse.json({ error: 'Missing required data' }, { status: 400 })
+    if (!businessId) {
+      return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
+    }
+
+    if (!telegramData || !telegramData.id) {
+      return NextResponse.json({ error: 'Telegram data is required' }, { status: 400 })
+    }
+
+    // Валідація даних
+    const telegramId = BigInt(telegramData.id)
+    if (!telegramId || telegramId <= 0) {
+      return NextResponse.json({ error: 'Invalid Telegram user ID' }, { status: 400 })
     }
 
     // Зберігаємо дані Telegram користувача
@@ -14,7 +24,7 @@ export async function POST(request: Request) {
       where: {
         businessId_telegramId: {
           businessId,
-          telegramId: BigInt(telegramData.id)
+          telegramId: telegramId
         }
       },
       update: {
@@ -26,7 +36,7 @@ export async function POST(request: Request) {
       },
       create: {
         businessId,
-        telegramId: BigInt(telegramData.id),
+        telegramId: telegramId,
         username: telegramData.username || null,
         firstName: telegramData.first_name || null,
         lastName: telegramData.last_name || null,
@@ -81,12 +91,45 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       success: true,
-      user: telegramUser,
+      user: {
+        id: telegramUser.id,
+        telegramId: telegramUser.telegramId,
+        username: telegramUser.username,
+        firstName: telegramUser.firstName,
+        lastName: telegramUser.lastName,
+        role: telegramUser.role,
+        isActive: telegramUser.isActive
+      },
+      telegramUser: {
+        id: telegramUser.id,
+        telegramId: telegramUser.telegramId,
+        username: telegramUser.username,
+        firstName: telegramUser.firstName,
+        lastName: telegramUser.lastName,
+        role: telegramUser.role,
+        isActive: telegramUser.isActive
+      },
       telegramData
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Telegram OAuth error:', error)
-    return NextResponse.json({ error: 'Failed to connect Telegram' }, { status: 500 })
+    
+    // Більш детальна обробка помилок
+    if (error.code === 'P2002') {
+      return NextResponse.json({ 
+        error: 'Цей Telegram акаунт вже підключено до іншого бізнесу' 
+      }, { status: 409 })
+    }
+    
+    if (error.message?.includes('Invalid')) {
+      return NextResponse.json({ 
+        error: 'Некоректні дані від Telegram' 
+      }, { status: 400 })
+    }
+    
+    return NextResponse.json({ 
+      error: error.message || 'Failed to connect Telegram' 
+    }, { status: 500 })
   }
 }
 

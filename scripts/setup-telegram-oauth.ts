@@ -1,0 +1,123 @@
+#!/usr/bin/env tsx
+
+/**
+ * Скрипт для налаштування Telegram OAuth для бізнесу
+ * 
+ * Використання:
+ *   npm run telegram:oauth <businessId> [botToken]
+ * 
+ * Якщо botToken не вказано, скрипт спробує отримати його з бази даних
+ */
+
+import { PrismaClient } from '@prisma/client'
+
+const prisma = new PrismaClient()
+
+async function setupTelegramOAuth(businessId: string, botToken?: string) {
+  try {
+    console.log('🔧 Налаштування Telegram OAuth...\n')
+
+    // Отримуємо бізнес
+    const business = await prisma.business.findUnique({
+      where: { id: businessId },
+      select: {
+        id: true,
+        name: true,
+        telegramBotToken: true
+      }
+    })
+
+    if (!business) {
+      console.error('❌ Бізнес не знайдено з ID:', businessId)
+      process.exit(1)
+    }
+
+    console.log(`📋 Бізнес: ${business.name} (${business.id})\n`)
+
+    // Отримуємо токен бота
+    let token = botToken || business.telegramBotToken
+
+    if (!token) {
+      console.error('❌ Токен Telegram бота не знайдено!')
+      console.error('   Вкажіть токен як другий аргумент або налаштуйте його в налаштуваннях бізнесу.')
+      process.exit(1)
+    }
+
+    // Перевіряємо токен через Telegram API
+    console.log('🔍 Перевірка токену бота...')
+    try {
+      const botInfoResponse = await fetch(`https://api.telegram.org/bot${token}/getMe`)
+      if (!botInfoResponse.ok) {
+        throw new Error('Не вдалося отримати інформацію про бота')
+      }
+
+      const botInfo = await botInfoResponse.json()
+      if (!botInfo.ok) {
+        throw new Error(botInfo.description || 'Помилка від Telegram API')
+      }
+
+      console.log(`✅ Бот знайдено: @${botInfo.result.username} (${botInfo.result.first_name})`)
+      console.log(`   Bot ID: ${botInfo.result.id}\n`)
+
+      // Оновлюємо токен в базі даних, якщо він змінився
+      if (token !== business.telegramBotToken) {
+        await prisma.business.update({
+          where: { id: businessId },
+          data: { telegramBotToken: token }
+        })
+        console.log('✅ Токен оновлено в базі даних\n')
+      }
+
+      // Перевіряємо наявність домену для OAuth
+      const domain = process.env.NEXT_PUBLIC_DOMAIN || process.env.VERCEL_URL || 'localhost:3000'
+      console.log(`🌐 Домен для OAuth: ${domain}\n`)
+
+      // Інструкції
+      console.log('📝 Інструкції для налаштування Telegram OAuth:\n')
+      console.log('1. Переконайтеся, що ваш бот налаштований в @BotFather')
+      console.log('2. Додайте домен в налаштування бота:')
+      console.log(`   - Відкрийте @BotFather`)
+      console.log(`   - Виберіть вашого бота`)
+      console.log(`   - Оберіть "Edit Bot" → "Edit Domains"`)
+      console.log(`   - Додайте домен: ${domain}\n`)
+      console.log('3. Відкрийте налаштування бізнесу в Xbase')
+      console.log('4. Перейдіть до вкладки "Telegram"')
+      console.log('5. Натисніть "Підключити Telegram"\n')
+
+      console.log('✅ Налаштування завершено!\n')
+
+    } catch (error: any) {
+      console.error('❌ Помилка при перевірці токену:', error.message)
+      console.error('\nПереконайтеся, що:')
+      console.error('1. Токен бота правильний')
+      console.error('2. Бот активний в @BotFather')
+      console.error('3. Є доступ до інтернету\n')
+      process.exit(1)
+    }
+
+  } catch (error: any) {
+    console.error('❌ Помилка:', error.message)
+    process.exit(1)
+  } finally {
+    await prisma.$disconnect()
+  }
+}
+
+// Отримуємо аргументи з командного рядка
+const args = process.argv.slice(2)
+
+if (args.length < 1) {
+  console.error('❌ Помилка: не вказано businessId')
+  console.error('\nВикористання:')
+  console.error('  npm run telegram:oauth <businessId> [botToken]')
+  console.error('\nПриклад:')
+  console.error('  npm run telegram:oauth cml3hv43g000011zklyvox6sh')
+  console.error('  npm run telegram:oauth cml3hv43g000011zklyvox6sh 123456:ABC-DEF1234ghIkl-zyx57W2v1u123ew11')
+  process.exit(1)
+}
+
+const businessId = args[0]
+const botToken = args[1]
+
+setupTelegramOAuth(businessId, botToken)
+
