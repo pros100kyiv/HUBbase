@@ -29,9 +29,10 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
 
   // Close sidebar when pathname changes
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && pathname) {
       onClose()
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [pathname])
 
   useEffect(() => {
