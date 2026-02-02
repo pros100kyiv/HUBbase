@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { WorkingHoursEditor } from '@/components/admin/WorkingHoursEditor'
 import { BusinessCardEditor } from '@/components/admin/BusinessCardEditor'
 import { TelegramSettings } from '@/components/admin/TelegramSettings'
+import { IntegrationsSettings } from '@/components/admin/IntegrationsSettings'
 import { ImageIcon, ClockIcon, ChevronDownIcon, ChevronUpIcon } from '@/components/icons'
 import { toast } from '@/components/ui/toast'
 import { Confetti, triggerConfetti } from '@/components/ui/confetti'
@@ -63,7 +64,7 @@ const getCategoryColor = (index: number) => {
   return colors[index % colors.length]
 }
 
-type Tab = 'info' | 'masters' | 'services' | 'businessCard' | 'telegram'
+type Tab = 'info' | 'masters' | 'services' | 'businessCard' | 'telegram' | 'integrations'
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -517,7 +518,7 @@ export default function SettingsPage() {
 
           {/* Tabs */}
           <div className="flex gap-2 flex-wrap">
-            {(['info', 'masters', 'services', 'businessCard', 'telegram'] as Tab[]).map((tab) => {
+            {(['info', 'masters', 'services', 'businessCard', 'telegram', 'integrations'] as Tab[]).map((tab) => {
               return (
                 <button
                   key={tab}
@@ -534,6 +535,7 @@ export default function SettingsPage() {
                   {tab === 'services' && 'Послуги'}
                   {tab === 'businessCard' && 'Візитівка'}
                   {tab === 'telegram' && 'Telegram'}
+                  {tab === 'integrations' && 'Інтеграції'}
                 </button>
               )
             })}
@@ -1127,6 +1129,32 @@ export default function SettingsPage() {
                 }}
               />
             </div>
+          )}
+
+          {/* Integrations Tab */}
+          {activeTab === 'integrations' && business && (
+            <IntegrationsSettings
+              business={business}
+              onUpdate={async (data) => {
+                const response = await fetch(`/api/business/${business.id}`, {
+                  method: 'PATCH',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify(data)
+                })
+                if (response.ok) {
+                  const updated = await response.json()
+                  setBusiness(updated)
+                  const businessData = localStorage.getItem('business')
+                  if (businessData) {
+                    const parsed = JSON.parse(businessData)
+                    localStorage.setItem('business', JSON.stringify({ ...parsed, ...updated }))
+                  }
+                  toast.success('Налаштування збережено')
+                } else {
+                  toast.error('Помилка збереження')
+                }
+              }}
+            />
           )}
 
         </div>

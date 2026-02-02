@@ -1,0 +1,263 @@
+import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { startOfDay, endOfDay, subDays, subMonths, format, eachDayOfInterval } from 'date-fns'
+
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const businessId = searchParams.get('businessId')
+    const period = searchParams.get('period') || 'month'
+    
+    if (!businessId) {
+      return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
+    }
+    
+    const now = new Date()
+    let startDate: Date, endDate: Date
+    
+    switch (period) {
+      case 'day':
+        startDate = startOfDay(now)
+        endDate = endOfDay(now)
+        break
+      case 'week':
+        startDate = startOfDay(subDays(now, 7))
+        endDate = endOfDay(now)
+        break
+      case 'month':
+        startDate = startOfDay(subMonths(now, 1))
+        endDate = endOfDay(now)
+        break
+      default:
+        startDate = startOfDay(subMonths(now, 1))
+        endDate = endOfDay(now)
+    }
+    
+    const [appointments, clients, services, masters] = await Promise.all([
+      prisma.appointment.findMany({
+        where: {
+          businessId,
+          startTime: { gte: startDate, lte: endDate }
+        },
+        include: { client: true, master: true }
+      }),
+      prisma.client.findMany({
+        where: { businessId },
+        include: { appointments: true }
+      }),
+      prisma.service.findMany({ where: { businessId } }),
+      prisma.master.findMany({ where: { businessId } })
+    ])
+    
+    // Поточний прибуток (тільки виконані)
+    const completedAppointments = appointments.filter(a => a.status === 'Done')
+    const currentRevenue = completedAppointments.reduce((sum, apt) => {
+      const servicesList = JSON.parse(apt.services || '[]')
+      const total = servicesList.reduce((s: number, serviceId: string) => {
+        const service = services.find(s => s.id === serviceId)
+        return s + (service?.price || 0)
+      }, 0)
+      return sum + (apt.customPrice ? Number(apt.customPrice) / 100 : total)
+    }, 0)
+    
+    // Прогнозований прибуток (підтверджені)
+    const confirmedAppointments = appointments.filter(a => a.status === 'Confirmed')
+    const forecastedRevenue = confirmedAppointments.reduce((sum, apt) => {
+      const servicesList = JSON.parse(apt.services || '[]')
+      const total = servicesList.reduce((s: number, serviceId: string) => {
+        const service = services.find(s => s.id === serviceId)
+        return s + (service?.price || 0)
+      }, 0)
+      return sum + (apt.customPrice ? Number(apt.customPrice) / 100 : total)
+    }, 0)
+    
+    // LTV
+    const ltvData = clients.map(client => {
+      const clientAppointments = client.appointments.filter(a => a.status === 'Done')
+      const totalSpent = Number(client.totalSpent) / 100
+      const visits = clientAppointments.length
+      const avgOrderValue = visits > 0 ? totalSpent / visits : 0
+      const firstVisit = client.firstAppointmentDate ? new Date(client.firstAppointmentDate) : null
+      const lastVisit = client.lastAppointmentDate ? new Date(client.lastAppointmentDate) : null
+      const daysActive = firstVisit && lastVisit 
+        ? Math.max(1, Math.floor((lastVisit.getTime() - firstVisit.getTime()) / (1000 * 60 * 60 * 24)))
+        : 0
+      const visitsPerMonth = daysActive > 0 ? (visits / daysActive) * 30 : 0
+      const estimatedLifetime = visitsPerMonth > 0 ? avgOrderValue * visitsPerMonth * 12 : 0
+      
+      return {
+        clientId: client.id,
+        clientName: client.name,
+        totalSpent,
+        visits,
+        avgOrderValue,
+        ltv: estimatedLifetime,
+        daysActive
+      }
+    })
+    
+    const avgLTV = ltvData.length > 0 
+      ? ltvData.reduce((sum, c) => sum + c.ltv, 0) / ltvData.length 
+      : 0
+    
+    // Retention Rate
+    const activeClients = clients.filter(c => {
+      if (!c.lastAppointmentDate) return false
+      const lastVisit = new Date(c.lastAppointmentDate)
+      const daysSinceLastVisit = Math.floor((now.getTime() - lastVisit.getTime()) / (1000 * 60 * 60 * 24))
+      return daysSinceLastVisit <= 90
+    }).length
+    
+    const retentionRate = clients.length > 0 
+      ? (activeClients / clients.length) * 100 
+      : 0
+    
+    // Аналіз послуг
+    const serviceAnalysis = services.map(service => {
+      const serviceAppointments = completedAppointments.filter(apt => {
+        const servicesList = JSON.parse(apt.services || '[]')
+        return servicesList.includes(service.id)
+      })
+      
+      const revenue = serviceAppointments.length * service.price
+      const popularity = completedAppointments.length > 0 
+        ? (serviceAppointments.length / completedAppointments.length) * 100 
+        : 0
+      
+      return {
+        serviceId: service.id,
+        serviceName: service.name,
+        price: service.price,
+        bookings: serviceAppointments.length,
+        revenue,
+        popularity: Math.round(popularity * 100) / 100,
+        avgRevenuePerBooking: service.price
+      }
+    }).sort((a, b) => b.revenue - a.revenue)
+    
+    // Завантаженість спеціалістів
+    const masterUtilization = masters.map(master => {
+      const masterAppointments = completedAppointments.filter(a => a.masterId === master.id)
+      const totalHours = masterAppointments.reduce((sum, apt) => {
+        const duration = (new Date(apt.endTime).getTime() - new Date(apt.startTime).getTime()) / (1000 * 60 * 60)
+        return sum + duration
+      }, 0)
+      
+      const daysInPeriod = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+      const workingDays = daysInPeriod * 0.7
+      const availableHours = workingDays * 8
+      
+      const utilizationRate = availableHours > 0 ? (totalHours / availableHours) * 100 : 0
+      const revenue = masterAppointments.reduce((sum, apt) => {
+        const servicesList = JSON.parse(apt.services || '[]')
+        const total = servicesList.reduce((s: number, serviceId: string) => {
+          const service = services.find(s => s.id === serviceId)
+          return s + (service?.price || 0)
+        }, 0)
+        return sum + (apt.customPrice ? Number(apt.customPrice) / 100 : total)
+      }, 0)
+      
+      return {
+        masterId: master.id,
+        masterName: master.name,
+        appointments: masterAppointments.length,
+        totalHours: Math.round(totalHours * 100) / 100,
+        availableHours: Math.round(availableHours * 100) / 100,
+        utilizationRate: Math.round(utilizationRate * 100) / 100,
+        revenue,
+        avgRevenuePerHour: totalHours > 0 ? revenue / totalHours : 0
+      }
+    }).sort((a, b) => b.utilizationRate - a.utilizationRate)
+    
+    // Тренди
+    const dailyTrends = eachDayOfInterval({ start: startDate, end: endDate }).map(date => {
+      const dayAppointments = appointments.filter(a => {
+        const aptDate = new Date(a.startTime)
+        return aptDate.toDateString() === date.toDateString()
+      })
+      
+      const dayRevenue = dayAppointments
+        .filter(a => a.status === 'Done')
+        .reduce((sum, apt) => {
+          const servicesList = JSON.parse(apt.services || '[]')
+          const total = servicesList.reduce((s: number, serviceId: string) => {
+            const service = services.find(s => s.id === serviceId)
+            return s + (service?.price || 0)
+          }, 0)
+          return sum + (apt.customPrice ? Number(apt.customPrice) / 100 : total)
+        }, 0)
+      
+      return {
+        date: format(date, 'yyyy-MM-dd'),
+        dateLabel: format(date, 'dd.MM'),
+        appointments: dayAppointments.length,
+        completed: dayAppointments.filter(a => a.status === 'Done').length,
+        revenue: dayRevenue
+      }
+    })
+    
+    // Конверсія
+    const totalBookings = appointments.length
+    const confirmed = appointments.filter(a => a.status === 'Confirmed' || a.status === 'Done').length
+    const completed = appointments.filter(a => a.status === 'Done').length
+    const cancelled = appointments.filter(a => a.status === 'Cancelled').length
+    
+    const conversionFunnel = {
+      total: totalBookings,
+      confirmed: confirmed,
+      completed: completed,
+      cancelled: cancelled,
+      confirmationRate: totalBookings > 0 ? (confirmed / totalBookings) * 100 : 0,
+      completionRate: confirmed > 0 ? (completed / confirmed) * 100 : 0,
+      cancellationRate: totalBookings > 0 ? (cancelled / totalBookings) * 100 : 0
+    }
+    
+    // Джерела
+    const sourceAnalysis = appointments.reduce((acc, apt) => {
+      const source = apt.source || 'unknown'
+      if (!acc[source]) {
+        acc[source] = { count: 0, revenue: 0 }
+      }
+      acc[source].count++
+      if (apt.status === 'Done') {
+        const servicesList = JSON.parse(apt.services || '[]')
+        const total = servicesList.reduce((s: number, serviceId: string) => {
+          const service = services.find(s => s.id === serviceId)
+          return s + (service?.price || 0)
+        }, 0)
+        acc[source].revenue += (apt.customPrice ? Number(apt.customPrice) / 100 : total)
+      }
+      return acc
+    }, {} as Record<string, { count: number, revenue: number }>)
+    
+    // Прогноз
+    const avgDailyRevenue = dailyTrends.length > 0
+      ? dailyTrends.reduce((sum, d) => sum + d.revenue, 0) / dailyTrends.length
+      : 0
+    
+    const daysInNextPeriod = period === 'day' ? 1 : period === 'week' ? 7 : 30
+    const forecastNextPeriod = avgDailyRevenue * daysInNextPeriod
+    
+    return NextResponse.json({
+      currentRevenue: Math.round(currentRevenue),
+      forecastedRevenue: Math.round(forecastedRevenue),
+      avgLTV: Math.round(avgLTV),
+      retentionRate: Math.round(retentionRate * 100) / 100,
+      activeClients,
+      totalClients: clients.length,
+      serviceAnalysis,
+      masterUtilization,
+      dailyTrends,
+      conversionFunnel,
+      sourceAnalysis,
+      forecastNextPeriod: Math.round(forecastNextPeriod),
+      forecastGrowth: currentRevenue > 0 
+        ? Math.round(((forecastedRevenue - currentRevenue) / currentRevenue) * 100)
+        : 0
+    })
+  } catch (error) {
+    console.error('Advanced analytics error:', error)
+    return NextResponse.json({ error: 'Failed to calculate analytics' }, { status: 500 })
+  }
+}
+

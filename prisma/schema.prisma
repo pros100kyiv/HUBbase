@@ -64,6 +64,28 @@ model Business {
   telegramChatId              String? // ID чату для сповіщень
   telegramNotificationsEnabled Boolean  @default(false) // Чи увімкнені сповіщення
   telegramSettings             String? // JSON: налаштування бота (розсилки, команди тощо)
+  // AI Чат
+  aiChatEnabled               Boolean  @default(false) // Чи увімкнений AI чат
+  aiProvider                  String? // 'gemini', 'openai'
+  aiApiKey                    String? // API ключ для AI
+  aiSettings                  String? // JSON: налаштування AI (temperature, model, тощо)
+  // SMS/Email
+  smsProvider                 String? // 'twilio', 'smsc'
+  smsApiKey                   String?
+  smsSender                   String? // Ім'я відправника
+  emailProvider               String? // 'sendgrid', 'mailgun'
+  emailApiKey                 String?
+  emailFrom                   String? // Email відправника
+  emailFromName               String? // Ім'я відправника
+  // Платежі
+  paymentProvider             String? // 'liqpay', 'fondy', 'portmone'
+  paymentApiKey               String?
+  paymentMerchantId           String?
+  paymentEnabled              Boolean  @default(false)
+  // Нагадування
+  remindersEnabled            Boolean  @default(false)
+  reminderSmsEnabled          Boolean  @default(false)
+  reminderEmailEnabled        Boolean  @default(false)
   // Відносини
   masters                     Master[]
   services                    Service[]
@@ -76,6 +98,10 @@ model Business {
   analytics                   AnalyticsReport[] // Аналітичні звіти
   imports                     DataImport[] // Імпорти даних
   exports                     DataExport[] // Експорти даних
+  aiChatMessages              AIChatMessage[] // AI чат повідомлення
+  broadcasts                  Broadcast[] // Розсилки SMS/Email
+  payments                    Payment[] // Платежі
+  clientSegments              ClientSegment[] // Сегменти клієнтів
   createdAt                   DateTime          @default(now())
   updatedAt                   DateTime          @updatedAt
 
@@ -154,6 +180,7 @@ model Client {
   metadata             String? // JSON: додаткові дані
   appointments         Appointment[]
   telegramReminders    TelegramReminder[] // Нагадування для клієнта
+  payments             Payment[] // Платежі клієнта
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
 
@@ -191,6 +218,7 @@ model Appointment {
   isFromBooking       Boolean   @default(false) // Чи створено через публічне бронювання (QR/посилання)
   source              String? // Джерело запису: "qr", "link", "phone", "walk_in", "ad_campaign_*", тощо
   campaignId          String? // ID рекламної кампанії (якщо запис з реклами)
+  payments            Payment[] // Платежі за цей запис
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
@@ -408,4 +436,90 @@ model TelegramReminder {
   @@index([scheduledAt])
   @@index([clientId])
   @@index([createdAt])
+}
+
+// AI Чат повідомлення
+model AIChatMessage {
+  id            String    @id @default(cuid())
+  businessId    String
+  business      Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  sessionId     String    // ID сесії чату
+  role          String    // 'user' | 'assistant'
+  message       String    // Текст повідомлення
+  metadata      String?   // JSON: додаткові дані (context, tokens, тощо)
+  createdAt     DateTime  @default(now())
+  
+  @@index([businessId])
+  @@index([sessionId])
+  @@index([createdAt])
+}
+
+// Розсилки SMS/Email
+model Broadcast {
+  id            String    @id @default(cuid())
+  businessId    String
+  business      Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  title         String
+  message       String
+  type          String    // 'sms', 'email', 'both'
+  targetType    String    // 'all', 'segment', 'selected'
+  targetSegment String?   // ID сегменту
+  targetClients String?   // JSON: масив ID клієнтів
+  status        String    @default("draft") // draft, scheduled, sending, sent, failed
+  scheduledAt   DateTime?
+  sentAt        DateTime?
+  sentCount     Int       @default(0)
+  failedCount   Int       @default(0)
+  smsCount      Int       @default(0) // Кількість SMS
+  emailCount    Int       @default(0) // Кількість Email
+  metadata      String?   // JSON: додаткові дані
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([businessId])
+  @@index([status])
+  @@index([scheduledAt])
+}
+
+// Платежі
+model Payment {
+  id                String    @id @default(cuid())
+  businessId        String
+  business          Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  appointmentId     String?
+  appointment       Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
+  clientId          String?
+  client            Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
+  amount            BigInt    // в копійках
+  currency          String    @default("UAH")
+  status            String    // pending, processing, succeeded, failed, refunded
+  provider          String?   // 'liqpay', 'fondy', 'portmone'
+  providerPaymentId String?   // ID платежу в провайдері
+  paymentUrl        String?   // URL для оплати
+  returnUrl         String?   // URL після оплати
+  metadata          String?   // JSON: додаткові дані
+  paidAt            DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+  
+  @@index([businessId])
+  @@index([appointmentId])
+  @@index([clientId])
+  @@index([status])
+  @@index([providerPaymentId])
+}
+
+// Сегменти клієнтів
+model ClientSegment {
+  id            String    @id @default(cuid())
+  businessId    String
+  business      Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  name          String    // 'VIP', 'Активні', 'Неактивні'
+  criteria      String    // JSON: критерії сегментації
+  clientCount   Int       @default(0)
+  autoUpdate    Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  @@index([businessId])
 }

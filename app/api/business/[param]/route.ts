@@ -100,6 +100,29 @@ export async function PATCH(
       socialMedia,
       workingHours,
       location,
+      // AI Chat
+      aiChatEnabled,
+      aiProvider,
+      aiApiKey,
+      aiSettings,
+      // SMS
+      smsProvider,
+      smsApiKey,
+      smsSender,
+      // Email
+      emailProvider,
+      emailApiKey,
+      emailFrom,
+      emailFromName,
+      // Payment
+      paymentProvider,
+      paymentApiKey,
+      paymentMerchantId,
+      paymentEnabled,
+      // Reminders
+      remindersEnabled,
+      reminderSmsEnabled,
+      reminderEmailEnabled,
     } = body
 
     const business = await prisma.business.update({
@@ -121,6 +144,29 @@ export async function PATCH(
         ...(socialMedia !== undefined && { socialMedia: socialMedia || null }),
         ...(workingHours !== undefined && { workingHours: workingHours || null }),
         ...(location !== undefined && { location: location || null }),
+        // AI Chat
+        ...(aiChatEnabled !== undefined && { aiChatEnabled }),
+        ...(aiProvider !== undefined && { aiProvider: aiProvider || null }),
+        ...(aiApiKey !== undefined && { aiApiKey: aiApiKey || null }),
+        ...(aiSettings !== undefined && { aiSettings: aiSettings || null }),
+        // SMS
+        ...(smsProvider !== undefined && { smsProvider: smsProvider || null }),
+        ...(smsApiKey !== undefined && { smsApiKey: smsApiKey || null }),
+        ...(smsSender !== undefined && { smsSender: smsSender || null }),
+        // Email
+        ...(emailProvider !== undefined && { emailProvider: emailProvider || null }),
+        ...(emailApiKey !== undefined && { emailApiKey: emailApiKey || null }),
+        ...(emailFrom !== undefined && { emailFrom: emailFrom || null }),
+        ...(emailFromName !== undefined && { emailFromName: emailFromName || null }),
+        // Payment
+        ...(paymentProvider !== undefined && { paymentProvider: paymentProvider || null }),
+        ...(paymentApiKey !== undefined && { paymentApiKey: paymentApiKey || null }),
+        ...(paymentMerchantId !== undefined && { paymentMerchantId: paymentMerchantId || null }),
+        ...(paymentEnabled !== undefined && { paymentEnabled }),
+        // Reminders
+        ...(remindersEnabled !== undefined && { remindersEnabled }),
+        ...(reminderSmsEnabled !== undefined && { reminderSmsEnabled }),
+        ...(reminderEmailEnabled !== undefined && { reminderEmailEnabled }),
       },
       select: businessSelect,
     })

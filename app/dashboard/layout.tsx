@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { Navbar } from '@/components/layout/Navbar'
 import { Sidebar } from '@/components/admin/Sidebar'
 import { MobileSidebar } from '@/components/admin/MobileSidebar'
+import { AIChatWidget } from '@/components/ai/AIChatWidget'
 
 // Global state for mobile menu
 let globalMobileMenuState = { isOpen: false, setIsOpen: (open: boolean) => {} }
@@ -48,6 +49,20 @@ export default function DashboardLayout({
           {children}
         </div>
       </main>
+
+      {/* AI Chat Widget */}
+      {typeof window !== 'undefined' && (() => {
+        const businessData = localStorage.getItem('business')
+        if (businessData) {
+          try {
+            const business = JSON.parse(businessData)
+            if (business?.id) {
+              return <AIChatWidget businessId={business.id} />
+            }
+          } catch {}
+        }
+        return null
+      })()}
     </div>
   )
 }
