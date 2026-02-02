@@ -26,8 +26,8 @@
   }
   
   body {
-    background: #0F0F0F;
-    color: #FFFFFF;
+    background: #F5F5F5;
+    color: #1A1A1A;
     font-family: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -47,7 +47,7 @@
   
   /* Unified Card Styles */
   .card-candy {
-    @apply bg-gray-800/95 dark:bg-gray-900/95 border border-gray-700/50 dark:border-gray-800/50 rounded-candy-sm shadow-soft-xl backdrop-blur-xl;
+    @apply bg-white dark:bg-gray-800/95 border border-gray-200 dark:border-gray-700/50 rounded-candy-sm shadow-soft-xl dark:shadow-soft-xl backdrop-blur-xl;
     @apply transition-all duration-300;
   }
   
@@ -95,19 +95,19 @@
   
   /* Unified Text Styles */
   .text-heading {
-    @apply text-lg md:text-xl font-black text-white;
+    @apply text-lg md:text-xl font-black text-gray-900 dark:text-white;
   }
   
   .text-subheading {
-    @apply text-base md:text-lg font-black text-white;
+    @apply text-base md:text-lg font-black text-gray-900 dark:text-white;
   }
   
   .text-body {
-    @apply text-sm text-gray-200 dark:text-gray-200;
+    @apply text-sm text-gray-700 dark:text-gray-200;
   }
   
   .text-caption {
-    @apply text-xs text-gray-400 dark:text-gray-400;
+    @apply text-xs text-gray-600 dark:text-gray-400;
   }
   
   .text-small {

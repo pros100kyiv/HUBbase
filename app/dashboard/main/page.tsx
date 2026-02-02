@@ -129,8 +129,8 @@ export default function MainPage() {
               type="text"
               placeholder="Пошук записів..."
               className={cn(
-                'w-full px-3 py-2 rounded-candy-sm border-2 bg-gray-700 dark:bg-gray-800',
-                'border-gray-600 dark:border-gray-700 text-white placeholder-gray-400',
+                'w-full px-3 py-2 rounded-candy-sm border-2 bg-white dark:bg-gray-800',
+                'border-gray-200 dark:border-gray-700 text-gray-900 dark:text-white placeholder-gray-400',
                 'focus:outline-none focus:ring-2 focus:ring-candy-blue focus:border-transparent'
               )}
               onChange={(e) => {
@@ -209,7 +209,7 @@ export default function MainPage() {
                   }
                 }
               }}
-              className="px-3 py-1.5 text-xs font-bold rounded-candy-sm border border-gray-600 dark:border-gray-700 bg-gray-700 dark:bg-gray-800 text-white hover:bg-gray-600 dark:hover:bg-gray-700 transition-all"
+              className="px-3 py-1.5 text-xs font-bold rounded-candy-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
             >
               <span>{hideRevenue ? '👁️ Показати дохід' : '🙈 Приховати дохід'}</span>
             </button>
@@ -273,7 +273,7 @@ export default function MainPage() {
                   return (
                     <div
                       key={appointment.id}
-                      className="card-candy card-candy-hover p-2.5 flex items-center justify-between gap-2.5 bg-gray-700/50 dark:bg-gray-800/50 border-gray-600 dark:border-gray-700"
+                      className="card-candy card-candy-hover p-2.5 flex items-center justify-between gap-2.5 bg-gray-50 dark:bg-gray-800/50 border-gray-200 dark:border-gray-700"
                     >
                       <div className="flex items-center gap-2.5 flex-1 min-w-0">
                         <div className="flex flex-col items-center justify-center w-14 h-14 rounded-candy-sm bg-candy-blue/10 dark:bg-candy-blue/20 text-candy-blue flex-shrink-0 border border-candy-blue/20">
@@ -286,7 +286,7 @@ export default function MainPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <p className="text-sm font-black text-white truncate">{appointment.clientName}</p>
+                            <p className="text-sm font-black text-gray-900 dark:text-white truncate">{appointment.clientName}</p>
                             <span className={`px-2 py-0.5 rounded-full text-[10px] font-bold border flex-shrink-0 whitespace-nowrap ${getStatusColor(appointment.status)}`}>
                               {getStatusLabel(appointment.status)}
                             </span>
@@ -317,7 +317,7 @@ export default function MainPage() {
               {todayAppointments.length > 5 && (
                 <button
                   onClick={() => router.push('/dashboard/appointments')}
-                  className="w-full px-3 py-2 text-xs font-bold rounded-candy-sm border border-gray-600 dark:border-gray-700 bg-gray-700 dark:bg-gray-800 text-white hover:bg-gray-600 dark:hover:bg-gray-700 transition-all"
+                  className="w-full px-3 py-2 text-xs font-bold rounded-candy-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
                 >
                   Показати всі записи ({todayAppointments.length})
                 </button>

@@ -80,7 +80,7 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <>
-      <aside className={cn('bg-gray-800/95 dark:bg-gray-900/95 backdrop-blur-xl border-r border-gray-700/50 dark:border-gray-800/50 w-16 md:w-40 min-h-screen fixed left-0 top-16 z-40 shadow-soft-xl', className)}>
+      <aside className={cn('bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border-r border-gray-200 dark:border-gray-700/50 w-16 md:w-40 min-h-screen fixed left-0 top-16 z-40 shadow-soft-xl', className)}>
         <nav className="p-1.5 md:p-2 space-y-0.5 md:space-y-1">
           {navItems.map((item) => {
             const isActive = pathname === item.path || (item.path === '/dashboard' && pathname === '/dashboard')
@@ -98,14 +98,14 @@ export function Sidebar({ className }: SidebarProps) {
                   'w-full flex flex-col items-center gap-1 md:gap-1.5 px-1 md:px-2 py-1.5 md:py-2 rounded-candy-sm text-center transition-all duration-200 active:scale-[0.97] group relative',
                   isActive
                     ? 'bg-gradient-to-r from-candy-blue to-candy-purple text-white shadow-soft-xl'
-                    : 'text-gray-300 dark:text-gray-400 hover:bg-gray-700/50 dark:hover:bg-gray-800/50 hover:text-white'
+                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50 hover:text-gray-900 dark:hover:text-white'
                 )}
                 title={item.label}
               >
-                <div className={cn(isActive ? 'text-white' : 'text-gray-300 dark:text-gray-400 group-hover:text-white', 'w-5 h-5 md:w-6 md:h-6 transition-colors')}>
+                <div className={cn(isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white', 'w-5 h-5 md:w-6 md:h-6 transition-colors')}>
                   {item.icon}
                 </div>
-                <span className={cn("text-[10px] md:text-xs font-black leading-tight hidden md:block transition-colors", isActive ? 'text-white' : 'text-gray-300 dark:text-gray-400 group-hover:text-white')}>
+                <span className={cn("text-[10px] md:text-xs font-black leading-tight hidden md:block transition-colors", isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300 group-hover:text-gray-900 dark:group-hover:text-white')}>
                   {item.label}
                 </span>
                 {item.badge && item.badge > 0 && (

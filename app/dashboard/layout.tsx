@@ -12,8 +12,8 @@ export default function DashboardLayout({
     <div className="relative min-h-screen overflow-hidden">
       {/* Blurred Background */}
       <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1920')] bg-cover bg-center opacity-20" />
-        <div className="absolute inset-0 bg-black/60 backdrop-blur-xl" />
+        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1920')] bg-cover bg-center opacity-10 dark:opacity-20" />
+        <div className="absolute inset-0 bg-white/80 dark:bg-black/60 backdrop-blur-xl" />
       </div>
 
       {/* Top Navbar */}
