@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, usePathname } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, BellIcon, XIcon } from '@/components/icons'
 import { NotificationsPanel } from './NotificationsPanel'
@@ -26,14 +26,16 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const [business, setBusiness] = useState<any>(null)
   const [pendingCount, setPendingCount] = useState(0)
   const [showNotifications, setShowNotifications] = useState(false)
+  const prevPathnameRef = useRef<string | null>(null)
 
-  // Close sidebar when pathname changes
+  // Close sidebar when pathname changes (only if it actually changed)
   useEffect(() => {
-    if (isOpen && pathname) {
+    if (isOpen && pathname && prevPathnameRef.current !== null && prevPathnameRef.current !== pathname) {
       onClose()
     }
+    prevPathnameRef.current = pathname
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [pathname])
+  }, [pathname, isOpen])
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')

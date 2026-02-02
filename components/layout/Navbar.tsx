@@ -61,11 +61,13 @@ export function Navbar() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
+  // Close mobile menu when pathname changes
   useEffect(() => {
-    if (pathname?.startsWith('/dashboard')) {
-      setMobileMenuState(mobileMenuOpen)
+    if (mobileMenuOpen && pathname) {
+      setMobileMenuOpen(false)
+      setMobileMenuState(false)
     }
-  }, [mobileMenuOpen, pathname])
+  }, [pathname])
 
   // Don't show on dashboard pages (they have sidebar)
   if (pathname?.startsWith('/dashboard')) {
