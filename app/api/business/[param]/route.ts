@@ -83,7 +83,24 @@ export async function PATCH(
     }
 
     const body = await request.json()
-    const { name, email, phone, address, description, primaryColor, secondaryColor, backgroundColor, surfaceColor, hideRevenue } = body
+    const { 
+      name, 
+      email, 
+      phone, 
+      address, 
+      description, 
+      primaryColor, 
+      secondaryColor, 
+      backgroundColor, 
+      surfaceColor, 
+      hideRevenue,
+      businessCardBackgroundImage,
+      slogan,
+      additionalInfo,
+      socialMedia,
+      workingHours,
+      location,
+    } = body
 
     const business = await prisma.business.update({
       where: { id: param },
@@ -98,22 +115,14 @@ export async function PATCH(
         ...(backgroundColor !== undefined && { backgroundColor }),
         ...(surfaceColor !== undefined && { surfaceColor }),
         ...(hideRevenue !== undefined && { hideRevenue }),
+        ...(businessCardBackgroundImage !== undefined && { businessCardBackgroundImage: businessCardBackgroundImage || null }),
+        ...(slogan !== undefined && { slogan: slogan || null }),
+        ...(additionalInfo !== undefined && { additionalInfo: additionalInfo || null }),
+        ...(socialMedia !== undefined && { socialMedia: socialMedia || null }),
+        ...(workingHours !== undefined && { workingHours: workingHours || null }),
+        ...(location !== undefined && { location: location || null }),
       },
-      select: {
-        id: true,
-        name: true,
-        slug: true,
-        email: true,
-        phone: true,
-        address: true,
-        description: true,
-        logo: true,
-        primaryColor: true,
-        secondaryColor: true,
-        backgroundColor: true,
-        surfaceColor: true,
-        isActive: true,
-      },
+      select: businessSelect,
     })
 
     return NextResponse.json({ business })
