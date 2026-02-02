@@ -139,9 +139,10 @@ export default function MainPage() {
             />
           </div>
         </div>
+      </div>
 
-        {/* Quick Stats */}
-        <div className={cn(
+      {/* Quick Stats */}
+      <div className={cn(
             "grid gap-2 mb-2",
             hideRevenue ? "grid-cols-2 md:grid-cols-3" : "grid-cols-2 md:grid-cols-4"
           )}>
@@ -172,10 +173,10 @@ export default function MainPage() {
               value={stats?.uniqueClients || 0}
               iconColor="purple"
             />
-        </div>
+      </div>
 
-        {/* Revenue Toggle */}
-        <div className="mb-2 flex items-center justify-end">
+      {/* Revenue Toggle */}
+      <div className="mb-2 flex items-center justify-end">
             <button
               onClick={async () => {
                 const newHideRevenue = !hideRevenue
@@ -204,10 +205,10 @@ export default function MainPage() {
             >
               <span>{hideRevenue ? '👁️ Показати дохід' : '🙈 Приховати дохід'}</span>
             </button>
-        </div>
+      </div>
 
-        {/* Today's Appointments */}
-        <div className="card-candy p-3 mb-3 overflow-hidden">
+      {/* Today's Appointments */}
+      <div className="card-candy p-3 mb-3 overflow-hidden">
             <h2 className="text-subheading mb-3 truncate">
               Записи на сьогодні ({format(new Date(), 'd MMMM yyyy')})
             </h2>
@@ -315,7 +316,6 @@ export default function MainPage() {
               )}
             </div>
           </div>
-        </div>
       </div>
     </div>
   )
