@@ -10,6 +10,7 @@ import { EditAppointmentForm } from '@/components/admin/EditAppointmentForm'
 import { QuickClientCard } from '@/components/admin/QuickClientCard'
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon, FilterIcon, DownloadIcon, CheckIcon, UserIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
+import { toast } from '@/components/ui/toast'
 
 interface Appointment {
   id: string
@@ -121,24 +122,42 @@ export default function AppointmentsPage() {
     reloadAppointments()
   }
 
-  const reloadAppointments = () => {
+  const reloadAppointments = async () => {
     if (!business) return
     
-    const start = startOfMonth(currentMonth)
-    const end = endOfMonth(currentMonth)
-    const startStr = format(start, 'yyyy-MM-dd')
-    const endStr = format(end, 'yyyy-MM-dd')
-    
-    fetch(`/api/appointments?businessId=${business.id}&startDate=${startStr}&endDate=${endStr}`)
-      .then((res) => res.json())
-      .then((data) => {
-        const withMasters = (data || []).map((apt: Appointment) => {
-          const master = masters.find((m: any) => m.id === apt.masterId)
-          return { ...apt, masterName: master?.name || apt.master?.name || 'Невідомий спеціаліст' }
-        })
-        setAppointments(withMasters)
+    try {
+      // Спочатку завантажуємо masters, якщо їх немає
+      let currentMasters = masters
+      if (currentMasters.length === 0) {
+        const mastersRes = await fetch(`/api/masters?businessId=${business.id}`)
+        if (mastersRes.ok) {
+          currentMasters = await mastersRes.json()
+          setMasters(currentMasters)
+        }
+      }
+      
+      const start = startOfMonth(currentMonth)
+      const end = endOfMonth(currentMonth)
+      const startStr = format(start, 'yyyy-MM-dd')
+      const endStr = format(end, 'yyyy-MM-dd')
+      
+      const res = await fetch(`/api/appointments?businessId=${business.id}&startDate=${startStr}&endDate=${endStr}`)
+      if (!res.ok) throw new Error(`Failed to fetch appointments: ${res.status}`)
+      
+      const data = await res.json()
+      const withMasters = (data || []).map((apt: Appointment) => {
+        const master = currentMasters.find((m: any) => m.id === apt.masterId)
+        return { ...apt, masterName: master?.name || apt.master?.name || 'Невідомий спеціаліст' }
       })
-      .catch((error) => console.error('Error reloading appointments:', error))
+      setAppointments(withMasters)
+    } catch (error) {
+      console.error('Error reloading appointments:', error)
+      toast({
+        title: 'Помилка',
+        description: 'Не вдалося завантажити записи',
+        type: 'error',
+      })
+    }
   }
 
   const handleEditAppointment = (appointment: Appointment) => {
@@ -147,44 +166,71 @@ export default function AppointmentsPage() {
   }
 
   const handleStatusChange = async (id: string, status: string) => {
+    if (!business) return
+    
     try {
       const response = await fetch(`/api/appointments/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ status, businessId: business.id }),
       })
 
       if (response.ok) {
         setAppointments((prev) =>
           prev.map((apt) => (apt.id === id ? { ...apt, status } : apt))
         )
+        toast({ title: 'Статус оновлено', type: 'success' })
+      } else {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to update status')
       }
     } catch (error) {
       console.error('Error updating appointment:', error)
+      toast({
+        title: 'Помилка',
+        description: error instanceof Error ? error.message : 'Не вдалося оновити статус',
+        type: 'error',
+      })
     }
   }
 
   const handleBulkStatusChange = async (status: string) => {
-    if (selectedAppointments.size === 0) return
+    if (selectedAppointments.size === 0 || !business) return
     
     try {
       const promises = Array.from(selectedAppointments).map(id =>
         fetch(`/api/appointments/${id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status }),
+          body: JSON.stringify({ status, businessId: business.id }),
         })
       )
       
-      await Promise.all(promises)
-      setAppointments((prev) =>
-        prev.map((apt) => 
-          selectedAppointments.has(apt.id) ? { ...apt, status } : apt
+      const results = await Promise.allSettled(promises)
+      const failed = results.filter(r => r.status === 'rejected')
+      
+      if (failed.length > 0) {
+        toast({
+          title: 'Помилка',
+          description: `Не вдалося оновити ${failed.length} записів`,
+          type: 'error',
+        })
+      } else {
+        setAppointments((prev) =>
+          prev.map((apt) => 
+            selectedAppointments.has(apt.id) ? { ...apt, status } : apt
+          )
         )
-      )
-      setSelectedAppointments(new Set())
+        setSelectedAppointments(new Set())
+        toast({ title: 'Статуси оновлено', type: 'success' })
+      }
     } catch (error) {
       console.error('Error updating appointments:', error)
+      toast({
+        title: 'Помилка',
+        description: error instanceof Error ? error.message : 'Не вдалося оновити записи',
+        type: 'error',
+      })
     }
   }
 
@@ -196,7 +242,12 @@ export default function AppointmentsPage() {
       let servicesList: string[] = []
       try {
         if (apt.services) {
-          servicesList = JSON.parse(apt.services)
+          const serviceIds = JSON.parse(apt.services)
+          // Конвертуємо ID в назви послуг
+          servicesList = serviceIds.map((serviceId: string) => {
+            const service = services.find(s => s.id === serviceId)
+            return service?.name || serviceId
+          })
         }
       } catch (e) {
         // Ignore
@@ -256,7 +307,11 @@ export default function AppointmentsPage() {
       try {
         if (apt.services) {
           const servicesList = JSON.parse(apt.services)
-          matchesService = servicesList.some((s: string) => s.toLowerCase().includes(query))
+          // servicesList містить ID послуг, перевіряємо по назвах
+          matchesService = servicesList.some((serviceId: string) => {
+            const service = services.find(s => s.id === serviceId)
+            return service?.name.toLowerCase().includes(query) || false
+          })
         }
       } catch (e) {
         // Ignore
@@ -279,8 +334,8 @@ export default function AppointmentsPage() {
         try {
           if (apt.services) {
             const servicesList = JSON.parse(apt.services)
-            const total = servicesList.reduce((acc: number, serviceName: string) => {
-              const service = services.find(s => s.name === serviceName)
+            const total = servicesList.reduce((acc: number, serviceId: string) => {
+              const service = services.find(s => s.id === serviceId)
               return acc + (service?.price || 0)
             }, 0)
             return sum + total
