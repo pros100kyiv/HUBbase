@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils'
 interface ProfileSetupModalProps {
   business: any
   onComplete: (updatedBusiness: any) => void
+  onClose?: () => void // Додаємо опціональний callback для закриття
 }
 
 const BUSINESS_NICHES = [
@@ -26,7 +27,7 @@ const BUSINESS_NICHES = [
   { value: 'OTHER', label: 'Інше' },
 ]
 
-export function ProfileSetupModal({ business, onComplete }: ProfileSetupModalProps) {
+export function ProfileSetupModal({ business, onComplete, onClose }: ProfileSetupModalProps) {
   const [formData, setFormData] = useState({
     name: business?.name || '',
     phone: business?.phone || '',
@@ -215,17 +216,25 @@ export function ProfileSetupModal({ business, onComplete }: ProfileSetupModalPro
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
       <div className="relative w-full max-w-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-candy-lg shadow-soft-xl p-6 md:p-8">
-        {/* Close button */}
+        {/* Close button - завжди доступний */}
         <button
           onClick={() => {
-            // Не дозволяємо закрити, поки профіль не заповнений
-            if (!business?.profileCompleted) {
-              return
+            // Якщо профіль заповнений - викликаємо onComplete
+            if (business?.profileCompleted) {
+              onComplete(business)
+            } else {
+              // Якщо профіль не заповнений - викликаємо onClose (якщо є)
+              // або просто закриваємо модальне вікно
+              if (onClose) {
+                onClose()
+              } else {
+                // Якщо onClose не передано, викликаємо onComplete з поточним бізнесом
+                onComplete(business)
+              }
             }
-            onComplete(business)
           }}
           className="absolute top-4 right-4 p-2 rounded-candy-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
-          disabled={!business?.profileCompleted}
+          title={business?.profileCompleted ? 'Закрити' : 'Закрити (профіль не заповнений)'}
         >
           <XIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
         </button>

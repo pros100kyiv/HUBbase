@@ -33,8 +33,14 @@ export default function DashboardLayout({
       try {
         const parsed = JSON.parse(businessData)
         setBusiness(parsed)
-        // Показуємо модальне вікно, якщо профіль не заповнений
-        if (!parsed.profileCompleted) {
+        
+        // Перевіряємо, чи користувач вже закривав це вікно
+        const profileModalClosed = localStorage.getItem('profileModalClosed')
+        
+        // Показуємо модальне вікно ТІЛЬКИ якщо:
+        // 1. Профіль не заповнений
+        // 2. Користувач ще не закривав це вікно вручну
+        if (!parsed.profileCompleted && !profileModalClosed) {
           setShowProfileModal(true)
         }
       } catch (e) {
@@ -55,10 +61,16 @@ export default function DashboardLayout({
       // Закриваємо модальне вікно тільки якщо профіль заповнений
       if (updatedBusiness.profileCompleted) {
         setShowProfileModal(false)
-        // Не перезавантажуємо сторінку - просто оновлюємо стан
-        // Дані вже оновлені в localStorage, Navbar оновиться автоматично
+        // Видаляємо прапорець закриття, оскільки профіль тепер заповнений
+        localStorage.removeItem('profileModalClosed')
       }
     }
+  }
+
+  const handleProfileModalClose = () => {
+    // Зберігаємо прапорець, що користувач закрив вікно вручну
+    localStorage.setItem('profileModalClosed', 'true')
+    setShowProfileModal(false)
   }
 
   return (
@@ -99,11 +111,12 @@ export default function DashboardLayout({
         return null
       })()}
 
-      {/* Profile Setup Modal */}
-      {mounted && showProfileModal && business && (
+      {/* Profile Setup Modal - показується тільки при першій реєстрації */}
+      {mounted && showProfileModal && business && !business.profileCompleted && (
         <ProfileSetupModal
           business={business}
           onComplete={handleProfileComplete}
+          onClose={handleProfileModalClose}
         />
       )}
     </div>
