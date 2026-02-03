@@ -79,6 +79,7 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
     script.setAttribute('data-size', 'large')
     script.setAttribute('data-onauth', 'onTelegramAuth(user)') // Використовуємо статичну назву
     script.setAttribute('data-request-access', 'write')
+    script.setAttribute('data-userpic', 'false') // Вимикаємо відображення аватара останнього користувача
     script.async = true
 
     script.onerror = () => {
@@ -105,11 +106,11 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
   }, [isRegister]) // Видаляємо router з залежностей, він не потрібен
 
   return (
-    <div className="w-full flex justify-center">
-      {/* Telegram Login Widget - стилізується як кнопка */}
+    <div className="w-full">
+      {/* Telegram Login Widget - стилізується як біла кнопка як Google */}
       <div 
         ref={containerRef} 
-        className="[&>iframe]:!w-full [&>iframe]:!h-[48px] [&>iframe]:!rounded-lg [&>iframe]:!border-none"
+        className="[&>iframe]:!w-full [&>iframe]:!h-[48px] [&>iframe]:!rounded-lg [&>iframe]:!border-none [&>iframe]:!bg-white"
       />
       <style jsx global>{`
         div[data-telegram-login] iframe {
@@ -117,6 +118,7 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
           height: 48px !important;
           border-radius: 8px !important;
           border: none !important;
+          background: white !important;
         }
       `}</style>
     </div>

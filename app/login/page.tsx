@@ -104,7 +104,16 @@ function LoginForm() {
 
           {/* Password Field */}
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">Пароль *</label>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-medium text-gray-300">Пароль *</label>
+              <button
+                type="button"
+                onClick={() => router.push('/forgot-password')}
+                className="text-xs text-candy-blue hover:text-candy-purple hover:underline"
+              >
+                Забули пароль?
+              </button>
+            </div>
             <input
               type="password"
               value={formData.password}

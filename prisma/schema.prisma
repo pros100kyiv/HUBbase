@@ -43,6 +43,8 @@ model Business {
   slug                         String              @unique // для URL: /booking/[slug]
   email                        String              @unique
   password                     String? // хешований пароль (опціональний для OAuth)
+  resetToken                   String? // Токен для відновлення паролю
+  resetTokenExpiry             DateTime? // Термін дії токену відновлення
   googleId                     String?             @unique // Google OAuth ID
   telegramId                   BigInt?             @unique // Telegram OAuth ID (для автоматичної реєстрації/входу)
   phone                        String?
@@ -602,6 +604,8 @@ model ManagementCenter {
   slug                         String        @unique // Slug для URL
   email                        String        @unique // Email (логін)
   password                     String? // Хешований пароль
+  resetToken                   String? // Токен для відновлення паролю
+  resetTokenExpiry             DateTime? // Термін дії токену відновлення
   googleId                     String?       @unique // Google OAuth ID
   telegramId                   BigInt?       @unique // Telegram OAuth ID
   phone                        String? // Номер телефону
