@@ -433,7 +433,7 @@ export default function AppointmentsPage() {
         </div>
 
         {/* Search and Filters */}
-        <div className="bg-white rounded-xl p-4 mb-2" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+        <div className="bg-white rounded-xl p-4 mb-2 card-floating">
           <div className="flex flex-col sm:flex-row gap-2">
             {/* Search */}
             <div className="flex-1 relative">
@@ -498,23 +498,23 @@ export default function AppointmentsPage() {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-2">
-          <div className="bg-white rounded-xl p-3 text-center" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+          <div className="bg-white rounded-xl p-3 text-center card-floating">
             <div className="text-xs text-gray-600 mb-0.5">Всього</div>
             <div className="text-sm font-black text-black">{stats.total}</div>
           </div>
-          <div className="bg-white rounded-xl p-3 text-center" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+          <div className="bg-white rounded-xl p-3 text-center card-floating">
             <div className="text-xs text-gray-600 mb-0.5">Очікує</div>
             <div className="text-sm font-black text-orange-500">{stats.pending}</div>
           </div>
-          <div className="bg-white rounded-xl p-3 text-center" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+          <div className="bg-white rounded-xl p-3 text-center card-floating">
             <div className="text-xs text-gray-600 mb-0.5">Підтверджено</div>
             <div className="text-sm font-black text-green-500">{stats.confirmed}</div>
           </div>
-          <div className="bg-white rounded-xl p-3 text-center" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+          <div className="bg-white rounded-xl p-3 text-center card-floating">
             <div className="text-xs text-gray-600 mb-0.5">Виконано</div>
             <div className="text-sm font-black text-blue-500">{stats.done}</div>
           </div>
-          <div className="bg-white rounded-xl p-3 text-center" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+          <div className="bg-white rounded-xl p-3 text-center card-floating">
             <div className="text-xs text-gray-600 mb-0.5">Дохід</div>
             <div className="text-sm font-black text-purple-500">{stats.revenue} грн</div>
           </div>
@@ -525,7 +525,7 @@ export default function AppointmentsPage() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-3">
           {/* Month Navigation */}
-          <div className="bg-white rounded-xl p-4" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+          <div className="bg-white rounded-xl p-4 card-floating">
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
               <h2 className="text-base font-black text-black">
                 {format(currentMonth, 'LLLL yyyy', { locale: uk })}
@@ -640,7 +640,7 @@ export default function AppointmentsPage() {
 
           {/* Selected Date Details */}
           {selectedDate && (
-            <div className="bg-white rounded-xl p-4" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+            <div className="bg-white rounded-xl p-4 card-floating">
               <div className="flex items-center justify-between mb-2">
                 <h3 className="text-base font-black text-black">
                   {format(selectedDate, 'd MMMM yyyy', { locale: uk })}
@@ -702,7 +702,7 @@ export default function AppointmentsPage() {
 
           {/* List View */}
           {viewMode === 'list' && !showCreateForm && (
-            <div className="bg-white rounded-xl p-4" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+            <div className="bg-white rounded-xl p-4 card-floating">
               <h3 className="text-base font-black text-black mb-3">
                 Всі записи ({filteredAppointments.length})
               </h3>
@@ -746,7 +746,7 @@ export default function AppointmentsPage() {
           )}
 
           {viewMode === 'calendar' && !selectedDate && !showCreateForm && (
-            <div className="bg-white rounded-xl p-12 text-center" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+            <div className="bg-white rounded-xl p-12 text-center card-floating">
               <div className="mb-6 flex justify-center">
                 <div className="w-32 h-32 bg-blue-50 rounded-full flex items-center justify-center">
                   <CalendarIcon className="w-16 h-16 text-blue-500" />
@@ -773,7 +773,7 @@ export default function AppointmentsPage() {
 
           {/* Create Appointment Form */}
           {showCreateForm && (
-            <div className="bg-white rounded-xl p-4" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+            <div className="bg-white rounded-xl p-4 card-floating">
               <CreateAppointmentForm
                 businessId={business.id}
                 masters={masters}
@@ -789,7 +789,7 @@ export default function AppointmentsPage() {
         {/* Right Sidebar */}
         <div className="space-y-3">
           {/* Quick Stats */}
-          <div className="bg-white rounded-xl p-4" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+          <div className="bg-white rounded-xl p-4 card-floating">
             <h3 className="text-sm font-black text-black mb-2">
               Статистика місяця
             </h3>
@@ -814,7 +814,7 @@ export default function AppointmentsPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className="bg-white rounded-xl p-4" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+          <div className="bg-white rounded-xl p-4 card-floating">
             <h3 className="text-sm font-black text-black mb-2">
               Швидкі дії
             </h3>

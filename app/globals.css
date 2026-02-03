@@ -86,16 +86,49 @@
     border-color: rgba(255, 255, 255, 0.1);
   }
   
-  /* White cards on dark background */
+  /* White cards on dark background - floating effect */
   .bg-gray-100 {
     background-color: #FFFFFF;
     color: #000000;
+    box-shadow: 
+      0 10px 25px -5px rgba(0, 0, 0, 0.4),
+      0 8px 10px -6px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+    transform: translateY(0);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .bg-gray-100:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 15px 35px -5px rgba(0, 0, 0, 0.5),
+      0 10px 15px -6px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.15);
   }
   
   /* Dark cards on dark background */
   .bg-gray-800 {
     background-color: #1A1A1A;
     color: #FFFFFF;
+  }
+  
+  /* Floating white card style */
+  .card-floating {
+    background-color: #FFFFFF;
+    box-shadow: 
+      0 10px 25px -5px rgba(0, 0, 0, 0.4),
+      0 8px 10px -6px rgba(0, 0, 0, 0.3),
+      0 0 0 1px rgba(255, 255, 255, 0.1);
+    transform: translateY(0);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  
+  .card-floating:hover {
+    transform: translateY(-2px);
+    box-shadow: 
+      0 15px 35px -5px rgba(0, 0, 0, 0.5),
+      0 10px 15px -6px rgba(0, 0, 0, 0.4),
+      0 0 0 1px rgba(255, 255, 255, 0.15);
   }
   
   .dark body {
