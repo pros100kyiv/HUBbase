@@ -121,23 +121,38 @@ export function ProfileSetupModal({ business, onComplete }: ProfileSetupModalPro
       }
 
       // Оновлюємо localStorage
-      if (data.business) {
-        localStorage.setItem('business', JSON.stringify(data.business))
-      }
+      const updatedBusiness = data.business || business
+      if (updatedBusiness) {
+        // Додаємо всі необхідні поля
+        const fullBusiness = {
+          ...updatedBusiness,
+          profileCompleted: true,
+          businessIdentifier: identifier,
+          name: formData.name.trim(),
+          phone: normalizedPhone,
+          niche: formData.niche,
+          customNiche: formData.niche === 'OTHER' ? formData.customNiche.trim() : null,
+        }
+        localStorage.setItem('business', JSON.stringify(fullBusiness))
+        
+        // Показуємо повідомлення
+        try {
+          const toastModule = await import('@/components/ui/toast')
+          toastModule.toast({
+            title: 'Успішно!',
+            description: 'Профіль заповнено',
+            type: 'success',
+          })
+        } catch (e) {
+          console.warn('Toast not available')
+        }
 
-      // Показуємо повідомлення
-      try {
-        const toastModule = await import('@/components/ui/toast')
-        toastModule.toast({
-          title: 'Успішно!',
-          description: 'Профіль заповнено',
-          type: 'success',
-        })
-      } catch (e) {
-        console.warn('Toast not available')
+        // Викликаємо onComplete з повними даними
+        onComplete(fullBusiness)
+      } else {
+        setErrors({ submit: 'Не вдалося отримати оновлені дані' })
+        setIsSaving(false)
       }
-
-      onComplete(data.business || business)
     } catch (error) {
       console.error('Error saving profile:', error)
       setErrors({ submit: 'Помилка при збереженні профілю' })

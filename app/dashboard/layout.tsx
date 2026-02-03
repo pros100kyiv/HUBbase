@@ -48,11 +48,16 @@ export default function DashboardLayout({
   }, [mobileMenuOpen])
 
   const handleProfileComplete = (updatedBusiness: any) => {
-    setBusiness(updatedBusiness)
-    setShowProfileModal(false)
-    // Оновлюємо localStorage
     if (updatedBusiness) {
+      setBusiness(updatedBusiness)
+      // Оновлюємо localStorage
       localStorage.setItem('business', JSON.stringify(updatedBusiness))
+      // Закриваємо модальне вікно тільки якщо профіль заповнений
+      if (updatedBusiness.profileCompleted) {
+        setShowProfileModal(false)
+        // Не перезавантажуємо сторінку - просто оновлюємо стан
+        // Дані вже оновлені в localStorage, Navbar оновиться автоматично
+      }
     }
   }
 

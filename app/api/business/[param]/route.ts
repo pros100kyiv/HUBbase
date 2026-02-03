@@ -2,9 +2,19 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // Перевіряє чи параметр є UUID (ID) чи slug
+// CUID має формат: c[0-9a-z]{24} або схожий
 function isUUID(str: string): boolean {
+  // Перевіряємо UUID формат
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-  return uuidRegex.test(str)
+  if (uuidRegex.test(str)) return true
+  
+  // Перевіряємо CUID формат (використовується Prisma за замовчуванням)
+  const cuidRegex = /^c[0-9a-z]{24}$/i
+  if (cuidRegex.test(str)) return true
+  
+  // Якщо це не UUID і не CUID, але має достатню довжину - вважаємо ID
+  // (може бути інший формат ID)
+  return str.length > 10 && !str.includes('-') && !str.includes('_')
 }
 
 const businessSelect = {
