@@ -7,6 +7,7 @@ import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { UserIcon, SearchIcon, DownloadIcon, FilterIcon, CheckIcon, CalendarIcon, PhoneIcon, SettingsIcon, XIcon, StarIcon, MoneyIcon, UsersIcon, ChevronDownIcon, ChevronUpIcon, EditIcon, TrashIcon } from '@/components/icons'
 import { QuickMasterCard } from '@/components/admin/QuickMasterCard'
+import { MasterScheduleModal } from '@/components/admin/MasterScheduleModal'
 import { toast } from '@/components/ui/toast'
 
 interface Master {
@@ -53,6 +54,9 @@ export default function MastersPage() {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards')
   const [showQuickMasterCard, setShowQuickMasterCard] = useState(false)
   const [editingMaster, setEditingMaster] = useState<Master | null>(null)
+  const [showScheduleModal, setShowScheduleModal] = useState(false)
+  const [selectedMasterForSchedule, setSelectedMasterForSchedule] = useState<Master | null>(null)
+  const [dateFilter, setDateFilter] = useState<string>('all') // all, today, tomorrow, week, month
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -369,6 +373,37 @@ export default function MastersPage() {
         if (filterStatus === 'inactive' && master.isActive) return false
       }
 
+      // Date filter - фільтруємо по записах спеціаліста
+      if (dateFilter !== 'all') {
+        const masterAppointments = appointments.filter((apt: any) => apt.masterId === master.id)
+        const now = new Date()
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+        const tomorrow = new Date(today)
+        tomorrow.setDate(tomorrow.getDate() + 1)
+        const weekEnd = new Date(today)
+        weekEnd.setDate(weekEnd.getDate() + 7)
+        const monthEnd = new Date(today)
+        monthEnd.setMonth(monthEnd.getMonth() + 1)
+
+        const hasAppointmentsInPeriod = masterAppointments.some((apt: any) => {
+          const aptDate = new Date(apt.startTime)
+          switch (dateFilter) {
+            case 'today':
+              return aptDate >= today && aptDate < tomorrow
+            case 'tomorrow':
+              return aptDate >= tomorrow && aptDate < new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000)
+            case 'week':
+              return aptDate >= today && aptDate < weekEnd
+            case 'month':
+              return aptDate >= today && aptDate < monthEnd
+            default:
+              return true
+          }
+        })
+
+        if (!hasAppointmentsInPeriod) return false
+      }
+
       return true
     })
     .sort((a, b) => {
@@ -582,6 +617,19 @@ export default function MastersPage() {
             >
               {sortOrder === 'asc' ? '↑' : '↓'}
             </button>
+
+            {/* Date Filter */}
+            <select
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
+            >
+              <option value="all">Всі дати</option>
+              <option value="today">Сьогодні</option>
+              <option value="tomorrow">Завтра</option>
+              <option value="week">Цей тиждень</option>
+              <option value="month">Цей місяць</option>
+            </select>
           </div>
 
           {/* Bulk Actions */}
@@ -754,6 +802,16 @@ export default function MastersPage() {
                         <td className="p-2">
                           <div className="flex gap-1 justify-center">
                             <button
+                              onClick={() => {
+                                setSelectedMasterForSchedule(master)
+                                setShowScheduleModal(true)
+                              }}
+                              className="p-1 text-candy-blue hover:bg-candy-blue/10 rounded-candy-xs transition-all"
+                              title="Графік роботи"
+                            >
+                              <CalendarIcon className="w-3 h-3" />
+                            </button>
+                            <button
                               onClick={() => handleEditMaster(master)}
                               className="p-1 text-candy-purple hover:bg-candy-purple/10 rounded-candy-xs transition-all"
                               title="Редагувати"
@@ -870,6 +928,16 @@ export default function MastersPage() {
                         <div className="text-[10px] text-gray-500 dark:text-gray-400">Зароблено</div>
                       </div>
                       <div className="flex gap-1">
+                        <button
+                          onClick={() => {
+                            setSelectedMasterForSchedule(master)
+                            setShowScheduleModal(true)
+                          }}
+                          className="p-1.5 text-candy-blue hover:bg-candy-blue/10 rounded-candy-xs transition-all"
+                          title="Графік роботи"
+                        >
+                          <CalendarIcon className="w-4 h-4" />
+                        </button>
                         <button
                           onClick={() => handleEditMaster(master)}
                           className="p-1.5 text-candy-purple hover:bg-candy-purple/10 rounded-candy-xs transition-all"
@@ -996,6 +1064,29 @@ export default function MastersPage() {
           onCancel={() => {
             setShowQuickMasterCard(false)
             setEditingMaster(null)
+          }}
+        />
+      )}
+
+      {/* Schedule Modal */}
+      {showScheduleModal && selectedMasterForSchedule && business && (
+        <MasterScheduleModal
+          master={selectedMasterForSchedule}
+          businessId={business.id}
+          onClose={() => {
+            setShowScheduleModal(false)
+            setSelectedMasterForSchedule(null)
+          }}
+          onSave={(workingHours, blockedPeriods) => {
+            // Оновлюємо дані спеціаліста
+            setMasters((prev) =>
+              prev.map((m) =>
+                m.id === selectedMasterForSchedule.id
+                  ? { ...m, workingHours, blockedPeriods }
+                  : m
+              )
+            )
+            handleMasterCreated() // Перезавантажуємо дані
           }}
         />
       )}
