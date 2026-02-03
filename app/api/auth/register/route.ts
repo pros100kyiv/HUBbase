@@ -14,12 +14,15 @@ const registerSchema = z.object({
 })
 
 export async function POST(request: Request) {
+  // Зберігаємо body для використання в обробці помилок
+  let requestBody: any = null
+
   try {
     // Перевіряємо та створюємо таблицю admin_control_center, якщо вона не існує
     await ensureAdminControlCenterTable()
     
-    const body = await request.json()
-    const validated = registerSchema.parse(body)
+    requestBody = await request.json()
+    const validated = registerSchema.parse(requestBody)
     
     // Генеруємо deviceId для перевірки пристрою
     const clientIp = getClientIp(request)
@@ -180,7 +183,15 @@ export async function POST(request: Request) {
     if (error instanceof Error && (error.message.includes('Unique constraint') || error.message.includes('P2002'))) {
       // Спробуємо знайти існуючий бізнес для більш точного повідомлення
       try {
-        const normalizedEmail = validated?.email?.toLowerCase().trim()
+        // Спробуємо валідувати requestBody для отримання email
+        let normalizedEmail: string | undefined
+        if (requestBody) {
+          const tempValidated = registerSchema.safeParse(requestBody)
+          if (tempValidated.success) {
+            normalizedEmail = tempValidated.data.email.toLowerCase().trim()
+          }
+        }
+
         if (normalizedEmail) {
           const existing = await prisma.business.findFirst({
             where: {
