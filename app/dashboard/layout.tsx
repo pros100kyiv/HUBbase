@@ -74,7 +74,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="relative min-h-screen bg-[#0F0F0F]">
+    <div className="relative min-h-screen bg-[#F5F5F5]" style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
       {/* Top Navbar */}
       <Navbar />
       
@@ -85,7 +85,7 @@ export default function DashboardLayout({
       <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       
       {/* Main Content Area */}
-      <main className="relative ml-0 md:ml-64 pt-16 min-h-screen bg-[#0F0F0F]">
+      <main className="relative ml-0 md:ml-64 pt-16 min-h-screen bg-[#F5F5F5]" style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
         <div className="p-6">
           {children}
         </div>

@@ -388,10 +388,10 @@ export default function AppointmentsPage() {
       <div className="mb-3">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
           <div>
-            <h1 className="text-lg md:text-xl font-black text-white mb-1" style={{ letterSpacing: '-0.01em' }}>
+            <h1 className="text-lg md:text-xl font-black text-black mb-1" style={{ letterSpacing: '-0.01em' }}>
               Записи та Візити
             </h1>
-            <p className="text-xs md:text-sm text-gray-400">
+            <p className="text-xs md:text-sm text-gray-600">
               Управління записами та розкладом
             </p>
           </div>
