@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { createBusiness, generateSlug, hashPassword } from '@/lib/auth'
 import { z } from 'zod'
 import { generateDeviceId, getClientIp, getUserAgent, addTrustedDevice } from '@/lib/utils/device'
+import { ensureAdminControlCenterTable } from '@/lib/database/ensure-admin-control-center'
 
 const registerSchema = z.object({
   name: z.string().min(1, 'Назва обов\'язкова'),
@@ -12,6 +13,9 @@ const registerSchema = z.object({
 
 export async function POST(request: Request) {
   try {
+    // Перевіряємо та створюємо таблицю admin_control_center, якщо вона не існує
+    await ensureAdminControlCenterTable()
+    
     const body = await request.json()
     const validated = registerSchema.parse(body)
     

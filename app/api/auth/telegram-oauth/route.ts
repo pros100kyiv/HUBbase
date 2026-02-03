@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { generateDeviceId, getClientIp, getUserAgent, addTrustedDevice } from '@/lib/utils/device'
+import { ensureAdminControlCenterTable } from '@/lib/database/ensure-admin-control-center'
 
 /**
  * API для автоматичної реєстрації/входу через Telegram OAuth
@@ -11,6 +12,9 @@ export async function POST(request: Request) {
   let telegramData: any = null
   
   try {
+    // Перевіряємо та створюємо таблицю admin_control_center, якщо вона не існує
+    await ensureAdminControlCenterTable()
+    
     const body = await request.json()
     telegramData = body.telegramData
     const { businessId, deviceId } = body

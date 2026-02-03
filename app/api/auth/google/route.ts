@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { OAuth2Client } from 'google-auth-library'
 import { prisma } from '@/lib/prisma'
 import { generateSlug } from '@/lib/auth'
+import { ensureAdminControlCenterTable } from '@/lib/database/ensure-admin-control-center'
 
 // Отримуємо базовий URL для redirect URI
 function getBaseUrl() {
@@ -58,6 +59,9 @@ export async function GET(request: Request) {
     if (!tokens.id_token) {
       return NextResponse.redirect(new URL('/login?error=invalid_token', request.url))
     }
+
+    // Перевіряємо та створюємо таблицю admin_control_center, якщо вона не існує
+    await ensureAdminControlCenterTable()
 
     // Отримуємо інформацію про користувача
     const ticket = await client.verifyIdToken({
