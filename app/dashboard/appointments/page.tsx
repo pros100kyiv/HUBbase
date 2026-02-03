@@ -388,30 +388,31 @@ export default function AppointmentsPage() {
       <div className="mb-3">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
           <div>
-            <h1 className="text-lg md:text-xl font-black text-gray-900 dark:text-white mb-1">
+            <h1 className="text-lg md:text-xl font-black text-white mb-1" style={{ letterSpacing: '-0.01em' }}>
               Записи та Візити
             </h1>
-            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-xs md:text-sm text-gray-400">
               Управління записами та розкладом
             </p>
           </div>
           <div className="flex gap-1.5 flex-wrap">
             <button
               onClick={() => setShowQuickClientCard(true)}
-              className="px-3 py-1.5 bg-gradient-to-r from-candy-blue to-candy-purple text-white font-black rounded-candy-xs text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5"
+              className="px-3 py-1.5 bg-white text-black font-black rounded-lg text-xs hover:bg-gray-100 transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5"
+              style={{ boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.1)' }}
             >
               <UserIcon className="w-4 h-4" />
               ЗАПИС
             </button>
             <button
               onClick={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
-              className="px-2.5 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-xs text-xs font-bold"
+              className="px-2.5 py-1.5 border border-gray-700 bg-[#1A1A1A] text-white hover:bg-gray-800 transition-all active:scale-95 rounded-lg text-xs font-bold"
             >
               {viewMode === 'calendar' ? '📋 Список' : '📅 Календар'}
             </button>
             <button
               onClick={handleExportCSV}
-              className="px-2.5 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-xs text-xs font-bold flex items-center gap-1"
+              className="px-2.5 py-1.5 border border-gray-700 bg-[#1A1A1A] text-white hover:bg-gray-800 transition-all active:scale-95 rounded-lg text-xs font-bold flex items-center gap-1"
             >
               <DownloadIcon className="w-3 h-3" />
               Експорт
@@ -423,7 +424,8 @@ export default function AppointmentsPage() {
                   setSelectedDate(new Date())
                 }
               }}
-              className="px-3 py-1.5 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-xs text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95 whitespace-nowrap"
+              className="px-3 py-1.5 bg-white text-black font-bold rounded-lg text-xs hover:bg-gray-100 transition-all active:scale-95 whitespace-nowrap"
+              style={{ boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.1)' }}
             >
               + Додати запис
             </button>
@@ -431,7 +433,7 @@ export default function AppointmentsPage() {
         </div>
 
         {/* Search and Filters */}
-        <div className="card-candy p-2 mb-2">
+        <div className="bg-white rounded-xl p-4 mb-2" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
           <div className="flex flex-col sm:flex-row gap-2">
             {/* Search */}
             <div className="flex-1 relative">
@@ -441,7 +443,7 @@ export default function AppointmentsPage() {
                 placeholder="Пошук по клієнту, телефону, послузі..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
+                className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
               />
             </div>
             
@@ -449,7 +451,7 @@ export default function AppointmentsPage() {
             <select
               value={filterMaster}
               onChange={(e) => setFilterMaster(e.target.value)}
-              className="px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
+              className="px-2.5 py-1.5 text-xs border border-gray-300 rounded-lg bg-white text-gray-900 focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">Всі спеціалісти</option>
               {masters.map((master) => (
@@ -460,32 +462,32 @@ export default function AppointmentsPage() {
 
           {/* Bulk Actions */}
           {selectedAppointments.size > 0 && (
-            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-gray-600 dark:text-gray-400">
+            <div className="mt-2 pt-2 border-t border-gray-200 flex items-center gap-2 flex-wrap">
+              <span className="text-xs text-gray-600">
                 Вибрано: {selectedAppointments.size}
               </span>
               <div className="flex gap-1.5">
                 <button
                   onClick={() => handleBulkStatusChange('Confirmed')}
-                  className="px-2 py-1 text-[10px] bg-candy-mint text-white rounded-candy-xs font-bold hover:opacity-80 transition-all"
+                  className="px-2 py-1 text-[10px] bg-green-500 text-white rounded-lg font-bold hover:opacity-80 transition-all"
                 >
                   Підтвердити
                 </button>
                 <button
                   onClick={() => handleBulkStatusChange('Done')}
-                  className="px-2 py-1 text-[10px] bg-candy-blue text-white rounded-candy-xs font-bold hover:opacity-80 transition-all"
+                  className="px-2 py-1 text-[10px] bg-blue-500 text-white rounded-lg font-bold hover:opacity-80 transition-all"
                 >
                   Виконано
                 </button>
                 <button
                   onClick={() => handleBulkStatusChange('Cancelled')}
-                  className="px-2 py-1 text-[10px] bg-red-500 text-white rounded-candy-xs font-bold hover:opacity-80 transition-all"
+                  className="px-2 py-1 text-[10px] bg-red-500 text-white rounded-lg font-bold hover:opacity-80 transition-all"
                 >
                   Скасувати
                 </button>
                 <button
                   onClick={() => setSelectedAppointments(new Set())}
-                  className="px-2 py-1 text-[10px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white rounded-candy-xs font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+                  className="px-2 py-1 text-[10px] border border-gray-300 bg-white text-gray-700 rounded-lg font-bold hover:bg-gray-50 transition-all"
                 >
                   Скасувати вибір
                 </button>
@@ -496,25 +498,25 @@ export default function AppointmentsPage() {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-2">
-          <div className="card-candy p-2 text-center">
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Всього</div>
-            <div className="text-sm font-black text-gray-900 dark:text-white">{stats.total}</div>
+          <div className="bg-white rounded-xl p-3 text-center" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+            <div className="text-xs text-gray-600 mb-0.5">Всього</div>
+            <div className="text-sm font-black text-black">{stats.total}</div>
           </div>
-          <div className="card-candy p-2 text-center">
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Очікує</div>
-            <div className="text-sm font-black text-candy-orange">{stats.pending}</div>
+          <div className="bg-white rounded-xl p-3 text-center" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+            <div className="text-xs text-gray-600 mb-0.5">Очікує</div>
+            <div className="text-sm font-black text-orange-500">{stats.pending}</div>
           </div>
-          <div className="card-candy p-2 text-center">
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Підтверджено</div>
-            <div className="text-sm font-black text-candy-mint">{stats.confirmed}</div>
+          <div className="bg-white rounded-xl p-3 text-center" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+            <div className="text-xs text-gray-600 mb-0.5">Підтверджено</div>
+            <div className="text-sm font-black text-green-500">{stats.confirmed}</div>
           </div>
-          <div className="card-candy p-2 text-center">
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Виконано</div>
-            <div className="text-sm font-black text-candy-blue">{stats.done}</div>
+          <div className="bg-white rounded-xl p-3 text-center" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+            <div className="text-xs text-gray-600 mb-0.5">Виконано</div>
+            <div className="text-sm font-black text-blue-500">{stats.done}</div>
           </div>
-          <div className="card-candy p-2 text-center">
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Дохід</div>
-            <div className="text-sm font-black text-candy-purple">{stats.revenue} грн</div>
+          <div className="bg-white rounded-xl p-3 text-center" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+            <div className="text-xs text-gray-600 mb-0.5">Дохід</div>
+            <div className="text-sm font-black text-purple-500">{stats.revenue} грн</div>
           </div>
         </div>
       </div>
@@ -523,9 +525,9 @@ export default function AppointmentsPage() {
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-3">
           {/* Month Navigation */}
-          <div className="card-candy p-3">
+          <div className="bg-white rounded-xl p-4" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
             <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
-              <h2 className="text-base font-black text-gray-900 dark:text-white">
+              <h2 className="text-base font-black text-black">
                 {format(currentMonth, 'LLLL yyyy', { locale: uk })}
               </h2>
               <div className="flex gap-1.5">
@@ -536,7 +538,7 @@ export default function AppointmentsPage() {
                     setCurrentMonth(prev)
                     setSelectedDate(null)
                   }}
-                  className="p-1 rounded-candy-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
+                  className="p-1 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-all active:scale-95"
                 >
                   <ChevronLeftIcon className="w-4 h-4" />
                 </button>
@@ -547,7 +549,8 @@ export default function AppointmentsPage() {
                     setCurrentMonth(today)
                     setSelectedDate(today)
                   }}
-                  className="px-2.5 py-1 bg-gradient-to-r from-candy-blue to-candy-purple text-white font-bold rounded-candy-xs text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95"
+                  className="px-2.5 py-1 bg-black text-white font-bold rounded-lg text-xs hover:bg-gray-800 transition-all active:scale-95"
+                  style={{ boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.1)' }}
                 >
                   Сьогодні
                 </button>
@@ -558,7 +561,7 @@ export default function AppointmentsPage() {
                     setCurrentMonth(next)
                     setSelectedDate(null)
                   }}
-                  className="p-1 rounded-candy-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
+                  className="p-1 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-all active:scale-95"
                 >
                   <ChevronRightIcon className="w-4 h-4" />
                 </button>
@@ -572,11 +575,12 @@ export default function AppointmentsPage() {
                   key={status}
                   onClick={() => setFilterStatus(status)}
                   className={cn(
-                    'px-2.5 py-1 rounded-candy-xs text-xs font-bold transition-all active:scale-95 whitespace-nowrap',
+                    'px-2.5 py-1 rounded-lg text-xs font-bold transition-all active:scale-95 whitespace-nowrap',
                     filterStatus === status
-                      ? 'bg-gradient-to-r from-candy-purple to-candy-blue text-white shadow-soft-lg'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   )}
+                  style={filterStatus === status ? { boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' } : {}}
                 >
                   {status === 'all' ? 'Всі' : status === 'Pending' ? 'Очікує' : status === 'Confirmed' ? 'Підтверджено' : status === 'Done' ? 'Виконано' : 'Скасовано'}
                 </button>
@@ -586,7 +590,7 @@ export default function AppointmentsPage() {
             {/* Calendar Grid */}
             <div className="grid grid-cols-7 gap-1">
               {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
-                <div key={day} className="text-center text-xs font-bold text-gray-500 dark:text-gray-400 py-1">
+                <div key={day} className="text-center text-xs font-bold text-gray-500 py-1">
                   {day}
                 </div>
               ))}
@@ -606,24 +610,24 @@ export default function AppointmentsPage() {
                       }
                     }}
                     className={cn(
-                      'relative p-1 rounded-candy-xs border transition-all min-h-[40px] flex flex-col items-center justify-start',
+                      'relative p-1 rounded-lg border transition-all min-h-[40px] flex flex-col items-center justify-start',
                       !isCurrentMonth && 'opacity-30',
                       isSelected
-                        ? 'border-candy-purple bg-gradient-to-br from-candy-purple/20 to-candy-blue/20 shadow-soft-lg'
-                        : 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600',
-                      isToday && !isSelected && 'ring-1 ring-candy-purple/50',
+                        ? 'border-blue-500 bg-blue-50 shadow-md'
+                        : 'border-gray-200 bg-white hover:border-gray-300',
+                      isToday && !isSelected && 'ring-1 ring-blue-500/50',
                       isCurrentMonth && 'cursor-pointer active:scale-95'
                     )}
                   >
                     <div className={cn(
                       'text-xs font-black mb-0.5',
-                      isToday ? 'text-candy-purple' : 'text-gray-900 dark:text-white'
+                      isToday ? 'text-blue-500' : 'text-black'
                     )}>
                       {format(day, 'd')}
                     </div>
                     {dayAppointments.length > 0 && (
                       <div className="w-full mt-auto">
-                        <div className="text-[10px] font-black text-candy-purple text-center bg-gradient-to-r from-candy-purple/20 to-candy-blue/20 rounded-full py-0.5">
+                        <div className="text-[10px] font-black text-blue-500 text-center bg-blue-50 rounded-full py-0.5">
                           {dayAppointments.length}
                         </div>
                       </div>
@@ -636,14 +640,14 @@ export default function AppointmentsPage() {
 
           {/* Selected Date Details */}
           {selectedDate && (
-            <div className="card-candy p-3">
+            <div className="bg-white rounded-xl p-4" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
               <div className="flex items-center justify-between mb-2">
-                <h3 className="text-base font-black text-gray-900 dark:text-white">
+                <h3 className="text-base font-black text-black">
                   {format(selectedDate, 'd MMMM yyyy', { locale: uk })}
                 </h3>
                 <button
                   onClick={() => setSelectedDate(null)}
-                  className="px-2.5 py-1 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-xs text-xs font-bold"
+                  className="px-2.5 py-1 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-all active:scale-95 rounded-lg text-xs font-bold"
                 >
                   ✕ Закрити
                 </button>
@@ -657,12 +661,12 @@ export default function AppointmentsPage() {
                   return (
                     <div className="text-center py-6">
                       <div className="mb-2 flex justify-center">
-                        <CalendarIcon className="w-10 h-10 text-gray-300 dark:text-gray-600" />
+                        <CalendarIcon className="w-10 h-10 text-gray-300" />
                       </div>
-                      <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-1">
+                      <p className="text-gray-500 text-sm font-medium mb-1">
                         Немає записів на цей день
                       </p>
-                      <p className="text-xs text-gray-400 dark:text-gray-500">
+                      <p className="text-xs text-gray-400">
                         Створіть новий запис, щоб почати
                       </p>
                     </div>
@@ -672,8 +676,8 @@ export default function AppointmentsPage() {
                 return (
                   <div className="space-y-2">
                     {hours.map((hour) => (
-                      <div key={hour} className="border-l-2 border-candy-purple pl-2">
-                        <div className="text-sm font-black text-candy-purple mb-1.5">
+                      <div key={hour} className="border-l-2 border-blue-500 pl-2">
+                        <div className="text-sm font-black text-blue-500 mb-1.5">
                           {String(hour).padStart(2, '0')}:00
                         </div>
                         <div className="space-y-2">
@@ -698,19 +702,19 @@ export default function AppointmentsPage() {
 
           {/* List View */}
           {viewMode === 'list' && !showCreateForm && (
-            <div className="card-candy p-3">
-              <h3 className="text-base font-black text-gray-900 dark:text-white mb-3">
+            <div className="bg-white rounded-xl p-4" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+              <h3 className="text-base font-black text-black mb-3">
                 Всі записи ({filteredAppointments.length})
               </h3>
               {filteredAppointments.length === 0 ? (
                 <div className="text-center py-12">
                   <div className="mb-4 flex justify-center">
-                    <CalendarIcon className="w-16 h-16 text-gray-300 dark:text-gray-600" />
+                    <CalendarIcon className="w-16 h-16 text-gray-300" />
                   </div>
-                  <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">
+                  <p className="text-gray-500 text-sm font-medium mb-2">
                     Немає записів
                   </p>
-                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
+                  <p className="text-xs text-gray-400 mb-4">
                     Створіть новий запис, щоб почати
                   </p>
                   <button
@@ -718,7 +722,8 @@ export default function AppointmentsPage() {
                       setShowCreateForm(true)
                       setSelectedDate(new Date())
                     }}
-                    className="px-4 py-2 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95"
+                    className="px-4 py-2 bg-black text-white font-bold rounded-lg hover:bg-gray-800 transition-all active:scale-95"
+                    style={{ boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.1)' }}
                   >
                     Створити новий запис
                   </button>
@@ -741,16 +746,16 @@ export default function AppointmentsPage() {
           )}
 
           {viewMode === 'calendar' && !selectedDate && !showCreateForm && (
-            <div className="card-candy p-12 text-center">
+            <div className="bg-white rounded-xl p-12 text-center" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
               <div className="mb-6 flex justify-center">
-                <div className="w-32 h-32 bg-gradient-to-br from-candy-purple/20 to-candy-blue/20 rounded-full flex items-center justify-center">
-                  <CalendarIcon className="w-16 h-16 text-candy-purple" />
+                <div className="w-32 h-32 bg-blue-50 rounded-full flex items-center justify-center">
+                  <CalendarIcon className="w-16 h-16 text-blue-500" />
                 </div>
               </div>
-              <h3 className="text-xl font-black text-gray-900 dark:text-white mb-2">
+              <h3 className="text-xl font-black text-black mb-2">
                 Оберіть дату в календарі
               </h3>
-              <p className="text-gray-600 dark:text-gray-400 mb-6">
+              <p className="text-gray-600 mb-6">
                 Щоб переглянути записи на конкретну дату
               </p>
               <button
@@ -758,7 +763,8 @@ export default function AppointmentsPage() {
                   setShowCreateForm(true)
                   setSelectedDate(new Date())
                 }}
-                className="px-6 py-3 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
+                className="px-6 py-3 bg-black text-white font-bold rounded-lg hover:bg-gray-800 transition-all active:scale-95"
+                style={{ boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.1)' }}
               >
                 Створити новий запис
               </button>
@@ -767,7 +773,7 @@ export default function AppointmentsPage() {
 
           {/* Create Appointment Form */}
           {showCreateForm && (
-            <div className="card-candy p-3">
+            <div className="bg-white rounded-xl p-4" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
               <CreateAppointmentForm
                 businessId={business.id}
                 masters={masters}
@@ -783,24 +789,24 @@ export default function AppointmentsPage() {
         {/* Right Sidebar */}
         <div className="space-y-3">
           {/* Quick Stats */}
-          <div className="card-candy p-3 bg-gradient-to-br from-candy-purple/10 to-candy-blue/10">
-            <h3 className="text-sm font-black text-gray-900 dark:text-white mb-2">
+          <div className="bg-white rounded-xl p-4" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+            <h3 className="text-sm font-black text-black mb-2">
               Статистика місяця
             </h3>
             <div className="space-y-2">
-              <div className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded-candy-xs">
-                <span className="text-xs text-gray-600 dark:text-gray-400">Всього записів</span>
-                <span className="text-sm font-black text-candy-purple">{appointments.length}</span>
+              <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                <span className="text-xs text-gray-600">Всього записів</span>
+                <span className="text-sm font-black text-purple-500">{appointments.length}</span>
               </div>
-              <div className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded-candy-xs">
-                <span className="text-xs text-gray-600 dark:text-gray-400">Підтверджено</span>
-                <span className="text-sm font-black text-candy-mint">
+              <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                <span className="text-xs text-gray-600">Підтверджено</span>
+                <span className="text-sm font-black text-green-500">
                   {appointments.filter(a => a.status === 'Confirmed').length}
                 </span>
               </div>
-              <div className="flex items-center justify-between p-2 bg-white dark:bg-gray-800 rounded-candy-xs">
-                <span className="text-xs text-gray-600 dark:text-gray-400">Виконано</span>
-                <span className="text-sm font-black text-candy-blue">
+              <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg">
+                <span className="text-xs text-gray-600">Виконано</span>
+                <span className="text-sm font-black text-blue-500">
                   {appointments.filter(a => a.status === 'Done').length}
                 </span>
               </div>
@@ -808,8 +814,8 @@ export default function AppointmentsPage() {
           </div>
 
           {/* Quick Actions */}
-          <div className="card-candy p-3">
-            <h3 className="text-sm font-black text-gray-900 dark:text-white mb-2">
+          <div className="bg-white rounded-xl p-4" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
+            <h3 className="text-sm font-black text-black mb-2">
               Швидкі дії
             </h3>
             <div className="space-y-1.5">
@@ -818,13 +824,14 @@ export default function AppointmentsPage() {
                   setShowCreateForm(true)
                   setSelectedDate(new Date())
                 }}
-                className="w-full px-2.5 py-1.5 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-xs text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95 text-left"
+                className="w-full px-2.5 py-1.5 bg-black text-white font-bold rounded-lg text-xs hover:bg-gray-800 transition-all active:scale-95 text-left"
+                style={{ boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.1)' }}
               >
                 + Створити запис на сьогодні
               </button>
               <button
                 onClick={() => router.push('/dashboard/clients')}
-                className="w-full px-2.5 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-xs text-xs font-bold text-left"
+                className="w-full px-2.5 py-1.5 border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-all active:scale-95 rounded-lg text-xs font-bold text-left"
               >
                 Переглянути клієнтів
               </button>

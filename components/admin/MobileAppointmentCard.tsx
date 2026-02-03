@@ -35,13 +35,13 @@ export function MobileAppointmentCard({
     switch (status) {
       case 'Pending':
       case 'Очікує':
-        return 'text-candy-orange border-candy-orange bg-candy-orange/10'
+        return 'text-orange-500 border-orange-500 bg-orange-50'
       case 'Confirmed':
       case 'Підтверджено':
-        return 'text-candy-mint border-candy-mint bg-candy-mint/10'
+        return 'text-green-500 border-green-500 bg-green-50'
       case 'Done':
       case 'Виконано':
-        return 'text-candy-blue border-candy-blue bg-candy-blue/10'
+        return 'text-blue-500 border-blue-500 bg-blue-50'
       case 'Cancelled':
       case 'Скасовано':
         return 'text-red-500 border-red-500 bg-red-50'
@@ -78,13 +78,13 @@ export function MobileAppointmentCard({
     switch (status) {
       case 'Pending':
       case 'Очікує':
-        return 'border-l-4 border-candy-orange'
+        return 'border-l-4 border-orange-500'
       case 'Confirmed':
       case 'Підтверджено':
-        return 'border-l-4 border-candy-mint'
+        return 'border-l-4 border-green-500'
       case 'Done':
       case 'Виконано':
-        return 'border-l-4 border-candy-blue'
+        return 'border-l-4 border-blue-500'
       case 'Cancelled':
       case 'Скасовано':
         return 'border-l-4 border-red-500'
@@ -94,11 +94,11 @@ export function MobileAppointmentCard({
   }
 
   return (
-    <div className={cn("card-candy card-candy-hover p-2.5 overflow-hidden", getStatusBorderColor(appointment.status))}>
+    <div className={cn("bg-white rounded-lg p-3 overflow-hidden hover:shadow-md transition-all", getStatusBorderColor(appointment.status))} style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}>
       {/* Header with time and status */}
       <div className="flex items-center justify-between gap-1.5">
         <div className="flex items-center gap-1.5 flex-1 min-w-0">
-          <div className="w-12 h-12 rounded-candy-sm candy-blue flex flex-col items-center justify-center shadow-soft text-white flex-shrink-0 overflow-hidden">
+          <div className="w-12 h-12 rounded-lg bg-blue-500 flex flex-col items-center justify-center text-white flex-shrink-0 overflow-hidden" style={{ boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.1)' }}>
             <span className="text-sm font-black leading-tight">
               {format(startTime, 'HH:mm')}
             </span>
@@ -107,8 +107,8 @@ export function MobileAppointmentCard({
             </span>
           </div>
           <div className="flex-1 min-w-0 overflow-hidden">
-            <p className="font-black text-foreground dark:text-white text-sm mb-0.5 truncate">{appointment.clientName}</p>
-            <p className="text-xs text-gray-600 dark:text-gray-400 font-medium mb-0.5 truncate">{appointment.clientPhone}</p>
+            <p className="font-black text-black text-sm mb-0.5 truncate">{appointment.clientName}</p>
+            <p className="text-xs text-gray-600 font-medium mb-0.5 truncate">{appointment.clientPhone}</p>
             {appointment.masterName && (
               <div className="flex items-center gap-1 min-w-0">
                 <UserIcon className="w-3 h-3 text-gray-500 flex-shrink-0" />
@@ -135,7 +135,7 @@ export function MobileAppointmentCard({
                 <>
                   <button
                     onClick={() => onStatusChange(appointment.id, 'Confirmed')}
-                    className="px-2 py-1 rounded-candy-xs bg-candy-mint/10 border border-candy-mint text-candy-mint hover:bg-candy-mint hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center gap-1 text-[10px] font-bold whitespace-nowrap"
+                    className="px-2 py-1 rounded-lg bg-green-50 border border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center gap-1 text-[10px] font-bold whitespace-nowrap"
                     title="Підтвердити"
                   >
                     <CheckIcon className="w-3 h-3" />
@@ -143,7 +143,7 @@ export function MobileAppointmentCard({
                   </button>
                   <button
                     onClick={() => onStatusChange(appointment.id, 'Done')}
-                    className="px-2 py-1 rounded-candy-xs bg-candy-blue/10 border border-candy-blue text-candy-blue hover:bg-candy-blue hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center gap-1 text-[10px] font-bold whitespace-nowrap"
+                    className="px-2 py-1 rounded-lg bg-blue-50 border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center gap-1 text-[10px] font-bold whitespace-nowrap"
                     title="В роботі"
                   >
                     <CheckIcon className="w-3 h-3" />
@@ -154,7 +154,7 @@ export function MobileAppointmentCard({
               {appointment.status === 'Confirmed' && (
                 <button
                   onClick={() => onStatusChange(appointment.id, 'Done')}
-                  className="px-2 py-1 rounded-candy-xs bg-candy-blue/10 border border-candy-blue text-candy-blue hover:bg-candy-blue hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center gap-1 text-[10px] font-bold whitespace-nowrap"
+                  className="px-2 py-1 rounded-lg bg-blue-50 border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center gap-1 text-[10px] font-bold whitespace-nowrap"
                   title="Виконано"
                 >
                   <CheckIcon className="w-3 h-3" />
@@ -164,7 +164,7 @@ export function MobileAppointmentCard({
               {appointment.status !== 'Cancelled' && (
                 <button
                   onClick={() => onStatusChange(appointment.id, 'Cancelled')}
-                  className="px-2 py-1 rounded-candy-xs bg-red-50 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center gap-1 text-[10px] font-bold whitespace-nowrap"
+                  className="px-2 py-1 rounded-lg bg-red-50 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center gap-1 text-[10px] font-bold whitespace-nowrap"
                   title="Скасувати"
                 >
                   <XIcon className="w-3 h-3" />
@@ -197,7 +197,7 @@ export function MobileAppointmentCard({
           )}
           <div className="flex items-center gap-1 flex-shrink-0">
             <ClockIcon className="w-3 h-3 text-gray-400" />
-            <span className="text-[10px] font-bold text-gray-600 dark:text-gray-400">
+            <span className="text-[10px] font-bold text-gray-600">
               {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
             </span>
             <span className="text-[9px] text-gray-400">•</span>
