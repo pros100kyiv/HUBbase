@@ -18,13 +18,37 @@ export async function POST(request: Request) {
     const telegramId = BigInt(telegramData.id)
     
     // ЗАВЖДИ спочатку перевіряємо, чи акаунт вже існує
+    // Перевіряємо в обох місцях: Business.telegramId та TelegramUser.telegramId
     // Якщо існує - робимо вхід (незалежно від forceRegister)
     // Якщо не існує - створюємо новий
-    const existingBusiness = await prisma.business.findUnique({
+    
+    // 1. Перевіряємо в таблиці Business за telegramId
+    let existingBusiness = await prisma.business.findUnique({
       where: { telegramId }
     })
     
-    // Якщо бізнес знайдено через Telegram ID - автоматичний вхід
+    // 2. Якщо не знайдено в Business - перевіряємо в TelegramUser
+    if (!existingBusiness) {
+      const existingTelegramUser = await prisma.telegramUser.findUnique({
+        where: { telegramId },
+        include: { business: true }
+      })
+      
+      // Якщо знайдено в TelegramUser - отримуємо зв'язаний Business
+      if (existingTelegramUser && existingTelegramUser.business) {
+        existingBusiness = existingTelegramUser.business
+        
+        // Оновлюємо telegramId в Business, якщо його там не було
+        if (!existingBusiness.telegramId) {
+          await prisma.business.update({
+            where: { id: existingBusiness.id },
+            data: { telegramId: telegramId }
+          })
+        }
+      }
+    }
+    
+    // Якщо бізнес знайдено через Telegram ID (в будь-якому місці) - автоматичний вхід
     if (existingBusiness) {
       // Оновлюємо дані бізнесу
       await prisma.business.update({
