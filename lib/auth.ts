@@ -47,18 +47,13 @@ export async function createBusiness(data: {
     },
   })
 
-  // Автоматично реєструємо в Центрі управління
+  // Автоматично реєструємо в Центрі управління (ПОВНЕ ДУБЛЮВАННЯ)
   if (hashedPassword) {
+    const { registerBusinessInManagementCenter } = await import('@/lib/services/management-center')
     await registerBusinessInManagementCenter({
       businessId: business.id,
-      businessName: business.name,
-      email: normalizedEmail,
-      password: hashedPassword,
-      phone: business.phone,
+      business: business, // Передаємо повний об'єкт для дублювання
       registrationType: data.googleId ? 'google' : 'standard',
-      businessIdentifier: business.businessIdentifier,
-      niche: business.niche,
-      customNiche: business.customNiche,
     })
   }
 

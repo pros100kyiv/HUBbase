@@ -204,6 +204,15 @@ export async function PATCH(
       select: businessSelect,
     })
 
+    // Синхронізуємо всі дані в ManagementCenter (ПОВНЕ ДУБЛЮВАННЯ)
+    try {
+      const { syncBusinessToManagementCenter } = await import('@/lib/services/management-center')
+      await syncBusinessToManagementCenter(param)
+    } catch (error) {
+      console.error('Error syncing business to Management Center:', error)
+      // Не викидаємо помилку, щоб не зламати оновлення бізнесу
+    }
+
     // Оновлюємо номер телефону в Реєстрі телефонів (якщо змінився)
     if (phone !== undefined && currentBusiness && phone !== currentBusiness.phone) {
       try {

@@ -592,23 +592,75 @@ model SocialIntegration {
 // ============================================
 // ЦЕНТР УПРАВЛІННЯ (Management Center)
 // ============================================
-// Зберігає дані реєстрації всіх бізнесів для подальшого створення Центру управління
+// ПОВНЕ ДУБЛЮВАННЯ ВСІХ ДАНИХ З Business
+// Зберігає повну копію всіх даних бізнесу для Центру управління
 model ManagementCenter {
-  id                 String    @id @default(cuid())
-  businessId         String    @unique // ID бізнесу (зв'язок з Business)
-  businessName       String // Назва бізнесу
-  phone              String? // Номер телефону бізнесу
-  email              String    @unique // Email (логін)
-  password           String // Хешований пароль (для безпеки)
-  registrationType   String // 'telegram', 'google', 'standard'
-  businessIdentifier String? // Унікальний ідентифікатор бізнесу
-  niche              String? // Категорія бізнесу
-  customNiche        String? // Кастомна категорія
-  isActive           Boolean   @default(true)
-  registeredAt       DateTime  @default(now()) // Дата реєстрації
-  lastLoginAt        DateTime? // Останній вхід
-  createdAt          DateTime  @default(now())
-  updatedAt          DateTime  @updatedAt
+  id                           String        @id @default(cuid())
+  businessId                   String        @unique // ID бізнесу (зв'язок з Business)
+  // Основні дані (дублювання з Business)
+  name                         String // Назва бізнесу
+  slug                         String        @unique // Slug для URL
+  email                        String        @unique // Email (логін)
+  password                     String? // Хешований пароль
+  googleId                     String?       @unique // Google OAuth ID
+  telegramId                   BigInt?       @unique // Telegram OAuth ID
+  phone                        String? // Номер телефону
+  address                      String? // Адреса
+  description                  String? // Опис
+  logo                         String? // Логотип
+  avatar                       String? // Аватар
+  primaryColor                 String?       @default("#C5A059")
+  secondaryColor               String?       @default("#FFFFFF")
+  backgroundColor              String?       @default("#050505")
+  surfaceColor                 String?       @default("#121212")
+  hideRevenue                  Boolean       @default(false)
+  isActive                     Boolean       @default(true)
+  // Модульна архітектура
+  niche                        BusinessNiche @default(OTHER)
+  customNiche                  String? // Кастомна категорія
+  businessIdentifier           String?       @unique // Унікальний ідентифікатор
+  profileCompleted             Boolean       @default(false)
+  settings                     String? // JSON налаштування
+  // Візитівка
+  businessCardBackgroundImage  String? // URL фонового зображення
+  slogan                       String? // Слоган
+  additionalInfo               String? // Додаткова інформація (JSON)
+  socialMedia                  String? // JSON соцмережі
+  workingHours                 String? // JSON робочі години
+  location                     String? // Розташування
+  // Telegram інтеграція
+  telegramBotToken             String? // Токен Telegram бота
+  telegramChatId               String? // ID чату
+  telegramNotificationsEnabled Boolean       @default(false)
+  telegramSettings             String? // JSON налаштування Telegram
+  // AI Чат
+  aiChatEnabled                Boolean       @default(false)
+  aiProvider                   String? // 'gemini', 'openai'
+  aiApiKey                     String? // API ключ
+  aiSettings                   String? // JSON налаштування AI
+  // SMS/Email
+  smsProvider                  String? // 'twilio', 'smsc'
+  smsApiKey                    String?
+  smsSender                    String? // Ім'я відправника
+  emailProvider                String? // 'sendgrid', 'mailgun'
+  emailApiKey                  String?
+  emailFrom                    String? // Email відправника
+  emailFromName                String? // Ім'я відправника
+  // Платежі
+  paymentProvider              String? // 'liqpay', 'fondy', 'portmone'
+  paymentApiKey                String?
+  paymentMerchantId            String?
+  paymentEnabled               Boolean       @default(false)
+  // Нагадування
+  remindersEnabled             Boolean       @default(false)
+  reminderSmsEnabled           Boolean       @default(false)
+  reminderEmailEnabled         Boolean       @default(false)
+  // Додаткові поля для Центру управління
+  registrationType             String // 'telegram', 'google', 'standard'
+  registeredAt                 DateTime      @default(now()) // Дата реєстрації
+  lastLoginAt                  DateTime? // Останній вхід
+  createdAt                    DateTime      @default(now())
+  updatedAt                    DateTime      @updatedAt
 
   @@index([businessId])
   @@index([email])
@@ -616,6 +668,8 @@ model ManagementCenter {
   @@index([registrationType])
   @@index([registeredAt])
   @@index([isActive])
+  @@index([niche])
+  @@index([businessIdentifier])
 }
 
 // ============================================
@@ -649,5 +703,81 @@ model PhoneDirectory {
   @@index([businessId])
   @@index([clientId])
   @@index([isActive])
+  @@index([createdAt])
+}
+
+// ============================================
+// NEO4J-СТИЛЬ: ВУЗЛИ (Nodes)
+// ============================================
+// Уніфіковане зберігання всіх вузлів графу (подібно до Neo4j)
+enum NodeType {
+  BUSINESS
+  CLIENT
+  MASTER
+  SERVICE
+  APPOINTMENT
+  USER
+  PAYMENT
+  BROADCAST
+}
+
+model GraphNode {
+  id         String   @id @default(cuid())
+  nodeType   NodeType // Тип вузла
+  originalId String   @unique // ID оригінальної сутності (з Business, Client, тощо)
+  businessId String? // ID бізнесу (для ізоляції)
+  // Властивості вузла (JSON для гнучкості)
+  properties String // JSON: всі властивості вузла
+  labels     String? // JSON: масив міток (labels) як в Neo4j
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  // Зв'язки (relationships)
+  fromRelationships GraphRelationship[] @relation("FromNode")
+  toRelationships   GraphRelationship[] @relation("ToNode")
+
+  @@index([nodeType])
+  @@index([originalId])
+  @@index([businessId])
+  @@index([createdAt])
+}
+
+// ============================================
+// NEO4J-СТИЛЬ: ЗВ'ЯЗКИ (Relationships)
+// ============================================
+// Зв'язки між вузлами (подібно до Neo4j)
+enum RelationshipType {
+  OWNS // Business OWNS Client/Master/Service
+  HAS // Business HAS Appointment
+  PROVIDES // Master PROVIDES Service
+  BOOKED_BY // Appointment BOOKED_BY Client
+  PERFORMED_BY // Appointment PERFORMED_BY Master
+  INCLUDES // Appointment INCLUDES Service
+  PAYS // Client PAYS Payment
+  RECEIVES // Business RECEIVES Payment
+  SENDS // Business SENDS Broadcast
+  BELONGS_TO // Service BELONGS_TO Business
+  WORKS_FOR // Master WORKS_FOR Business
+  CREATED_BY // Appointment CREATED_BY User
+}
+
+model GraphRelationship {
+  id               String           @id @default(cuid())
+  relationshipType RelationshipType // Тип зв'язку
+  fromNodeId       String // ID вузла-джерела
+  fromNode         GraphNode        @relation("FromNode", fields: [fromNodeId], references: [id], onDelete: Cascade)
+  toNodeId         String // ID вузла-призначення
+  toNode           GraphNode        @relation("ToNode", fields: [toNodeId], references: [id], onDelete: Cascade)
+  businessId       String? // ID бізнесу (для ізоляції)
+  // Властивості зв'язку (JSON для гнучкості)
+  properties       String? // JSON: додаткові властивості зв'язку
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  @@unique([fromNodeId, toNodeId, relationshipType])
+  @@index([relationshipType])
+  @@index([fromNodeId])
+  @@index([toNodeId])
+  @@index([businessId])
   @@index([createdAt])
 }

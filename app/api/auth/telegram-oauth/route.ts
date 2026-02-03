@@ -377,18 +377,12 @@ export async function POST(request: Request) {
       }
     })
 
-    // Автоматично реєструємо в Центрі управління
+    // Автоматично реєструємо в Центрі управління (ПОВНЕ ДУБЛЮВАННЯ)
     const { registerBusinessInManagementCenter } = await import('@/lib/services/management-center')
     await registerBusinessInManagementCenter({
       businessId: newBusiness.id,
-      businessName: newBusiness.name,
-      email: email,
-      password: hashedPassword,
-      phone: null,
+      business: newBusiness, // Передаємо повний об'єкт для дублювання
       registrationType: 'telegram',
-      businessIdentifier: businessIdentifier,
-      niche: 'OTHER',
-      customNiche: null,
     })
 
     // Створюємо TelegramUser

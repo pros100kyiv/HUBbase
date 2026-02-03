@@ -6,51 +6,164 @@ import { prisma } from '@/lib/prisma'
 
 interface RegisterBusinessData {
   businessId: string
-  businessName: string
-  email: string
-  password: string // Хешований пароль
-  phone?: string | null
+  business: any // Повний об'єкт Business для дублювання
   registrationType: 'telegram' | 'google' | 'standard'
-  businessIdentifier?: string | null
-  niche?: string | null
-  customNiche?: string | null
 }
 
 /**
- * Реєструє бізнес в Центрі управління
+ * Синхронізує всі дані Business в ManagementCenter (ПОВНЕ ДУБЛЮВАННЯ)
  */
-export async function registerBusinessInManagementCenter(data: RegisterBusinessData) {
+export async function syncBusinessToManagementCenter(businessId: string) {
   try {
-    // Створюємо запис в Центрі управління
-    const managementRecord = await prisma.managementCenter.create({
-      data: {
-        businessId: data.businessId,
-        businessName: data.businessName,
-        email: data.email,
-        password: data.password, // Хешований пароль
-        phone: data.phone || null,
-        registrationType: data.registrationType,
-        businessIdentifier: data.businessIdentifier || null,
-        niche: data.niche || null,
-        customNiche: data.customNiche || null,
-        isActive: true,
+    const business = await prisma.business.findUnique({
+      where: { id: businessId },
+    })
+
+    if (!business) {
+      console.warn('Business not found for sync:', businessId)
+      return null
+    }
+
+    // Оновлюємо або створюємо запис в Центрі управління
+    const managementRecord = await prisma.managementCenter.upsert({
+      where: { businessId },
+      update: {
+        // Синхронізуємо ВСІ дані
+        name: business.name,
+        slug: business.slug,
+        email: business.email,
+        password: business.password,
+        googleId: business.googleId,
+        telegramId: business.telegramId,
+        phone: business.phone,
+        address: business.address,
+        description: business.description,
+        logo: business.logo,
+        avatar: business.avatar,
+        primaryColor: business.primaryColor,
+        secondaryColor: business.secondaryColor,
+        backgroundColor: business.backgroundColor,
+        surfaceColor: business.surfaceColor,
+        hideRevenue: business.hideRevenue,
+        isActive: business.isActive,
+        niche: business.niche,
+        customNiche: business.customNiche,
+        businessIdentifier: business.businessIdentifier,
+        profileCompleted: business.profileCompleted,
+        settings: business.settings,
+        businessCardBackgroundImage: business.businessCardBackgroundImage,
+        slogan: business.slogan,
+        additionalInfo: business.additionalInfo,
+        socialMedia: business.socialMedia,
+        workingHours: business.workingHours,
+        location: business.location,
+        telegramBotToken: business.telegramBotToken,
+        telegramChatId: business.telegramChatId,
+        telegramNotificationsEnabled: business.telegramNotificationsEnabled,
+        telegramSettings: business.telegramSettings,
+        aiChatEnabled: business.aiChatEnabled,
+        aiProvider: business.aiProvider,
+        aiApiKey: business.aiApiKey,
+        aiSettings: business.aiSettings,
+        smsProvider: business.smsProvider,
+        smsApiKey: business.smsApiKey,
+        smsSender: business.smsSender,
+        emailProvider: business.emailProvider,
+        emailApiKey: business.emailApiKey,
+        emailFrom: business.emailFrom,
+        emailFromName: business.emailFromName,
+        paymentProvider: business.paymentProvider,
+        paymentApiKey: business.paymentApiKey,
+        paymentMerchantId: business.paymentMerchantId,
+        paymentEnabled: business.paymentEnabled,
+        remindersEnabled: business.remindersEnabled,
+        reminderSmsEnabled: business.reminderSmsEnabled,
+        reminderEmailEnabled: business.reminderEmailEnabled,
+        updatedAt: new Date(),
+      },
+      create: {
+        businessId: business.id,
+        // ПОВНЕ ДУБЛЮВАННЯ ВСІХ ДАНИХ
+        name: business.name,
+        slug: business.slug,
+        email: business.email,
+        password: business.password,
+        googleId: business.googleId,
+        telegramId: business.telegramId,
+        phone: business.phone,
+        address: business.address,
+        description: business.description,
+        logo: business.logo,
+        avatar: business.avatar,
+        primaryColor: business.primaryColor || '#C5A059',
+        secondaryColor: business.secondaryColor || '#FFFFFF',
+        backgroundColor: business.backgroundColor || '#050505',
+        surfaceColor: business.surfaceColor || '#121212',
+        hideRevenue: business.hideRevenue || false,
+        isActive: business.isActive !== undefined ? business.isActive : true,
+        niche: business.niche || 'OTHER',
+        customNiche: business.customNiche,
+        businessIdentifier: business.businessIdentifier,
+        profileCompleted: business.profileCompleted || false,
+        settings: business.settings,
+        businessCardBackgroundImage: business.businessCardBackgroundImage,
+        slogan: business.slogan,
+        additionalInfo: business.additionalInfo,
+        socialMedia: business.socialMedia,
+        workingHours: business.workingHours,
+        location: business.location,
+        telegramBotToken: business.telegramBotToken,
+        telegramChatId: business.telegramChatId,
+        telegramNotificationsEnabled: business.telegramNotificationsEnabled || false,
+        telegramSettings: business.telegramSettings,
+        aiChatEnabled: business.aiChatEnabled || false,
+        aiProvider: business.aiProvider,
+        aiApiKey: business.aiApiKey,
+        aiSettings: business.aiSettings,
+        smsProvider: business.smsProvider,
+        smsApiKey: business.smsApiKey,
+        smsSender: business.smsSender,
+        emailProvider: business.emailProvider,
+        emailApiKey: business.emailApiKey,
+        emailFrom: business.emailFrom,
+        emailFromName: business.emailFromName,
+        paymentProvider: business.paymentProvider,
+        paymentApiKey: business.paymentApiKey,
+        paymentMerchantId: business.paymentMerchantId,
+        paymentEnabled: business.paymentEnabled || false,
+        remindersEnabled: business.remindersEnabled || false,
+        reminderSmsEnabled: business.reminderSmsEnabled || false,
+        reminderEmailEnabled: business.reminderEmailEnabled || false,
+        registrationType: 'standard', // Буде оновлено при реєстрації
+        registeredAt: business.createdAt || new Date(),
       },
     })
 
-    // Якщо є номер телефону - додаємо в Реєстр телефонів
-    if (data.phone) {
-      await prisma.phoneDirectory.create({
+    return managementRecord
+  } catch (error) {
+    console.error('Error syncing business to Management Center:', error)
+    return null
+  }
+}
+
+/**
+ * Реєструє бізнес в Центрі управління (ПОВНЕ ДУБЛЮВАННЯ ВСІХ ДАНИХ)
+ */
+export async function registerBusinessInManagementCenter(data: RegisterBusinessData) {
+  try {
+    // Використовуємо функцію синхронізації
+    const managementRecord = await syncBusinessToManagementCenter(data.businessId)
+    
+    // Оновлюємо registrationType
+    if (managementRecord) {
+      await prisma.managementCenter.update({
+        where: { businessId: data.businessId },
         data: {
-          phone: data.phone,
-          category: 'BUSINESS',
-          businessId: data.businessId,
-          businessName: data.businessName,
-          isActive: true,
-          isVerified: false, // Потрібно підтвердити
+          registrationType: data.registrationType,
         },
       })
     }
-
+    
     return managementRecord
   } catch (error) {
     console.error('Error registering business in Management Center:', error)
@@ -156,14 +269,13 @@ export async function updateBusinessPhoneInDirectory(
       })
     }
 
-    // Оновлюємо в Центрі управління
-    await prisma.managementCenter.update({
-      where: { businessId },
-      data: {
-        phone: newPhone,
-        updatedAt: new Date(),
-      },
+    // Оновлюємо в Центрі управління (синхронізуємо всі дані)
+    const business = await prisma.business.findUnique({
+      where: { id: businessId },
     })
+
+    // Використовуємо функцію синхронізації для оновлення всіх даних
+    await syncBusinessToManagementCenter(businessId)
   } catch (error) {
     console.error('Error updating business phone in directory:', error)
   }
