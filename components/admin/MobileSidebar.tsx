@@ -3,7 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 import { cn } from '@/lib/utils'
-import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, BellIcon, XIcon, BuildingIcon } from '@/components/icons'
+import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, BellIcon, XIcon } from '@/components/icons'
 import { NotificationsPanel } from './NotificationsPanel'
 
 interface NavItem {
@@ -75,7 +75,6 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     { id: 'masters', label: 'Спеціалісти', icon: <UserIcon />, path: '/dashboard/masters' },
     { id: 'analytics', label: 'Аналітика', icon: <ChartIcon />, path: '/dashboard/analytics' },
     { id: 'notifications', label: 'Сповіщення', icon: <BellIcon />, path: '#', badge: pendingCount, onClick: () => setShowNotifications(true) },
-    { id: 'control-center', label: 'Центр управління', icon: <BuildingIcon />, path: '/admin/control-center' },
     { id: 'settings', label: 'Налаштування', icon: <SettingsIcon />, path: '/dashboard/settings' },
   ]
 
@@ -124,7 +123,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
         {/* Navigation */}
         <nav className="p-2 space-y-1 overflow-y-auto h-[calc(100vh-80px)]">
           {navItems.map((item) => {
-            const isActive = pathname === item.path || (item.path === '/dashboard' && pathname === '/dashboard') || (item.path === '/admin/control-center' && pathname?.startsWith('/admin/control-center'))
+            const isActive = pathname === item.path || (item.path === '/dashboard' && pathname === '/dashboard')
             return (
               <button
                 key={item.id}

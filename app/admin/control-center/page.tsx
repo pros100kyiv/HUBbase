@@ -39,8 +39,19 @@ interface Business {
   niche: string
 }
 
+// Helper function для отримання заголовків з токеном
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('adminToken')
+  return {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json',
+  }
+}
+
 export default function ControlCenterPage() {
   const router = useRouter()
+  const [isAuthorized, setIsAuthorized] = useState(false)
+  const [isLoadingAuth, setIsLoadingAuth] = useState(true)
   const [activeTab, setActiveTab] = useState<Tab>('overview')
   const [businesses, setBusinesses] = useState<Business[]>([])
   const [stats, setStats] = useState<any>(null)
@@ -50,13 +61,59 @@ export default function ControlCenterPage() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
 
+  // Перевірка авторизації
   useEffect(() => {
-    loadData()
-  }, [page, search, statusFilter])
+    const checkAuth = async () => {
+      const token = localStorage.getItem('adminToken')
+      
+      if (!token) {
+        router.push('/admin/login')
+        return
+      }
+
+      // Перевіряємо токен на сервері
+      try {
+        const response = await fetch('/api/admin/auth/verify', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        })
+
+        if (response.ok) {
+          setIsAuthorized(true)
+        } else {
+          localStorage.removeItem('adminToken')
+          localStorage.removeItem('adminEmail')
+          router.push('/admin/login')
+        }
+      } catch (error) {
+        console.error('Auth check error:', error)
+        localStorage.removeItem('adminToken')
+        localStorage.removeItem('adminEmail')
+        router.push('/admin/login')
+      } finally {
+        setIsLoadingAuth(false)
+      }
+    }
+
+    checkAuth()
+  }, [router])
+
+  useEffect(() => {
+    if (isAuthorized) {
+      loadData()
+    }
+  }, [page, search, statusFilter, isAuthorized])
 
   const loadData = async () => {
     setLoading(true)
     try {
+      const token = localStorage.getItem('adminToken')
+      if (!token) {
+        router.push('/admin/login')
+        return
+      }
+
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '20',
@@ -64,7 +121,9 @@ export default function ControlCenterPage() {
         ...(statusFilter !== 'all' && { status: statusFilter }),
       })
 
-      const response = await fetch(`/api/admin/control-center?${params}`)
+      const response = await fetch(`/api/admin/control-center?${params}`, {
+        headers: getAuthHeaders(),
+      })
       const data = await response.json()
 
       if (response.ok) {
@@ -102,6 +161,20 @@ export default function ControlCenterPage() {
     { id: 'settings', label: 'Налаштування', icon: SettingsIcon },
     { id: 'export', label: 'Експорт/Імпорт', icon: DownloadIcon },
   ]
+
+  if (isLoadingAuth) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-500 dark:text-gray-400 mb-4">Перевірка доступу...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (!isAuthorized) {
+    return null
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 md:p-6">
@@ -289,7 +362,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
       for (const businessId of selectedBusinesses) {
         await fetch('/api/admin/control-center', {
           method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
+          headers: getAuthHeaders(),
           body: JSON.stringify({
             businessId,
             action: bulkAction,
@@ -502,7 +575,9 @@ function PhonesTab() {
         ...(category !== 'all' && { category }),
         ...(search && { search }),
       })
-      const response = await fetch(`/api/admin/phone-directory?${params}`)
+      const response = await fetch(`/api/admin/phone-directory?${params}`, {
+        headers: getAuthHeaders(),
+      })
       const data = await response.json()
       if (response.ok) {
         setPhones(data.phones || [])
@@ -602,7 +677,9 @@ function ActivityTab() {
       const params = new URLSearchParams({
         ...(actionType !== 'all' && { actionType }),
       })
-      const response = await fetch(`/api/admin/activity-log?${params}`)
+      const response = await fetch(`/api/admin/activity-log?${params}`, {
+        headers: getAuthHeaders(),
+      })
       const data = await response.json()
       if (response.ok) {
         setLogs(data.logs || [])
@@ -690,7 +767,9 @@ function AnalyticsTab({ stats }: { stats: any }) {
   const loadAnalytics = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/admin/analytics?period=${period}`)
+      const response = await fetch(`/api/admin/analytics?period=${period}`, {
+        headers: getAuthHeaders(),
+      })
       const data = await response.json()
       if (response.ok) {
         setAnalytics(data)
@@ -756,7 +835,9 @@ function IntegrationsTab() {
   const loadIntegrations = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/admin/integrations')
+      const response = await fetch('/api/admin/integrations', {
+        headers: getAuthHeaders(),
+      })
       const data = await response.json()
       if (response.ok) {
         setIntegrations(data.integrations || [])
@@ -829,7 +910,9 @@ function FinancesTab() {
   const loadFinances = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/admin/finances?period=${period}`)
+      const response = await fetch(`/api/admin/finances?period=${period}`, {
+        headers: getAuthHeaders(),
+      })
       const data = await response.json()
       if (response.ok) {
         setFinances(data)
@@ -917,7 +1000,9 @@ function ClientsTab() {
       const params = new URLSearchParams({
         ...(search && { search }),
       })
-      const response = await fetch(`/api/admin/clients?${params}`)
+      const response = await fetch(`/api/admin/clients?${params}`, {
+        headers: getAuthHeaders(),
+      })
       const data = await response.json()
       if (response.ok) {
         setClients(data.clients || [])
@@ -1004,7 +1089,9 @@ function ExportTab() {
 
   const handleExport = async () => {
     try {
-      const response = await fetch(`/api/admin/export?format=${exportFormat}&type=${exportType}`)
+      const response = await fetch(`/api/admin/export?format=${exportFormat}&type=${exportType}`, {
+        headers: getAuthHeaders(),
+      })
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')

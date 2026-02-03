@@ -3,7 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
-import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, BellIcon, ShareIcon, BuildingIcon } from '@/components/icons'
+import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, BellIcon, ShareIcon } from '@/components/icons'
 import { NotificationsPanel } from './NotificationsPanel'
 
 interface NavItem {
@@ -65,7 +65,6 @@ export function Sidebar({ className }: SidebarProps) {
     { id: 'analytics', label: 'Аналітика', icon: <ChartIcon />, path: '/dashboard/analytics' },
     { id: 'social', label: 'Соцмережі', icon: <ShareIcon />, path: '/dashboard/social' },
     { id: 'notifications', label: 'Сповіщення', icon: <BellIcon />, path: '#', badge: pendingCount, onClick: () => setShowNotifications(true) },
-    { id: 'control-center', label: 'Центр управління', icon: <BuildingIcon />, path: '/admin/control-center' },
     { id: 'settings', label: 'Налаштування', icon: <SettingsIcon />, path: '/dashboard/settings' },
   ]
 
@@ -83,7 +82,7 @@ export function Sidebar({ className }: SidebarProps) {
       <aside className={cn('bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border-r border-gray-200 dark:border-gray-700/50 w-0 md:w-56 min-h-screen fixed left-0 top-12 z-40 shadow-soft-xl hidden md:block', className)}>
         <nav className="p-1.5 space-y-0.5">
           {navItems.map((item) => {
-            const isActive = pathname === item.path || (item.path === '/dashboard' && pathname === '/dashboard') || (item.path === '/admin/control-center' && pathname?.startsWith('/admin/control-center'))
+            const isActive = pathname === item.path || (item.path === '/dashboard' && pathname === '/dashboard')
             return (
               <button
                 key={item.id}

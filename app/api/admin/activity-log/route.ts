@@ -1,7 +1,14 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { verifyAdminToken } from '@/lib/middleware/admin-auth'
 
 export async function GET(request: Request) {
+  // Перевірка доступу
+  const auth = verifyAdminToken(request as any)
+  if (!auth.valid) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const { searchParams } = new URL(request.url)
     const actionType = searchParams.get('actionType') // 'client_created' | 'appointment_created' | 'business_created' | 'all'
