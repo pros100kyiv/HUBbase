@@ -2,61 +2,108 @@ import { NextResponse } from 'next/server'
 import { z } from 'zod'
 import { hash, compare } from 'bcryptjs'
 import jwt from 'jsonwebtoken'
+import { prisma } from '@/lib/prisma'
 
 const loginSchema = z.object({
   email: z.string().email(),
   password: z.string().min(1),
 })
 
+// Статичний адмін (для початкового доступу)
+const STATIC_ADMIN = {
+  email: 'pros100kyiv@gmail.com',
+  password: 'Ca0397ah',
+  role: 'SUPER_ADMIN',
+  permissions: ['VIEW_BUSINESSES', 'EDIT_BUSINESSES', 'DELETE_BUSINESSES', 'VIEW_CLIENTS', 'VIEW_ANALYTICS', 'VIEW_FINANCES', 'MANAGE_ADMINS', 'EXPORT_DATA'],
+}
+
 export async function POST(request: Request) {
   try {
     const body = await request.json()
     const validated = loginSchema.parse(body)
 
-    // Перевіряємо, чи це email розробника
-    const developerEmail = process.env.DEVELOPER_EMAIL || 'developer@xbase.online'
-    const developerPassword = process.env.DEVELOPER_PASSWORD
+    const email = validated.email.toLowerCase().trim()
+    let admin: any = null
+    let role = 'developer'
+    let permissions: string[] = []
 
-    if (!developerPassword) {
-      console.error('DEVELOPER_PASSWORD not set in environment variables')
-      return NextResponse.json(
-        { error: 'Developer access not configured' },
-        { status: 500 }
-      )
-    }
+    // КРОК 1: Перевіряємо статичного адміна
+    if (email === STATIC_ADMIN.email.toLowerCase()) {
+      if (validated.password === STATIC_ADMIN.password) {
+        admin = STATIC_ADMIN
+        role = STATIC_ADMIN.role
+        permissions = STATIC_ADMIN.permissions
+      } else {
+        return NextResponse.json(
+          { error: 'Невірний email або пароль' },
+          { status: 401 }
+        )
+      }
+    } else {
+      // КРОК 2: Перевіряємо адмінів з бази даних
+      const dbAdmin = await prisma.admin.findUnique({
+        where: { email },
+      })
 
-    // Перевіряємо email
-    if (validated.email.toLowerCase().trim() !== developerEmail.toLowerCase().trim()) {
-      return NextResponse.json(
-        { error: 'Невірний email або пароль' },
-        { status: 401 }
-      )
-    }
+      if (!dbAdmin || !dbAdmin.isActive) {
+        // КРОК 3: Перевіряємо developer email з .env (fallback)
+        const developerEmail = process.env.DEVELOPER_EMAIL || 'developer@xbase.online'
+        const developerPassword = process.env.DEVELOPER_PASSWORD
 
-    // Перевіряємо пароль
-    // Якщо пароль в .env хешований, використовуємо compare
-    // Якщо пароль в .env не хешований (для простоти), перевіряємо напряму
-    let passwordMatch = false
-    
-    // Спробуємо порівняти як хешований пароль
-    try {
-      passwordMatch = await compare(validated.password, developerPassword)
-    } catch (e) {
-      // Якщо не хешований, порівнюємо напряму
-      passwordMatch = validated.password === developerPassword
-    }
+        if (email === developerEmail.toLowerCase() && developerPassword) {
+          let passwordMatch = false
+          try {
+            passwordMatch = await compare(validated.password, developerPassword)
+          } catch (e) {
+            passwordMatch = validated.password === developerPassword
+          }
 
-    if (!passwordMatch) {
-      return NextResponse.json(
-        { error: 'Невірний email або пароль' },
-        { status: 401 }
-      )
+          if (!passwordMatch) {
+            return NextResponse.json(
+              { error: 'Невірний email або пароль' },
+              { status: 401 }
+            )
+          }
+
+          role = 'developer'
+        } else {
+          return NextResponse.json(
+            { error: 'Невірний email або пароль' },
+            { status: 401 }
+          )
+        }
+      } else {
+        // Перевіряємо пароль адміна з БД
+        const passwordMatch = await compare(validated.password, dbAdmin.password)
+        
+        if (!passwordMatch) {
+          return NextResponse.json(
+            { error: 'Невірний email або пароль' },
+            { status: 401 }
+          )
+        }
+
+        admin = dbAdmin
+        role = dbAdmin.role
+        permissions = dbAdmin.permissions ? JSON.parse(dbAdmin.permissions) : []
+
+        // Оновлюємо останній вхід
+        await prisma.admin.update({
+          where: { id: dbAdmin.id },
+          data: { lastLoginAt: new Date() },
+        })
+      }
     }
 
     // Генеруємо JWT токен
     const secret = process.env.JWT_SECRET || 'xbase-admin-secret-key-change-in-production'
     const token = jwt.sign(
-      { email: validated.email.toLowerCase().trim(), role: 'developer' },
+      { 
+        email,
+        role,
+        permissions,
+        adminId: admin?.id || null,
+      },
       secret,
       { expiresIn: '24h' }
     )
@@ -64,7 +111,9 @@ export async function POST(request: Request) {
     return NextResponse.json({
       success: true,
       token,
-      email: validated.email.toLowerCase().trim(),
+      email,
+      role,
+      permissions,
     })
   } catch (error: any) {
     console.error('Admin login error:', error)

@@ -5,6 +5,8 @@ export interface AdminAuthResult {
   valid: boolean
   email?: string
   role?: string
+  permissions?: string[]
+  adminId?: string
 }
 
 export function verifyAdminToken(request: NextRequest | Request): AdminAuthResult {
@@ -19,11 +21,19 @@ export function verifyAdminToken(request: NextRequest | Request): AdminAuthResul
     const secret = process.env.JWT_SECRET || 'xbase-admin-secret-key-change-in-production'
     const decoded = jwt.verify(token, secret) as any
     
-    if (decoded.role !== 'developer') {
+    // Перевіряємо роль (developer, SUPER_ADMIN, ADMIN, VIEWER)
+    const validRoles = ['developer', 'SUPER_ADMIN', 'ADMIN', 'VIEWER']
+    if (!validRoles.includes(decoded.role)) {
       return { valid: false }
     }
 
-    return { valid: true, email: decoded.email, role: decoded.role }
+    return { 
+      valid: true, 
+      email: decoded.email, 
+      role: decoded.role,
+      permissions: decoded.permissions || [],
+      adminId: decoded.adminId || null,
+    }
   } catch (error) {
     return { valid: false }
   }

@@ -23,7 +23,7 @@ import {
   DatabaseIcon
 } from '@/components/icons'
 
-type Tab = 'overview' | 'businesses' | 'phones' | 'activity' | 'graph' | 'analytics' | 'integrations' | 'security' | 'finances' | 'clients' | 'settings' | 'export'
+type Tab = 'overview' | 'businesses' | 'phones' | 'activity' | 'graph' | 'analytics' | 'integrations' | 'security' | 'finances' | 'clients' | 'admins' | 'settings' | 'export'
 
 interface Business {
   id: string
@@ -158,6 +158,7 @@ export default function ControlCenterPage() {
     { id: 'security', label: 'Безпека', icon: ShieldIcon },
     { id: 'finances', label: 'Фінанси', icon: MoneyIcon },
     { id: 'clients', label: 'Клієнти', icon: UsersIcon },
+    { id: 'admins', label: 'Адміністратори', icon: ShieldIcon },
     { id: 'settings', label: 'Налаштування', icon: SettingsIcon },
     { id: 'export', label: 'Експорт/Імпорт', icon: DownloadIcon },
   ]
@@ -261,6 +262,10 @@ export default function ControlCenterPage() {
 
         {activeTab === 'clients' && (
           <ClientsTab />
+        )}
+
+        {activeTab === 'admins' && (
+          <AdminsTab />
         )}
 
         {activeTab === 'settings' && (
@@ -1078,6 +1083,404 @@ function SettingsTab() {
       <p className="text-gray-600 dark:text-gray-400">
         Системні налаштування (в розробці)
       </p>
+    </div>
+  )
+}
+
+// Admins Tab Component
+function AdminsTab() {
+  const [admins, setAdmins] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [editingAdmin, setEditingAdmin] = useState<any>(null)
+  const [search, setSearch] = useState('')
+  const [roleFilter, setRoleFilter] = useState<'all' | 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER'>('all')
+
+  const [formData, setFormData] = useState({
+    email: '',
+    password: '',
+    name: '',
+    role: 'ADMIN' as 'SUPER_ADMIN' | 'ADMIN' | 'VIEWER',
+    permissions: [] as string[],
+    isActive: true,
+  })
+
+  const allPermissions = [
+    'VIEW_BUSINESSES',
+    'EDIT_BUSINESSES',
+    'DELETE_BUSINESSES',
+    'VIEW_CLIENTS',
+    'VIEW_ANALYTICS',
+    'VIEW_FINANCES',
+    'MANAGE_ADMINS',
+    'EXPORT_DATA',
+  ]
+
+  useEffect(() => {
+    loadAdmins()
+  }, [search, roleFilter])
+
+  const loadAdmins = async () => {
+    setLoading(true)
+    try {
+      const params = new URLSearchParams({
+        ...(search && { search }),
+        ...(roleFilter !== 'all' && { role: roleFilter }),
+      })
+      const response = await fetch(`/api/admin/admins?${params}`, {
+        headers: getAuthHeaders(),
+      })
+      const data = await response.json()
+      if (response.ok) {
+        setAdmins(data.admins || [])
+      }
+    } catch (error) {
+      console.error('Error loading admins:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleCreate = async () => {
+    try {
+      const response = await fetch('/api/admin/admins', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setShowCreateModal(false)
+        setFormData({
+          email: '',
+          password: '',
+          name: '',
+          role: 'ADMIN',
+          permissions: [],
+          isActive: true,
+        })
+        loadAdmins()
+      } else {
+        alert(data.error || 'Помилка створення адміна')
+      }
+    } catch (error) {
+      console.error('Error creating admin:', error)
+      alert('Помилка створення адміна')
+    }
+  }
+
+  const handleUpdate = async () => {
+    if (!editingAdmin) return
+
+    try {
+      const response = await fetch(`/api/admin/admins/${editingAdmin.id}`, {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setEditingAdmin(null)
+        setFormData({
+          email: '',
+          password: '',
+          name: '',
+          role: 'ADMIN',
+          permissions: [],
+          isActive: true,
+        })
+        loadAdmins()
+      } else {
+        alert(data.error || 'Помилка оновлення адміна')
+      }
+    } catch (error) {
+      console.error('Error updating admin:', error)
+      alert('Помилка оновлення адміна')
+    }
+  }
+
+  const handleDelete = async (adminId: string) => {
+    if (!confirm('Ви впевнені, що хочете видалити цього адміна?')) return
+
+    try {
+      const response = await fetch(`/api/admin/admins/${adminId}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      })
+
+      if (response.ok) {
+        loadAdmins()
+      } else {
+        const data = await response.json()
+        alert(data.error || 'Помилка видалення адміна')
+      }
+    } catch (error) {
+      console.error('Error deleting admin:', error)
+      alert('Помилка видалення адміна')
+    }
+  }
+
+  const handleEdit = (admin: any) => {
+    setEditingAdmin(admin)
+    setFormData({
+      email: admin.email,
+      password: '',
+      name: admin.name || '',
+      role: admin.role,
+      permissions: admin.permissions || [],
+      isActive: admin.isActive,
+    })
+    setShowCreateModal(true)
+  }
+
+  const togglePermission = (permission: string) => {
+    setFormData(prev => ({
+      ...prev,
+      permissions: prev.permissions.includes(permission)
+        ? prev.permissions.filter(p => p !== permission)
+        : [...prev.permissions, permission],
+    }))
+  }
+
+  return (
+    <div>
+      <div className="mb-6 flex justify-between items-center">
+        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+          Адміністратори
+        </h2>
+        <button
+          onClick={() => {
+            setEditingAdmin(null)
+            setFormData({
+              email: '',
+              password: '',
+              name: '',
+              role: 'ADMIN',
+              permissions: [],
+              isActive: true,
+            })
+            setShowCreateModal(true)
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+        >
+          + Додати адміна
+        </button>
+      </div>
+
+      <div className="mb-6 flex gap-4">
+        <div className="flex-1 relative">
+          <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Пошук по email або імені..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          />
+        </div>
+        <select
+          value={roleFilter}
+          onChange={(e) => setRoleFilter(e.target.value as any)}
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+        >
+          <option value="all">Всі ролі</option>
+          <option value="SUPER_ADMIN">Супер адмін</option>
+          <option value="ADMIN">Адмін</option>
+          <option value="VIEWER">Переглядач</option>
+        </select>
+      </div>
+
+      {loading ? (
+        <div className="text-center py-12">Завантаження...</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full">
+            <thead>
+              <tr className="border-b border-gray-200 dark:border-gray-700">
+                <th className="text-left py-3 px-4">Email</th>
+                <th className="text-left py-3 px-4">Ім'я</th>
+                <th className="text-left py-3 px-4">Роль</th>
+                <th className="text-left py-3 px-4">Права доступу</th>
+                <th className="text-left py-3 px-4">Статус</th>
+                <th className="text-left py-3 px-4">Останній вхід</th>
+                <th className="text-left py-3 px-4">Дії</th>
+              </tr>
+            </thead>
+            <tbody>
+              {admins.map((admin: any) => (
+                <tr key={admin.id} className="border-b border-gray-100 dark:border-gray-700">
+                  <td className="py-3 px-4 font-medium">{admin.email}</td>
+                  <td className="py-3 px-4">{admin.name || '-'}</td>
+                  <td className="py-3 px-4">
+                    <span className={`px-2 py-1 rounded text-xs font-medium ${
+                      admin.role === 'SUPER_ADMIN' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
+                      admin.role === 'ADMIN' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                      'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                    }`}>
+                      {admin.role === 'SUPER_ADMIN' ? 'Супер адмін' :
+                       admin.role === 'ADMIN' ? 'Адмін' :
+                       'Переглядач'}
+                    </span>
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                      {admin.permissions?.length || 0} прав
+                    </div>
+                  </td>
+                  <td className="py-3 px-4">
+                    {admin.isActive ? (
+                      <span className="px-2 py-1 rounded text-xs bg-green-100 text-green-800">Активний</span>
+                    ) : (
+                      <span className="px-2 py-1 rounded text-xs bg-red-100 text-red-800">Неактивний</span>
+                    )}
+                  </td>
+                  <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
+                    {admin.lastLoginAt ? format(new Date(admin.lastLoginAt), 'dd.MM.yyyy HH:mm', { locale: uk }) : 'Ніколи'}
+                  </td>
+                  <td className="py-3 px-4">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEdit(admin)}
+                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                      >
+                        Редагувати
+                      </button>
+                      <button
+                        onClick={() => handleDelete(admin.id)}
+                        className="text-red-600 hover:text-red-800 dark:text-red-400"
+                      >
+                        Видалити
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+
+      {/* Create/Edit Modal */}
+      {showCreateModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+              {editingAdmin ? 'Редагувати адміна' : 'Створити нового адміна'}
+            </h3>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block mb-2 text-sm font-medium">Email *</label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  disabled={!!editingAdmin}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm font-medium">
+                  Пароль {editingAdmin ? '(залиште порожнім, щоб не змінювати)' : '*'}
+                </label>
+                <input
+                  type="password"
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  required={!editingAdmin}
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm font-medium">Ім'я</label>
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                />
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm font-medium">Роль *</label>
+                <select
+                  value={formData.role}
+                  onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
+                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                >
+                  <option value="SUPER_ADMIN">Супер адмін</option>
+                  <option value="ADMIN">Адмін</option>
+                  <option value="VIEWER">Переглядач</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block mb-2 text-sm font-medium">Права доступу</label>
+                <div className="space-y-2 border border-gray-300 dark:border-gray-600 rounded-lg p-4">
+                  {allPermissions.map((permission) => (
+                    <label key={permission} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="checkbox"
+                        checked={formData.permissions.includes(permission)}
+                        onChange={() => togglePermission(permission)}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                        {permission.replace(/_/g, ' ')}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={formData.isActive}
+                    onChange={(e) => setFormData({ ...formData, isActive: e.target.checked })}
+                    className="w-4 h-4"
+                  />
+                  <span className="text-sm font-medium">Активний</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="mt-6 flex gap-4 justify-end">
+              <button
+                onClick={() => {
+                  setShowCreateModal(false)
+                  setEditingAdmin(null)
+                  setFormData({
+                    email: '',
+                    password: '',
+                    name: '',
+                    role: 'ADMIN',
+                    permissions: [],
+                    isActive: true,
+                  })
+                }}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+              >
+                Скасувати
+              </button>
+              <button
+                onClick={editingAdmin ? handleUpdate : handleCreate}
+                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              >
+                {editingAdmin ? 'Оновити' : 'Створити'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

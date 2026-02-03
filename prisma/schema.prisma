@@ -806,3 +806,42 @@ model GraphRelationship {
   @@index([businessId])
   @@index([createdAt])
 }
+
+// ============================================
+// АДМІНІСТРАТОРИ ЦЕНТРУ УПРАВЛІННЯ
+// ============================================
+enum AdminRole {
+  SUPER_ADMIN // Суперадмін (повний доступ)
+  ADMIN // Адмін (обмежений доступ)
+  VIEWER // Переглядач (тільки перегляд)
+}
+
+enum AdminPermission {
+  VIEW_BUSINESSES // Перегляд бізнесів
+  EDIT_BUSINESSES // Редагування бізнесів
+  DELETE_BUSINESSES // Видалення бізнесів
+  VIEW_CLIENTS // Перегляд клієнтів
+  VIEW_ANALYTICS // Перегляд аналітики
+  VIEW_FINANCES // Перегляд фінансів
+  MANAGE_ADMINS // Управління адмінами
+  EXPORT_DATA // Експорт даних
+}
+
+model Admin {
+  id            String          @id @default(cuid())
+  email         String          @unique // Email адміна
+  password      String // Хешований пароль
+  name          String? // Ім'я адміна
+  role          AdminRole       @default(ADMIN) // Роль адміна
+  permissions   String? // JSON: масив AdminPermission
+  isActive      Boolean         @default(true) // Чи активний адмін
+  lastLoginAt   DateTime? // Останній вхід
+  createdBy     String? // ID адміна, який створив цього адміна
+  createdAt     DateTime        @default(now())
+  updatedAt     DateTime        @updatedAt
+
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
+  @@index([createdAt])
+}
