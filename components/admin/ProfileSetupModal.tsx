@@ -159,10 +159,28 @@ export function ProfileSetupModal({ business, onComplete, onClose }: ProfileSetu
         }),
       })
 
-      const data = await response.json()
+      let data
+      try {
+        data = await response.json()
+      } catch (parseError) {
+        console.error('Error parsing response:', parseError)
+        const errorMsg = 'Помилка при обробці відповіді сервера. Будь ласка, спробуйте ще раз.'
+        setErrorMessage(errorMsg)
+        setShowErrorToast(true)
+        setErrors({ submit: errorMsg })
+        setIsSaving(false)
+        return
+      }
 
       if (!response.ok) {
-        const errorMsg = data.error || 'Помилка при збереженні профілю. Будь ласка, спробуйте ще раз.'
+        // Отримуємо детальне повідомлення про помилку з сервера
+        const errorMsg = data?.error || `Помилка при збереженні профілю (код ${response.status}). Будь ласка, спробуйте ще раз.`
+        console.error('Profile save error:', {
+          status: response.status,
+          statusText: response.statusText,
+          error: data?.error,
+          data,
+        })
         setErrorMessage(errorMsg)
         setShowErrorToast(true)
         setErrors({ submit: errorMsg })

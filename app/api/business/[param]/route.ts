@@ -296,12 +296,23 @@ export async function PATCH(
     }
 
     // Синхронізуємо всі дані в ManagementCenter (ПОВНЕ ДУБЛЮВАННЯ)
+    // Це необов'язкова операція - якщо вона не вдається, це не повинно блокувати оновлення бізнесу
     try {
       const { syncBusinessToManagementCenter } = await import('@/lib/services/management-center')
-      await syncBusinessToManagementCenter(businessId)
-    } catch (error) {
-      console.error('Error syncing business to Management Center:', error)
-      // Не викидаємо помилку, щоб не зламати оновлення бізнесу
+      const syncResult = await syncBusinessToManagementCenter(businessId)
+      if (!syncResult) {
+        console.warn('ManagementCenter sync returned null, but continuing...')
+      }
+    } catch (syncError: any) {
+      // Логуємо помилку, але не викидаємо її, щоб не зламати оновлення бізнесу
+      console.error('Error syncing business to Management Center:', syncError)
+      console.error('Sync error details:', {
+        message: syncError?.message,
+        code: syncError?.code,
+        stack: syncError?.stack,
+        name: syncError?.name,
+      })
+      // Продовжуємо виконання - синхронізація не критична для оновлення профілю
     }
 
     // Оновлюємо номер телефону в Реєстрі телефонів (якщо змінився)
@@ -314,20 +325,43 @@ export async function PATCH(
           phone || null,
           business.name
         )
-      } catch (error) {
-        console.error('Error updating business phone in directory:', error)
+      } catch (phoneError: any) {
+        console.error('Error updating business phone in directory:', phoneError)
+        // Логуємо детальну інформацію про помилку
+        console.error('Phone update error details:', {
+          message: phoneError?.message,
+          code: phoneError?.code,
+          stack: phoneError?.stack,
+        })
         // Не викидаємо помилку, щоб не зламати оновлення бізнесу
       }
     }
 
     return NextResponse.json({ business })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Unexpected error updating business:', error)
     console.error('Error details:', {
       message: error instanceof Error ? error.message : String(error),
       stack: error instanceof Error ? error.stack : undefined,
       name: error instanceof Error ? error.name : undefined,
+      code: error?.code,
+      meta: error?.meta,
     })
+    
+    // Перевіряємо, чи це помилка парсингу JSON
+    if (error instanceof SyntaxError) {
+      return NextResponse.json({ 
+        error: 'Невірний формат даних. Перевірте введені значення.' 
+      }, { status: 400 })
+    }
+    
+    // Перевіряємо, чи це помилка бази даних
+    if (error?.code?.startsWith('P')) {
+      // Prisma помилка
+      return NextResponse.json({ 
+        error: 'Помилка бази даних. Будь ласка, спробуйте ще раз або зверніться до підтримки.' 
+      }, { status: 500 })
+    }
     
     // Загальна обробка несподіваних помилок
     return NextResponse.json({ 
