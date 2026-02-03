@@ -17,23 +17,18 @@ export async function POST(request: Request) {
 
     const telegramId = BigInt(telegramData.id)
     
-    // Перевіряємо, чи бізнес вже зареєстрований через Telegram OAuth
-    let existingBusiness = await prisma.business.findUnique({
-      where: { telegramId }
-    })
-    
-    // Якщо forceRegister=true - завжди створюємо новий бізнес (навіть якщо існує)
-    if (forceRegister && existingBusiness) {
-      // Видаляємо старий telegramId, щоб створити новий бізнес
-      await prisma.business.update({
-        where: { id: existingBusiness.id },
-        data: { telegramId: null }
+    // Якщо forceRegister=true - завжди створюємо новий бізнес, пропускаємо всі перевірки
+    if (forceRegister) {
+      // Переходимо безпосередньо до створення нового бізнесу
+      // (код буде нижче, після всіх перевірок)
+    } else {
+      // Перевіряємо, чи бізнес вже зареєстрований через Telegram OAuth
+      const existingBusiness = await prisma.business.findUnique({
+        where: { telegramId }
       })
-      existingBusiness = null
-    }
-    
-    // Якщо бізнес знайдено через Telegram ID і це не примусова реєстрація - автоматичний вхід
-    if (!forceRegister && existingBusiness) {
+      
+      // Якщо бізнес знайдено через Telegram ID - автоматичний вхід
+      if (existingBusiness) {
       // Оновлюємо дані бізнесу
       await prisma.business.update({
         where: { id: existingBusiness.id },
@@ -145,16 +140,19 @@ export async function POST(request: Request) {
           role: telegramUser.role
         }
       })
+      }
     }
 
-    // Перевіряємо, чи користувач вже зареєстрований через TelegramUser
-    let telegramUser = await prisma.telegramUser.findUnique({
-      where: { telegramId },
-      include: { business: true }
-    })
+    // Якщо це не примусова реєстрація - перевіряємо TelegramUser
+    if (!forceRegister) {
+      // Перевіряємо, чи користувач вже зареєстрований через TelegramUser
+      const telegramUser = await prisma.telegramUser.findUnique({
+        where: { telegramId },
+        include: { business: true }
+      })
 
-    // Якщо користувач вже існує - автоматичний вхід
-    if (telegramUser && telegramUser.business) {
+      // Якщо користувач вже існує - автоматичний вхід
+      if (telegramUser && telegramUser.business) {
       // Оновлюємо дані користувача
       await prisma.telegramUser.update({
         where: { id: telegramUser.id },
@@ -227,10 +225,11 @@ export async function POST(request: Request) {
           role: telegramUser.role
         }
       })
+      }
     }
 
     // Якщо businessId вказано - прив'язуємо до існуючого бізнесу
-    if (businessId) {
+    if (businessId && !forceRegister) {
       const business = await prisma.business.findUnique({
         where: { id: businessId }
       })
@@ -240,7 +239,7 @@ export async function POST(request: Request) {
       }
 
       // Створюємо TelegramUser для існуючого бізнесу
-      telegramUser = await prisma.telegramUser.create({
+      const telegramUser = await prisma.telegramUser.create({
         data: {
           businessId: business.id,
           telegramId: telegramId,
@@ -319,6 +318,7 @@ export async function POST(request: Request) {
     }
 
     // Автоматична реєстрація нового бізнесу через Telegram OAuth
+    // (виконується якщо forceRegister=true або якщо користувач не знайдено)
     // Генеруємо унікальний slug на основі імені користувача
     const baseSlug = (telegramData.first_name || 'user').toLowerCase()
       .replace(/[^a-z0-9а-яіїєґ]/g, '-')
@@ -392,7 +392,7 @@ export async function POST(request: Request) {
     }
 
     // Створюємо TelegramUser
-    telegramUser = await prisma.telegramUser.create({
+    const telegramUser = await prisma.telegramUser.create({
       data: {
         businessId: newBusiness.id,
         telegramId: telegramId,
