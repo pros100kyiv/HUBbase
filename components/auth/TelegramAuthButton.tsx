@@ -137,19 +137,25 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
   }
 
   return (
-    <div className="w-full relative">
-      {/* Telegram Login Widget - прихований, але активний */}
+    <div className="w-full relative" style={{ height: '48px' }}>
+      {/* Telegram Login Widget - прихований, але активний для кліків */}
       <div 
         ref={containerRef} 
-        className="absolute opacity-0 pointer-events-none w-full h-[48px] overflow-hidden"
-        style={{ zIndex: -1 }}
+        className="absolute inset-0 w-full h-full"
+        style={{ zIndex: 1 }}
       />
-      {/* Власна кнопка, яка виглядає як Google кнопка */}
-      <button
-        type="button"
-        disabled={isLoading}
-        onClick={handleClick}
-        className="w-full py-3 rounded-lg bg-white text-gray-700 font-medium flex items-center justify-center gap-3 hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md relative z-10"
+      {/* Власна кнопка, яка виглядає як Google кнопка - overlay поверх iframe */}
+      <div
+        className="absolute inset-0 w-full h-full py-3 rounded-lg bg-white text-gray-700 font-medium flex items-center justify-center gap-3 hover:bg-gray-50 transition-all shadow-md cursor-pointer"
+        style={{ zIndex: 2, pointerEvents: 'none' }}
+        onClick={(e) => {
+          // Клік проходить через overlay до iframe
+          e.stopPropagation()
+          const iframe = containerRef.current?.querySelector('iframe')
+          if (iframe) {
+            iframe.click()
+          }
+        }}
       >
         {/* Telegram іконка */}
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -159,14 +165,19 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
           />
         </svg>
         <span>{text || (isRegister ? 'Зареєструватися через Telegram' : 'Увійти через Telegram')}</span>
-      </button>
+      </div>
       <style jsx global>{`
-        div[data-telegram-login] iframe {
+        div[data-telegram-login] {
           opacity: 0 !important;
-          pointer-events: none !important;
-          position: absolute !important;
+          pointer-events: auto !important;
+        }
+        div[data-telegram-login] iframe {
           width: 100% !important;
           height: 48px !important;
+          border-radius: 8px !important;
+          border: none !important;
+          background: transparent !important;
+          pointer-events: auto !important;
         }
       `}</style>
     </div>
