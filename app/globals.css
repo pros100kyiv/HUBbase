@@ -72,6 +72,13 @@
     line-height: 1.5;
   }
   
+  /* Panel background - 3 tones darker than main background */
+  .panel-bg {
+    background-color: #E0E0E0;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
+  
   /* White cards on dark background */
   .bg-gray-100 {
     background-color: #FFFFFF;

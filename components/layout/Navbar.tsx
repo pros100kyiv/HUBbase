@@ -74,7 +74,7 @@ export function Navbar() {
   if (pathname?.startsWith('/dashboard')) {
     return (
       <>
-        <nav className="fixed top-0 left-0 md:left-64 right-0 z-50 bg-white/80 backdrop-blur-xl border-b border-gray-200" style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+        <nav className="fixed top-0 left-0 md:left-64 right-0 z-50 border-b border-gray-300" style={{ backgroundColor: '#E0E0E0', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
           <div className="px-6">
             <div className="flex justify-between items-center h-16">
               {/* Left side - Menu button (mobile) and Hi User */}

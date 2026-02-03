@@ -131,9 +131,9 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <>
-      <aside className={cn('bg-white/80 backdrop-blur-xl border-r border-gray-200 w-0 md:w-64 min-h-screen fixed left-0 top-0 z-40 hidden md:block', className)} style={{ backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
+      <aside className={cn('border-r border-gray-300 w-0 md:w-64 min-h-screen fixed left-0 top-0 z-40 hidden md:block', className)} style={{ backgroundColor: '#E0E0E0', backdropFilter: 'blur(20px)', WebkitBackdropFilter: 'blur(20px)' }}>
         {/* Logo Section */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-300">
           <h1 className="text-xl font-bold text-black" style={{ letterSpacing: '-0.02em' }}>Growth</h1>
         </div>
         
@@ -156,7 +156,7 @@ export function Sidebar({ className }: SidebarProps) {
           </div>
 
           {/* Settings */}
-          <div className="space-y-1 pt-4 border-t border-gray-200">
+          <div className="space-y-1 pt-4 border-t border-gray-300">
             <button
               onClick={() => router.push('/dashboard/settings')}
               className={cn(
