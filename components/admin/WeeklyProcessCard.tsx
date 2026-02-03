@@ -1,79 +1,190 @@
 'use client'
 
+import { useEffect, useState } from 'react'
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, eachDayOfInterval, isSameMonth } from 'date-fns'
+import { uk } from 'date-fns/locale'
+import { useRouter } from 'next/navigation'
+import { cn } from '@/lib/utils'
+
 interface WeeklyProcessCardProps {
-  data?: Array<{ day: string; work: number; meditation: number }>
+  businessId?: string
 }
 
-export function WeeklyProcessCard({ data }: WeeklyProcessCardProps) {
-  // Default data if not provided
-  const defaultData = [
-    { day: 'M', work: 60, meditation: 30 },
-    { day: 'T', work: 70, meditation: 40 },
-    { day: 'W', work: 65, meditation: 35 },
-    { day: 'T', work: 80, meditation: 45 },
-    { day: 'F', work: 75, meditation: 50 },
-    { day: 'S', work: 50, meditation: 30 },
-    { day: 'S', work: 40, meditation: 25 },
-  ]
+interface Appointment {
+  id: string
+  startTime: string
+  status: string
+}
 
-  const chartData = data || defaultData
-  const maxValue = Math.max(...chartData.flatMap(d => [d.work, d.meditation]))
+export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
+  const router = useRouter()
+  const [currentMonth, setCurrentMonth] = useState(new Date())
+  const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!businessId) {
+      // Try to get from localStorage
+      const businessData = localStorage.getItem('business')
+      if (businessData) {
+        try {
+          const parsed = JSON.parse(businessData)
+          loadAppointments(parsed.id)
+        } catch {
+          setLoading(false)
+        }
+      } else {
+        setLoading(false)
+      }
+      return
+    }
+    loadAppointments(businessId)
+  }, [businessId, currentMonth])
+
+  const loadAppointments = async (id: string) => {
+    try {
+      setLoading(true)
+      const start = startOfMonth(currentMonth)
+      const end = endOfMonth(currentMonth)
+      const startStr = format(start, 'yyyy-MM-dd')
+      const endStr = format(end, 'yyyy-MM-dd')
+      
+      const response = await fetch(`/api/appointments?businessId=${id}&startDate=${startStr}&endDate=${endStr}`)
+      if (response.ok) {
+        const data = await response.json()
+        setAppointments(data || [])
+      }
+    } catch (error) {
+      console.error('Error loading appointments:', error)
+      setAppointments([])
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const monthStart = startOfMonth(currentMonth)
+  const monthEnd = endOfMonth(currentMonth)
+  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 })
+  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 })
+  const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd })
+
+  const getAppointmentsForDay = (day: Date) => {
+    return appointments.filter((apt) => isSameDay(new Date(apt.startTime), day))
+  }
+
+  const handleDayClick = (day: Date) => {
+    if (isSameMonth(day, currentMonth)) {
+      router.push(`/dashboard/appointments?date=${format(day, 'yyyy-MM-dd')}`)
+    }
+  }
+
+  const handlePrevMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() - 1))
+  }
+
+  const handleNextMonth = () => {
+    setCurrentMonth(new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1))
+  }
+
+  const handleToday = () => {
+    setCurrentMonth(new Date())
+  }
 
   return (
     <div className="rounded-xl p-6 card-floating">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
-          Weekly process
+          Календар записів
         </h3>
-        <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
-          <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-          </svg>
-        </div>
-      </div>
-
-      {/* Legend */}
-      <div className="flex items-center gap-4 mb-4">
         <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-black"></div>
-          <span className="text-xs text-gray-300">Work</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-          <span className="text-xs text-gray-300">Meditation</span>
+          <button
+            onClick={handlePrevMonth}
+            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+            </svg>
+          </button>
+          <button
+            onClick={handleToday}
+            className="px-2 py-1 text-xs font-medium text-white hover:bg-white/10 rounded-lg transition-colors"
+          >
+            Сьогодні
+          </button>
+          <button
+            onClick={handleNextMonth}
+            className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+          >
+            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
         </div>
       </div>
 
-      {/* Chart */}
-      <div className="relative h-32">
-        <svg className="w-full h-full" viewBox="0 0 300 100" preserveAspectRatio="none">
-          {/* Work line */}
-          <polyline
-            points={chartData.map((d, i) => `${(i * 300) / (chartData.length - 1)},${100 - (d.work / maxValue) * 80}`).join(' ')}
-            fill="none"
-            stroke="#000000"
-            strokeWidth="2"
-          />
-          {/* Meditation line */}
-          <polyline
-            points={chartData.map((d, i) => `${(i * 300) / (chartData.length - 1)},${100 - (d.meditation / maxValue) * 80}`).join(' ')}
-            fill="none"
-            stroke="#9CA3AF"
-            strokeWidth="2"
-          />
-          {/* 65% label on Thursday */}
-          <text x="170" y="25" fontSize="10" fill="#000000" fontWeight="600">65%</text>
-        </svg>
+      <div className="mb-3">
+        <h4 className="text-sm font-semibold text-white">
+          {format(currentMonth, 'LLLL yyyy', { locale: uk })}
+        </h4>
       </div>
 
-      {/* Days */}
-      <div className="flex justify-between mt-2">
-        {chartData.map((d, i) => (
-          <div key={i} className="text-xs text-gray-300 font-medium">
-            {d.day}
+      {/* Calendar Grid */}
+      <div className="grid grid-cols-7 gap-1">
+        {/* Day headers */}
+        {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
+          <div key={day} className="text-center text-[10px] font-bold text-gray-400 py-1">
+            {day}
           </div>
         ))}
+        
+        {/* Calendar days */}
+        {calendarDays.map((day) => {
+          const dayAppointments = getAppointmentsForDay(day)
+          const isToday = isSameDay(day, new Date())
+          const isCurrentMonth = isSameMonth(day, currentMonth)
+          const appointmentCount = dayAppointments.length
+
+          return (
+            <button
+              key={day.toISOString()}
+              onClick={() => handleDayClick(day)}
+              className={cn(
+                'relative p-1.5 rounded-lg border transition-all min-h-[32px] flex flex-col items-center justify-center',
+                !isCurrentMonth && 'opacity-30',
+                isToday
+                  ? 'border-blue-500 bg-blue-500/20'
+                  : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10',
+                isCurrentMonth && 'cursor-pointer active:scale-95'
+              )}
+            >
+              <div className={cn(
+                'text-[11px] font-bold mb-0.5',
+                isToday ? 'text-blue-400' : isCurrentMonth ? 'text-white' : 'text-gray-500'
+              )}>
+                {format(day, 'd')}
+              </div>
+              {appointmentCount > 0 && (
+                <div className="w-full mt-auto">
+                  <div className={cn(
+                    'text-[9px] font-bold text-center rounded-full py-0.5',
+                    isToday 
+                      ? 'bg-blue-500 text-white' 
+                      : 'bg-white/20 text-white'
+                  )}>
+                    {appointmentCount}
+                  </div>
+                </div>
+              )}
+            </button>
+          )
+        })}
       </div>
+
+      {loading && (
+        <div className="mt-4 text-center">
+          <div className="text-xs text-gray-400">Завантаження...</div>
+        </div>
+      )}
     </div>
   )
 }

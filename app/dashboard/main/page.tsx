@@ -175,9 +175,9 @@ export default function MainPage() {
           />
         </div>
 
-        {/* Weekly Process Card */}
+        {/* Calendar Card */}
         <div className="lg:col-span-1">
-          <WeeklyProcessCard />
+          <WeeklyProcessCard businessId={business?.id} />
         </div>
 
         {/* Month Progress Card */}
