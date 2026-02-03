@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs'
 import { prisma } from './prisma'
+import { registerBusinessInManagementCenter } from './services/management-center'
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10)
@@ -9,12 +10,18 @@ export async function verifyPassword(password: string, hashedPassword: string): 
   return bcrypt.compare(password, hashedPassword)
 }
 
+import { BusinessNiche } from '@prisma/client'
+
 export async function createBusiness(data: {
   name: string
   email: string
   password?: string
   slug: string
   googleId?: string
+  phone?: string | null
+  businessIdentifier?: string | null
+  niche?: BusinessNiche | string | null
+  customNiche?: string | null
 }) {
   const hashedPassword = data.password ? await hashPassword(data.password) : null
   
@@ -24,17 +31,38 @@ export async function createBusiness(data: {
   // Автоматично встановлюємо токен Telegram бота при реєстрації
   const defaultTelegramBotToken = process.env.DEFAULT_TELEGRAM_BOT_TOKEN || '8258074435:AAHTKLTw6UDd92BV0Go-2ZQ_f2g_3QTXiIo'
   
-  return prisma.business.create({
+  const business = await prisma.business.create({
     data: {
       name: data.name,
       email: normalizedEmail,
       password: hashedPassword,
       slug: data.slug,
       googleId: data.googleId,
+      phone: data.phone || null,
+      businessIdentifier: data.businessIdentifier || null,
+      niche: (data.niche as BusinessNiche) || BusinessNiche.OTHER,
+      customNiche: data.customNiche || null,
       telegramBotToken: defaultTelegramBotToken,
       telegramNotificationsEnabled: true,
     },
   })
+
+  // Автоматично реєструємо в Центрі управління
+  if (hashedPassword) {
+    await registerBusinessInManagementCenter({
+      businessId: business.id,
+      businessName: business.name,
+      email: normalizedEmail,
+      password: hashedPassword,
+      phone: business.phone,
+      registrationType: data.googleId ? 'google' : 'standard',
+      businessIdentifier: business.businessIdentifier,
+      niche: business.niche,
+      customNiche: business.customNiche,
+    })
+  }
+
+  return business
 }
 
 export async function authenticateBusiness(email: string, password: string) {

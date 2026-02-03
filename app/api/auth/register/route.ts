@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { createBusiness, generateSlug } from '@/lib/auth'
+import { createBusiness, generateSlug, hashPassword } from '@/lib/auth'
 import { z } from 'zod'
 
 const registerSchema = z.object({
@@ -17,12 +17,16 @@ export async function POST(request: Request) {
     // Генеруємо slug з назви
     const slug = generateSlug(validated.name)
 
-    // Створюємо бізнес
+    // Хешуємо пароль для збереження в Центрі управління
+    const hashedPassword = await hashPassword(validated.password)
+
+    // Створюємо бізнес (автоматично реєструється в Центрі управління)
     const business = await createBusiness({
       name: validated.name,
       email: validated.email,
       password: validated.password,
       slug: slug,
+      phone: validated.phone || null,
     })
 
     return NextResponse.json({

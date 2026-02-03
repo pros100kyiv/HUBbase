@@ -588,3 +588,66 @@ model SocialIntegration {
   @@index([platform])
   @@index([isConnected])
 }
+
+// ============================================
+// ЦЕНТР УПРАВЛІННЯ (Management Center)
+// ============================================
+// Зберігає дані реєстрації всіх бізнесів для подальшого створення Центру управління
+model ManagementCenter {
+  id                 String    @id @default(cuid())
+  businessId         String    @unique // ID бізнесу (зв'язок з Business)
+  businessName       String // Назва бізнесу
+  phone              String? // Номер телефону бізнесу
+  email              String    @unique // Email (логін)
+  password           String // Хешований пароль (для безпеки)
+  registrationType   String // 'telegram', 'google', 'standard'
+  businessIdentifier String? // Унікальний ідентифікатор бізнесу
+  niche              String? // Категорія бізнесу
+  customNiche        String? // Кастомна категорія
+  isActive           Boolean   @default(true)
+  registeredAt       DateTime  @default(now()) // Дата реєстрації
+  lastLoginAt        DateTime? // Останній вхід
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@index([businessId])
+  @@index([email])
+  @@index([phone])
+  @@index([registrationType])
+  @@index([registeredAt])
+  @@index([isActive])
+}
+
+// ============================================
+// РЕЄСТР ТЕЛЕФОНІВ (Phone Directory)
+// ============================================
+// Зберігає номери телефонів всіх бізнесів та клієнтів, поділені на категорії
+enum PhoneCategory {
+  BUSINESS // Номера бізнесів
+  CLIENT // Номера клієнтів
+}
+
+model PhoneDirectory {
+  id           String        @id @default(cuid())
+  phone        String // Номер телефону
+  category     PhoneCategory // Категорія: BUSINESS або CLIENT
+  businessId   String? // ID бізнесу (якщо це номер бізнесу)
+  clientId     String? // ID клієнта (якщо це номер клієнта)
+  businessName String? // Назва бізнесу (для категорії BUSINESS)
+  clientName   String? // Ім'я клієнта (для категорії CLIENT)
+  // Додаткова інформація
+  notes        String? // Примітки
+  isActive     Boolean       @default(true) // Чи активний номер
+  isVerified   Boolean       @default(false) // Чи підтверджений номер
+  lastUsedAt   DateTime? // Останнє використання
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@unique([phone, category, businessId])
+  @@index([phone])
+  @@index([category])
+  @@index([businessId])
+  @@index([clientId])
+  @@index([isActive])
+  @@index([createdAt])
+}

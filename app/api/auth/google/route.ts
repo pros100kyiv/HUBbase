@@ -116,7 +116,28 @@ export async function GET(request: Request) {
           googleId,
           slug: finalSlug,
           logo: picture,
+          niche: 'OTHER',
+          customNiche: null,
         },
+      })
+
+      // Автоматично реєструємо в Центрі управління
+      // Для Google OAuth пароль не зберігається, тому генеруємо випадковий
+      const { hashPassword } = await import('@/lib/auth')
+      const { registerBusinessInManagementCenter } = await import('@/lib/services/management-center')
+      const randomPassword = Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12)
+      const hashedPassword = await hashPassword(randomPassword)
+      
+      await registerBusinessInManagementCenter({
+        businessId: business.id,
+        businessName: business.name,
+        email: email.toLowerCase(),
+        password: hashedPassword,
+        phone: null,
+        registrationType: 'google',
+        businessIdentifier: null,
+        niche: 'OTHER',
+        customNiche: null,
       })
     }
 

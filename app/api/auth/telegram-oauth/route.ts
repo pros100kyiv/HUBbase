@@ -371,8 +371,24 @@ export async function POST(request: Request) {
         reminderSmsEnabled: true,
         // Профіль не заповнений - потрібно заповнити
         profileCompleted: false,
-        businessIdentifier: businessIdentifier
+        businessIdentifier: businessIdentifier,
+        niche: 'OTHER',
+        customNiche: null,
       }
+    })
+
+    // Автоматично реєструємо в Центрі управління
+    const { registerBusinessInManagementCenter } = await import('@/lib/services/management-center')
+    await registerBusinessInManagementCenter({
+      businessId: newBusiness.id,
+      businessName: newBusiness.name,
+      email: email,
+      password: hashedPassword,
+      phone: null,
+      registrationType: 'telegram',
+      businessIdentifier: businessIdentifier,
+      niche: 'OTHER',
+      customNiche: null,
     })
 
     // Створюємо TelegramUser

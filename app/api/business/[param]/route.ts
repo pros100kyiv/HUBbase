@@ -147,6 +147,12 @@ export async function PATCH(
       reminderEmailEnabled,
     } = body
 
+    // Отримуємо поточний бізнес для порівняння телефону
+    const currentBusiness = await prisma.business.findUnique({
+      where: { id: param },
+      select: { phone: true, name: true },
+    })
+
     const business = await prisma.business.update({
       where: { id: param },
       data: {
@@ -197,6 +203,22 @@ export async function PATCH(
       },
       select: businessSelect,
     })
+
+    // Оновлюємо номер телефону в Реєстрі телефонів (якщо змінився)
+    if (phone !== undefined && currentBusiness && phone !== currentBusiness.phone) {
+      try {
+        const { updateBusinessPhoneInDirectory } = await import('@/lib/services/management-center')
+        await updateBusinessPhoneInDirectory(
+          param,
+          currentBusiness.phone,
+          phone || null,
+          business.name
+        )
+      } catch (error) {
+        console.error('Error updating business phone in directory:', error)
+        // Не викидаємо помилку, щоб не зламати оновлення бізнесу
+      }
+    }
 
     return NextResponse.json({ business })
   } catch (error) {

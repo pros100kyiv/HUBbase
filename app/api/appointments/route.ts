@@ -69,6 +69,20 @@ export async function POST(request: Request) {
       },
     })
 
+    // Автоматично додаємо номер телефону клієнта в Реєстр телефонів
+    try {
+      const { addClientPhoneToDirectory } = await import('@/lib/services/management-center')
+      await addClientPhoneToDirectory(
+        clientPhone.trim(),
+        businessId,
+        appointment.clientId || undefined,
+        clientName.trim()
+      )
+    } catch (error) {
+      console.error('Error adding client phone to directory:', error)
+      // Не викидаємо помилку, щоб не зламати створення запису
+    }
+
     return NextResponse.json(appointment, { status: 201 })
   } catch (error) {
     console.error('Error creating appointment:', error)

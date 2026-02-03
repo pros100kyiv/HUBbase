@@ -58,6 +58,15 @@ export async function POST(request: Request) {
 
     console.log('Login successful for business:', business.id)
 
+    // Оновлюємо дату останнього входу в Центрі управління
+    try {
+      const { updateLastLogin } = await import('@/lib/services/management-center')
+      await updateLastLogin(business.id)
+    } catch (error) {
+      console.error('Error updating last login:', error)
+      // Не викидаємо помилку, щоб не зламати логін
+    }
+
     // В продакшені тут буде JWT токен або сесія
     // Для простоти повертаємо бізнес (в реальному додатку використовуйте cookies/headers)
     return NextResponse.json({
