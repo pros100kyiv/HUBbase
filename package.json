@@ -27,7 +27,8 @@
     "db:cleanup": "tsx scripts/cleanup-database.ts",
     "db:sync-management": "tsx scripts/sync-all-businesses-to-management-center.ts",
     "db:apply-rls": "tsx scripts/apply-rls-manual.ts",
-    "db:diagnose": "tsx scripts/diagnose-and-fix-database.ts"
+    "db:diagnose": "tsx scripts/diagnose-and-fix-database.ts",
+    "db:create-email-index": "tsx scripts/create-email-index.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
