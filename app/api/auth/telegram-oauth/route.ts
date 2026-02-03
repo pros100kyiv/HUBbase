@@ -9,7 +9,7 @@ import bcrypt from 'bcryptjs'
  */
 export async function POST(request: Request) {
   try {
-    const { telegramData, businessId } = await request.json()
+    const { telegramData, businessId, forceRegister } = await request.json()
     
     if (!telegramData || !telegramData.id) {
       return NextResponse.json({ error: 'Telegram data is required' }, { status: 400 })
@@ -21,9 +21,19 @@ export async function POST(request: Request) {
     let existingBusiness = await prisma.business.findUnique({
       where: { telegramId }
     })
-
-    // Якщо бізнес знайдено через Telegram ID - автоматичний вхід
-    if (existingBusiness) {
+    
+    // Якщо forceRegister=true - завжди створюємо новий бізнес (навіть якщо існує)
+    if (forceRegister && existingBusiness) {
+      // Видаляємо старий telegramId, щоб створити новий бізнес
+      await prisma.business.update({
+        where: { id: existingBusiness.id },
+        data: { telegramId: null }
+      })
+      existingBusiness = null
+    }
+    
+    // Якщо бізнес знайдено через Telegram ID і це не примусова реєстрація - автоматичний вхід
+    if (!forceRegister && existingBusiness) {
       // Оновлюємо дані бізнесу
       await prisma.business.update({
         where: { id: existingBusiness.id },
@@ -31,6 +41,11 @@ export async function POST(request: Request) {
           telegramChatId: telegramData.id.toString(),
           avatar: telegramData.photo_url || existingBusiness.avatar // Оновлюємо аватар, якщо є
         }
+      })
+      
+      // Отримуємо оновлений бізнес з avatar
+      const updatedBusiness = await prisma.business.findUnique({
+        where: { id: existingBusiness.id }
       })
 
       // Отримуємо або створюємо TelegramUser
@@ -105,20 +120,21 @@ export async function POST(request: Request) {
         success: true,
         action: 'login',
         business: {
-          id: existingBusiness.id,
-          name: existingBusiness.name,
-          slug: existingBusiness.slug,
-          email: existingBusiness.email,
-          phone: existingBusiness.phone,
-          address: existingBusiness.address,
-          description: existingBusiness.description,
-          logo: existingBusiness.logo,
-          avatar: telegramData.photo_url || existingBusiness.avatar || null,
-          primaryColor: existingBusiness.primaryColor,
-          secondaryColor: existingBusiness.secondaryColor,
-          backgroundColor: existingBusiness.backgroundColor,
-          surfaceColor: existingBusiness.surfaceColor,
-          isActive: existingBusiness.isActive,
+          id: updatedBusiness!.id,
+          name: updatedBusiness!.name,
+          slug: updatedBusiness!.slug,
+          email: updatedBusiness!.email,
+          phone: updatedBusiness!.phone,
+          address: updatedBusiness!.address,
+          description: updatedBusiness!.description,
+          logo: updatedBusiness!.logo,
+          avatar: updatedBusiness!.avatar || null,
+          primaryColor: updatedBusiness!.primaryColor,
+          secondaryColor: updatedBusiness!.secondaryColor,
+          backgroundColor: updatedBusiness!.backgroundColor,
+          surfaceColor: updatedBusiness!.surfaceColor,
+          isActive: updatedBusiness!.isActive,
+          telegramChatId: updatedBusiness!.telegramChatId || null,
         },
         user: {
           id: telegramUser.id,
