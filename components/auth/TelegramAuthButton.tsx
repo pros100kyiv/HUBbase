@@ -21,10 +21,15 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
     // Глобальна функція для обробки авторизації
     ;(window as any)[`onTelegramAuth_${widgetId}`] = async (user: any) => {
       try {
+        console.log('[TelegramAuthButton] OAuth callback received:', user, 'isRegister:', isRegister)
+        
         const response = await fetch('/api/auth/telegram-oauth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ telegramData: user })
+          body: JSON.stringify({ 
+            telegramData: user,
+            forceRegister: isRegister // Примусово створюємо бізнес при реєстрації
+          })
         })
         
         const data = await response.json()
