@@ -35,8 +35,9 @@ export async function GET(request: Request) {
 }
 
 export async function POST(request: Request) {
+  let body: any = null
   try {
-    const body = await request.json()
+    body = await request.json()
     const { businessId, name, phone, email, notes } = body
 
     if (!businessId || !name || !phone) {
@@ -118,11 +119,11 @@ export async function POST(request: Request) {
     // Більш детальна обробка помилок
     const errorMessage = error?.message || 'Failed to create client'
     console.error('Client creation error details:', {
-      error,
+      error: error?.message,
       code: error?.code,
       message: errorMessage,
-      businessId,
-      phone: normalizedPhone,
+      businessId: body?.businessId,
+      phone: body?.phone,
     })
     
     return NextResponse.json(
