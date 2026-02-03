@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { authenticateBusiness } from '@/lib/auth'
 import { z } from 'zod'
 import { generateDeviceId, getClientIp, getUserAgent, isDeviceTrusted, addTrustedDevice } from '@/lib/utils/device'
+import { prisma } from '@/lib/prisma'
 
 const loginSchema = z.object({
   email: z.string().email('Невірний формат email'),
@@ -25,7 +26,6 @@ export async function POST(request: Request) {
     if (!businessAuth) {
       console.log('Authentication failed for email:', validated.email)
       // Перевіряємо, чи користувач існує
-      const { prisma } = await import('@/lib/prisma')
       const existingBusiness = await prisma.business.findUnique({
         where: { email: validated.email.toLowerCase().trim() },
         select: { id: true }
@@ -60,7 +60,6 @@ export async function POST(request: Request) {
     console.log('Login successful for business:', businessAuth.id)
 
     // Отримуємо бізнес з trustedDevices для перевірки пристрою
-    const { prisma } = await import('@/lib/prisma')
     const businessWithDevices = await prisma.business.findUnique({
       where: { id: businessAuth.id },
       select: { trustedDevices: true }
@@ -87,9 +86,25 @@ export async function POST(request: Request) {
       // Не викидаємо помилку, щоб не зламати логін
     }
 
+    // Додаємо пристрій до довірених при успішному вході
+    const updatedTrustedDevices = addTrustedDevice(businessWithDevices?.trustedDevices || null, deviceId)
+    await prisma.business.update({
+      where: { id: businessAuth.id },
+      data: { trustedDevices: updatedTrustedDevices }
+    })
+
+    // Синхронізуємо з ManagementCenter
+    try {
+      const { syncBusinessToManagementCenter } = await import('@/lib/services/management-center')
+      await syncBusinessToManagementCenter(businessAuth.id)
+    } catch (syncError) {
+      console.error('Error syncing to ManagementCenter:', syncError)
+    }
+
     // В продакшені тут буде JWT токен або сесія
     // Для простоти повертаємо бізнес (в реальному додатку використовуйте cookies/headers)
     return NextResponse.json({
+      success: true,
       business: {
         id: businessAuth.id,
         name: businessAuth.name,
@@ -105,6 +120,10 @@ export async function POST(request: Request) {
         backgroundColor: businessAuth.backgroundColor,
         surfaceColor: businessAuth.surfaceColor,
         isActive: businessAuth.isActive,
+        businessIdentifier: (businessAuth as any).businessIdentifier || null,
+        profileCompleted: (businessAuth as any).profileCompleted || false,
+        niche: (businessAuth as any).niche || null,
+        customNiche: (businessAuth as any).customNiche || null,
         telegramChatId: (businessAuth as any).telegramChatId || null,
       },
       message: 'Вхід успішний',

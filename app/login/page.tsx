@@ -85,7 +85,15 @@ function LoginForm() {
 
       // Зберігаємо бізнес в localStorage
       localStorage.setItem('business', JSON.stringify(data.business))
-      router.push('/dashboard')
+      
+      // Показуємо повідомлення про успіх
+      setErrorMessage('Успішний вхід')
+      setShowErrorToast(true)
+      
+      // Перенаправляємо на dashboard через невелику затримку
+      setTimeout(() => {
+        router.replace('/dashboard')
+      }, 1000)
     } catch (error) {
       setErrorMessage('Помилка при вході. Будь ласка, спробуйте ще раз.')
       setShowErrorToast(true)

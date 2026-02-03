@@ -40,11 +40,26 @@ function RegisterForm() {
     setErrors({})
     setIsLoading(true)
 
+    // Клієнтська валідація email (додаткова перевірка)
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email)) {
+      setErrorMessage('Невірний формат email')
+      setShowErrorToast(true)
+      setErrors({ email: 'Невірний формат email', submit: 'Невірний формат email' })
+      setIsLoading(false)
+      return
+    }
+
     try {
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          email: formData.email.toLowerCase().trim(),
+          password: formData.password,
+          phone: formData.slug ? undefined : undefined, // slug не відправляємо, він генерується автоматично
+        }),
       })
 
       const data = await response.json()
@@ -78,8 +93,8 @@ function RegisterForm() {
       
       // Перенаправляємо на dashboard через невелику затримку для показу повідомлення
       setTimeout(() => {
-        router.push('/dashboard')
-      }, 1000)
+        router.replace('/dashboard')
+      }, 1500)
     } catch (error) {
       setErrorMessage('Помилка при реєстрації. Будь ласка, спробуйте ще раз.')
       setShowErrorToast(true)
@@ -125,9 +140,17 @@ function RegisterForm() {
             <div>
               <label className="block text-sm font-medium mb-2 text-gray-300">Email *</label>
               <input
-                type="email"
+                type="text"
+                inputMode="email"
                 value={formData.email}
-                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                onChange={(e) => {
+                  const value = e.target.value
+                  setFormData({ ...formData, email: value })
+                  // Очищаємо помилку при введенні
+                  if (errors.email) {
+                    setErrors({ ...errors, email: '' })
+                  }
+                }}
                 placeholder="your@email.com"
                 required
                 className={`w-full px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 border ${
