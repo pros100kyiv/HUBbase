@@ -17,14 +17,43 @@ export async function POST(request: Request) {
 
     const telegramId = BigInt(telegramData.id)
     
-    // ЗАВЖДИ спочатку перевіряємо, чи акаунт вже існує
-    // Якщо існує - робимо вхід, якщо ні - створюємо новий
-    const existingBusiness = await prisma.business.findUnique({
-      where: { telegramId }
-    })
-    
-    // Якщо бізнес знайдено через Telegram ID - автоматичний вхід (незалежно від forceRegister)
-    if (existingBusiness) {
+    // Якщо forceRegister=true (реєстрація) - завжди створюємо новий унікальний бізнес
+    if (forceRegister) {
+      // Перевіряємо, чи існує бізнес з таким Telegram ID
+      const existingBusiness = await prisma.business.findUnique({
+        where: { telegramId }
+      })
+      
+      // Якщо існує - видаляємо telegramId з попереднього бізнесу, щоб створити новий
+      if (existingBusiness) {
+        await prisma.business.update({
+          where: { id: existingBusiness.id },
+          data: { telegramId: null }
+        })
+        
+        // Також видаляємо зв'язок з TelegramUser, якщо він існує
+        const existingTelegramUser = await prisma.telegramUser.findUnique({
+          where: { telegramId }
+        })
+        if (existingTelegramUser) {
+          await prisma.telegramUser.delete({
+            where: { id: existingTelegramUser.id         }
+      })
+      }
+    }
+
+    // Якщо дійшли сюди і forceRegister=true - створюємо новий бізнес
+    // Якщо forceRegister=false і акаунт не знайдено - також створюємо новий бізнес
+      
+      // Переходимо до створення нового бізнесу (код буде нижче)
+    } else {
+      // Якщо це вхід (не реєстрація) - перевіряємо існуючий акаунт
+      const existingBusiness = await prisma.business.findUnique({
+        where: { telegramId }
+      })
+      
+      // Якщо бізнес знайдено через Telegram ID - автоматичний вхід
+      if (existingBusiness) {
       // Оновлюємо дані бізнесу
       await prisma.business.update({
         where: { id: existingBusiness.id },
@@ -136,89 +165,7 @@ export async function POST(request: Request) {
           role: telegramUser.role
         }
       })
-    }
-
-    // Перевіряємо, чи користувач вже зареєстрований через TelegramUser
-    // (завжди перевіряємо, незалежно від forceRegister)
-    const telegramUser = await prisma.telegramUser.findUnique({
-      where: { telegramId },
-      include: { business: true }
-    })
-
-    // Якщо користувач вже існує - автоматичний вхід
-    if (telegramUser && telegramUser.business) {
-      // Оновлюємо дані користувача
-      await prisma.telegramUser.update({
-        where: { id: telegramUser.id },
-        data: {
-          username: telegramData.username || null,
-          firstName: telegramData.first_name || null,
-          lastName: telegramData.last_name || null,
-          lastActivity: new Date()
-        }
-      })
-
-      // Оновлюємо інтеграцію
-      await prisma.socialIntegration.upsert({
-        where: {
-          businessId_platform: {
-            businessId: telegramUser.businessId,
-            platform: 'telegram'
-          }
-        },
-        update: {
-          isConnected: true,
-          userId: telegramData.id.toString(),
-          username: telegramData.username || null,
-          metadata: JSON.stringify({
-            firstName: telegramData.first_name,
-            lastName: telegramData.last_name,
-            photoUrl: telegramData.photo_url
-          }),
-          lastSyncAt: new Date()
-        },
-        create: {
-          businessId: telegramUser.businessId,
-          platform: 'telegram',
-          isConnected: true,
-          userId: telegramData.id.toString(),
-          username: telegramData.username || null,
-          metadata: JSON.stringify({
-            firstName: telegramData.first_name,
-            lastName: telegramData.last_name,
-            photoUrl: telegramData.photo_url
-          }),
-          lastSyncAt: new Date()
-        }
-      })
-
-      return NextResponse.json({
-        success: true,
-        action: 'login',
-        business: {
-          id: telegramUser.business.id,
-          name: telegramUser.business.name,
-          slug: telegramUser.business.slug,
-          email: telegramUser.business.email,
-          phone: telegramUser.business.phone,
-          address: telegramUser.business.address,
-          description: telegramUser.business.description,
-          logo: telegramUser.business.logo,
-          primaryColor: telegramUser.business.primaryColor,
-          secondaryColor: telegramUser.business.secondaryColor,
-          backgroundColor: telegramUser.business.backgroundColor,
-          surfaceColor: telegramUser.business.surfaceColor,
-          isActive: telegramUser.business.isActive,
-        },
-        user: {
-          id: telegramUser.id,
-          telegramId: telegramUser.telegramId.toString(),
-          username: telegramUser.username,
-          firstName: telegramUser.firstName,
-          lastName: telegramUser.lastName,
-          role: telegramUser.role
-        }
-      })
+      }
     }
 
     // Якщо businessId вказано - прив'язуємо до існуючого бізнесу
