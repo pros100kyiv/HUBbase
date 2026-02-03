@@ -89,23 +89,28 @@ export function OverallInfoCard({ tasks = [] }: OverallInfoCardProps) {
               {/* Background shape - less bright */}
               <div className="absolute inset-0 bg-gradient-to-br from-purple-400/10 to-blue-400/10 rounded-3xl blur-2xl"></div>
               
-              {/* Monitor */}
+              {/* Central element - Calendar/Notebook */}
               <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
                 <div className="relative">
-                  {/* Monitor base - less bright */}
-                  <div className="w-28 h-20 bg-gradient-to-br from-purple-500/15 to-purple-600/15 rounded-lg border-2 border-purple-400/20 shadow-lg">
-                    {/* Screen content */}
-                    <div className="absolute inset-2 flex flex-col gap-1">
-                      <div className="flex gap-1">
-                        <div className="w-2 h-2 rounded-full bg-purple-300/25"></div>
-                        <div className="w-2 h-2 rounded-full bg-purple-300/25"></div>
-                        <div className="w-2 h-2 rounded-full bg-purple-300/25"></div>
-                      </div>
-                      <div className="flex-1 bg-purple-400/10 rounded"></div>
+                  {/* Notebook/Calendar base */}
+                  <div className="w-24 h-32 bg-gradient-to-br from-purple-500/15 to-purple-600/15 rounded-lg border-2 border-purple-400/20 shadow-lg">
+                    {/* Spiral binding */}
+                    <div className="absolute left-0 top-0 bottom-0 w-2 bg-purple-400/20 rounded-l-lg"></div>
+                    {/* Lines on page */}
+                    <div className="absolute inset-2 left-4 flex flex-col gap-1.5">
+                      <div className="h-0.5 bg-purple-300/15 rounded w-full"></div>
+                      <div className="h-0.5 bg-purple-300/15 rounded w-3/4"></div>
+                      <div className="h-0.5 bg-purple-300/15 rounded w-full"></div>
+                      <div className="h-0.5 bg-purple-300/15 rounded w-2/3"></div>
+                      <div className="h-0.5 bg-purple-300/15 rounded w-full"></div>
+                    </div>
+                    {/* Checkbox circles */}
+                    <div className="absolute right-3 top-4 flex flex-col gap-2">
+                      <div className="w-3 h-3 rounded-full border border-purple-300/20"></div>
+                      <div className="w-3 h-3 rounded-full border border-purple-300/20"></div>
+                      <div className="w-3 h-3 rounded-full border border-purple-300/20"></div>
                     </div>
                   </div>
-                  {/* Monitor stand */}
-                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-14 h-2 bg-purple-500/15 rounded"></div>
                 </div>
               </div>
 
