@@ -28,7 +28,8 @@ export async function POST(request: Request) {
       await prisma.business.update({
         where: { id: existingBusiness.id },
         data: {
-          telegramChatId: telegramData.id.toString()
+          telegramChatId: telegramData.id.toString(),
+          avatar: telegramData.photo_url || existingBusiness.avatar // Оновлюємо аватар, якщо є
         }
       })
 
@@ -112,6 +113,7 @@ export async function POST(request: Request) {
           address: existingBusiness.address,
           description: existingBusiness.description,
           logo: existingBusiness.logo,
+          avatar: telegramData.photo_url || existingBusiness.avatar || null,
           primaryColor: existingBusiness.primaryColor,
           secondaryColor: existingBusiness.secondaryColor,
           backgroundColor: existingBusiness.backgroundColor,
@@ -338,10 +340,15 @@ export async function POST(request: Request) {
         password: hashedPassword,
         slug: slug,
         phone: null,
+        avatar: telegramData.photo_url || null, // Зберігаємо аватар з Telegram
         telegramId: telegramId, // Зберігаємо Telegram ID для OAuth
         telegramBotToken: defaultBotToken,
         telegramChatId: telegramData.id.toString(),
-        telegramNotificationsEnabled: true
+        telegramNotificationsEnabled: true,
+        // Автоматично вмикаємо SMS для нових бізнесів через Telegram
+        smsProvider: 'smsc', // Дефолтний провайдер
+        remindersEnabled: true,
+        reminderSmsEnabled: true
       }
     })
 
@@ -402,6 +409,7 @@ export async function POST(request: Request) {
         address: newBusiness.address,
         description: newBusiness.description,
         logo: newBusiness.logo,
+        avatar: newBusiness.avatar || null,
         primaryColor: newBusiness.primaryColor,
         secondaryColor: newBusiness.secondaryColor,
         backgroundColor: newBusiness.backgroundColor,

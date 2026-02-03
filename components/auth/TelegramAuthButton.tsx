@@ -48,7 +48,8 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
             console.warn('Toast not available')
           }
           
-          router.push('/dashboard')
+          // Автоматично переходимо на dashboard
+          window.location.href = '/dashboard'
         } else {
           alert(data.error || 'Помилка авторизації через Telegram')
         }

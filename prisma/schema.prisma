@@ -44,6 +44,7 @@ model Business {
   address                      String?
   description                  String?
   logo                         String?
+  avatar                       String? // Аватар користувача (з Telegram OAuth або завантажений)
   primaryColor                 String?             @default("#C5A059")
   secondaryColor               String?             @default("#FFFFFF")
   backgroundColor              String?             @default("#050505")

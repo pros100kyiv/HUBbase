@@ -70,11 +70,13 @@ export async function POST(request: Request) {
         address: business.address,
         description: business.description,
         logo: business.logo,
+        avatar: (business as any).avatar || null,
         primaryColor: business.primaryColor,
         secondaryColor: business.secondaryColor,
         backgroundColor: business.backgroundColor,
         surfaceColor: business.surfaceColor,
         isActive: business.isActive,
+        telegramChatId: (business as any).telegramChatId || null,
       },
       message: 'Вхід успішний',
     })

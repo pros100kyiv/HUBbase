@@ -6,6 +6,7 @@ import { useEffect, useState } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { SunIcon, MoonIcon, MenuIcon } from '@/components/icons'
 import { setMobileMenuState } from '@/app/dashboard/layout'
+import { AccountInfo } from '@/components/layout/AccountInfo'
 
 // Оновлюємо бізнес при зміні localStorage
 if (typeof window !== 'undefined') {
@@ -136,14 +137,7 @@ export function Navbar() {
                   >
                     QR код
                   </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={handleLogout}
-                    className="text-xs px-2 py-1 h-auto"
-                  >
-                    Вийти
-                  </Button>
+                  <AccountInfo business={business} />
                 </>
               )}
             </div>

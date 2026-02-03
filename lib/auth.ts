@@ -54,6 +54,7 @@ export async function authenticateBusiness(email: string, password: string) {
         address: true,
         description: true,
         logo: true,
+        avatar: true, // Аватар користувача
         primaryColor: true,
         secondaryColor: true,
         backgroundColor: true,
@@ -62,6 +63,7 @@ export async function authenticateBusiness(email: string, password: string) {
         isActive: true,
         password: true, // Потрібен для перевірки
         googleId: true,
+        telegramChatId: true, // Telegram Chat ID
         createdAt: true,
         updatedAt: true,
         // Нові поля візитівки (опціональні)
