@@ -136,30 +136,38 @@ async function applyRLSMigration() {
       DECLARE
         business_record RECORD;
       BEGIN
-        SELECT id, phone, email, name
-        INTO business_record
-        FROM "Business"
-        WHERE id = NEW."businessId";
+        -- Перевіряємо, чи існує таблиця перед записом
+        IF EXISTS (
+          SELECT 1 FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'admin_control_center'
+        ) THEN
+          SELECT id, phone, email, name
+          INTO business_record
+          FROM "Business"
+          WHERE id = NEW."businessId";
 
-        INSERT INTO admin_control_center (
-          business_id, business_phone, business_email, business_name,
-          client_id, client_name, client_phone, action_type, metadata, created_at
-        ) VALUES (
-          business_record.id::TEXT,
-          business_record.phone,
-          business_record.email,
-          business_record.name,
-          NEW.id::TEXT,
-          NEW.name,
-          NEW.phone,
-          'client_created',
-          jsonb_build_object(
-            'client_id', NEW.id,
-            'business_id', NEW."businessId",
-            'created_at', NEW."createdAt"
-          ),
-          NOW()
-        );
+          INSERT INTO admin_control_center (
+            business_id, business_phone, business_email, business_name,
+            client_id, client_name, client_phone, action_type, metadata, created_at
+          ) VALUES (
+            business_record.id::TEXT,
+            business_record.phone,
+            business_record.email,
+            business_record.name,
+            NEW.id::TEXT,
+            NEW.name,
+            NEW.phone,
+            'client_created',
+            jsonb_build_object(
+              'client_id', NEW.id,
+              'business_id', NEW."businessId",
+              'created_at', NEW."createdAt"
+            ),
+            NOW()
+          )
+          ON CONFLICT DO NOTHING;
+        END IF;
 
         RETURN NEW;
       END;
@@ -187,40 +195,48 @@ async function applyRLSMigration() {
         business_record RECORD;
         client_record RECORD;
       BEGIN
-        SELECT id, phone, email, name
-        INTO business_record
-        FROM "Business"
-        WHERE id = NEW."businessId";
+        -- Перевіряємо, чи існує таблиця перед записом
+        IF EXISTS (
+          SELECT 1 FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'admin_control_center'
+        ) THEN
+          SELECT id, phone, email, name
+          INTO business_record
+          FROM "Business"
+          WHERE id = NEW."businessId";
 
-        IF NEW."clientId" IS NOT NULL THEN
-          SELECT id, name, phone
-          INTO client_record
-          FROM "Client"
-          WHERE id = NEW."clientId";
+          IF NEW."clientId" IS NOT NULL THEN
+            SELECT id, name, phone
+            INTO client_record
+            FROM "Client"
+            WHERE id = NEW."clientId";
+          END IF;
+
+          INSERT INTO admin_control_center (
+            business_id, business_phone, business_email, business_name,
+            client_id, client_name, client_phone, action_type, metadata, created_at
+          ) VALUES (
+            business_record.id::TEXT,
+            business_record.phone,
+            business_record.email,
+            business_record.name,
+            COALESCE(client_record.id::TEXT, NULL),
+            COALESCE(client_record.name, NEW."clientName"),
+            COALESCE(client_record.phone, NEW."clientPhone"),
+            'appointment_created',
+            jsonb_build_object(
+              'appointment_id', NEW.id,
+              'business_id', NEW."businessId",
+              'master_id', NEW."masterId",
+              'start_time', NEW."startTime",
+              'status', NEW.status,
+              'created_at', NEW."createdAt"
+            ),
+            NOW()
+          )
+          ON CONFLICT DO NOTHING;
         END IF;
-
-        INSERT INTO admin_control_center (
-          business_id, business_phone, business_email, business_name,
-          client_id, client_name, client_phone, action_type, metadata, created_at
-        ) VALUES (
-          business_record.id::TEXT,
-          business_record.phone,
-          business_record.email,
-          business_record.name,
-          COALESCE(client_record.id::TEXT, NULL),
-          COALESCE(client_record.name, NEW."clientName"),
-          COALESCE(client_record.phone, NEW."clientPhone"),
-          'appointment_created',
-          jsonb_build_object(
-            'appointment_id', NEW.id,
-            'business_id', NEW."businessId",
-            'master_id', NEW."masterId",
-            'start_time', NEW."startTime",
-            'status', NEW.status,
-            'created_at', NEW."createdAt"
-          ),
-          NOW()
-        );
 
         RETURN NEW;
       END;
@@ -245,23 +261,31 @@ async function applyRLSMigration() {
       CREATE OR REPLACE FUNCTION sync_business_to_admin_control()
       RETURNS TRIGGER AS $trigger$
       BEGIN
-        INSERT INTO admin_control_center (
-          business_id, business_phone, business_email, business_name,
-          action_type, metadata, created_at
-        ) VALUES (
-          NEW.id::TEXT,
-          NEW.phone,
-          NEW.email,
-          NEW.name,
-          'business_created',
-          jsonb_build_object(
-            'business_id', NEW.id,
-            'slug', NEW.slug,
-            'niche', NEW.niche,
-            'created_at', NEW."createdAt"
-          ),
-          NOW()
-        );
+        -- Перевіряємо, чи існує таблиця перед записом
+        IF EXISTS (
+          SELECT 1 FROM information_schema.tables 
+          WHERE table_schema = 'public' 
+          AND table_name = 'admin_control_center'
+        ) THEN
+          INSERT INTO admin_control_center (
+            business_id, business_phone, business_email, business_name,
+            action_type, metadata, created_at
+          ) VALUES (
+            NEW.id::TEXT,
+            NEW.phone,
+            NEW.email,
+            NEW.name,
+            'business_created',
+            jsonb_build_object(
+              'business_id', NEW.id,
+              'slug', NEW.slug,
+              'niche', NEW.niche,
+              'created_at', NEW."createdAt"
+            ),
+            NOW()
+          )
+          ON CONFLICT DO NOTHING;
+        END IF;
 
         RETURN NEW;
       END;
