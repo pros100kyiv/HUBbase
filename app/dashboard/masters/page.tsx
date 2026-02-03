@@ -8,6 +8,7 @@ import { cn } from '@/lib/utils'
 import { UserIcon, SearchIcon, DownloadIcon, FilterIcon, CheckIcon, CalendarIcon, PhoneIcon, SettingsIcon, XIcon, StarIcon, MoneyIcon, UsersIcon, ChevronDownIcon, ChevronUpIcon, EditIcon, TrashIcon } from '@/components/icons'
 import { QuickMasterCard } from '@/components/admin/QuickMasterCard'
 import { MasterScheduleModal } from '@/components/admin/MasterScheduleModal'
+import { DateRangePicker } from '@/components/admin/DateRangePicker'
 import { toast } from '@/components/ui/toast'
 
 interface Master {
@@ -56,7 +57,9 @@ export default function MastersPage() {
   const [editingMaster, setEditingMaster] = useState<Master | null>(null)
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [selectedMasterForSchedule, setSelectedMasterForSchedule] = useState<Master | null>(null)
-  const [dateFilter, setDateFilter] = useState<string>('all') // all, today, tomorrow, week, month
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [dateFilterStart, setDateFilterStart] = useState<Date | null>(null)
+  const [dateFilterEnd, setDateFilterEnd] = useState<Date | null>(null)
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -374,31 +377,16 @@ export default function MastersPage() {
       }
 
       // Date filter - фільтруємо по записах спеціаліста
-      if (dateFilter !== 'all') {
+      if (dateFilterStart && dateFilterEnd) {
         const masterAppointments = appointments.filter((apt: any) => apt.masterId === master.id)
-        const now = new Date()
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-        const tomorrow = new Date(today)
-        tomorrow.setDate(tomorrow.getDate() + 1)
-        const weekEnd = new Date(today)
-        weekEnd.setDate(weekEnd.getDate() + 7)
-        const monthEnd = new Date(today)
-        monthEnd.setMonth(monthEnd.getMonth() + 1)
+        const start = new Date(dateFilterStart)
+        start.setHours(0, 0, 0, 0)
+        const end = new Date(dateFilterEnd)
+        end.setHours(23, 59, 59, 999)
 
         const hasAppointmentsInPeriod = masterAppointments.some((apt: any) => {
           const aptDate = new Date(apt.startTime)
-          switch (dateFilter) {
-            case 'today':
-              return aptDate >= today && aptDate < tomorrow
-            case 'tomorrow':
-              return aptDate >= tomorrow && aptDate < new Date(tomorrow.getTime() + 24 * 60 * 60 * 1000)
-            case 'week':
-              return aptDate >= today && aptDate < weekEnd
-            case 'month':
-              return aptDate >= today && aptDate < monthEnd
-            default:
-              return true
-          }
+          return aptDate >= start && aptDate <= end
         })
 
         if (!hasAppointmentsInPeriod) return false
@@ -618,18 +606,28 @@ export default function MastersPage() {
               {sortOrder === 'asc' ? '↑' : '↓'}
             </button>
 
-            {/* Date Filter */}
-            <select
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
+            {/* Date Filter Button */}
+            <button
+              onClick={() => setShowDatePicker(true)}
+              className="px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all flex items-center gap-1.5"
             >
-              <option value="all">Всі дати</option>
-              <option value="today">Сьогодні</option>
-              <option value="tomorrow">Завтра</option>
-              <option value="week">Цей тиждень</option>
-              <option value="month">Цей місяць</option>
-            </select>
+              <CalendarIcon className="w-3 h-3" />
+              {dateFilterStart && dateFilterEnd
+                ? `${format(dateFilterStart, 'dd.MM')} - ${format(dateFilterEnd, 'dd.MM')}`
+                : 'Період'}
+            </button>
+            {dateFilterStart && dateFilterEnd && (
+              <button
+                onClick={() => {
+                  setDateFilterStart(null)
+                  setDateFilterEnd(null)
+                }}
+                className="px-1.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+                title="Очистити фільтр"
+              >
+                ✕
+              </button>
+            )}
           </div>
 
           {/* Bulk Actions */}
@@ -1088,6 +1086,19 @@ export default function MastersPage() {
             )
             handleMasterCreated() // Перезавантажуємо дані
           }}
+        />
+      )}
+
+      {/* Date Range Picker Modal */}
+      {showDatePicker && (
+        <DateRangePicker
+          onSelect={(start, end) => {
+            setDateFilterStart(start)
+            setDateFilterEnd(end)
+          }}
+          onClose={() => setShowDatePicker(false)}
+          initialStartDate={dateFilterStart}
+          initialEndDate={dateFilterEnd}
         />
       )}
     </div>

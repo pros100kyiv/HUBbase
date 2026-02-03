@@ -179,7 +179,7 @@ export function MasterScheduleModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="relative w-full max-w-2xl bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-candy-lg shadow-soft-xl p-6 max-h-[90vh] overflow-y-auto">
+      <div className="relative w-full max-w-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-candy-lg shadow-soft-xl p-4 max-h-[85vh] overflow-y-auto">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -189,29 +189,29 @@ export function MasterScheduleModal({
         </button>
 
         {/* Header */}
-        <div className="mb-6">
-          <h2 className="text-2xl md:text-3xl font-black text-candy-blue dark:text-blue-400 mb-2">
+        <div className="mb-4">
+          <h2 className="text-lg font-black text-candy-blue dark:text-blue-400 mb-1">
             Графік роботи
           </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-xs text-gray-600 dark:text-gray-400">
             {master.name}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-4">
           {/* Working Hours */}
           <div>
-            <h3 className="text-lg font-black text-gray-900 dark:text-white mb-3">
+            <h3 className="text-sm font-black text-gray-900 dark:text-white mb-2">
               Робочі години
             </h3>
-            <div className="space-y-2">
+            <div className="space-y-1.5">
               {DAYS.map((day) => {
                 const dayHours = workingHours[day.key] || { enabled: false, start: '09:00', end: '18:00' }
                 return (
                   <div
                     key={day.key}
                     className={cn(
-                      "flex items-center gap-3 p-3 rounded-candy-xs border transition-all",
+                      "flex items-center gap-2 p-2 rounded-candy-xs border transition-all",
                       dayHours.enabled
                         ? "bg-candy-mint/10 border-candy-mint"
                         : "bg-gray-50 dark:bg-gray-900 border-gray-200 dark:border-gray-700"
@@ -221,25 +221,25 @@ export function MasterScheduleModal({
                       type="checkbox"
                       checked={dayHours.enabled}
                       onChange={() => handleDayToggle(day.key)}
-                      className="w-4 h-4 rounded border-gray-300 dark:border-gray-700 text-candy-blue focus:ring-candy-blue"
+                      className="w-3.5 h-3.5 rounded border-gray-300 dark:border-gray-700 text-candy-blue focus:ring-candy-blue"
                     />
-                    <label className="flex-1 text-sm font-bold text-gray-900 dark:text-white">
+                    <label className="flex-1 text-xs font-bold text-gray-900 dark:text-white">
                       {day.label}
                     </label>
                     {dayHours.enabled && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         <input
                           type="time"
                           value={dayHours.start}
                           onChange={(e) => handleTimeChange(day.key, 'start', e.target.value)}
-                          className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-blue"
+                          className="w-20 px-1.5 py-0.5 text-[10px] border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-candy-blue"
                         />
-                        <span className="text-gray-500 dark:text-gray-400">-</span>
+                        <span className="text-[10px] text-gray-500 dark:text-gray-400">-</span>
                         <input
                           type="time"
                           value={dayHours.end}
                           onChange={(e) => handleTimeChange(day.key, 'end', e.target.value)}
-                          className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-blue"
+                          className="w-20 px-1.5 py-0.5 text-[10px] border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-candy-blue"
                         />
                       </div>
                     )}
@@ -251,30 +251,30 @@ export function MasterScheduleModal({
 
           {/* Blocked Periods */}
           <div>
-            <h3 className="text-lg font-black text-gray-900 dark:text-white mb-3">
+            <h3 className="text-sm font-black text-gray-900 dark:text-white mb-2">
               Заблоковані періоди
             </h3>
-            <div className="space-y-3">
+            <div className="space-y-2">
               {/* Add New Blocked Period */}
-              <div className="flex gap-2 p-3 bg-gray-50 dark:bg-gray-900 rounded-candy-xs border border-gray-200 dark:border-gray-700">
+              <div className="flex gap-1.5 p-2 bg-gray-50 dark:bg-gray-900 rounded-candy-xs border border-gray-200 dark:border-gray-700">
                 <input
                   type="datetime-local"
                   value={newBlockedStart}
                   onChange={(e) => setNewBlockedStart(e.target.value)}
                   placeholder="Початок"
-                  className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-blue"
+                  className="flex-1 px-1.5 py-1 text-[10px] border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-candy-blue"
                 />
                 <input
                   type="datetime-local"
                   value={newBlockedEnd}
                   onChange={(e) => setNewBlockedEnd(e.target.value)}
                   placeholder="Кінець"
-                  className="flex-1 px-2 py-1 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-blue"
+                  className="flex-1 px-1.5 py-1 text-[10px] border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-candy-blue"
                 />
                 <button
                   type="button"
                   onClick={handleAddBlockedPeriod}
-                  className="px-3 py-1 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-xs text-xs shadow-soft-lg hover:shadow-soft-xl transition-all"
+                  className="px-2 py-1 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-xs text-[10px] shadow-soft-lg hover:shadow-soft-xl transition-all whitespace-nowrap"
                 >
                   Додати
                 </button>
@@ -282,27 +282,37 @@ export function MasterScheduleModal({
 
               {/* Blocked Periods List */}
               {blockedPeriods.length > 0 && (
-                <div className="space-y-2">
+                <div className="space-y-1.5 max-h-32 overflow-y-auto">
                   {blockedPeriods.map((period, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between p-2 bg-red-50 dark:bg-red-900/20 rounded-candy-xs border border-red-200 dark:border-red-800"
+                      className="flex items-center justify-between p-1.5 bg-red-50 dark:bg-red-900/20 rounded-candy-xs border border-red-200 dark:border-red-800"
                     >
-                      <div className="text-xs text-gray-900 dark:text-white">
-                        <span className="font-bold">
-                          {new Date(period.start).toLocaleString('uk-UA')}
-                        </span>
-                        {' - '}
-                        <span className="font-bold">
-                          {new Date(period.end).toLocaleString('uk-UA')}
-                        </span>
+                      <div className="text-[10px] text-gray-900 dark:text-white flex-1 min-w-0">
+                        <div className="font-bold truncate">
+                          {new Date(period.start).toLocaleString('uk-UA', { 
+                            day: '2-digit', 
+                            month: '2-digit', 
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
+                        <div className="text-[9px] text-gray-600 dark:text-gray-400">
+                          до {new Date(period.end).toLocaleString('uk-UA', { 
+                            day: '2-digit', 
+                            month: '2-digit', 
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </div>
                       </div>
                       <button
                         type="button"
                         onClick={() => handleRemoveBlockedPeriod(index)}
-                        className="px-2 py-1 text-xs text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-candy-xs transition-colors"
+                        className="px-1.5 py-0.5 text-[10px] text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-candy-xs transition-colors ml-1"
                       >
-                        Видалити
+                        ✕
                       </button>
                     </div>
                   ))}
@@ -316,24 +326,24 @@ export function MasterScheduleModal({
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white font-bold rounded-candy-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+              className="flex-1 px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white font-bold rounded-candy-xs hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
             >
               Скасувати
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-4 py-2 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-black rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 px-3 py-1.5 text-xs bg-gradient-to-r from-candy-purple to-candy-blue text-white font-black rounded-candy-xs shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5"
             >
               {isSubmitting ? (
                 <>
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  <div className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
                   Збереження...
                 </>
               ) : (
                 <>
-                  <CheckIcon className="w-5 h-5" />
-                  Зберегти графік
+                  <CheckIcon className="w-3 h-3" />
+                  Зберегти
                 </>
               )}
             </button>
