@@ -2,55 +2,73 @@ import { prisma } from '../lib/prisma'
 
 /**
  * Скрипт для очищення бази даних від старих записів
- * Видаляє ВСІ записи, крім бізнесів, створених через Telegram OAuth
- * Надалі працюємо тільки з новоствореними бізнесами через Telegram OAuth
+ * Залишає тільки бізнеси, створені через:
+ * - Telegram OAuth (telegramId)
+ * - Стандартну реєстрацію (password)
+ * - Google OAuth (googleId)
+ * Видаляє тільки старі тестові дані та бізнеси без жодного з цих полів
  */
 async function cleanupDatabase() {
   try {
-    console.log('🧹 Початок агресивного очищення бази даних...')
-    console.log('⚠️  Видаляємо ВСІ записи, крім бізнесів з Telegram OAuth\n')
+    console.log('🧹 Початок очищення бази даних...')
+    console.log('✅ Залишаємо бізнеси через Telegram OAuth, стандартну реєстрацію та Google OAuth\n')
     
-    // Отримуємо список бізнесів з Telegram OAuth, які залишаємо
-    const telegramBusinesses = await prisma.business.findMany({
+    // Отримуємо список бізнесів, які залишаємо (мають telegramId, googleId або password)
+    const validBusinesses = await prisma.business.findMany({
       where: {
-        telegramId: {
-          not: null
-        }
+        OR: [
+          { telegramId: { not: null } },      // Telegram OAuth
+          { googleId: { not: null } },         // Google OAuth
+          { password: { not: null } }         // Стандартна реєстрація
+        ]
       },
       select: {
         id: true,
         name: true,
+        email: true,
         telegramId: true,
+        googleId: true,
+        password: true,
         createdAt: true
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     })
     
-    console.log(`📊 Знайдено бізнесів з Telegram OAuth: ${telegramBusinesses.length}`)
-    if (telegramBusinesses.length > 0) {
-      console.log('   Бізнеси, які залишаються:')
-      telegramBusinesses.forEach((b, i) => {
-        console.log(`   ${i + 1}. ${b.name} (ID: ${b.id}, Telegram ID: ${b.telegramId})`)
+    const telegramCount = validBusinesses.filter(b => b.telegramId).length
+    const googleCount = validBusinesses.filter(b => b.googleId).length
+    const standardCount = validBusinesses.filter(b => b.password && !b.telegramId && !b.googleId).length
+    
+    console.log(`📊 Знайдено валідних бізнесів: ${validBusinesses.length}`)
+    console.log(`   - Telegram OAuth: ${telegramCount}`)
+    console.log(`   - Google OAuth: ${googleCount}`)
+    console.log(`   - Стандартна реєстрація: ${standardCount}`)
+    if (validBusinesses.length > 0) {
+      console.log('\n   Бізнеси, які залишаються:')
+      validBusinesses.forEach((b, i) => {
+        const type = b.telegramId ? 'Telegram' : b.googleId ? 'Google' : 'Стандартна'
+        console.log(`   ${i + 1}. ${b.name} (${b.email}) - ${type}`)
       })
     }
     console.log('')
     
-    // Видаляємо ВСІ записи, крім тих, що належать бізнесам з Telegram OAuth
-    const telegramBusinessIds = telegramBusinesses.map(b => b.id)
+    // Видаляємо записи, крім тих, що належать валідним бізнесам
+    const validBusinessIds = validBusinesses.map(b => b.id)
     
-    // Якщо немає бізнесів з Telegram OAuth - видаляємо ВСЕ
-    if (telegramBusinessIds.length === 0) {
-      console.log('⚠️  Не знайдено бізнесів з Telegram OAuth. Видаляємо ВСЕ...\n')
+    if (validBusinessIds.length === 0) {
+      console.log('⚠️  Не знайдено валідних бізнесів. Видаляємо ВСЕ...\n')
     } else {
-      console.log('✅ Залишаємо дані тільки для бізнесів з Telegram OAuth\n')
+      console.log(`✅ Залишаємо дані для ${validBusinessIds.length} валідних бізнесів\n`)
     }
     
     // Видаляємо записи в правильному порядку (з урахуванням foreign keys)
     
-    // 1. Видаляємо SMS повідомлення (якщо немає Telegram бізнесів - видаляємо все)
+    // 1. Видаляємо SMS повідомлення
     const deletedSMS = await prisma.sMSMessage.deleteMany({
-      where: telegramBusinessIds.length > 0 ? {
+      where: validBusinessIds.length > 0 ? {
         businessId: {
-          notIn: telegramBusinessIds
+          notIn: validBusinessIds
         }
       } : {}
     })
@@ -58,9 +76,9 @@ async function cleanupDatabase() {
     
     // 2. Видаляємо AI чат повідомлення
     const deletedAIChat = await prisma.aIChatMessage.deleteMany({
-      where: telegramBusinessIds.length > 0 ? {
+      where: validBusinessIds.length > 0 ? {
         businessId: {
-          notIn: telegramBusinessIds
+          notIn: validBusinessIds
         }
       } : {}
     })
@@ -68,9 +86,9 @@ async function cleanupDatabase() {
     
     // 3. Видаляємо платежі
     const deletedPayments = await prisma.payment.deleteMany({
-      where: telegramBusinessIds.length > 0 ? {
+      where: validBusinessIds.length > 0 ? {
         businessId: {
-          notIn: telegramBusinessIds
+          notIn: validBusinessIds
         }
       } : {}
     })
@@ -78,9 +96,9 @@ async function cleanupDatabase() {
     
     // 4. Видаляємо розсилки
     const deletedBroadcasts = await prisma.broadcast.deleteMany({
-      where: telegramBusinessIds.length > 0 ? {
+      where: validBusinessIds.length > 0 ? {
         businessId: {
-          notIn: telegramBusinessIds
+          notIn: validBusinessIds
         }
       } : {}
     })
@@ -88,9 +106,9 @@ async function cleanupDatabase() {
     
     // 5. Видаляємо записи (appointments)
     const deletedAppointments = await prisma.appointment.deleteMany({
-      where: telegramBusinessIds.length > 0 ? {
+      where: validBusinessIds.length > 0 ? {
         businessId: {
-          notIn: telegramBusinessIds
+          notIn: validBusinessIds
         }
       } : {}
     })
@@ -98,9 +116,9 @@ async function cleanupDatabase() {
     
     // 6. Видаляємо клієнтів
     const deletedClients = await prisma.client.deleteMany({
-      where: telegramBusinessIds.length > 0 ? {
+      where: validBusinessIds.length > 0 ? {
         businessId: {
-          notIn: telegramBusinessIds
+          notIn: validBusinessIds
         }
       } : {}
     })
@@ -108,9 +126,9 @@ async function cleanupDatabase() {
     
     // 7. Видаляємо послуги
     const deletedServices = await prisma.service.deleteMany({
-      where: telegramBusinessIds.length > 0 ? {
+      where: validBusinessIds.length > 0 ? {
         businessId: {
-          notIn: telegramBusinessIds
+          notIn: validBusinessIds
         }
       } : {}
     })
@@ -118,9 +136,9 @@ async function cleanupDatabase() {
     
     // 8. Видаляємо спеціалістів
     const deletedMasters = await prisma.master.deleteMany({
-      where: telegramBusinessIds.length > 0 ? {
+      where: validBusinessIds.length > 0 ? {
         businessId: {
-          notIn: telegramBusinessIds
+          notIn: validBusinessIds
         }
       } : {}
     })
@@ -128,9 +146,9 @@ async function cleanupDatabase() {
     
     // 9. Видаляємо Telegram розсилки
     const deletedTelegramBroadcasts = await prisma.telegramBroadcast.deleteMany({
-      where: telegramBusinessIds.length > 0 ? {
+      where: validBusinessIds.length > 0 ? {
         businessId: {
-          notIn: telegramBusinessIds
+          notIn: validBusinessIds
         }
       } : {}
     })
@@ -138,9 +156,9 @@ async function cleanupDatabase() {
     
     // 10. Видаляємо Telegram нагадування
     const deletedTelegramReminders = await prisma.telegramReminder.deleteMany({
-      where: telegramBusinessIds.length > 0 ? {
+      where: validBusinessIds.length > 0 ? {
         businessId: {
-          notIn: telegramBusinessIds
+          notIn: validBusinessIds
         }
       } : {}
     })
@@ -148,9 +166,9 @@ async function cleanupDatabase() {
     
     // 11. Видаляємо Telegram користувачів
     const deletedTelegramUsers = await prisma.telegramUser.deleteMany({
-      where: telegramBusinessIds.length > 0 ? {
+      where: validBusinessIds.length > 0 ? {
         businessId: {
-          notIn: telegramBusinessIds
+          notIn: validBusinessIds
         }
       } : {}
     })
@@ -158,9 +176,9 @@ async function cleanupDatabase() {
     
     // 12. Видаляємо інтеграції з соцмережами
     const deletedSocialIntegrations = await prisma.socialIntegration.deleteMany({
-      where: telegramBusinessIds.length > 0 ? {
+      where: validBusinessIds.length > 0 ? {
         businessId: {
-          notIn: telegramBusinessIds
+          notIn: validBusinessIds
         }
       } : {}
     })
@@ -168,9 +186,9 @@ async function cleanupDatabase() {
     
     // 13. Видаляємо сегменти клієнтів
     const deletedSegments = await prisma.clientSegment.deleteMany({
-      where: telegramBusinessIds.length > 0 ? {
+      where: validBusinessIds.length > 0 ? {
         businessId: {
-          notIn: telegramBusinessIds
+          notIn: validBusinessIds
         }
       } : {}
     })
@@ -178,9 +196,9 @@ async function cleanupDatabase() {
     
     // 14. Видаляємо аналітичні звіти
     const deletedAnalytics = await prisma.analyticsReport.deleteMany({
-      where: telegramBusinessIds.length > 0 ? {
+      where: validBusinessIds.length > 0 ? {
         businessId: {
-          notIn: telegramBusinessIds
+          notIn: validBusinessIds
         }
       } : {}
     })
@@ -188,18 +206,18 @@ async function cleanupDatabase() {
     
     // 15. Видаляємо імпорти/експорти
     const deletedImports = await prisma.dataImport.deleteMany({
-      where: telegramBusinessIds.length > 0 ? {
+      where: validBusinessIds.length > 0 ? {
         businessId: {
-          notIn: telegramBusinessIds
+          notIn: validBusinessIds
         }
       } : {}
     })
     console.log(`✅ Видалено імпортів: ${deletedImports.count}`)
     
     const deletedExports = await prisma.dataExport.deleteMany({
-      where: telegramBusinessIds.length > 0 ? {
+      where: validBusinessIds.length > 0 ? {
         businessId: {
-          notIn: telegramBusinessIds
+          notIn: validBusinessIds
         }
       } : {}
     })
@@ -207,42 +225,62 @@ async function cleanupDatabase() {
     
     // 16. Видаляємо Telegram логи
     const deletedTelegramLogs = await prisma.telegramLog.deleteMany({
-      where: telegramBusinessIds.length > 0 ? {
+      where: validBusinessIds.length > 0 ? {
         businessId: {
-          notIn: telegramBusinessIds
+          notIn: validBusinessIds
         }
       } : {}
     })
     console.log(`✅ Видалено Telegram логів: ${deletedTelegramLogs.count}`)
     
-    // 17. Видаляємо ВСІ бізнеси без Telegram ID
-    // Залишаємо ТІЛЬКИ бізнеси з telegramId (створені через Telegram OAuth)
+    // 17. Видаляємо бізнеси без telegramId, googleId та password (старі тестові дані)
+    // Залишаємо тільки валідні бізнеси (Telegram OAuth, Google OAuth, стандартна реєстрація)
     const deletedBusinesses = await prisma.business.deleteMany({
       where: {
-        telegramId: null // Видаляємо всі бізнеси без Telegram ID
+        AND: [
+          { telegramId: null },    // Немає Telegram ID
+          { googleId: null },      // Немає Google ID
+          { password: null }       // Немає пароля (не стандартна реєстрація)
+        ]
       }
     })
-    console.log(`✅ Видалено бізнесів (без Telegram ID): ${deletedBusinesses.count}`)
+    console.log(`✅ Видалено бізнесів (старі тестові дані): ${deletedBusinesses.count}`)
     
     // Показуємо скільки бізнесів залишилось
     const remainingBusinesses = await prisma.business.findMany({
       where: {
-        telegramId: {
-          not: null
-        }
+        OR: [
+          { telegramId: { not: null } },
+          { googleId: { not: null } },
+          { password: { not: null } }
+        ]
       },
       select: {
         id: true,
         name: true,
+        email: true,
         telegramId: true,
+        googleId: true,
         createdAt: true
+      },
+      orderBy: {
+        createdAt: 'desc'
       }
     })
-    console.log(`\n📊 Залишилось бізнесів (з Telegram OAuth): ${remainingBusinesses.length}`)
+    
+    const remainingTelegram = remainingBusinesses.filter(b => b.telegramId).length
+    const remainingGoogle = remainingBusinesses.filter(b => b.googleId).length
+    const remainingStandard = remainingBusinesses.filter(b => b.password && !b.telegramId && !b.googleId).length
+    
+    console.log(`\n📊 Залишилось валідних бізнесів: ${remainingBusinesses.length}`)
+    console.log(`   - Telegram OAuth: ${remainingTelegram}`)
+    console.log(`   - Google OAuth: ${remainingGoogle}`)
+    console.log(`   - Стандартна реєстрація: ${remainingStandard}`)
     if (remainingBusinesses.length > 0) {
-      console.log('   Список бізнесів, які залишились:')
+      console.log('\n   Список бізнесів, які залишились:')
       remainingBusinesses.forEach((b, i) => {
-        console.log(`   ${i + 1}. ${b.name} (ID: ${b.id}, створено: ${b.createdAt.toISOString()})`)
+        const type = b.telegramId ? 'Telegram OAuth' : b.googleId ? 'Google OAuth' : 'Стандартна реєстрація'
+        console.log(`   ${i + 1}. ${b.name} (${b.email}) - ${type}`)
       })
     }
     
