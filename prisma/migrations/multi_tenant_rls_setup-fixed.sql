@@ -35,11 +35,11 @@ $func$ LANGUAGE plpgsql;
 -- ============================================
 CREATE TABLE IF NOT EXISTS admin_control_center (
   id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  business_id UUID NOT NULL,
+  business_id TEXT NOT NULL,
   business_phone TEXT,
   business_email TEXT,
   business_name TEXT,
-  client_id UUID,
+  client_id TEXT,
   client_name TEXT,
   client_phone TEXT,
   action_type TEXT NOT NULL DEFAULT 'client_created',
@@ -120,25 +120,25 @@ BEGIN
   FROM "Business"
   WHERE id = NEW."businessId";
 
-  INSERT INTO admin_control_center (
-    business_id, business_phone, business_email, business_name,
-    client_id, client_name, client_phone, action_type, metadata, created_at
-  ) VALUES (
-    business_record.id::UUID,
-    business_record.phone,
-    business_record.email,
-    business_record.name,
-    NEW.id::UUID,
-    NEW.name,
-    NEW.phone,
-    'client_created',
-    jsonb_build_object(
-      'client_id', NEW.id,
-      'business_id', NEW."businessId",
-      'created_at', NEW."createdAt"
-    ),
-    NOW()
-  );
+        INSERT INTO admin_control_center (
+          business_id, business_phone, business_email, business_name,
+          client_id, client_name, client_phone, action_type, metadata, created_at
+        ) VALUES (
+          business_record.id::TEXT,
+          business_record.phone,
+          business_record.email,
+          business_record.name,
+          NEW.id::TEXT,
+          NEW.name,
+          NEW.phone,
+          'client_created',
+          jsonb_build_object(
+            'client_id', NEW.id,
+            'business_id', NEW."businessId",
+            'created_at', NEW."createdAt"
+          ),
+          NOW()
+        );
 
   RETURN NEW;
 END;
@@ -174,28 +174,28 @@ BEGIN
     WHERE id = NEW."clientId";
   END IF;
 
-  INSERT INTO admin_control_center (
-    business_id, business_phone, business_email, business_name,
-    client_id, client_name, client_phone, action_type, metadata, created_at
-  ) VALUES (
-    business_record.id::UUID,
-    business_record.phone,
-    business_record.email,
-    business_record.name,
-    COALESCE(client_record.id::UUID, NULL),
-    COALESCE(client_record.name, NEW."clientName"),
-    COALESCE(client_record.phone, NEW."clientPhone"),
-    'appointment_created',
-    jsonb_build_object(
-      'appointment_id', NEW.id,
-      'business_id', NEW."businessId",
-      'master_id', NEW."masterId",
-      'start_time', NEW."startTime",
-      'status', NEW.status,
-      'created_at', NEW."createdAt"
-    ),
-    NOW()
-  );
+        INSERT INTO admin_control_center (
+          business_id, business_phone, business_email, business_name,
+          client_id, client_name, client_phone, action_type, metadata, created_at
+        ) VALUES (
+          business_record.id::TEXT,
+          business_record.phone,
+          business_record.email,
+          business_record.name,
+          COALESCE(client_record.id::TEXT, NULL),
+          COALESCE(client_record.name, NEW."clientName"),
+          COALESCE(client_record.phone, NEW."clientPhone"),
+          'appointment_created',
+          jsonb_build_object(
+            'appointment_id', NEW.id,
+            'business_id', NEW."businessId",
+            'master_id', NEW."masterId",
+            'start_time', NEW."startTime",
+            'status', NEW.status,
+            'created_at', NEW."createdAt"
+          ),
+          NOW()
+        );
 
   RETURN NEW;
 END;
@@ -213,23 +213,23 @@ CREATE TRIGGER trigger_sync_appointment_to_admin_control
 CREATE OR REPLACE FUNCTION sync_business_to_admin_control()
 RETURNS TRIGGER AS $trigger$
 BEGIN
-  INSERT INTO admin_control_center (
-    business_id, business_phone, business_email, business_name,
-    action_type, metadata, created_at
-  ) VALUES (
-    NEW.id::UUID,
-    NEW.phone,
-    NEW.email,
-    NEW.name,
-    'business_created',
-    jsonb_build_object(
-      'business_id', NEW.id,
-      'slug', NEW.slug,
-      'niche', NEW.niche,
-      'created_at', NEW."createdAt"
-    ),
-    NOW()
-  );
+        INSERT INTO admin_control_center (
+          business_id, business_phone, business_email, business_name,
+          action_type, metadata, created_at
+        ) VALUES (
+          NEW.id::TEXT,
+          NEW.phone,
+          NEW.email,
+          NEW.name,
+          'business_created',
+          jsonb_build_object(
+            'business_id', NEW.id,
+            'slug', NEW.slug,
+            'niche', NEW.niche,
+            'created_at', NEW."createdAt"
+          ),
+          NOW()
+        );
 
   RETURN NEW;
 END;

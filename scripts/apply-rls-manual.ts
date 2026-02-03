@@ -42,14 +42,17 @@ async function applyRLSMigration() {
 
     // 4. Таблиця admin_control_center
     console.log('4. Створення таблиці admin_control_center...')
+    // Спочатку видаляємо таблицю, якщо вона існує з неправильним типом
+    await prisma.$executeRawUnsafe(`DROP TABLE IF EXISTS admin_control_center CASCADE;`)
+    // Створюємо таблицю з правильними типами (TEXT для CUID)
     await prisma.$executeRawUnsafe(`
-      CREATE TABLE IF NOT EXISTS admin_control_center (
+      CREATE TABLE admin_control_center (
         id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-        business_id UUID NOT NULL,
+        business_id TEXT NOT NULL,
         business_phone TEXT,
         business_email TEXT,
         business_name TEXT,
-        client_id UUID,
+        client_id TEXT,
         client_name TEXT,
         client_phone TEXT,
         action_type TEXT NOT NULL DEFAULT 'client_created',
@@ -142,11 +145,11 @@ async function applyRLSMigration() {
           business_id, business_phone, business_email, business_name,
           client_id, client_name, client_phone, action_type, metadata, created_at
         ) VALUES (
-          business_record.id::UUID,
+          business_record.id::TEXT,
           business_record.phone,
           business_record.email,
           business_record.name,
-          NEW.id::UUID,
+          NEW.id::TEXT,
           NEW.name,
           NEW.phone,
           'client_created',
@@ -200,11 +203,11 @@ async function applyRLSMigration() {
           business_id, business_phone, business_email, business_name,
           client_id, client_name, client_phone, action_type, metadata, created_at
         ) VALUES (
-          business_record.id::UUID,
+          business_record.id::TEXT,
           business_record.phone,
           business_record.email,
           business_record.name,
-          COALESCE(client_record.id::UUID, NULL),
+          COALESCE(client_record.id::TEXT, NULL),
           COALESCE(client_record.name, NEW."clientName"),
           COALESCE(client_record.phone, NEW."clientPhone"),
           'appointment_created',
@@ -246,7 +249,7 @@ async function applyRLSMigration() {
           business_id, business_phone, business_email, business_name,
           action_type, metadata, created_at
         ) VALUES (
-          NEW.id::UUID,
+          NEW.id::TEXT,
           NEW.phone,
           NEW.email,
           NEW.name,
