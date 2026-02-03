@@ -97,8 +97,10 @@ export function QuickClientCard({
         })
 
         if (!updateResponse.ok) {
-          const error = await updateResponse.json()
-          throw new Error(error.error || 'Не вдалося оновити клієнта')
+          const errorData = await updateResponse.json()
+          const errorMessage = errorData.error || errorData.details || 'Не вдалося оновити клієнта'
+          console.error('Client update error:', errorData)
+          throw new Error(errorMessage)
         }
 
         client = await updateResponse.json()
@@ -142,8 +144,10 @@ export function QuickClientCard({
           })
 
           if (!createResponse.ok) {
-            const error = await createResponse.json()
-            throw new Error(error.error || 'Не вдалося створити клієнта')
+            const errorData = await createResponse.json()
+            const errorMessage = errorData.error || errorData.details || 'Не вдалося створити клієнта'
+            console.error('Client creation error:', errorData)
+            throw new Error(errorMessage)
           }
 
           client = await createResponse.json()

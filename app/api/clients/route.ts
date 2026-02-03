@@ -115,8 +115,22 @@ export async function POST(request: Request) {
       )
     }
 
+    // Більш детальна обробка помилок
+    const errorMessage = error?.message || 'Failed to create client'
+    console.error('Client creation error details:', {
+      error,
+      code: error?.code,
+      message: errorMessage,
+      businessId,
+      phone: normalizedPhone,
+    })
+    
     return NextResponse.json(
-      { error: 'Failed to create client', details: error?.message },
+      { 
+        error: 'Не вдалося створити клієнта',
+        details: errorMessage,
+        code: error?.code,
+      },
       { status: 500 }
     )
   }
