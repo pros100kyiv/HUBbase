@@ -393,6 +393,25 @@ model TelegramUser {
   @@index([activationPassword])
 }
 
+// Коди підтвердження для Telegram OAuth
+model TelegramVerification {
+  id              String    @id @default(cuid())
+  code            String    @unique // 6-значний код підтвердження
+  telegramId      BigInt    // Telegram ID користувача
+  telegramData    String?   // JSON: дані з Telegram OAuth (first_name, last_name, username, photo_url)
+  action          String    // 'login' | 'register'
+  deviceId        String?   // ID пристрою (якщо потрібне підтвердження пристрою)
+  businessId      String?   // ID бізнесу (для реєстрації)
+  expiresAt       DateTime  // Термін дії коду (5 хвилин)
+  verified        Boolean   @default(false) // Чи підтверджено код
+  verifiedAt      DateTime? // Дата підтвердження
+  createdAt       DateTime  @default(now())
+
+  @@index([code])
+  @@index([telegramId])
+  @@index([expiresAt])
+}
+
 // Логи дій в Telegram боті
 model TelegramLog {
   id             String   @id @default(cuid())

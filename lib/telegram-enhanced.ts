@@ -79,6 +79,53 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     return Markup.inlineKeyboard(buttons)
   }
 
+  // Обробка кодів підтвердження (6-значні числа)
+  bot.hears(/^\d{6}$/, async (ctx: Context) => {
+    try {
+      const code = ctx.message && 'text' in ctx.message ? ctx.message.text : ''
+      const telegramId = BigInt(ctx.from?.id || 0)
+
+      // Перевіряємо чи це код підтвердження
+      const { verifyCode } = await import('./utils/telegram-verification')
+      const verification = await verifyCode(code)
+
+      if (!verification.success || !verification.verification) {
+        await ctx.reply(`❌ ${verification.error || 'Невірний код підтвердження'}`)
+        return
+      }
+
+      const ver = verification.verification
+
+      // Перевіряємо чи код належить цьому користувачу
+      if (ver.telegramId !== telegramId) {
+        await ctx.reply('❌ Цей код не належить вам.')
+        return
+      }
+
+      // Виконуємо вхід/реєстрацію через API
+      const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'
+      const response = await fetch(`${baseUrl}/api/auth/telegram-oauth`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          verificationCode: code
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok && data.success) {
+        const actionText = ver.action === 'login' ? 'вхід' : 'реєстрацію'
+        await ctx.reply(`✅ ${actionText === 'вхід' ? 'Вхід' : 'Реєстрацію'} успішно завершено!\n\nТепер ви можете використовувати систему.`)
+      } else {
+        await ctx.reply(`❌ Помилка при ${ver.action === 'login' ? 'вході' : 'реєстрації'}: ${data.error || 'Невідома помилка'}`)
+      }
+    } catch (error: any) {
+      console.error('Error processing verification code:', error)
+      await ctx.reply('❌ Помилка обробки коду підтвердження.')
+    }
+  })
+
   // Команда /start - активація через пароль
   bot.command('start', async (ctx: Context) => {
     try {

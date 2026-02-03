@@ -43,6 +43,13 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
         const data = await response.json()
         
         if (response.ok && data.success) {
+          // Якщо потрібне підтвердження коду
+          if (data.requiresVerification) {
+            alert(data.message || 'Код підтвердження відправлено в Telegram. Введіть код в боті для завершення.')
+            setIsLoading(false)
+            return
+          }
+          
           if (data.business) {
             localStorage.setItem('business', JSON.stringify(data.business))
             console.log('[TelegramAuthButton] Business saved')
