@@ -14,7 +14,7 @@ const updateAdminSchema = z.object({
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   // Перевірка доступу
   const auth = verifyAdminToken(request as any)
@@ -23,8 +23,9 @@ export async function GET(
   }
 
   try {
+    const { id } = await params
     const admin = await prisma.admin.findUnique({
-      where: { id: params.id },
+      where: { id },
       select: {
         id: true,
         email: true,
@@ -63,7 +64,7 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   // Перевірка доступу
   const auth = verifyAdminToken(request as any)
@@ -78,12 +79,13 @@ export async function PATCH(
   }
 
   try {
+    const { id } = await params
     const body = await request.json()
     const validated = updateAdminSchema.parse(body)
 
     // Перевіряємо, чи адмін існує
     const existingAdmin = await prisma.admin.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!existingAdmin) {
@@ -106,7 +108,7 @@ export async function PATCH(
 
     // Оновлюємо адміна
     const updatedAdmin = await prisma.admin.update({
-      where: { id: params.id },
+      where: { id },
       data: updateData,
       select: {
         id: true,
@@ -145,7 +147,7 @@ export async function PATCH(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   // Перевірка доступу
   const auth = verifyAdminToken(request as any)
@@ -160,9 +162,10 @@ export async function DELETE(
   }
 
   try {
+    const { id } = await params
     // Перевіряємо, чи адмін існує
     const existingAdmin = await prisma.admin.findUnique({
-      where: { id: params.id },
+      where: { id },
     })
 
     if (!existingAdmin) {
@@ -173,7 +176,7 @@ export async function DELETE(
     }
 
     // Не дозволяємо видаляти самого себе
-    if ((auth as any).adminId === params.id) {
+    if ((auth as any).adminId === id) {
       return NextResponse.json(
         { error: 'Не можна видалити самого себе' },
         { status: 400 }
@@ -182,7 +185,7 @@ export async function DELETE(
 
     // Видаляємо адміна
     await prisma.admin.delete({
-      where: { id: params.id },
+      where: { id },
     })
 
     return NextResponse.json({
