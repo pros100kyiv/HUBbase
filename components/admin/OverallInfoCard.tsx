@@ -94,24 +94,24 @@ export function OverallInfoCard({ onGeneratePlan }: OverallInfoCardProps) {
           </div>
         </div>
 
-        {/* Text - less bright */}
+        {/* Text with updated fonts */}
         <div className="space-y-3">
           <div className="flex items-center justify-center gap-2">
-            <div className="px-4 py-2 bg-blue-500/10 rounded-lg">
-              <span className="text-sm font-semibold text-gray-300">Сьогодні без завдань</span>
+            <div className="px-4 py-2 bg-white/5 rounded-lg border border-white/10">
+              <span className="text-sm font-medium text-white" style={{ letterSpacing: '-0.01em' }}>Сьогодні без завдань</span>
               <span className="ml-2 text-yellow-400/70">🔄</span>
             </div>
           </div>
           
-          <div className="px-4 py-2 bg-blue-500/10 rounded-lg inline-block">
-            <p className="text-sm text-gray-400">
+          <div className="px-4 py-2 bg-white/5 rounded-lg inline-block border border-white/10">
+            <p className="text-sm text-gray-300 font-normal" style={{ letterSpacing: '-0.01em' }}>
               Можеш використати момент і додати справи на день
             </p>
           </div>
 
           <button
             onClick={onGeneratePlan}
-            className="text-purple-300/80 hover:text-purple-200/80 underline text-sm font-medium transition-colors"
+            className="text-white hover:text-gray-200 underline text-sm font-medium transition-colors" style={{ letterSpacing: '-0.01em' }}
           >
             Згенерувати план на день
           </button>

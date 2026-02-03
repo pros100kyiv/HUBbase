@@ -179,16 +179,6 @@ export default function MainPage() {
             </p>
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-2">
-            <button className="px-4 py-2 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/50 text-sm font-medium">
-              Робочий день
-            </button>
-            <button className="px-4 py-2 rounded-lg bg-white/5 text-gray-400 border border-white/10 text-sm font-medium hover:bg-white/10 transition-colors">
-              Протерміновані
-            </button>
-          </div>
-
           {/* Overall Information Card */}
           <OverallInfoCard
             onGeneratePlan={() => console.log('Generate plan for day')}
