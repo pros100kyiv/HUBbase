@@ -54,12 +54,60 @@ export async function POST(request: Request) {
       )
     }
 
+    // Нормалізуємо телефон клієнта
+    let normalizedPhone = clientPhone.replace(/\s/g, '').replace(/[()-]/g, '')
+    if (normalizedPhone.startsWith('0')) {
+      normalizedPhone = `+380${normalizedPhone.slice(1)}`
+    } else if (normalizedPhone.startsWith('380')) {
+      normalizedPhone = `+${normalizedPhone}`
+    } else if (!normalizedPhone.startsWith('+380')) {
+      normalizedPhone = `+380${normalizedPhone}`
+    }
+
+    // Автоматично створюємо або оновлюємо клієнта
+    let clientId: string | null = null
+    try {
+      const existingClient = await prisma.client.findFirst({
+        where: {
+          businessId,
+          phone: normalizedPhone,
+        },
+      })
+
+      if (existingClient) {
+        // Оновлюємо існуючого клієнта
+        await prisma.client.update({
+          where: { id: existingClient.id },
+          data: {
+            name: clientName.trim(),
+            email: clientEmail?.trim() || null,
+          },
+        })
+        clientId = existingClient.id
+      } else {
+        // Створюємо нового клієнта
+        const newClient = await prisma.client.create({
+          data: {
+            businessId,
+            name: clientName.trim(),
+            phone: normalizedPhone,
+            email: clientEmail?.trim() || null,
+          },
+        })
+        clientId = newClient.id
+      }
+    } catch (clientError) {
+      console.error('Error creating/updating client:', clientError)
+      // Продовжуємо створення запису навіть якщо не вдалося створити клієнта
+    }
+
     const appointment = await prisma.appointment.create({
       data: {
         businessId,
         masterId,
+        clientId: clientId || undefined,
         clientName: clientName.trim(),
-        clientPhone: clientPhone.trim(),
+        clientPhone: normalizedPhone,
         clientEmail: clientEmail?.trim() || null,
         startTime: start,
         endTime: end,
@@ -73,9 +121,9 @@ export async function POST(request: Request) {
     try {
       const { addClientPhoneToDirectory } = await import('@/lib/services/management-center')
       await addClientPhoneToDirectory(
-        clientPhone.trim(),
+        normalizedPhone,
         businessId,
-        appointment.clientId || undefined,
+        clientId || undefined,
         clientName.trim()
       )
     } catch (error) {
