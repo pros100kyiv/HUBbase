@@ -44,6 +44,7 @@ const businessSelect = {
   profileCompleted: true,
   avatar: true,
   telegramChatId: true,
+  telegramId: true,
 }
 
 export async function GET(

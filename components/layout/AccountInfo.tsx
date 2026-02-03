@@ -19,7 +19,26 @@ export function AccountInfo({ business }: AccountInfoProps) {
   if (!mounted || !business) return null
 
   const displayName = business.name || 'Бізнес'
-  const displayEmail = business.email || ''
+  
+  // Визначаємо, чи це Telegram реєстрація
+  const isTelegramRegistration = !!business.telegramId || !!business.telegramChatId || (business.email?.includes('@telegram') || business.email?.includes('telegram-'))
+  
+  // Отримуємо username з email (якщо email містить @telegram) або з business
+  let displayIdentifier = business.email || ''
+  if (isTelegramRegistration) {
+    // Якщо email містить @telegram.xbase.online, витягуємо username
+    if (business.email?.includes('@telegram.xbase.online')) {
+      const username = business.email.split('@')[0]
+      displayIdentifier = username ? `@${username}` : business.email
+    } else if (business.email?.includes('telegram-')) {
+      // Якщо email у форматі telegram-{id}@xbase.online, показуємо email
+      displayIdentifier = business.email
+    } else {
+      // Якщо є username в business (зберігається при реєстрації)
+      displayIdentifier = business.email || ''
+    }
+  }
+  
   const avatar = business.avatar || business.logo
 
   return (
@@ -55,7 +74,7 @@ export function AccountInfo({ business }: AccountInfoProps) {
             {displayName}
           </div>
           <div className="text-[10px] text-gray-500 dark:text-gray-400 truncate max-w-[120px]">
-            {displayEmail}
+            {displayIdentifier}
           </div>
         </div>
         <ChevronDownIcon className={cn(
@@ -101,7 +120,7 @@ export function AccountInfo({ business }: AccountInfoProps) {
                     {displayName}
                   </div>
                   <div className="text-xs text-gray-500 dark:text-gray-400 truncate">
-                    {displayEmail}
+                    {displayIdentifier}
                   </div>
                 </div>
               </div>
@@ -115,7 +134,13 @@ export function AccountInfo({ business }: AccountInfoProps) {
                   <span>{business.phone}</span>
                 </div>
               )}
-              {business.slug && (
+              {business.businessIdentifier && (
+                <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                  <span className="font-medium">ID:</span>
+                  <span className="truncate font-bold text-candy-blue dark:text-blue-400">{business.businessIdentifier}</span>
+                </div>
+              )}
+              {!business.businessIdentifier && business.slug && (
                 <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
                   <span className="font-medium">URL:</span>
                   <span className="truncate">{business.slug}</span>
