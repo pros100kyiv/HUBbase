@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { authenticateBusiness } from '@/lib/auth'
 import { z } from 'zod'
+import { generateDeviceId, getClientIp, getUserAgent, isDeviceTrusted, addTrustedDevice } from '@/lib/utils/device'
 
 const loginSchema = z.object({
   email: z.string().email('Невірний формат email'),
@@ -11,6 +12,11 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     const validated = loginSchema.parse(body)
+    
+    // Генеруємо deviceId для перевірки пристрою
+    const clientIp = getClientIp(request)
+    const userAgent = getUserAgent(request)
+    const deviceId = generateDeviceId(clientIp, userAgent)
 
     console.log('Login attempt for email:', validated.email)
 
@@ -45,9 +51,9 @@ export async function POST(request: Request) {
       }
     }
 
-    const business = await authenticateBusiness(validated.email, validated.password)
+    const businessAuth = await authenticateBusiness(validated.email, validated.password)
 
-    if (!business) {
+    if (!businessAuth) {
       console.log('Authentication failed for email:', validated.email)
       // Перевіряємо, чи користувач існує
       const { prisma } = await import('@/lib/prisma')
@@ -75,19 +81,38 @@ export async function POST(request: Request) {
     }
 
     // Перевіряємо чи бізнес активний
-    if (business.isActive === false) {
+    if (businessAuth.isActive === false) {
       return NextResponse.json(
         { error: 'Ваш акаунт деактивовано' },
         { status: 403 }
       )
     }
 
-    console.log('Login successful for business:', business.id)
+    console.log('Login successful for business:', businessAuth.id)
+
+    // Отримуємо бізнес з trustedDevices для перевірки пристрою
+    const { prisma } = await import('@/lib/prisma')
+    const businessWithDevices = await prisma.business.findUnique({
+      where: { id: businessAuth.id },
+      select: { trustedDevices: true }
+    })
+    
+    // Перевіряємо, чи це новий пристрій
+    const isTrusted = isDeviceTrusted(businessWithDevices?.trustedDevices || null, deviceId)
+    
+    if (!isTrusted) {
+      // Якщо це новий пристрій - вимагаємо OAuth підтвердження
+      return NextResponse.json({
+        error: 'Це новий пристрій. Будь ласка, підтвердіть вхід через Telegram OAuth.',
+        requiresOAuth: true,
+        deviceId: deviceId
+      }, { status: 403 })
+    }
 
     // Оновлюємо дату останнього входу в Центрі управління
     try {
       const { updateLastLogin } = await import('@/lib/services/management-center')
-      await updateLastLogin(business.id)
+      await updateLastLogin(businessAuth.id)
     } catch (error) {
       console.error('Error updating last login:', error)
       // Не викидаємо помилку, щоб не зламати логін
@@ -97,21 +122,21 @@ export async function POST(request: Request) {
     // Для простоти повертаємо бізнес (в реальному додатку використовуйте cookies/headers)
     return NextResponse.json({
       business: {
-        id: business.id,
-        name: business.name,
-        slug: business.slug,
-        email: business.email,
-        phone: business.phone,
-        address: business.address,
-        description: business.description,
-        logo: business.logo,
-        avatar: (business as any).avatar || null,
-        primaryColor: business.primaryColor,
-        secondaryColor: business.secondaryColor,
-        backgroundColor: business.backgroundColor,
-        surfaceColor: business.surfaceColor,
-        isActive: business.isActive,
-        telegramChatId: (business as any).telegramChatId || null,
+        id: businessAuth.id,
+        name: businessAuth.name,
+        slug: businessAuth.slug,
+        email: businessAuth.email,
+        phone: businessAuth.phone,
+        address: businessAuth.address,
+        description: businessAuth.description,
+        logo: businessAuth.logo,
+        avatar: (businessAuth as any).avatar || null,
+        primaryColor: businessAuth.primaryColor,
+        secondaryColor: businessAuth.secondaryColor,
+        backgroundColor: businessAuth.backgroundColor,
+        surfaceColor: businessAuth.surfaceColor,
+        isActive: businessAuth.isActive,
+        telegramChatId: (businessAuth as any).telegramChatId || null,
       },
       message: 'Вхід успішний',
     })

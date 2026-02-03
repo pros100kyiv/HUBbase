@@ -91,6 +91,7 @@ export async function authenticateBusiness(email: string, password: string) {
         password: true, // Потрібен для перевірки
         googleId: true,
         telegramChatId: true, // Telegram Chat ID
+        trustedDevices: true, // Довірені пристрої
         createdAt: true,
         updatedAt: true,
         // Нові поля візитівки (опціональні)

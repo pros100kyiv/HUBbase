@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import { generateDeviceId, getClientIp, getUserAgent, isDeviceTrusted, addTrustedDevice } from '@/lib/utils/device'
 
 /**
  * API для автоматичної реєстрації/входу через Telegram OAuth
@@ -12,12 +13,18 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     telegramData = body.telegramData
+    const { businessId, deviceId } = body
     
     if (!telegramData || !telegramData.id) {
       return NextResponse.json({ error: 'Telegram data is required' }, { status: 400 })
     }
 
     const telegramId = BigInt(telegramData.id)
+    
+    // Генеруємо deviceId для перевірки пристрою
+    const clientIp = getClientIp(request)
+    const userAgent = getUserAgent(request)
+    const currentDeviceId = deviceId || generateDeviceId(clientIp, userAgent)
     
     // КРОК 1: Перевіряємо чи акаунт вже існує
     // Спочатку перевіряємо в Business.telegramId
@@ -89,6 +96,13 @@ export async function POST(request: Request) {
         })
       }
 
+      // Додаємо пристрій до довірених (OAuth підтвердження = довіра)
+      const updatedTrustedDevices = addTrustedDevice(updatedBusiness.trustedDevices, currentDeviceId)
+      await prisma.business.update({
+        where: { id: business.id },
+        data: { trustedDevices: updatedTrustedDevices }
+      })
+
       // Оновлюємо інтеграцію
       await prisma.socialIntegration.upsert({
         where: {
@@ -156,7 +170,90 @@ export async function POST(request: Request) {
       })
     }
 
-    // КРОК 3: Якщо акаунт НЕ знайдено - створюємо НОВИЙ
+    // КРОК 3: Якщо businessId вказано (реєстрація з нового пристрою) - прив'язуємо до бізнесу
+    if (businessId) {
+      const business = await prisma.business.findUnique({
+        where: { id: businessId }
+      })
+
+      if (!business) {
+        return NextResponse.json({ error: 'Business not found' }, { status: 404 })
+      }
+
+      // Додаємо пристрій до довірених
+      const updatedTrustedDevices = addTrustedDevice(business.trustedDevices, currentDeviceId)
+      await prisma.business.update({
+        where: { id: business.id },
+        data: { trustedDevices: updatedTrustedDevices }
+      })
+
+      // Оновлюємо telegramId в бізнесі
+      await prisma.business.update({
+        where: { id: business.id },
+        data: {
+          telegramId: telegramId,
+          telegramChatId: telegramData.id.toString(),
+          avatar: telegramData.photo_url || business.avatar
+        }
+      })
+
+      // Створюємо або оновлюємо TelegramUser
+      const telegramUser = await prisma.telegramUser.upsert({
+        where: { telegramId },
+        update: {
+          username: telegramData.username || null,
+          firstName: telegramData.first_name || null,
+          lastName: telegramData.last_name || null,
+          lastActivity: new Date()
+        },
+        create: {
+          businessId: business.id,
+          telegramId: telegramId,
+          username: telegramData.username || null,
+          firstName: telegramData.first_name || null,
+          lastName: telegramData.last_name || null,
+          role: 'OWNER',
+          isActive: true,
+          activatedAt: new Date(),
+          lastActivity: new Date()
+        }
+      })
+
+      return NextResponse.json({
+        success: true,
+        action: 'register',
+        business: {
+          id: business.id,
+          name: business.name,
+          slug: business.slug,
+          email: business.email,
+          phone: business.phone,
+          address: business.address,
+          description: business.description,
+          logo: business.logo,
+          avatar: telegramData.photo_url || business.avatar || null,
+          primaryColor: business.primaryColor,
+          secondaryColor: business.secondaryColor,
+          backgroundColor: business.backgroundColor,
+          surfaceColor: business.surfaceColor,
+          isActive: business.isActive,
+          telegramChatId: telegramData.id.toString(),
+          businessIdentifier: business.businessIdentifier || null,
+          profileCompleted: business.profileCompleted || false,
+        },
+        user: {
+          id: telegramUser.id,
+          telegramId: telegramUser.telegramId.toString(),
+          username: telegramUser.username,
+          firstName: telegramUser.firstName,
+          lastName: telegramUser.lastName,
+          role: telegramUser.role
+        },
+        message: 'Реєстрацію підтверджено через Telegram OAuth'
+      })
+    }
+
+    // КРОК 4: Якщо акаунт НЕ знайдено - створюємо НОВИЙ
     // Генеруємо унікальний slug
     const baseSlug = (telegramData.first_name || 'user').toLowerCase()
       .replace(/[^a-z0-9а-яіїєґ]/g, '-')
@@ -186,7 +283,7 @@ export async function POST(request: Request) {
     // Генеруємо ідентифікатор бізнесу
     const businessIdentifier = Math.floor(10000 + Math.random() * 90000).toString()
 
-    // Створюємо новий бізнес
+    // Створюємо новий бізнес з додаванням пристрою до довірених
     const newBusiness = await prisma.business.create({
       data: {
         name: telegramData.first_name 
@@ -208,6 +305,7 @@ export async function POST(request: Request) {
         businessIdentifier: businessIdentifier,
         niche: 'OTHER',
         customNiche: null,
+        trustedDevices: JSON.stringify([currentDeviceId]), // Додаємо поточний пристрій до довірених
       }
     })
 

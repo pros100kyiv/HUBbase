@@ -98,6 +98,8 @@ model Business {
   remindersEnabled             Boolean             @default(false)
   reminderSmsEnabled           Boolean             @default(false)
   reminderEmailEnabled         Boolean             @default(false)
+  // Безпека пристроїв
+  trustedDevices               String? // JSON: масив deviceId дозволених пристроїв
   // Відносини
   masters                      Master[]
   services                     Service[]

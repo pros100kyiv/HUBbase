@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createBusiness, generateSlug, hashPassword } from '@/lib/auth'
 import { z } from 'zod'
+import { generateDeviceId, getClientIp, getUserAgent, addTrustedDevice } from '@/lib/utils/device'
 
 const registerSchema = z.object({
   name: z.string().min(1, 'Назва обов\'язкова'),
@@ -13,6 +14,11 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     const validated = registerSchema.parse(body)
+    
+    // Генеруємо deviceId для перевірки пристрою
+    const clientIp = getClientIp(request)
+    const userAgent = getUserAgent(request)
+    const deviceId = generateDeviceId(clientIp, userAgent)
 
     // Генеруємо slug з назви
     const slug = generateSlug(validated.name)
@@ -29,24 +35,13 @@ export async function POST(request: Request) {
       phone: validated.phone || null,
     })
 
+    // При реєстрації завжди вимагаємо OAuth підтвердження для нового пристрою
     return NextResponse.json({
-      business: {
-        id: business.id,
-        name: business.name,
-        slug: business.slug,
-        email: business.email,
-        phone: business.phone,
-        address: business.address,
-        description: business.description,
-        logo: business.logo,
-        primaryColor: business.primaryColor,
-        secondaryColor: business.secondaryColor,
-        backgroundColor: business.backgroundColor,
-        surfaceColor: business.surfaceColor,
-        isActive: business.isActive,
-      },
-      message: 'Реєстрація успішна',
-    })
+      error: 'Для завершення реєстрації підтвердіть через Telegram OAuth.',
+      requiresOAuth: true,
+      deviceId: deviceId,
+      businessId: business.id
+    }, { status: 403 })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

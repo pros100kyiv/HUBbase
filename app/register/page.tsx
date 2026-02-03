@@ -33,6 +33,18 @@ export default function RegisterPage() {
       const data = await response.json()
 
       if (!response.ok) {
+        // Якщо потрібне OAuth підтвердження - показуємо повідомлення та кнопку Telegram
+        if (data.requiresOAuth && data.deviceId && data.businessId) {
+          setErrorMessage(data.error || 'Для завершення реєстрації підтвердіть через Telegram OAuth.')
+          setShowErrorToast(true)
+          setIsLoading(false)
+          // Зберігаємо deviceId та businessId для подальшого використання
+          localStorage.setItem('pendingDeviceId', data.deviceId)
+          localStorage.setItem('pendingBusinessId', data.businessId)
+          setErrors({ submit: data.error || 'Для завершення реєстрації підтвердіть через Telegram OAuth.' })
+          return
+        }
+        
         // Показуємо маленьке вікно з помилкою
         setErrorMessage(data.error || 'Помилка при реєстрації')
         setShowErrorToast(true)

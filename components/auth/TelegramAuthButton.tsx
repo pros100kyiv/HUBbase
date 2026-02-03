@@ -22,13 +22,23 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
         setIsLoading(true)
         console.log('[TelegramAuthButton] OAuth callback:', user)
         
+        // Отримуємо збережені deviceId та businessId (якщо є)
+        const pendingDeviceId = localStorage.getItem('pendingDeviceId')
+        const pendingBusinessId = localStorage.getItem('pendingBusinessId')
+        
         const response = await fetch('/api/auth/telegram-oauth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            telegramData: user
+            telegramData: user,
+            deviceId: pendingDeviceId,
+            businessId: pendingBusinessId
           })
         })
+        
+        // Очищаємо збережені дані після використання
+        if (pendingDeviceId) localStorage.removeItem('pendingDeviceId')
+        if (pendingBusinessId) localStorage.removeItem('pendingBusinessId')
         
         const data = await response.json()
         

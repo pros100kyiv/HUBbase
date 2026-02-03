@@ -52,12 +52,28 @@ function LoginForm() {
       if (!response.ok) {
         console.error('Login error:', data)
         
+        // Якщо потрібне OAuth підтвердження - показуємо повідомлення та кнопку Telegram
+        if (data.requiresOAuth && data.deviceId) {
+          setErrorMessage(data.error || 'Це новий пристрій. Підтвердіть вхід через Telegram OAuth.')
+          setShowErrorToast(true)
+          setIsLoading(false)
+          // Зберігаємо deviceId для подальшого використання
+          localStorage.setItem('pendingDeviceId', data.deviceId)
+          setErrors({ submit: data.error || 'Це новий пристрій. Підтвердіть вхід через Telegram OAuth.' })
+          return
+        }
+        
         // Показуємо маленьке вікно з помилкою
         setErrorMessage(data.error || 'Помилка при вході')
         setNeedsRegistration(data.needsRegistration || false)
         setShowErrorToast(true)
         setErrors({ submit: data.error || 'Помилка при вході' })
         setIsLoading(false)
+        
+        // Якщо користувач не зареєстрований, перенаправляємо на реєстрацію
+        if (response.status === 404 && data.needsRegistration) {
+          router.push('/register?error=not_registered')
+        }
         return
       }
 
