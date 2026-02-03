@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { TelegramAuthButton } from '@/components/auth/TelegramAuthButton'
 import { ErrorToast } from '@/components/ui/error-toast'
 
-export default function RegisterPage() {
+function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
@@ -29,15 +29,9 @@ export default function RegisterPage() {
       
       // Встановлюємо повідомлення про помилку
       const decodedError = decodeURIComponent(error)
-      if (error === 'nc' || decodedError.includes('OAuth') || decodedError.includes('підтвердіть')) {
-        setErrorMessage('Для завершення реєстрації підтвердіть через Telegram OAuth.')
-        setShowErrorToast(true)
-        setErrors({ submit: 'Для завершення реєстрації підтвердіть через Telegram OAuth.' })
-      } else {
-        setErrorMessage(decodedError || 'Помилка при реєстрації. Будь ласка, спробуйте ще раз.')
-        setShowErrorToast(true)
-        setErrors({ submit: decodedError || 'Помилка при реєстрації' })
-      }
+      setErrorMessage(decodedError || 'Помилка при реєстрації. Будь ласка, спробуйте ще раз.')
+      setShowErrorToast(true)
+      setErrors({ submit: decodedError || 'Помилка при реєстрації' })
     }
   }, [searchParams])
 
@@ -56,22 +50,11 @@ export default function RegisterPage() {
       const data = await response.json()
 
       if (!response.ok) {
-        // Якщо потрібне OAuth підтвердження - показуємо повідомлення та кнопку Telegram
-        if (data.requiresOAuth && data.deviceId && data.businessId) {
-          setErrorMessage(data.error || 'Для завершення реєстрації підтвердіть через Telegram OAuth.')
-          setShowErrorToast(true)
-          setIsLoading(false)
-          // Зберігаємо deviceId та businessId для подальшого використання
-          localStorage.setItem('pendingDeviceId', data.deviceId)
-          localStorage.setItem('pendingBusinessId', data.businessId)
-          setErrors({ submit: data.error || 'Для завершення реєстрації підтвердіть через Telegram OAuth.' })
-          return
-        }
-        
         // Показуємо маленьке вікно з помилкою
         setErrorMessage(data.error || 'Помилка при реєстрації')
         setShowErrorToast(true)
         setErrors({ submit: data.error || 'Помилка при реєстрації' })
+        setIsLoading(false)
         return
       }
 
@@ -264,6 +247,20 @@ export default function RegisterPage() {
           )}
       </div>
     </div>
+  )
+}
+
+export default function RegisterPage() {
+  return (
+    <Suspense fallback={
+      <div className="relative min-h-screen flex items-center justify-center overflow-hidden py-12 px-4">
+        <div className="text-center">
+          <p className="text-gray-500 dark:text-gray-400">Завантаження...</p>
+        </div>
+      </div>
+    }>
+      <RegisterForm />
+    </Suspense>
   )
 }
 

@@ -3,6 +3,7 @@ import { createBusiness, generateSlug, hashPassword } from '@/lib/auth'
 import { z } from 'zod'
 import { generateDeviceId, getClientIp, getUserAgent, addTrustedDevice } from '@/lib/utils/device'
 import { ensureAdminControlCenterTable } from '@/lib/database/ensure-admin-control-center'
+import { prisma } from '@/lib/prisma'
 
 const registerSchema = z.object({
   name: z.string().min(1, 'Назва обов\'язкова'),
@@ -39,13 +40,38 @@ export async function POST(request: Request) {
       phone: validated.phone || null,
     })
 
-    // При реєстрації завжди вимагаємо OAuth підтвердження для нового пристрою
+    // Додаємо пристрій до довірених при реєстрації
+    const updatedTrustedDevices = addTrustedDevice(business.trustedDevices, deviceId)
+    await prisma.business.update({
+      where: { id: business.id },
+      data: { trustedDevices: updatedTrustedDevices }
+    })
+
+    // Повертаємо успішну відповідь з даними бізнесу
     return NextResponse.json({
-      error: 'Для завершення реєстрації підтвердіть через Telegram OAuth.',
-      requiresOAuth: true,
-      deviceId: deviceId,
-      businessId: business.id
-    }, { status: 403 })
+      success: true,
+      business: {
+        id: business.id,
+        name: business.name,
+        slug: business.slug,
+        email: business.email,
+        phone: business.phone,
+        address: business.address,
+        description: business.description,
+        logo: business.logo,
+        avatar: business.avatar,
+        primaryColor: business.primaryColor,
+        secondaryColor: business.secondaryColor,
+        backgroundColor: business.backgroundColor,
+        surfaceColor: business.surfaceColor,
+        isActive: business.isActive,
+        businessIdentifier: business.businessIdentifier,
+        profileCompleted: business.profileCompleted,
+        niche: business.niche,
+        customNiche: business.customNiche,
+      },
+      message: 'Бізнес успішно зареєстровано'
+    }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
