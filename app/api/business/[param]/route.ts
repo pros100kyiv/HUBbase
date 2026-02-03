@@ -93,10 +93,12 @@ export async function PATCH(
     console.log('PATCH request received with param:', param)
     console.log('Is UUID?', isUUID(param))
 
-    // PATCH тільки для ID
+    // PATCH тільки для ID (CUID або UUID)
     if (!isUUID(param)) {
       console.error('Invalid business ID format:', param)
-      return NextResponse.json({ error: 'Invalid business ID', details: `Expected UUID format, got: ${param}` }, { status: 400 })
+      return NextResponse.json({ 
+        error: 'Невірний формат ідентифікатора бізнесу. Будь ласка, увійдіть знову.' 
+      }, { status: 400 })
     }
 
     const body = await request.json()
@@ -232,7 +234,32 @@ export async function PATCH(
     return NextResponse.json({ business })
   } catch (error) {
     console.error('Error updating business:', error)
-    return NextResponse.json({ error: 'Failed to update business' }, { status: 500 })
+    
+    // Детальна обробка помилок
+    let errorMessage = 'Помилка при оновленні профілю'
+    
+    if (error instanceof Error) {
+      // Перевірка на помилки бази даних
+      if (error.message.includes('Unique constraint') || error.message.includes('duplicate')) {
+        if (error.message.includes('email')) {
+          errorMessage = 'Email вже використовується іншим бізнесом'
+        } else if (error.message.includes('businessIdentifier')) {
+          errorMessage = 'Ідентифікатор бізнесу вже зайнятий. Спробуйте ще раз.'
+        } else if (error.message.includes('slug')) {
+          errorMessage = 'URL-адреса вже зайнята'
+        } else {
+          errorMessage = 'Ці дані вже використовуються іншим бізнесом'
+        }
+      } else if (error.message.includes('Record to update not found')) {
+        errorMessage = 'Бізнес не знайдено. Будь ласка, увійдіть знову.'
+      } else if (error.message.includes('invalid input syntax')) {
+        errorMessage = 'Невірний формат даних. Перевірте введені значення.'
+      } else {
+        errorMessage = 'Помилка при збереженні профілю. Будь ласка, спробуйте ще раз.'
+      }
+    }
+    
+    return NextResponse.json({ error: errorMessage }, { status: 500 })
   }
 }
 

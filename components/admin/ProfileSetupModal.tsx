@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { XIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
+import { ErrorToast } from '@/components/ui/error-toast'
 import { cn } from '@/lib/utils'
 
 interface ProfileSetupModalProps {
@@ -35,6 +36,8 @@ export function ProfileSetupModal({ business, onComplete }: ProfileSetupModalPro
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSaving, setIsSaving] = useState(false)
   const [showCustomNiche, setShowCustomNiche] = useState(false)
+  const [showErrorToast, setShowErrorToast] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   useEffect(() => {
     // Генеруємо ідентифікатор автоматично, якщо його немає
@@ -115,7 +118,10 @@ export function ProfileSetupModal({ business, onComplete }: ProfileSetupModalPro
       const data = await response.json()
 
       if (!response.ok) {
-        setErrors({ submit: data.error || 'Помилка при збереженні профілю' })
+        const errorMsg = data.error || 'Помилка при збереженні профілю'
+        setErrorMessage(errorMsg)
+        setShowErrorToast(true)
+        setErrors({ submit: errorMsg })
         setIsSaving(false)
         return
       }
@@ -155,7 +161,10 @@ export function ProfileSetupModal({ business, onComplete }: ProfileSetupModalPro
       }
     } catch (error) {
       console.error('Error saving profile:', error)
-      setErrors({ submit: 'Помилка при збереженні профілю' })
+      const errorMsg = 'Помилка при збереженні профілю. Будь ласка, спробуйте ще раз.'
+      setErrorMessage(errorMsg)
+      setShowErrorToast(true)
+      setErrors({ submit: errorMsg })
       setIsSaving(false)
     }
   }
@@ -293,12 +302,6 @@ export function ProfileSetupModal({ business, onComplete }: ProfileSetupModalPro
             </p>
           </div>
 
-          {errors.submit && (
-            <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 rounded-lg p-3">
-              <p className="text-red-600 dark:text-red-400 text-sm">{errors.submit}</p>
-            </div>
-          )}
-
           {/* Кнопка збереження */}
           <Button
             type="submit"
@@ -308,6 +311,17 @@ export function ProfileSetupModal({ business, onComplete }: ProfileSetupModalPro
             {isSaving ? 'Збереження...' : 'Зберегти профіль'}
           </Button>
         </form>
+
+        {/* Error Toast */}
+        {showErrorToast && errorMessage && (
+          <ErrorToast 
+            message={errorMessage} 
+            onClose={() => {
+              setShowErrorToast(false)
+              setErrorMessage('')
+            }} 
+          />
+        )}
       </div>
     </div>
   )
