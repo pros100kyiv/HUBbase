@@ -168,15 +168,9 @@ export default function MainPage() {
         <div className="lg:col-span-3 space-y-6">
           {/* Header */}
           <div>
-            <h1 className="text-2xl font-bold text-white mb-1" style={{ letterSpacing: '-0.02em' }}>
-              Daily Dashboard Overview
+            <h1 className="text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
+              Dashboard
             </h1>
-            <p className="text-sm text-gray-400">
-              {todayAppointments.length === 0 
-                ? 'Сьогодні в тебе нічого немає'
-                : `Сьогодні у тебе ${todayAppointments.length} ${todayAppointments.length === 1 ? 'запис' : 'записів'}`
-              }
-            </p>
           </div>
 
           {/* Overall Information Card */}
