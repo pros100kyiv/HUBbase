@@ -6,7 +6,8 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, ea
 import { uk } from 'date-fns/locale'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
 import { CreateAppointmentForm } from '@/components/admin/CreateAppointmentForm'
-import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon, FilterIcon, DownloadIcon, CheckIcon } from '@/components/icons'
+import { QuickClientCard } from '@/components/admin/QuickClientCard'
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon, FilterIcon, DownloadIcon, CheckIcon, UserIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 
 interface Appointment {
@@ -42,6 +43,7 @@ export default function AppointmentsPage() {
   const [masters, setMasters] = useState<any[]>([])
   const [services, setServices] = useState<any[]>([])
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showQuickClientCard, setShowQuickClientCard] = useState(false)
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar')
 
   useEffect(() => {
@@ -318,7 +320,14 @@ export default function AppointmentsPage() {
               Управління записами та розкладом
             </p>
           </div>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1.5 flex-wrap">
+            <button
+              onClick={() => setShowQuickClientCard(true)}
+              className="px-3 py-1.5 bg-gradient-to-r from-candy-blue to-candy-purple text-white font-black rounded-candy-xs text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5"
+            >
+              <UserIcon className="w-4 h-4" />
+              ЗАПИС
+            </button>
             <button
               onClick={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
               className="px-2.5 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-xs text-xs font-bold"
@@ -703,6 +712,22 @@ export default function AppointmentsPage() {
           </div>
         </div>
       </div>
+
+      {/* Quick Client Card Modal */}
+      {showQuickClientCard && business && (
+        <QuickClientCard
+          businessId={business.id}
+          onSuccess={(client) => {
+            setShowQuickClientCard(false)
+            // Можна автоматично відкрити форму створення запису з даними клієнта
+            setShowCreateForm(true)
+            if (!selectedDate) {
+              setSelectedDate(new Date())
+            }
+          }}
+          onCancel={() => setShowQuickClientCard(false)}
+        />
+      )}
     </div>
   )
 }

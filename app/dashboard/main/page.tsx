@@ -127,12 +127,23 @@ export default function MainPage() {
     <div className="max-w-7xl mx-auto">
       {/* Header */}
       <div className="mb-3">
-        <h1 className="text-lg md:text-xl font-black text-gray-900 dark:text-white mb-1">
-          Daily Dashboard Overview
-        </h1>
-        <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
-          {hasAppointments ? `Сьогодні у вас ${todayAppointments.length} ${todayAppointments.length === 1 ? 'запис' : 'записів'}` : 'Сьогодні в тебе нічого немає'}
-        </p>
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
+          <div>
+            <h1 className="text-lg md:text-xl font-black text-gray-900 dark:text-white mb-1">
+              Daily Dashboard Overview
+            </h1>
+            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
+              {hasAppointments ? `Сьогодні у вас ${todayAppointments.length} ${todayAppointments.length === 1 ? 'запис' : 'записів'}` : 'Сьогодні в тебе нічого немає'}
+            </p>
+          </div>
+          <button
+            onClick={() => router.push('/dashboard/appointments')}
+            className="px-3 py-1.5 bg-gradient-to-r from-candy-blue to-candy-purple text-white font-black rounded-candy-xs text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5"
+          >
+            <UsersIcon className="w-4 h-4" />
+            ЗАПИС
+          </button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
