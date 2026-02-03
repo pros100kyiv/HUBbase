@@ -28,13 +28,20 @@ export async function POST(request: Request) {
       
       if (!existing) {
         console.log('Auto-creating test business...')
-        await createBusiness({
+        const testBusiness = await createBusiness({
           name: '5 Barbershop',
           email: TEST_EMAIL,
           password: TEST_PASSWORD,
           slug: '045-barbershop',
         })
         console.log('Test business created automatically')
+        // КРИТИЧНО ВАЖЛИВО: createBusiness() вже синхронізує, але переконаємося
+        try {
+          const { syncBusinessToManagementCenter } = await import('@/lib/services/management-center')
+          await syncBusinessToManagementCenter(testBusiness.id)
+        } catch (error) {
+          console.error('КРИТИЧНА ПОМИЛКА: Не вдалося синхронізувати тестовий бізнес в ManagementCenter:', error)
+        }
       }
     }
 

@@ -47,14 +47,18 @@ export async function createBusiness(data: {
     },
   })
 
-  // Автоматично реєструємо в Центрі управління (ПОВНЕ ДУБЛЮВАННЯ)
-  if (hashedPassword) {
+  // КРИТИЧНО ВАЖЛИВО: Автоматично реєструємо в Центрі управління (ПОВНЕ ДУБЛЮВАННЯ)
+  // Всі акаунти мають бути в ManagementCenter незалежно від типу реєстрації
+  try {
     const { registerBusinessInManagementCenter } = await import('@/lib/services/management-center')
     await registerBusinessInManagementCenter({
       businessId: business.id,
       business: business, // Передаємо повний об'єкт для дублювання
       registrationType: data.googleId ? 'google' : 'standard',
     })
+  } catch (error) {
+    console.error('КРИТИЧНА ПОМИЛКА: Не вдалося синхронізувати бізнес в ManagementCenter:', error)
+    // Не викидаємо помилку, щоб не зламати реєстрацію, але логуємо
   }
 
   return business

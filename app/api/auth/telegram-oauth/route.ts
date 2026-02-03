@@ -377,13 +377,19 @@ export async function POST(request: Request) {
       }
     })
 
-    // Автоматично реєструємо в Центрі управління (ПОВНЕ ДУБЛЮВАННЯ)
-    const { registerBusinessInManagementCenter } = await import('@/lib/services/management-center')
-    await registerBusinessInManagementCenter({
-      businessId: newBusiness.id,
-      business: newBusiness, // Передаємо повний об'єкт для дублювання
-      registrationType: 'telegram',
-    })
+    // КРИТИЧНО ВАЖЛИВО: Автоматично реєструємо в Центрі управління (ПОВНЕ ДУБЛЮВАННЯ)
+    // Всі акаунти мають бути в ManagementCenter
+    try {
+      const { registerBusinessInManagementCenter } = await import('@/lib/services/management-center')
+      await registerBusinessInManagementCenter({
+        businessId: newBusiness.id,
+        business: newBusiness, // Передаємо повний об'єкт для дублювання
+        registrationType: 'telegram',
+      })
+    } catch (error) {
+      console.error('КРИТИЧНА ПОМИЛКА: Не вдалося синхронізувати Telegram OAuth бізнес в ManagementCenter:', error)
+      // Не викидаємо помилку, щоб не зламати реєстрацію
+    }
 
     // Створюємо TelegramUser
     telegramUser = await prisma.telegramUser.create({

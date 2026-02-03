@@ -149,6 +149,10 @@ export async function syncBusinessToManagementCenter(businessId: string) {
 /**
  * Реєструє бізнес в Центрі управління (ПОВНЕ ДУБЛЮВАННЯ ВСІХ ДАНИХ)
  */
+/**
+ * Реєструє бізнес в Центрі управління (ПОВНЕ ДУБЛЮВАННЯ ВСІХ ДАНИХ)
+ * КРИТИЧНО ВАЖЛИВО: Всі акаунти мають бути в ManagementCenter
+ */
 export async function registerBusinessInManagementCenter(data: RegisterBusinessData) {
   try {
     // Використовуємо функцію синхронізації
@@ -164,9 +168,40 @@ export async function registerBusinessInManagementCenter(data: RegisterBusinessD
       })
     }
     
+    // Додаємо номер телефону в PhoneDirectory (якщо є)
+    if (data.business?.phone) {
+      try {
+        await prisma.phoneDirectory.upsert({
+          where: {
+            phone_category_businessId: {
+              phone: data.business.phone,
+              category: 'BUSINESS',
+              businessId: data.businessId,
+            },
+          },
+          update: {
+            businessName: data.business.name,
+            isActive: true,
+            updatedAt: new Date(),
+          },
+          create: {
+            phone: data.business.phone,
+            category: 'BUSINESS',
+            businessId: data.businessId,
+            businessName: data.business.name,
+            isActive: true,
+            isVerified: false,
+          },
+        })
+      } catch (error) {
+        console.error('Error adding phone to directory:', error)
+        // Не викидаємо помилку
+      }
+    }
+    
     return managementRecord
   } catch (error) {
-    console.error('Error registering business in Management Center:', error)
+    console.error('КРИТИЧНА ПОМИЛКА: Error registering business in Management Center:', error)
     // Не викидаємо помилку, щоб не зламати реєстрацію
     return null
   }

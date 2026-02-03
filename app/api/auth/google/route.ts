@@ -121,13 +121,19 @@ export async function GET(request: Request) {
         },
       })
 
-      // Автоматично реєструємо в Центрі управління (ПОВНЕ ДУБЛЮВАННЯ)
-      const { registerBusinessInManagementCenter } = await import('@/lib/services/management-center')
-      await registerBusinessInManagementCenter({
-        businessId: business.id,
-        business: business, // Передаємо повний об'єкт для дублювання
-        registrationType: 'google',
-      })
+      // КРИТИЧНО ВАЖЛИВО: Автоматично реєструємо в Центрі управління (ПОВНЕ ДУБЛЮВАННЯ)
+      // Всі акаунти мають бути в ManagementCenter
+      try {
+        const { registerBusinessInManagementCenter } = await import('@/lib/services/management-center')
+        await registerBusinessInManagementCenter({
+          businessId: business.id,
+          business: business, // Передаємо повний об'єкт для дублювання
+          registrationType: 'google',
+        })
+      } catch (error) {
+        console.error('КРИТИЧНА ПОМИЛКА: Не вдалося синхронізувати Google OAuth бізнес в ManagementCenter:', error)
+        // Не викидаємо помилку, щоб не зламати реєстрацію
+      }
     }
 
     // Перевіряємо чи бізнес активний

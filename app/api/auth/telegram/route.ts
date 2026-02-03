@@ -116,6 +116,16 @@ export async function POST(request: NextRequest) {
         slug,
       })
 
+      // КРИТИЧНО ВАЖЛИВО: Автоматично реєструємо в Центрі управління (ПОВНЕ ДУБЛЮВАННЯ)
+      // createBusiness() вже синхронізує, але переконаємося
+      try {
+        const { syncBusinessToManagementCenter } = await import('@/lib/services/management-center')
+        await syncBusinessToManagementCenter(business.id)
+      } catch (error) {
+        console.error('КРИТИЧНА ПОМИЛКА: Не вдалося синхронізувати Telegram бізнес в ManagementCenter:', error)
+        // Не викидаємо помилку, щоб не зламати реєстрацію
+      }
+
       telegramUser = await prisma.telegramUser.create({
         data: {
           telegramId,
