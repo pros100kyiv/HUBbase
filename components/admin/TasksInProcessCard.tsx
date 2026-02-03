@@ -2,6 +2,7 @@
 
 import { UsersIcon, UserIcon } from '@/components/icons'
 import { useState } from 'react'
+import { EmptyTasksState } from './EmptyTasksState'
 
 interface Task {
   id: string
@@ -20,12 +21,12 @@ interface TasksInProcessCardProps {
 export function TasksInProcessCard({ tasks, onAddNote, onEdit, onDelete }: TasksInProcessCardProps) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
 
-  const defaultTasks: Task[] = [
-    { id: '1', title: 'Meet HR For Project', time: 'Tonight', icon: 'users' },
-    { id: '2', title: 'Boss Appointment', time: 'Next Morning', icon: 'user' },
-  ]
+  const displayTasks = tasks || []
+  const hasTasks = displayTasks.length > 0
 
-  const displayTasks = tasks.length > 0 ? tasks : defaultTasks
+  if (!hasTasks) {
+    return <EmptyTasksState onGeneratePlan={() => console.log('Generate plan')} />
+  }
 
   return (
     <div className="rounded-xl p-6 card-floating">

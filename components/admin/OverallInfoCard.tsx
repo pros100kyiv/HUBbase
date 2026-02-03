@@ -26,13 +26,17 @@ export function OverallInfoCard({
           Мій день
         </h3>
         <div className="flex items-center gap-2">
+          {/* Share icon - two circles connected */}
           <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-            <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <circle cx="9" cy="9" r="3" strokeWidth={2} />
+              <circle cx="15" cy="15" r="3" strokeWidth={2} />
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v6m0 0l-3-3m3 3l3-3" />
             </svg>
           </button>
+          {/* Three dots menu */}
           <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-            <svg className="w-5 h-5 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
             </svg>
           </button>
@@ -56,9 +60,9 @@ export function OverallInfoCard({
 
       {/* Progress Bar */}
       <div className="mb-6">
-        <div className="h-2 bg-gray-700/50 rounded-full overflow-hidden">
+        <div className="h-1 bg-white/10 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-gradient-to-r from-blue-500 to-purple-600 rounded-full transition-all"
+            className="h-full bg-white/30 rounded-full transition-all"
             style={{ width: `${progress}%` }}
           />
         </div>
