@@ -58,7 +58,7 @@ const config = {
         },
       },
       fontFamily: {
-        sans: ['Outfit', 'sans-serif'],
+        sans: ['Inter', 'sans-serif'],
       },
       letterSpacing: {
         'title': '0.15em',
@@ -72,6 +72,8 @@ const config = {
         'candy-xs': '8px',
         'ios': '20px',
         'ios-lg': '28px',
+        'modern': '12px',
+        'modern-lg': '16px',
       },
       boxShadow: {
         'soft': '0 2px 8px rgba(0, 0, 0, 0.06), 0 1px 3px rgba(0, 0, 0, 0.08)',

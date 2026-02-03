@@ -79,8 +79,21 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <>
-      <aside className={cn('bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border-r border-gray-200 dark:border-gray-700/50 w-0 md:w-56 min-h-screen fixed left-0 top-12 z-40 shadow-soft-xl hidden md:block', className)}>
-        <nav className="p-1.5 space-y-0.5">
+      <aside className={cn('bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 w-0 md:w-64 min-h-screen fixed left-0 top-0 z-40 shadow-sm hidden md:block', className)}>
+        {/* Logo Section */}
+        <div className="p-6 border-b border-slate-200 dark:border-slate-700">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg gradient-indigo flex items-center justify-center text-white font-bold text-lg shadow-md">
+              X
+            </div>
+            <div>
+              <h1 className="text-lg font-bold text-slate-900 dark:text-slate-50">Xbase</h1>
+              <p className="text-xs text-slate-500 dark:text-slate-400">Booking System</p>
+            </div>
+          </div>
+        </div>
+        
+        <nav className="p-4 space-y-1">
           {navItems.map((item) => {
             const isActive = pathname === item.path || (item.path === '/dashboard' && pathname === '/dashboard')
             return (
@@ -94,25 +107,25 @@ export function Sidebar({ className }: SidebarProps) {
                   }
                 }}
                 className={cn(
-                  'w-full flex items-center gap-2 px-3 py-2 rounded-candy-xs text-left transition-all duration-200 active:scale-[0.98] relative',
+                  'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 relative group',
                   isActive
-                    ? 'bg-gradient-to-r from-candy-blue to-candy-purple text-white shadow-soft-lg'
-                    : 'text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700/50'
+                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md'
+                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50'
                 )}
                 title={item.label}
               >
-                <div className={cn('w-4 h-4 flex-shrink-0', isActive ? 'text-white' : 'text-gray-700 dark:text-gray-300')}>
+                <div className={cn('w-5 h-5 flex-shrink-0', isActive ? 'text-white' : 'text-slate-600 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400')}>
                   {item.icon}
                 </div>
-                <span className={cn("text-xs font-bold flex-1", isActive ? 'text-white' : 'text-gray-900 dark:text-white')}>
+                <span className={cn("text-sm font-medium flex-1", isActive ? 'text-white' : 'text-slate-900 dark:text-slate-100')}>
                   {item.label}
                 </span>
                 {item.badge && item.badge > 0 && (
                   <span className={cn(
-                    "text-[10px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center",
+                    "text-xs font-semibold px-2 py-0.5 rounded-full min-w-[20px] text-center",
                     isActive 
-                      ? "bg-white text-candy-purple" 
-                      : "bg-gradient-to-r from-candy-pink to-red-500 text-white"
+                      ? "bg-white/20 text-white" 
+                      : "bg-red-500 text-white"
                   )}>
                     {item.badge}
                   </span>

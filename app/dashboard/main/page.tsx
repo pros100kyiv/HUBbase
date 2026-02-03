@@ -126,38 +126,38 @@ export default function MainPage() {
   return (
     <div className="max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-3">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
+      <div className="mb-6">
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
           <div>
-            <h1 className="text-lg md:text-xl font-black text-gray-900 dark:text-white mb-1">
-              Daily Dashboard Overview
+            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 mb-2">
+              Dashboard
             </h1>
-            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
               {hasAppointments ? `Сьогодні у вас ${todayAppointments.length} ${todayAppointments.length === 1 ? 'запис' : 'записів'}` : 'Сьогодні в тебе нічого немає'}
             </p>
           </div>
           <button
             onClick={() => router.push('/dashboard/appointments')}
-            className="px-3 py-1.5 bg-gradient-to-r from-candy-blue to-candy-purple text-white font-black rounded-candy-xs text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5"
+            className="btn-primary whitespace-nowrap flex items-center gap-2"
           >
             <UsersIcon className="w-4 h-4" />
-            ЗАПИС
+            Створити запис
           </button>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Main Content Area */}
         <div className="lg:col-span-2 space-y-3">
           {/* Tabs */}
-          <div className="flex gap-1.5">
+          <div className="flex gap-2 mb-4">
             <button
               onClick={() => setActiveTab('working')}
               className={cn(
-                'px-3 py-1.5 rounded-candy-xs font-bold text-xs transition-all',
+                'px-4 py-2 rounded-lg font-medium text-sm transition-all',
                 activeTab === 'working'
-                  ? 'bg-gradient-to-r from-candy-purple to-candy-blue text-white shadow-soft-lg'
-                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
               )}
             >
               Робочий день
@@ -165,10 +165,10 @@ export default function MainPage() {
             <button
               onClick={() => setActiveTab('overdue')}
               className={cn(
-                'px-3 py-1.5 rounded-candy-xs font-bold text-xs transition-all',
+                'px-4 py-2 rounded-lg font-medium text-sm transition-all',
                 activeTab === 'overdue'
-                  ? 'bg-gradient-to-r from-candy-purple to-candy-blue text-white shadow-soft-lg'
-                  : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                  ? 'bg-indigo-600 text-white shadow-sm'
+                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
               )}
             >
               Протерміновані
@@ -179,8 +179,8 @@ export default function MainPage() {
           {activeTab === 'working' && (
             <>
               {hasAppointments ? (
-                <div className="card-candy p-3">
-                  <h2 className="text-base font-black text-gray-900 dark:text-white mb-2">
+                <div className="card-modern p-6">
+                  <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">
                     Записи на сьогодні
                   </h2>
                   <div className="space-y-2">
@@ -202,18 +202,18 @@ export default function MainPage() {
                           switch (status) {
                             case 'Pending':
                             case 'Очікує':
-                              return 'bg-candy-orange/10 text-candy-orange border-candy-orange'
+                              return 'bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400'
                             case 'Confirmed':
                             case 'Підтверджено':
-                              return 'bg-candy-mint/10 text-candy-mint border-candy-mint'
+                              return 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400'
                             case 'Done':
                             case 'Виконано':
-                              return 'bg-candy-blue/10 text-candy-blue border-candy-blue'
+                              return 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
                             case 'Cancelled':
                             case 'Скасовано':
-                              return 'bg-red-50 text-red-500 border-red-500'
+                              return 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400'
                             default:
-                              return 'bg-gray-50 text-gray-500 border-gray-400'
+                              return 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
                           }
                         }
 
@@ -235,27 +235,27 @@ export default function MainPage() {
                         return (
                           <div
                             key={appointment.id}
-                            className="p-2 rounded-candy-xs bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 hover:shadow-soft-lg transition-all"
+                            className="p-4 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all"
                           >
-                            <div className="flex items-center gap-2">
-                              <div className="flex flex-col items-center justify-center w-12 h-12 rounded-candy-xs bg-gradient-to-r from-candy-blue to-candy-purple text-white flex-shrink-0">
-                                <span className="text-sm font-black">
+                            <div className="flex items-center gap-4">
+                              <div className="flex flex-col items-center justify-center w-16 h-16 rounded-lg gradient-indigo text-white flex-shrink-0 shadow-sm">
+                                <span className="text-base font-bold">
                                   {format(startTime, 'HH:mm')}
                                 </span>
-                                <span className="text-[10px] font-bold">
+                                <span className="text-xs font-medium">
                                   {format(endTime, 'HH:mm')}
                                 </span>
                               </div>
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-1.5 mb-0.5">
-                                  <p className="text-sm font-black text-gray-900 dark:text-white">
+                                <div className="flex items-center gap-2 mb-1">
+                                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
                                     {appointment.clientName}
                                   </p>
-                                  <span className={cn('px-1.5 py-0.5 rounded-full text-[10px] font-bold border', getStatusColor(appointment.status))}>
+                                  <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', getStatusColor(appointment.status))}>
                                     {getStatusLabel(appointment.status)}
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-2 text-xs text-gray-600 dark:text-gray-400">
+                                <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
                                   {appointment.masterName && (
                                     <span>Спеціаліст: {appointment.masterName}</span>
                                   )}
@@ -271,7 +271,7 @@ export default function MainPage() {
                   </div>
                 </div>
               ) : (
-                <div className="card-candy p-4 md:p-6 text-center">
+                <div className="card-modern p-8 text-center">
                   {/* Empty State Illustration */}
                   <div className="mb-4 flex justify-center">
                     <div className="relative w-48 h-48">

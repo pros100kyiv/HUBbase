@@ -59,37 +59,37 @@ export function Statistics({ businessId }: StatisticsProps) {
   }
 
   return (
-    <div className="space-y-1.5 card-candy card-candy-hover rounded-candy shadow-soft p-2.5 md:p-3">
+    <div className="card-modern card-modern-hover p-6">
       {/* Period Selector */}
-      <div className="flex items-center justify-between mb-1.5">
-        <h2 className="text-sm md:text-base font-black text-foreground">Статистика</h2>
-        <div className="flex gap-2 bg-gray-100 dark:bg-gray-700 p-1.5 rounded-candy border border-gray-200 dark:border-gray-600">
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-50">Статистика</h2>
+        <div className="flex gap-2 bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
           <button
             onClick={() => setPeriod('day')}
-            className={`px-5 py-2.5 rounded-candy text-sm font-bold transition-all duration-200 active:scale-97 ${
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
               period === 'day'
-                ? 'candy-purple text-white shadow-soft-lg'
-                : 'text-gray-600 dark:text-gray-400 hover:text-candy-purple dark:hover:text-purple-400 hover:bg-white dark:hover:bg-gray-700'
+                ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
             День
           </button>
           <button
             onClick={() => setPeriod('week')}
-            className={`px-5 py-2.5 rounded-candy text-sm font-bold transition-all duration-200 active:scale-97 ${
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
               period === 'week'
-                ? 'candy-purple text-white shadow-soft-lg'
-                : 'text-gray-600 dark:text-gray-400 hover:text-candy-purple dark:hover:text-purple-400 hover:bg-white dark:hover:bg-gray-700'
+                ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
             Тиждень
           </button>
           <button
             onClick={() => setPeriod('month')}
-            className={`px-5 py-2.5 rounded-candy text-sm font-bold transition-all duration-200 active:scale-97 ${
+            className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
               period === 'month'
-                ? 'candy-purple text-white shadow-soft-lg'
-                : 'text-gray-600 dark:text-gray-400 hover:text-candy-purple dark:hover:text-purple-400 hover:bg-white dark:hover:bg-gray-700'
+                ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-400 shadow-sm'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
             }`}
           >
             Місяць
@@ -98,7 +98,7 @@ export function Statistics({ businessId }: StatisticsProps) {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-1.5">
+      <div className="grid grid-cols-2 gap-4">
         <MobileWidget
           icon={<CalendarIcon />}
           title="Всього записів"

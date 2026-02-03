@@ -74,81 +74,88 @@ export function Navbar() {
   if (pathname?.startsWith('/dashboard')) {
     return (
       <>
-        <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl border-b border-gray-200 dark:border-gray-700/50 shadow-soft-xl">
-          <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-6">
-            <div className="flex justify-between items-center h-10 md:h-12">
-              {/* Left side - Menu button (mobile) and Logo */}
-              <div className="flex items-center gap-1.5 flex-shrink-0">
+        <nav className="fixed top-0 left-0 md:left-64 right-0 z-50 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
+          <div className="px-4 lg:px-6">
+            <div className="flex justify-between items-center h-16">
+              {/* Left side - Menu button (mobile) and Search */}
+              <div className="flex items-center gap-4 flex-1">
                 <button
                   onClick={() => {
                     const newState = !mobileMenuOpen
                     setMobileMenuOpen(newState)
                     setMobileMenuState(newState)
                   }}
-                  className="md:hidden p-1.5 rounded-candy-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors active:scale-95"
+                  className="md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
                   aria-label="Відкрити меню"
                 >
-                  <MenuIcon className="w-4 h-4 text-gray-700 dark:text-gray-300" />
+                  <MenuIcon className="w-5 h-5 text-slate-700 dark:text-slate-300" />
                 </button>
-                <div className="w-6 h-6 md:w-7 md:h-7 rounded-candy-xs bg-gradient-to-r from-candy-blue to-candy-purple flex items-center justify-center text-white font-black text-[10px] md:text-xs shadow-soft-lg">
-                  X
+                
+                {/* Search Bar */}
+                <div className="hidden md:flex items-center flex-1 max-w-md">
+                  <div className="relative w-full">
+                    <input
+                      type="text"
+                      placeholder="Search placeholder"
+                      className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
+                    />
+                    <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                  </div>
                 </div>
-                <span className="text-[10px] md:text-xs font-black text-gray-900 dark:text-white hidden sm:block">
-                  Xbase
-                </span>
               </div>
 
-            {/* Center - Business name */}
-            <div className="flex items-center justify-center flex-1 min-w-0">
-              <div className="text-center">
-                <h1 className="text-xs md:text-sm font-black text-gray-900 dark:text-white truncate">
-                  {business?.name || 'Dashboard'}
-                </h1>
-                {business?.businessIdentifier && (
-                  <p className="text-[9px] text-gray-500 dark:text-gray-400 truncate hidden md:block">
-                    ID: {business.businessIdentifier}
-                  </p>
-                )}
-                {business?.phone && !business?.businessIdentifier && (
-                  <p className="text-[9px] text-gray-600 dark:text-gray-400 truncate hidden md:block">
-                    {business.phone}
-                  </p>
-                )}
-              </div>
-            </div>
-
-            {/* Right side - Actions */}
-            <div className="flex items-center gap-2 flex-shrink-0">
-              {mounted && (
-                <button
-                  onClick={toggleTheme}
-                  className="p-1.5 md:p-2 rounded-candy-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 active:scale-95"
-                  title={theme === 'light' ? 'Увімкнути темну тему' : 'Увімкнути світлу тему'}
-                >
-                  {theme === 'light' ? (
-                    <MoonIcon className="w-4 h-4 md:w-5 md:h-5" />
-                  ) : (
-                    <SunIcon className="w-4 h-4 md:w-5 md:h-5" />
+              {/* Right side - Actions */}
+              <div className="flex items-center gap-3">
+                {/* Chat Icon */}
+                <button className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors relative">
+                  <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                  </svg>
+                </button>
+                
+                {/* Notifications Icon */}
+                <button className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors relative">
+                  <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                  {business && (
+                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                   )}
                 </button>
-              )}
-              {business && (
-                <>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => window.open(`/qr/${business.slug}`, '_blank')}
-                    className="hidden md:flex text-xs px-2 py-1 h-auto"
+                
+                {/* Theme Toggle */}
+                {mounted && (
+                  <button
+                    onClick={toggleTheme}
+                    className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200"
+                    title={theme === 'light' ? 'Увімкнути темну тему' : 'Увімкнути світлу тему'}
                   >
-                    QR код
-                  </Button>
-                  <AccountInfo business={business} />
-                </>
-              )}
+                    {theme === 'light' ? (
+                      <MoonIcon className="w-5 h-5" />
+                    ) : (
+                      <SunIcon className="w-5 h-5" />
+                    )}
+                  </button>
+                )}
+                
+                {/* Profile */}
+                {business && (
+                  <div className="flex items-center gap-3 pl-3 border-l border-slate-200 dark:border-slate-700">
+                    <div className="text-right hidden sm:block">
+                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{business.name || 'User'}</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">{business.email?.split('@')[0] || 'Admin'}</p>
+                    </div>
+                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold shadow-md">
+                      {business.name?.charAt(0)?.toUpperCase() || 'U'}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
-      </nav>
+        </nav>
       </>
     )
   }

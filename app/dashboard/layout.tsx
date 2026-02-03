@@ -74,13 +74,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
-      {/* Blurred Background */}
-      <div className="fixed inset-0 z-0">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1920')] bg-cover bg-center opacity-10 dark:opacity-20" />
-        <div className="absolute inset-0 bg-white/80 dark:bg-black/60 backdrop-blur-xl" />
-      </div>
-
+    <div className="relative min-h-screen bg-slate-50 dark:bg-slate-900">
       {/* Top Navbar */}
       <Navbar />
       
@@ -91,8 +85,8 @@ export default function DashboardLayout({
       <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       
       {/* Main Content Area */}
-      <main className="relative z-10 ml-0 md:ml-56 pt-10 md:pt-12 min-h-screen">
-        <div className="p-2 md:p-3">
+      <main className="relative ml-0 md:ml-64 pt-16 min-h-screen">
+        <div className="p-6">
           {children}
         </div>
       </main>
