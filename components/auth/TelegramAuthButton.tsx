@@ -50,16 +50,18 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
           
           // Перенаправлення на dashboard
           console.log('[TelegramAuthButton] Redirecting to dashboard...')
-          window.location.href = '/dashboard'
+          window.location.replace('/dashboard')
         } else {
           console.error('[TelegramAuthButton] Error:', data.error)
-          alert(data.error || 'Помилка авторизації через Telegram')
-          setIsLoading(false)
+          // Якщо помилка - перенаправляємо на сторінку реєстрації з повідомленням
+          const errorMsg = data.error || 'Помилка авторизації через Telegram'
+          window.location.replace(`/register?error=${encodeURIComponent(errorMsg)}`)
         }
       } catch (error) {
         console.error('[TelegramAuthButton] Error:', error)
-        alert('Помилка при авторизації через Telegram')
-        setIsLoading(false)
+        const errorMsg = error instanceof Error ? error.message : 'Помилка при авторизації через Telegram'
+        // Перенаправляємо на сторінку реєстрації з повідомленням про помилку
+        window.location.replace(`/register?error=${encodeURIComponent(errorMsg)}`)
       }
     }
 

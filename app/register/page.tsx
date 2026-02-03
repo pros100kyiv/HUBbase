@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { TelegramAuthButton } from '@/components/auth/TelegramAuthButton'
 import { ErrorToast } from '@/components/ui/error-toast'
 
 export default function RegisterPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -17,6 +18,28 @@ export default function RegisterPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [showErrorToast, setShowErrorToast] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  
+  // Перевіряємо параметри URL на наявність помилок
+  useEffect(() => {
+    const error = searchParams.get('error')
+    if (error) {
+      // Видаляємо параметр помилки з URL
+      const newUrl = window.location.pathname
+      window.history.replaceState({}, '', newUrl)
+      
+      // Встановлюємо повідомлення про помилку
+      const decodedError = decodeURIComponent(error)
+      if (error === 'nc' || decodedError.includes('OAuth') || decodedError.includes('підтвердіть')) {
+        setErrorMessage('Для завершення реєстрації підтвердіть через Telegram OAuth.')
+        setShowErrorToast(true)
+        setErrors({ submit: 'Для завершення реєстрації підтвердіть через Telegram OAuth.' })
+      } else {
+        setErrorMessage(decodedError || 'Помилка при реєстрації. Будь ласка, спробуйте ще раз.')
+        setShowErrorToast(true)
+        setErrors({ submit: decodedError || 'Помилка при реєстрації' })
+      }
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
