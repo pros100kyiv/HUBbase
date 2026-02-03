@@ -10,6 +10,7 @@ import { MonthGoalsCard } from '@/components/admin/MonthGoalsCard'
 import { TasksInProcessCard } from '@/components/admin/TasksInProcessCard'
 import { AddTaskCard } from '@/components/admin/AddTaskCard'
 import { LastProjectsCard } from '@/components/admin/LastProjectsCard'
+import { DateNavigationCard } from '@/components/admin/DateNavigationCard'
 
 interface Appointment {
   id: string
@@ -162,10 +163,33 @@ export default function MainPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Top Row - Three Cards */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* Overall Information Card */}
-        <div className="lg:col-span-1">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        {/* Left Column - Main Content (3 columns) */}
+        <div className="lg:col-span-3 space-y-6">
+          {/* Header */}
+          <div>
+            <h1 className="text-2xl font-bold text-white mb-1" style={{ letterSpacing: '-0.02em' }}>
+              Daily Dashboard Overview
+            </h1>
+            <p className="text-sm text-gray-400">
+              {todayAppointments.length === 0 
+                ? 'Сьогодні в тебе нічого немає'
+                : `Сьогодні у тебе ${todayAppointments.length} ${todayAppointments.length === 1 ? 'запис' : 'записів'}`
+              }
+            </p>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex gap-2">
+            <button className="px-4 py-2 rounded-lg bg-blue-500/20 text-blue-400 border border-blue-500/50 text-sm font-medium">
+              Робочий день
+            </button>
+            <button className="px-4 py-2 rounded-lg bg-white/5 text-gray-400 border border-white/10 text-sm font-medium hover:bg-white/10 transition-colors">
+              Протерміновані
+            </button>
+          </div>
+
+          {/* Overall Information Card */}
           <OverallInfoCard
             totalTasks={totalTasks}
             stoppedProjects={stoppedProjects}
@@ -173,48 +197,39 @@ export default function MainPage() {
             inProgress={inProgress}
             completed={completed}
           />
+
+          {/* Tasks Section */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <TasksInProcessCard 
+              tasks={tasks}
+              onAddNote={(id) => console.log('Add note:', id)}
+              onEdit={(id) => router.push(`/dashboard/appointments?edit=${id}`)}
+              onDelete={(id) => console.log('Delete:', id)}
+            />
+            <AddTaskCard onClick={handleAddTask} />
+          </div>
+
+          {/* Last Projects */}
+          <LastProjectsCard projects={projects} />
         </div>
 
-        {/* Calendar Card */}
-        <div className="lg:col-span-1">
+        {/* Right Column - Sidebar (1 column) */}
+        <div className="lg:col-span-1 space-y-6">
+          {/* Date Navigation */}
+          <DateNavigationCard />
+
+          {/* Calendar Card */}
           <WeeklyProcessCard businessId={business?.id} />
-        </div>
 
-        {/* Month Progress Card */}
-        <div className="lg:col-span-1">
-          <MonthProgressCard progress={30} />
-        </div>
-      </div>
-
-      {/* Middle Row - Goals and Tasks */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-        {/* Month Goals Card */}
-        <div className="lg:col-span-1">
+          {/* Month Goals Card */}
           <MonthGoalsCard 
             goals={goals}
             onToggleGoal={handleToggleGoal}
           />
-        </div>
 
-        {/* Tasks In Process Card */}
-        <div className="lg:col-span-1">
-          <TasksInProcessCard 
-            tasks={tasks}
-            onAddNote={(id) => console.log('Add note:', id)}
-            onEdit={(id) => router.push(`/dashboard/appointments?edit=${id}`)}
-            onDelete={(id) => console.log('Delete:', id)}
-          />
+          {/* Month Progress Card */}
+          <MonthProgressCard progress={30} />
         </div>
-
-        {/* Add Task Card */}
-        <div className="lg:col-span-1">
-          <AddTaskCard onClick={handleAddTask} />
-        </div>
-      </div>
-
-      {/* Bottom Row - Last Projects */}
-      <div className="mb-6">
-        <LastProjectsCard projects={projects} />
       </div>
     </div>
   )
