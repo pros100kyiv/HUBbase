@@ -65,6 +65,16 @@
     line-height: 1.5;
   }
   
+  /* Ensure consistent gray-100 background for cards */
+  .bg-gray-100 {
+    background-color: #F3F4F6;
+  }
+  
+  /* Ensure consistent gray-800 for dark cards */
+  .bg-gray-800 {
+    background-color: #1F2937;
+  }
+  
   .dark body {
     background: #0F172A;
     color: #F8FAFC;

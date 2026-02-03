@@ -1,0 +1,112 @@
+'use client'
+
+import { UsersIcon, UserIcon } from '@/components/icons'
+import { useState } from 'react'
+
+interface Task {
+  id: string
+  title: string
+  time: string
+  icon: 'users' | 'user'
+}
+
+interface TasksInProcessCardProps {
+  tasks: Task[]
+  onAddNote?: (taskId: string) => void
+  onEdit?: (taskId: string) => void
+  onDelete?: (taskId: string) => void
+}
+
+export function TasksInProcessCard({ tasks, onAddNote, onEdit, onDelete }: TasksInProcessCardProps) {
+  const [openMenuId, setOpenMenuId] = useState<string | null>(null)
+
+  const defaultTasks: Task[] = [
+    { id: '1', title: 'Meet HR For Project', time: 'Tonight', icon: 'users' },
+    { id: '2', title: 'Boss Appointment', time: 'Next Morning', icon: 'user' },
+  ]
+
+  const displayTasks = tasks.length > 0 ? tasks : defaultTasks
+
+  return (
+    <div className="bg-gray-100 rounded-xl p-6" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}>
+      <div className="flex items-center justify-between mb-4">
+        <h3 className="text-lg font-semibold text-black" style={{ letterSpacing: '-0.01em' }}>
+          Task In process ({displayTasks.length})
+        </h3>
+        <button className="text-sm text-gray-600 hover:text-black transition-colors">
+          Open Archive &gt;
+        </button>
+      </div>
+
+      <div className="grid grid-cols-2 gap-3">
+        {displayTasks.map((task) => (
+          <div 
+            key={task.id}
+            className="bg-white rounded-lg p-4 relative"
+            style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}
+          >
+            <div className="flex items-start justify-between mb-3">
+              <div className="w-8 h-8 rounded-lg bg-gray-200 flex items-center justify-center">
+                {task.icon === 'users' ? (
+                  <UsersIcon className="w-5 h-5 text-gray-600" />
+                ) : (
+                  <UserIcon className="w-5 h-5 text-gray-600" />
+                )}
+              </div>
+              <button
+                onClick={() => setOpenMenuId(openMenuId === task.id ? null : task.id)}
+                className="p-1 hover:bg-gray-100 rounded transition-colors"
+              >
+                <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
+                </svg>
+              </button>
+            </div>
+
+            {openMenuId === task.id && (
+              <div className="absolute top-12 right-2 bg-white border border-gray-200 rounded-lg shadow-lg z-10 min-w-[120px]">
+                <button
+                  onClick={() => {
+                    onAddNote?.(task.id)
+                    setOpenMenuId(null)
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 rounded-t-lg"
+                >
+                  Add Note
+                </button>
+                <button
+                  onClick={() => {
+                    onEdit?.(task.id)
+                    setOpenMenuId(null)
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                >
+                  Edit
+                </button>
+                <button
+                  onClick={() => {
+                    onDelete?.(task.id)
+                    setOpenMenuId(null)
+                  }}
+                  className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100 rounded-b-lg"
+                >
+                  Delete
+                </button>
+              </div>
+            )}
+
+            <h4 className="text-sm font-semibold text-black mb-1">{task.title}</h4>
+            <p className="text-xs text-gray-600">{task.time}</p>
+            
+            <div className="absolute bottom-2 right-2">
+              <svg className="w-4 h-4 text-black" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
