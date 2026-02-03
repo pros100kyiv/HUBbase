@@ -253,7 +253,126 @@ export async function POST(request: Request) {
       })
     }
 
-    // КРОК 4: Якщо акаунт НЕ знайдено - створюємо НОВИЙ
+    // КРОК 4: Якщо акаунт НЕ знайдено - або прив'язуємо до існуючого по email, або створюємо НОВИЙ
+    // Генеруємо базовий email з Telegram даних
+    const email = telegramData.username 
+      ? `${telegramData.username}@telegram.xbase.online`
+      : `telegram-${telegramData.id}@xbase.online`
+
+    // 4.1. Перевіряємо, чи існує бізнес з таким email (щоб не дублювати акаунт)
+    const existingByEmail = await prisma.business.findUnique({
+      where: { email }
+    })
+
+    if (existingByEmail) {
+      // Оновлюємо існуючий бізнес: прив'язуємо Telegram
+      const updatedBusiness = await prisma.business.update({
+        where: { id: existingByEmail.id },
+        data: {
+          telegramId: telegramId,
+          telegramChatId: telegramData.id.toString(),
+          avatar: telegramData.photo_url || existingByEmail.avatar,
+        }
+      })
+
+      // Додаємо пристрій до довірених
+      const updatedTrustedDevices = addTrustedDevice(updatedBusiness.trustedDevices, currentDeviceId)
+      await prisma.business.update({
+        where: { id: updatedBusiness.id },
+        data: { trustedDevices: updatedTrustedDevices }
+      })
+
+      // Створюємо або оновлюємо TelegramUser
+      const telegramUser = await prisma.telegramUser.upsert({
+        where: { telegramId },
+        update: {
+          username: telegramData.username || null,
+          firstName: telegramData.first_name || null,
+          lastName: telegramData.last_name || null,
+          lastActivity: new Date()
+        },
+        create: {
+          businessId: updatedBusiness.id,
+          telegramId: telegramId,
+          username: telegramData.username || null,
+          firstName: telegramData.first_name || null,
+          lastName: telegramData.last_name || null,
+          role: 'OWNER',
+          isActive: true,
+          activatedAt: new Date(),
+          lastActivity: new Date()
+        }
+      })
+
+      // Оновлюємо інтеграцію
+      await prisma.socialIntegration.upsert({
+        where: {
+          businessId_platform: {
+            businessId: updatedBusiness.id,
+            platform: 'telegram'
+          }
+        },
+        update: {
+          isConnected: true,
+          userId: telegramData.id.toString(),
+          username: telegramData.username || null,
+          metadata: JSON.stringify({
+            firstName: telegramData.first_name,
+            lastName: telegramData.last_name,
+            photoUrl: telegramData.photo_url
+          }),
+          lastSyncAt: new Date()
+        },
+        create: {
+          businessId: updatedBusiness.id,
+          platform: 'telegram',
+          isConnected: true,
+          userId: telegramData.id.toString(),
+          username: telegramData.username || null,
+          metadata: JSON.stringify({
+            firstName: telegramData.first_name,
+            lastName: telegramData.last_name,
+            photoUrl: telegramData.photo_url
+          }),
+          lastSyncAt: new Date()
+        }
+      })
+
+      // Повертаємо успішний ВХІД в існуючий бізнес
+      return NextResponse.json({
+        success: true,
+        action: 'login',
+        business: {
+          id: updatedBusiness.id,
+          name: updatedBusiness.name,
+          slug: updatedBusiness.slug,
+          email: updatedBusiness.email,
+          phone: updatedBusiness.phone,
+          address: updatedBusiness.address,
+          description: updatedBusiness.description,
+          logo: updatedBusiness.logo,
+          avatar: updatedBusiness.avatar || null,
+          primaryColor: updatedBusiness.primaryColor,
+          secondaryColor: updatedBusiness.secondaryColor,
+          backgroundColor: updatedBusiness.backgroundColor,
+          surfaceColor: updatedBusiness.surfaceColor,
+          isActive: updatedBusiness.isActive,
+          telegramChatId: updatedBusiness.telegramChatId || null,
+          businessIdentifier: updatedBusiness.businessIdentifier || null,
+          profileCompleted: updatedBusiness.profileCompleted || false,
+        },
+        user: {
+          id: telegramUser.id,
+          telegramId: telegramUser.telegramId.toString(),
+          username: telegramUser.username,
+          firstName: telegramUser.firstName,
+          lastName: telegramUser.lastName,
+          role: telegramUser.role
+        }
+      })
+    }
+
+    // 4.2. Якщо бізнесу з таким email немає - створюємо НОВИЙ
     // Генеруємо унікальний slug
     const baseSlug = (telegramData.first_name || 'user').toLowerCase()
       .replace(/[^a-z0-9а-яіїєґ]/g, '-')
@@ -267,11 +386,6 @@ export async function POST(request: Request) {
       slug = `${baseSlug}-${counter}`
       counter++
     }
-
-    // Генеруємо email
-    const email = telegramData.username 
-      ? `${telegramData.username}@telegram.xbase.online`
-      : `telegram-${telegramData.id}@xbase.online`
 
     // Генеруємо пароль
     const randomPassword = Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12)
