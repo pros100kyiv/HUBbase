@@ -346,6 +346,10 @@ export async function POST(request: Request) {
     // Отримуємо токен бота з env або використовуємо дефолтний
     const defaultBotToken = process.env.DEFAULT_TELEGRAM_BOT_TOKEN || '8258074435:AAHTKLTw6UDd92BV0Go-2ZQ_f2g_3QTXiIo'
     
+    // Генеруємо унікальний ідентифікатор бізнесу (5-значне число)
+    // Ймовірність колізії дуже мала (1/90000), тому перевірку унікальності робимо через API
+    const businessIdentifier = Math.floor(10000 + Math.random() * 90000).toString()
+
     // Створюємо новий бізнес з усіма налаштуваннями Telegram
     const newBusiness = await prisma.business.create({
       data: {
@@ -364,7 +368,10 @@ export async function POST(request: Request) {
         // Автоматично вмикаємо SMS для нових бізнесів через Telegram
         smsProvider: 'smsc', // Дефолтний провайдер
         remindersEnabled: true,
-        reminderSmsEnabled: true
+        reminderSmsEnabled: true,
+        // Профіль не заповнений - потрібно заповнити
+        profileCompleted: false,
+        businessIdentifier: businessIdentifier
       }
     })
 
@@ -431,6 +438,10 @@ export async function POST(request: Request) {
         backgroundColor: newBusiness.backgroundColor,
         surfaceColor: newBusiness.surfaceColor,
         isActive: newBusiness.isActive,
+        businessIdentifier: newBusiness.businessIdentifier || null,
+        profileCompleted: newBusiness.profileCompleted || false,
+        niche: newBusiness.niche || 'OTHER',
+        customNiche: newBusiness.customNiche || null,
       },
       user: {
         id: telegramUser.id,

@@ -17,7 +17,12 @@ enum BusinessNiche {
   STO // СТО (Станція технічного обслуговування)
   CAR_WASH // Автомийка
   SPA // СПА
-  FITNESS // Фітнес
+  FITNESS // Фітнес тренер
+  BEAUTY // Бюті сфера
+  TIRE_SERVICE // Шиномонтаж
+  EDUCATION // Освіта
+  MEDICINE // Медицина
+  RESTAURANT // Ресторан
   OTHER // Інше
 }
 
@@ -53,6 +58,9 @@ model Business {
   isActive                     Boolean             @default(true)
   // Модульна архітектура
   niche                        BusinessNiche       @default(OTHER) // Ніша бізнесу
+  customNiche                  String? // Кастомна категорія (якщо вибрано OTHER або створено свою)
+  businessIdentifier           String?             @unique // Унікальний ідентифікатор бізнесу (наприклад 11122)
+  profileCompleted             Boolean             @default(false) // Чи заповнений профіль
   settings                     String? // JSON: додаткові налаштування для ніші
   // Візитівка
   businessCardBackgroundImage  String? // URL до фонового зображення

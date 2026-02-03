@@ -104,7 +104,12 @@ export function Navbar() {
                 <h1 className="text-xs md:text-sm font-black text-gray-900 dark:text-white truncate">
                   {business?.name || 'Dashboard'}
                 </h1>
-                {business?.phone && (
+                {business?.businessIdentifier && (
+                  <p className="text-[9px] text-gray-500 dark:text-gray-400 truncate hidden md:block">
+                    ID: {business.businessIdentifier}
+                  </p>
+                )}
+                {business?.phone && !business?.businessIdentifier && (
                   <p className="text-[9px] text-gray-600 dark:text-gray-400 truncate hidden md:block">
                     {business.phone}
                   </p>

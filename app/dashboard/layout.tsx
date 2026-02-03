@@ -5,6 +5,7 @@ import { Navbar } from '@/components/layout/Navbar'
 import { Sidebar } from '@/components/admin/Sidebar'
 import { MobileSidebar } from '@/components/admin/MobileSidebar'
 import { AIChatWidget } from '@/components/ai/AIChatWidget'
+import { ProfileSetupModal } from '@/components/admin/ProfileSetupModal'
 
 // Global state for mobile menu
 let globalMobileMenuState = { isOpen: false, setIsOpen: (open: boolean) => {} }
@@ -21,10 +22,39 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [business, setBusiness] = useState<any>(null)
+  const [showProfileModal, setShowProfileModal] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    const businessData = localStorage.getItem('business')
+    if (businessData) {
+      try {
+        const parsed = JSON.parse(businessData)
+        setBusiness(parsed)
+        // Показуємо модальне вікно, якщо профіль не заповнений
+        if (!parsed.profileCompleted) {
+          setShowProfileModal(true)
+        }
+      } catch (e) {
+        console.error('Error parsing business data:', e)
+      }
+    }
+  }, [])
 
   useEffect(() => {
     globalMobileMenuState = { isOpen: mobileMenuOpen, setIsOpen: setMobileMenuOpen }
   }, [mobileMenuOpen])
+
+  const handleProfileComplete = (updatedBusiness: any) => {
+    setBusiness(updatedBusiness)
+    setShowProfileModal(false)
+    // Оновлюємо localStorage
+    if (updatedBusiness) {
+      localStorage.setItem('business', JSON.stringify(updatedBusiness))
+    }
+  }
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -63,6 +93,14 @@ export default function DashboardLayout({
         }
         return null
       })()}
+
+      {/* Profile Setup Modal */}
+      {mounted && showProfileModal && business && (
+        <ProfileSetupModal
+          business={business}
+          onComplete={handleProfileComplete}
+        />
+      )}
     </div>
   )
 }

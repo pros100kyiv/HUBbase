@@ -28,6 +28,12 @@ const businessSelect = {
   socialMedia: true,
   workingHours: true,
   location: true,
+  niche: true,
+  customNiche: true,
+  businessIdentifier: true,
+  profileCompleted: true,
+  avatar: true,
+  telegramChatId: true,
 }
 
 export async function GET(
@@ -100,6 +106,11 @@ export async function PATCH(
       socialMedia,
       workingHours,
       location,
+      // Профіль
+      niche,
+      customNiche,
+      businessIdentifier,
+      profileCompleted,
       // AI Chat
       aiChatEnabled,
       aiProvider,
@@ -144,6 +155,11 @@ export async function PATCH(
         ...(socialMedia !== undefined && { socialMedia: socialMedia || null }),
         ...(workingHours !== undefined && { workingHours: workingHours || null }),
         ...(location !== undefined && { location: location || null }),
+        // Профіль
+        ...(niche !== undefined && { niche }),
+        ...(customNiche !== undefined && { customNiche: customNiche || null }),
+        ...(businessIdentifier !== undefined && { businessIdentifier: businessIdentifier || null }),
+        ...(profileCompleted !== undefined && { profileCompleted }),
         // AI Chat
         ...(aiChatEnabled !== undefined && { aiChatEnabled }),
         ...(aiProvider !== undefined && { aiProvider: aiProvider || null }),

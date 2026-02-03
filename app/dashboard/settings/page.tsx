@@ -31,6 +31,10 @@ interface Business {
   socialMedia?: string
   workingHours?: string
   location?: string
+  niche?: string
+  customNiche?: string
+  businessIdentifier?: string
+  profileCompleted?: boolean
 }
 
 interface Master {
@@ -274,6 +278,9 @@ export default function SettingsPage() {
           phone: updated.business.phone || '',
           address: updated.business.address || '',
           description: updated.business.description || '',
+          niche: updated.business.niche || 'OTHER',
+          customNiche: updated.business.customNiche || '',
+          businessIdentifier: updated.business.businessIdentifier || '',
         })
         localStorage.setItem('business', JSON.stringify(updated.business))
         toast({ title: 'Збережено', type: 'success', duration: 1500 })
@@ -592,6 +599,50 @@ export default function SettingsPage() {
                   />
                 </div>
 
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Категорія бізнесу</label>
+                  <select
+                    value={formData.niche || 'OTHER'}
+                    onChange={(e) => setFormData({ ...formData, niche: e.target.value, customNiche: e.target.value !== 'OTHER' ? '' : formData.customNiche })}
+                    className="w-full px-4 py-2 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-candy-blue"
+                  >
+                    <option value="SALON">Салон краси</option>
+                    <option value="BARBERSHOP">Барбершоп</option>
+                    <option value="STO">СТО (Станція технічного обслуговування)</option>
+                    <option value="CAR_WASH">Автомийка</option>
+                    <option value="SPA">СПА</option>
+                    <option value="FITNESS">Фітнес тренер</option>
+                    <option value="BEAUTY">Бюті сфера</option>
+                    <option value="TIRE_SERVICE">Шиномонтаж</option>
+                    <option value="EDUCATION">Освіта</option>
+                    <option value="MEDICINE">Медицина</option>
+                    <option value="RESTAURANT">Ресторан</option>
+                    <option value="OTHER">Інше</option>
+                  </select>
+                </div>
+
+                {formData.niche === 'OTHER' && (
+                  <div>
+                    <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Вкажіть вашу категорію</label>
+                    <Input
+                      value={formData.customNiche || ''}
+                      onChange={(e) => setFormData({ ...formData, customNiche: e.target.value })}
+                      placeholder="Наприклад: Автосервіс, Стоматологія..."
+                    />
+                  </div>
+                )}
+
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Ідентифікатор бізнесу</label>
+                  <div className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600">
+                    <p className="text-lg font-black text-candy-blue dark:text-blue-400">
+                      {formData.businessIdentifier || 'Не встановлено'}
+                    </p>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    Унікальний ідентифікатор вашого бізнесу (не можна змінити)
+                  </p>
+                </div>
 
                 <Button 
                   onClick={handleSaveBusiness} 
