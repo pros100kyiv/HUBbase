@@ -20,37 +20,6 @@ export async function POST(request: Request) {
 
     console.log('Login attempt for email:', validated.email)
 
-    // Auto-create test business if it doesn't exist (only for test email)
-    const TEST_EMAIL = 'admin@045barbershop.com'
-    const TEST_PASSWORD = 'password123'
-    
-    if (validated.email.toLowerCase() === TEST_EMAIL.toLowerCase()) {
-      const { prisma } = await import('@/lib/prisma')
-      const { createBusiness } = await import('@/lib/auth')
-      
-      const existing = await prisma.business.findUnique({
-        where: { email: TEST_EMAIL.toLowerCase() },
-      })
-      
-      if (!existing) {
-        console.log('Auto-creating test business...')
-        const testBusiness = await createBusiness({
-          name: '5 Barbershop',
-          email: TEST_EMAIL,
-          password: TEST_PASSWORD,
-          slug: '045-barbershop',
-        })
-        console.log('Test business created automatically')
-        // КРИТИЧНО ВАЖЛИВО: createBusiness() вже синхронізує, але переконаємося
-        try {
-          const { syncBusinessToManagementCenter } = await import('@/lib/services/management-center')
-          await syncBusinessToManagementCenter(testBusiness.id)
-        } catch (error) {
-          console.error('КРИТИЧНА ПОМИЛКА: Не вдалося синхронізувати тестовий бізнес в ManagementCenter:', error)
-        }
-      }
-    }
-
     const businessAuth = await authenticateBusiness(validated.email, validated.password)
 
     if (!businessAuth) {
