@@ -175,7 +175,16 @@ export default function MainPage() {
 
           {/* Overall Information Card */}
           <OverallInfoCard
-            onGeneratePlan={() => console.log('Generate plan for day')}
+            tasks={todayAppointments.map((apt) => {
+              const startTime = new Date(apt.startTime)
+              return {
+                id: apt.id,
+                title: apt.clientName,
+                time: format(startTime, 'HH:mm'),
+                status: apt.status,
+                masterName: apt.masterName,
+              }
+            })}
           />
 
           {/* Tasks Section */}

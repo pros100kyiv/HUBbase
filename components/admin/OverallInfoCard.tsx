@@ -1,10 +1,23 @@
 'use client'
 
-interface OverallInfoCardProps {
-  onGeneratePlan?: () => void
+import { format } from 'date-fns'
+import { uk } from 'date-fns/locale'
+
+interface Task {
+  id: string
+  title: string
+  time: string
+  status?: string
+  masterName?: string
 }
 
-export function OverallInfoCard({ onGeneratePlan }: OverallInfoCardProps) {
+interface OverallInfoCardProps {
+  tasks?: Task[]
+}
+
+export function OverallInfoCard({ tasks = [] }: OverallInfoCardProps) {
+  const hasTasks = tasks && tasks.length > 0
+
   return (
     <div className="bg-[#1A1A1A] text-white rounded-xl p-6 card-floating">
       <div className="flex items-center justify-between mb-6">
@@ -29,94 +42,127 @@ export function OverallInfoCard({ onGeneratePlan }: OverallInfoCardProps) {
         </div>
       </div>
 
-      {/* Empty State with less bright colors */}
-      <div className="text-center">
-        {/* Illustration */}
-        <div className="mb-6 flex justify-center">
-          <div className="relative w-56 h-40">
-            {/* Background shape - less bright */}
-            <div className="absolute inset-0 bg-gradient-to-br from-purple-400/10 to-blue-400/10 rounded-3xl blur-2xl"></div>
-            
-            {/* Monitor */}
-            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
-              <div className="relative">
-                {/* Monitor base - less bright */}
-                <div className="w-28 h-20 bg-gradient-to-br from-purple-500/15 to-purple-600/15 rounded-lg border-2 border-purple-400/20 shadow-lg">
-                  {/* Screen content */}
-                  <div className="absolute inset-2 flex flex-col gap-1">
-                    <div className="flex gap-1">
-                      <div className="w-2 h-2 rounded-full bg-purple-300/25"></div>
-                      <div className="w-2 h-2 rounded-full bg-purple-300/25"></div>
-                      <div className="w-2 h-2 rounded-full bg-purple-300/25"></div>
-                    </div>
-                    <div className="flex-1 bg-purple-400/10 rounded"></div>
+      {hasTasks ? (
+        /* Tasks List - адаптивний вміст */
+        <div className="space-y-3">
+          {tasks.map((task) => (
+            <div
+              key={task.id}
+              className="bg-white/5 border border-white/10 rounded-lg p-4"
+            >
+              <div className="flex items-start justify-between">
+                <div className="flex-1">
+                  <h4 className="text-sm font-semibold text-white mb-1" style={{ letterSpacing: '-0.01em' }}>
+                    {task.title}
+                  </h4>
+                  {task.masterName && (
+                    <p className="text-xs text-gray-400 mb-2">{task.masterName}</p>
+                  )}
+                  <div className="flex items-center gap-2 text-xs text-gray-300">
+                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {task.time}
                   </div>
                 </div>
-                {/* Monitor stand */}
-                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-14 h-2 bg-purple-500/15 rounded"></div>
+                {task.status && (
+                  <div className={`px-2 py-1 rounded text-xs font-medium ${
+                    task.status === 'Confirmed' || task.status === 'Підтверджено'
+                      ? 'bg-green-500/20 text-green-400 border border-green-500/50'
+                      : task.status === 'Pending' || task.status === 'Очікує'
+                      ? 'bg-orange-500/20 text-orange-400 border border-orange-500/50'
+                      : 'bg-gray-500/20 text-gray-400 border border-gray-500/50'
+                  }`}>
+                    {task.status}
+                  </div>
+                )}
               </div>
             </div>
-
-            {/* Plant - less bright */}
-            <div className="absolute left-6 top-12">
-              <div className="relative">
-                {/* Pot */}
-                <div className="w-6 h-5 bg-purple-400/20 rounded-b-lg"></div>
-                {/* Leaves */}
-                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
-                  <div className="w-5 h-5 bg-purple-300/25 rounded-full"></div>
-                  <div className="absolute -top-1.5 left-1.5 w-3 h-3 bg-purple-300/25 rounded-full"></div>
-                  <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-purple-300/25 rounded-full"></div>
+          ))}
+        </div>
+      ) : (
+        /* Empty State */
+        <div className="text-center">
+          {/* Illustration */}
+          <div className="mb-6 flex justify-center">
+            <div className="relative w-56 h-40">
+              {/* Background shape - less bright */}
+              <div className="absolute inset-0 bg-gradient-to-br from-purple-400/10 to-blue-400/10 rounded-3xl blur-2xl"></div>
+              
+              {/* Monitor */}
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+                <div className="relative">
+                  {/* Monitor base - less bright */}
+                  <div className="w-28 h-20 bg-gradient-to-br from-purple-500/15 to-purple-600/15 rounded-lg border-2 border-purple-400/20 shadow-lg">
+                    {/* Screen content */}
+                    <div className="absolute inset-2 flex flex-col gap-1">
+                      <div className="flex gap-1">
+                        <div className="w-2 h-2 rounded-full bg-purple-300/25"></div>
+                        <div className="w-2 h-2 rounded-full bg-purple-300/25"></div>
+                        <div className="w-2 h-2 rounded-full bg-purple-300/25"></div>
+                      </div>
+                      <div className="flex-1 bg-purple-400/10 rounded"></div>
+                    </div>
+                  </div>
+                  {/* Monitor stand */}
+                  <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-14 h-2 bg-purple-500/15 rounded"></div>
                 </div>
               </div>
-            </div>
 
-            {/* Coffee cup - less bright */}
-            <div className="absolute right-6 top-14">
-              <div className="relative">
-                {/* Cup */}
-                <div className="w-5 h-6 bg-purple-400/20 rounded-b-lg border-2 border-purple-300/20">
-                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-purple-300/15 rounded-t-lg"></div>
-                </div>
-                {/* Steam */}
-                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 flex gap-0.5">
-                  <div className="w-0.5 h-2 bg-purple-200/25 rounded-full animate-pulse"></div>
-                  <div className="w-0.5 h-3 bg-purple-200/25 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
-                  <div className="w-0.5 h-2 bg-purple-200/25 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+              {/* Plant - less bright */}
+              <div className="absolute left-6 top-12">
+                <div className="relative">
+                  {/* Pot */}
+                  <div className="w-6 h-5 bg-purple-400/20 rounded-b-lg"></div>
+                  {/* Leaves */}
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <div className="w-5 h-5 bg-purple-300/25 rounded-full"></div>
+                    <div className="absolute -top-1.5 left-1.5 w-3 h-3 bg-purple-300/25 rounded-full"></div>
+                    <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-purple-300/25 rounded-full"></div>
+                  </div>
                 </div>
               </div>
-            </div>
 
-            {/* Floating dots - less bright */}
-            <div className="absolute top-3 left-10 w-1.5 h-1.5 bg-purple-300/20 rounded-full"></div>
-            <div className="absolute bottom-6 right-12 w-1 h-1 bg-purple-300/20 rounded-full"></div>
-            <div className="absolute top-10 right-6 w-0.5 h-0.5 bg-purple-300/20 rounded-full"></div>
+              {/* Coffee cup - less bright */}
+              <div className="absolute right-6 top-14">
+                <div className="relative">
+                  {/* Cup */}
+                  <div className="w-5 h-6 bg-purple-400/20 rounded-b-lg border-2 border-purple-300/20">
+                    <div className="absolute top-0 left-0 right-0 h-1.5 bg-purple-300/15 rounded-t-lg"></div>
+                  </div>
+                  {/* Steam */}
+                  <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 flex gap-0.5">
+                    <div className="w-0.5 h-2 bg-purple-200/25 rounded-full animate-pulse"></div>
+                    <div className="w-0.5 h-3 bg-purple-200/25 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                    <div className="w-0.5 h-2 bg-purple-200/25 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Floating dots - less bright */}
+              <div className="absolute top-3 left-10 w-1.5 h-1.5 bg-purple-300/20 rounded-full"></div>
+              <div className="absolute bottom-6 right-12 w-1 h-1 bg-purple-300/20 rounded-full"></div>
+              <div className="absolute top-10 right-6 w-0.5 h-0.5 bg-purple-300/20 rounded-full"></div>
+            </div>
+          </div>
+
+          {/* Text with updated fonts */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-center gap-2">
+              <div className="px-4 py-2 bg-white/5 rounded-lg border border-white/10">
+                <span className="text-sm font-medium text-white" style={{ letterSpacing: '-0.01em' }}>Сьогодні без завдань</span>
+                <span className="ml-2 text-yellow-400/70">🔄</span>
+              </div>
+            </div>
+            
+            <div className="px-4 py-2 bg-white/5 rounded-lg inline-block border border-white/10">
+              <p className="text-sm text-gray-300 font-normal" style={{ letterSpacing: '-0.01em' }}>
+                Можеш використати момент і додати справи на день
+              </p>
+            </div>
           </div>
         </div>
-
-        {/* Text with updated fonts */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-center gap-2">
-            <div className="px-4 py-2 bg-white/5 rounded-lg border border-white/10">
-              <span className="text-sm font-medium text-white" style={{ letterSpacing: '-0.01em' }}>Сьогодні без завдань</span>
-              <span className="ml-2 text-yellow-400/70">🔄</span>
-            </div>
-          </div>
-          
-          <div className="px-4 py-2 bg-white/5 rounded-lg inline-block border border-white/10">
-            <p className="text-sm text-gray-300 font-normal" style={{ letterSpacing: '-0.01em' }}>
-              Можеш використати момент і додати справи на день
-            </p>
-          </div>
-
-          <button
-            onClick={onGeneratePlan}
-            className="text-white hover:text-gray-200 underline text-sm font-medium transition-colors" style={{ letterSpacing: '-0.01em' }}
-          >
-            Згенерувати план на день
-          </button>
-        </div>
-      </div>
+      )}
     </div>
   )
 }
