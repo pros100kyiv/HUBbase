@@ -505,129 +505,136 @@ export default function MastersPage() {
               Управління командою спеціалістів
             </p>
           </div>
-          <div className="flex gap-1.5 flex-wrap">
+          <div className="flex gap-1 sm:gap-1.5 flex-wrap">
             <button
               onClick={() => {
                 setEditingMaster(null)
                 setShowQuickMasterCard(true)
               }}
-              className="px-3 py-1.5 bg-gradient-to-r from-candy-blue to-candy-purple text-white font-black rounded-candy-xs text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5"
+              className="px-2 sm:px-3 py-1.5 bg-gradient-to-r from-candy-blue to-candy-purple text-white font-black rounded-candy-xs text-[10px] sm:text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95 whitespace-nowrap flex items-center gap-1 sm:gap-1.5 touch-manipulation"
             >
-              <UserIcon className="w-4 h-4" />
-              Додати спеціаліста
+              <UserIcon className="w-3 h-3 sm:w-4 sm:h-4" />
+              <span className="hidden sm:inline">Додати спеціаліста</span>
+              <span className="sm:hidden">Додати</span>
             </button>
             <button
               onClick={() => setViewMode(viewMode === 'cards' ? 'table' : 'cards')}
-              className="px-2.5 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-xs text-xs font-bold"
+              className="px-2 sm:px-2.5 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-xs text-[10px] sm:text-xs font-bold touch-manipulation hidden sm:flex"
             >
               {viewMode === 'cards' ? '📊 Таблиця' : '📋 Картки'}
             </button>
             <button
               onClick={handleExportCSV}
-              className="px-2.5 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-xs text-xs font-bold flex items-center gap-1"
+              className="px-2 sm:px-2.5 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-xs text-[10px] sm:text-xs font-bold flex items-center gap-1 touch-manipulation"
             >
               <DownloadIcon className="w-3 h-3" />
-              Експорт
+              <span className="hidden sm:inline">Експорт</span>
             </button>
           </div>
         </div>
 
         {/* Quick Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 mb-2">
-          <div className="card-candy p-2 text-center">
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Всього</div>
-            <div className="text-sm font-black text-gray-900 dark:text-white">{stats.total}</div>
+        <div className="grid grid-cols-3 sm:grid-cols-6 gap-1.5 sm:gap-2 mb-2">
+          <div className="card-candy p-1.5 sm:p-2 text-center">
+            <div className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-0.5">Всього</div>
+            <div className="text-xs sm:text-sm font-black text-gray-900 dark:text-white">{stats.total}</div>
           </div>
-          <div className="card-candy p-2 text-center">
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Активні</div>
-            <div className="text-sm font-black text-candy-mint">{stats.active}</div>
+          <div className="card-candy p-1.5 sm:p-2 text-center">
+            <div className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-0.5">Активні</div>
+            <div className="text-xs sm:text-sm font-black text-candy-mint">{stats.active}</div>
           </div>
-          <div className="card-candy p-2 text-center">
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Неактивні</div>
-            <div className="text-sm font-black text-candy-orange">{stats.inactive}</div>
+          <div className="card-candy p-1.5 sm:p-2 text-center">
+            <div className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-0.5">Неактивні</div>
+            <div className="text-xs sm:text-sm font-black text-candy-orange">{stats.inactive}</div>
           </div>
-          <div className="card-candy p-2 text-center">
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Візити</div>
-            <div className="text-sm font-black text-candy-blue">{stats.totalAppointments}</div>
+          <div className="card-candy p-1.5 sm:p-2 text-center">
+            <div className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-0.5">Візити</div>
+            <div className="text-xs sm:text-sm font-black text-candy-blue">{stats.totalAppointments}</div>
           </div>
-          <div className="card-candy p-2 text-center">
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Дохід</div>
-            <div className="text-sm font-black text-candy-purple">{Math.round(stats.totalRevenue)} грн</div>
+          <div className="card-candy p-1.5 sm:p-2 text-center">
+            <div className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-0.5">Дохід</div>
+            <div className="text-xs sm:text-sm font-black text-candy-purple">{Math.round(stats.totalRevenue)} грн</div>
           </div>
-          <div className="card-candy p-2 text-center">
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Середній рейтинг</div>
-            <div className="text-sm font-black text-candy-pink">{stats.avgRating.toFixed(1)}</div>
+          <div className="card-candy p-1.5 sm:p-2 text-center">
+            <div className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-0.5">Рейтинг</div>
+            <div className="text-xs sm:text-sm font-black text-candy-pink">{stats.avgRating.toFixed(1)}</div>
           </div>
         </div>
 
         {/* Search and Filters */}
-        <div className="card-candy p-2 mb-2">
-          <div className="flex flex-col sm:flex-row gap-2">
+        <div className="card-candy p-2 sm:p-2 mb-2">
+          <div className="flex flex-col gap-2">
             {/* Search */}
             <div className="flex-1 relative">
-              <SearchIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <SearchIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-400" />
               <input
                 type="text"
                 placeholder="Пошук за ім'ям або описом..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
+                className="w-full pl-7 sm:pl-8 pr-2 sm:pr-3 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
               />
             </div>
             
-            {/* Status Filter */}
-            <select
-              value={filterStatus}
-              onChange={(e) => setFilterStatus(e.target.value)}
-              className="px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
-            >
-              <option value="all">Всі спеціалісти</option>
-              <option value="active">Активні</option>
-              <option value="inactive">Неактивні</option>
-            </select>
-
-            {/* Sort By */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
-            >
-              <option value="name">За ім'ям</option>
-              <option value="visits">За візитами</option>
-              <option value="earned">За заробітком</option>
-              <option value="rating">За рейтингом</option>
-            </select>
-
-            {/* Sort Order */}
-            <button
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
-            >
-              {sortOrder === 'asc' ? '↑' : '↓'}
-            </button>
-
-            {/* Date Filter Button */}
-            <button
-              onClick={() => setShowDatePicker(true)}
-              className="px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all flex items-center gap-1.5"
-            >
-              <CalendarIcon className="w-3 h-3" />
-              {dateFilterStart && dateFilterEnd
-                ? `${format(dateFilterStart, 'dd.MM')} - ${format(dateFilterEnd, 'dd.MM')}`
-                : 'Період'}
-            </button>
-            {dateFilterStart && dateFilterEnd && (
-              <button
-                onClick={() => {
-                  setDateFilterStart(null)
-                  setDateFilterEnd(null)
-                }}
-                className="px-1.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
-                title="Очистити фільтр"
+            {/* Filters Row */}
+            <div className="grid grid-cols-2 sm:flex gap-1.5 sm:gap-2">
+              {/* Status Filter */}
+              <select
+                value={filterStatus}
+                onChange={(e) => setFilterStatus(e.target.value)}
+                className="px-2 sm:px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
               >
-                ✕
+                <option value="all">Всі</option>
+                <option value="active">Активні</option>
+                <option value="inactive">Неактивні</option>
+              </select>
+
+              {/* Sort By */}
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-2 sm:px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
+              >
+                <option value="name">Ім'я</option>
+                <option value="visits">Візити</option>
+                <option value="earned">Заробіток</option>
+                <option value="rating">Рейтинг</option>
+              </select>
+
+              {/* Sort Order */}
+              <button
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="px-2 sm:px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all min-w-[40px]"
+              >
+                {sortOrder === 'asc' ? '↑' : '↓'}
               </button>
-            )}
+
+              {/* Date Filter Button */}
+              <button
+                onClick={() => setShowDatePicker(true)}
+                className="px-2 sm:px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all flex items-center justify-center gap-1 sm:gap-1.5 flex-1 sm:flex-initial"
+              >
+                <CalendarIcon className="w-3 h-3 flex-shrink-0" />
+                <span className="hidden sm:inline">
+                  {dateFilterStart && dateFilterEnd
+                    ? `${format(dateFilterStart, 'dd.MM')} - ${format(dateFilterEnd, 'dd.MM')}`
+                    : 'Період'}
+                </span>
+                <span className="sm:hidden">Період</span>
+              </button>
+              {dateFilterStart && dateFilterEnd && (
+                <button
+                  onClick={() => {
+                    setDateFilterStart(null)
+                    setDateFilterEnd(null)
+                  }}
+                  className="px-1.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+                  title="Очистити фільтр"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
           </div>
 
           {/* Bulk Actions */}
@@ -679,16 +686,16 @@ export default function MastersPage() {
 
       {/* Masters List */}
       {filteredMasters.length === 0 ? (
-        <div className="card-candy p-6 text-center">
-          <div className="mb-4 flex justify-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-candy-purple/20 to-candy-blue/20 rounded-full flex items-center justify-center">
-              <UserIcon className="w-10 h-10 text-candy-purple" />
+        <div className="card-candy p-4 sm:p-6 text-center">
+          <div className="mb-3 sm:mb-4 flex justify-center">
+            <div className="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-candy-purple/20 to-candy-blue/20 rounded-full flex items-center justify-center">
+              <UserIcon className="w-8 h-8 sm:w-10 sm:h-10 text-candy-purple" />
             </div>
           </div>
-          <h3 className="text-base font-black text-gray-900 dark:text-white mb-1.5">
+          <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-white mb-1 sm:mb-1.5">
             {searchQuery ? "Спеціалістів не знайдено" : "Немає спеціалістів"}
           </h3>
-          <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+          <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 mb-2 sm:mb-3">
             {searchQuery ? "Спробуйте інший пошуковий запит" : "Додайте першого спеціаліста, щоб почати працювати"}
           </p>
           {!searchQuery && (
@@ -697,17 +704,17 @@ export default function MastersPage() {
                 setEditingMaster(null)
                 setShowQuickMasterCard(true)
               }}
-              className="px-3 py-1.5 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-xs text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95"
+              className="px-2.5 sm:px-3 py-1.5 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-xs text-[10px] sm:text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95 touch-manipulation"
             >
               Додати першого спеціаліста
             </button>
           )}
         </div>
       ) : (
-        <div className="space-y-3">
-          {viewMode === 'table' && (
-            <div className="card-candy p-2 overflow-x-auto">
-              <table className="w-full text-xs">
+        <div className="space-y-2 sm:space-y-3">
+          {viewMode === 'table' && typeof window !== 'undefined' && window.innerWidth >= 768 && (
+            <div className="card-candy p-1 sm:p-2 overflow-x-auto -mx-2 sm:mx-0">
+              <table className="w-full text-[10px] sm:text-xs min-w-[600px]">
                 <thead>
                   <tr className="border-b border-gray-200 dark:border-gray-700">
                     <th className="text-left p-2">
@@ -833,7 +840,7 @@ export default function MastersPage() {
             </div>
           )}
 
-          {viewMode === 'cards' && filteredMasters.map((master) => {
+          {(viewMode === 'cards' || (typeof window !== 'undefined' && window.innerWidth < 768)) && filteredMasters.map((master) => {
             const isExpanded = expandedMaster === master.id
             const stats = masterStats[master.id] || {
               visits: 0,
@@ -883,20 +890,20 @@ export default function MastersPage() {
                         )}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <h3 className="text-sm font-black text-gray-900 dark:text-white truncate">
+                        <div className="flex items-center gap-1.5 sm:gap-2 mb-0.5">
+                          <h3 className="text-xs sm:text-sm font-black text-gray-900 dark:text-white truncate">
                             {master.name}
                           </h3>
                           <div className="flex items-center gap-0.5">
-                            <StarIcon className="w-3 h-3 text-yellow-400" />
-                            <span className="text-xs font-bold text-gray-600 dark:text-gray-400">
+                            <StarIcon className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-yellow-400" />
+                            <span className="text-[10px] sm:text-xs font-bold text-gray-600 dark:text-gray-400">
                               {master.averageRating.toFixed(1)}
                             </span>
                           </div>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
                           <span className={cn(
-                            "px-1.5 py-0.5 rounded-full text-[10px] font-bold border",
+                            "px-1 sm:px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold border",
                             master.isActive
                               ? "bg-candy-mint/10 text-candy-mint border-candy-mint"
                               : "bg-gray-200 dark:bg-gray-700 text-gray-500 dark:text-gray-400 border-gray-400"
@@ -904,7 +911,7 @@ export default function MastersPage() {
                             {master.isActive ? 'Працює' : 'Не працює'}
                           </span>
                           {master.bio && (
-                            <p className="text-[10px] text-gray-500 dark:text-gray-500 truncate">
+                            <p className="text-[9px] sm:text-[10px] text-gray-500 dark:text-gray-500 truncate hidden sm:block">
                               {master.bio}
                             </p>
                           )}
@@ -912,52 +919,52 @@ export default function MastersPage() {
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-3 flex-shrink-0">
-                      <div className="text-center">
-                        <div className="text-sm font-black text-candy-purple">
+                    <div className="flex items-center gap-1.5 sm:gap-3 flex-shrink-0">
+                      <div className="text-center hidden sm:block">
+                        <div className="text-xs sm:text-sm font-black text-candy-purple">
                           {stats.visits}
                         </div>
-                        <div className="text-[10px] text-gray-500 dark:text-gray-400">Візитів</div>
+                        <div className="text-[9px] sm:text-[10px] text-gray-500 dark:text-gray-400">Візитів</div>
                       </div>
-                      <div className="text-center">
-                        <div className="text-sm font-black text-candy-blue">
+                      <div className="text-center hidden sm:block">
+                        <div className="text-xs sm:text-sm font-black text-candy-blue">
                           {Math.round(stats.earned)} грн
                         </div>
-                        <div className="text-[10px] text-gray-500 dark:text-gray-400">Зароблено</div>
+                        <div className="text-[9px] sm:text-[10px] text-gray-500 dark:text-gray-400">Зароблено</div>
                       </div>
-                      <div className="flex gap-1">
+                      <div className="flex gap-0.5 sm:gap-1">
                         <button
                           onClick={() => {
                             setSelectedMasterForSchedule(master)
                             setShowScheduleModal(true)
                           }}
-                          className="p-1.5 text-candy-blue hover:bg-candy-blue/10 rounded-candy-xs transition-all"
+                          className="p-1 sm:p-1.5 text-candy-blue hover:bg-candy-blue/10 rounded-candy-xs transition-all touch-manipulation"
                           title="Графік роботи"
                         >
-                          <CalendarIcon className="w-4 h-4" />
+                          <CalendarIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </button>
                         <button
                           onClick={() => handleEditMaster(master)}
-                          className="p-1.5 text-candy-purple hover:bg-candy-purple/10 rounded-candy-xs transition-all"
+                          className="p-1 sm:p-1.5 text-candy-purple hover:bg-candy-purple/10 rounded-candy-xs transition-all touch-manipulation"
                           title="Редагувати"
                         >
-                          <EditIcon className="w-4 h-4" />
+                          <EditIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteMaster(master.id)}
-                          className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-candy-xs transition-all"
+                          className="p-1 sm:p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-candy-xs transition-all touch-manipulation"
                           title="Видалити"
                         >
-                          <TrashIcon className="w-4 h-4" />
+                          <TrashIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                         </button>
                         <button
                           onClick={() => setExpandedMaster(isExpanded ? null : master.id)}
-                          className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-candy-xs transition-all"
+                          className="p-1 sm:p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-candy-xs transition-all touch-manipulation"
                         >
                           {isExpanded ? (
-                            <ChevronUpIcon className="w-4 h-4" />
+                            <ChevronUpIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           ) : (
-                            <ChevronDownIcon className="w-4 h-4" />
+                            <ChevronDownIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                           )}
                         </button>
                       </div>
@@ -966,68 +973,68 @@ export default function MastersPage() {
                 </div>
 
                 {isExpanded && (
-                  <div className="px-3 pb-3 pt-0 border-t border-gray-200 dark:border-gray-700">
-                    <div className="mt-2 space-y-3">
+                  <div className="px-2 sm:px-3 pb-2 sm:pb-3 pt-0 border-t border-gray-200 dark:border-gray-700">
+                    <div className="mt-2 space-y-2 sm:space-y-3">
                       {/* Quick Stats */}
-                      <div className="grid grid-cols-3 gap-2">
-                        <div className="p-2 bg-gradient-to-br from-candy-purple/10 to-candy-purple/5 rounded-candy-xs border border-candy-purple/20">
-                          <div className="text-[10px] text-gray-600 dark:text-gray-400 font-bold mb-0.5">Клієнти</div>
-                          <div className="text-sm font-black text-candy-purple">{stats.clients}</div>
+                      <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
+                        <div className="p-1.5 sm:p-2 bg-gradient-to-br from-candy-purple/10 to-candy-purple/5 rounded-candy-xs border border-candy-purple/20">
+                          <div className="text-[9px] sm:text-[10px] text-gray-600 dark:text-gray-400 font-bold mb-0.5">Клієнти</div>
+                          <div className="text-xs sm:text-sm font-black text-candy-purple">{stats.clients}</div>
                         </div>
 
-                        <div className="p-2 bg-gradient-to-br from-candy-blue/10 to-candy-blue/5 rounded-candy-xs border border-candy-blue/20">
-                          <div className="text-[10px] text-gray-600 dark:text-gray-400 font-bold mb-0.5">Послуги</div>
-                          <div className="text-sm font-black text-candy-blue">{stats.services}</div>
+                        <div className="p-1.5 sm:p-2 bg-gradient-to-br from-candy-blue/10 to-candy-blue/5 rounded-candy-xs border border-candy-blue/20">
+                          <div className="text-[9px] sm:text-[10px] text-gray-600 dark:text-gray-400 font-bold mb-0.5">Послуги</div>
+                          <div className="text-xs sm:text-sm font-black text-candy-blue">{stats.services}</div>
                         </div>
 
-                        <div className="p-2 bg-gradient-to-br from-candy-mint/10 to-candy-mint/5 rounded-candy-xs border border-candy-mint/20">
-                          <div className="text-[10px] text-gray-600 dark:text-gray-400 font-bold mb-0.5">Завантаженість</div>
-                          <div className="text-sm font-black text-candy-mint">{Math.round(stats.utilizationRate)}%</div>
+                        <div className="p-1.5 sm:p-2 bg-gradient-to-br from-candy-mint/10 to-candy-mint/5 rounded-candy-xs border border-candy-mint/20">
+                          <div className="text-[9px] sm:text-[10px] text-gray-600 dark:text-gray-400 font-bold mb-0.5">Завантаженість</div>
+                          <div className="text-xs sm:text-sm font-black text-candy-mint">{Math.round(stats.utilizationRate)}%</div>
                         </div>
                       </div>
 
                       {/* Bio */}
                       {master.bio && (
-                        <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-candy-xs border border-gray-200 dark:border-gray-700">
-                          <div className="text-[10px] text-gray-600 dark:text-gray-400 font-bold mb-1">Опис</div>
-                          <div className="text-xs text-gray-900 dark:text-white">{master.bio}</div>
+                        <div className="p-1.5 sm:p-2 bg-gray-50 dark:bg-gray-800 rounded-candy-xs border border-gray-200 dark:border-gray-700">
+                          <div className="text-[9px] sm:text-[10px] text-gray-600 dark:text-gray-400 font-bold mb-1">Опис</div>
+                          <div className="text-[10px] sm:text-xs text-gray-900 dark:text-white">{master.bio}</div>
                         </div>
                       )}
 
                       {/* Recent Appointments */}
                       {stats.recentAppointments.length > 0 && (
                         <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="text-xs font-black text-gray-900 dark:text-white">
+                          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
+                            <h4 className="text-[10px] sm:text-xs font-black text-gray-900 dark:text-white">
                               Останні записи ({stats.recentAppointments.length})
                             </h4>
                             <button
                               onClick={() => router.push(`/dashboard/appointments?masterId=${master.id}`)}
-                              className="px-2 py-1 text-[10px] bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-xs shadow-soft-lg hover:shadow-soft-xl transition-all"
+                              className="px-1.5 sm:px-2 py-0.5 sm:py-1 text-[9px] sm:text-[10px] bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-xs shadow-soft-lg hover:shadow-soft-xl transition-all touch-manipulation"
                             >
                               Всі записи
                             </button>
                           </div>
                           
-                          <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                          <div className="space-y-1.5 sm:space-y-2 max-h-[200px] sm:max-h-[300px] overflow-y-auto">
                             {stats.recentAppointments.map((appointment: any) => {
                               const start = new Date(appointment.startTime)
                               return (
                                 <div
                                   key={appointment.id}
-                                  className="p-2 rounded-candy-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
+                                  className="p-1.5 sm:p-2 rounded-candy-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800"
                                 >
-                                  <div className="flex items-center justify-between">
-                                    <div>
-                                      <div className="text-xs font-black text-gray-900 dark:text-white">
+                                  <div className="flex items-center justify-between gap-2">
+                                    <div className="min-w-0 flex-1">
+                                      <div className="text-[10px] sm:text-xs font-black text-gray-900 dark:text-white truncate">
                                         {format(start, 'dd.MM.yyyy HH:mm')}
                                       </div>
-                                      <div className="text-[10px] text-gray-600 dark:text-gray-400">
+                                      <div className="text-[9px] sm:text-[10px] text-gray-600 dark:text-gray-400 truncate">
                                         {appointment.clientName}
                                       </div>
                                     </div>
                                     <span className={cn(
-                                      "px-1.5 py-0.5 rounded-full text-[10px] font-bold border",
+                                      "px-1 sm:px-1.5 py-0.5 rounded-full text-[9px] sm:text-[10px] font-bold border flex-shrink-0",
                                       appointment.status === 'Done' ? "bg-candy-blue/10 text-candy-blue border-candy-blue" :
                                       appointment.status === 'Confirmed' ? "bg-candy-mint/10 text-candy-mint border-candy-mint" :
                                       "bg-candy-orange/10 text-candy-orange border-candy-orange"

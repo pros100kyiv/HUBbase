@@ -178,33 +178,33 @@ export function MasterScheduleModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-      <div className="relative w-full max-w-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-candy-lg shadow-soft-xl p-4 max-h-[85vh] overflow-y-auto">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm">
+      <div className="relative w-full max-w-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-candy-lg shadow-soft-xl p-3 sm:p-4 max-h-[90vh] sm:max-h-[85vh] overflow-y-auto">
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 rounded-candy-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="absolute top-2 right-2 sm:top-4 sm:right-4 p-1.5 sm:p-2 rounded-candy-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors touch-manipulation"
         >
-          <XIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <XIcon className="w-4 h-4 sm:w-5 sm:h-5 text-gray-500 dark:text-gray-400" />
         </button>
 
         {/* Header */}
-        <div className="mb-4">
-          <h2 className="text-lg font-black text-candy-blue dark:text-blue-400 mb-1">
+        <div className="mb-3 sm:mb-4">
+          <h2 className="text-base sm:text-lg font-black text-candy-blue dark:text-blue-400 mb-1">
             Графік роботи
           </h2>
-          <p className="text-xs text-gray-600 dark:text-gray-400">
+          <p className="text-[10px] sm:text-xs text-gray-600 dark:text-gray-400 truncate">
             {master.name}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           {/* Working Hours */}
           <div>
-            <h3 className="text-sm font-black text-gray-900 dark:text-white mb-2">
+            <h3 className="text-xs sm:text-sm font-black text-gray-900 dark:text-white mb-1.5 sm:mb-2">
               Робочі години
             </h3>
-            <div className="space-y-1.5">
+            <div className="space-y-1 sm:space-y-1.5">
               {DAYS.map((day) => {
                 const dayHours = workingHours[day.key] || { enabled: false, start: '09:00', end: '18:00' }
                 return (
@@ -221,25 +221,25 @@ export function MasterScheduleModal({
                       type="checkbox"
                       checked={dayHours.enabled}
                       onChange={() => handleDayToggle(day.key)}
-                      className="w-3.5 h-3.5 rounded border-gray-300 dark:border-gray-700 text-candy-blue focus:ring-candy-blue"
+                      className="w-3.5 h-3.5 sm:w-4 sm:h-4 rounded border-gray-300 dark:border-gray-700 text-candy-blue focus:ring-candy-blue touch-manipulation"
                     />
-                    <label className="flex-1 text-xs font-bold text-gray-900 dark:text-white">
+                    <label className="flex-1 text-[10px] sm:text-xs font-bold text-gray-900 dark:text-white">
                       {day.label}
                     </label>
                     {dayHours.enabled && (
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1 sm:gap-1.5">
                         <input
                           type="time"
                           value={dayHours.start}
                           onChange={(e) => handleTimeChange(day.key, 'start', e.target.value)}
-                          className="w-20 px-1.5 py-0.5 text-[10px] border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-candy-blue"
+                          className="w-16 sm:w-20 px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-[10px] border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-candy-blue"
                         />
-                        <span className="text-[10px] text-gray-500 dark:text-gray-400">-</span>
+                        <span className="text-[9px] sm:text-[10px] text-gray-500 dark:text-gray-400">-</span>
                         <input
                           type="time"
                           value={dayHours.end}
                           onChange={(e) => handleTimeChange(day.key, 'end', e.target.value)}
-                          className="w-20 px-1.5 py-0.5 text-[10px] border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-candy-blue"
+                          className="w-16 sm:w-20 px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-[10px] border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-candy-blue"
                         />
                       </div>
                     )}
@@ -251,30 +251,30 @@ export function MasterScheduleModal({
 
           {/* Blocked Periods */}
           <div>
-            <h3 className="text-sm font-black text-gray-900 dark:text-white mb-2">
+            <h3 className="text-xs sm:text-sm font-black text-gray-900 dark:text-white mb-1.5 sm:mb-2">
               Заблоковані періоди
             </h3>
-            <div className="space-y-2">
+            <div className="space-y-1.5 sm:space-y-2">
               {/* Add New Blocked Period */}
-              <div className="flex gap-1.5 p-2 bg-gray-50 dark:bg-gray-900 rounded-candy-xs border border-gray-200 dark:border-gray-700">
+              <div className="flex flex-col sm:flex-row gap-1 sm:gap-1.5 p-1.5 sm:p-2 bg-gray-50 dark:bg-gray-900 rounded-candy-xs border border-gray-200 dark:border-gray-700">
                 <input
                   type="datetime-local"
                   value={newBlockedStart}
                   onChange={(e) => setNewBlockedStart(e.target.value)}
                   placeholder="Початок"
-                  className="flex-1 px-1.5 py-1 text-[10px] border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-candy-blue"
+                  className="flex-1 px-1.5 py-1 text-[9px] sm:text-[10px] border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-candy-blue"
                 />
                 <input
                   type="datetime-local"
                   value={newBlockedEnd}
                   onChange={(e) => setNewBlockedEnd(e.target.value)}
                   placeholder="Кінець"
-                  className="flex-1 px-1.5 py-1 text-[10px] border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-candy-blue"
+                  className="flex-1 px-1.5 py-1 text-[9px] sm:text-[10px] border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-candy-blue"
                 />
                 <button
                   type="button"
                   onClick={handleAddBlockedPeriod}
-                  className="px-2 py-1 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-xs text-[10px] shadow-soft-lg hover:shadow-soft-xl transition-all whitespace-nowrap"
+                  className="px-2 py-1 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-xs text-[9px] sm:text-[10px] shadow-soft-lg hover:shadow-soft-xl transition-all whitespace-nowrap touch-manipulation"
                 >
                   Додати
                 </button>
@@ -282,13 +282,13 @@ export function MasterScheduleModal({
 
               {/* Blocked Periods List */}
               {blockedPeriods.length > 0 && (
-                <div className="space-y-1.5 max-h-32 overflow-y-auto">
+                <div className="space-y-1 sm:space-y-1.5 max-h-24 sm:max-h-32 overflow-y-auto">
                   {blockedPeriods.map((period, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between p-1.5 bg-red-50 dark:bg-red-900/20 rounded-candy-xs border border-red-200 dark:border-red-800"
+                      className="flex items-center justify-between p-1 sm:p-1.5 bg-red-50 dark:bg-red-900/20 rounded-candy-xs border border-red-200 dark:border-red-800"
                     >
-                      <div className="text-[10px] text-gray-900 dark:text-white flex-1 min-w-0">
+                      <div className="text-[9px] sm:text-[10px] text-gray-900 dark:text-white flex-1 min-w-0">
                         <div className="font-bold truncate">
                           {new Date(period.start).toLocaleString('uk-UA', { 
                             day: '2-digit', 
@@ -298,7 +298,7 @@ export function MasterScheduleModal({
                             minute: '2-digit'
                           })}
                         </div>
-                        <div className="text-[9px] text-gray-600 dark:text-gray-400">
+                        <div className="text-[8px] sm:text-[9px] text-gray-600 dark:text-gray-400 truncate">
                           до {new Date(period.end).toLocaleString('uk-UA', { 
                             day: '2-digit', 
                             month: '2-digit', 
@@ -310,7 +310,7 @@ export function MasterScheduleModal({
                       <button
                         type="button"
                         onClick={() => handleRemoveBlockedPeriod(index)}
-                        className="px-1.5 py-0.5 text-[10px] text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-candy-xs transition-colors ml-1"
+                        className="px-1 sm:px-1.5 py-0.5 text-[9px] sm:text-[10px] text-red-500 hover:bg-red-100 dark:hover:bg-red-900/40 rounded-candy-xs transition-colors ml-1 touch-manipulation min-w-[24px]"
                       >
                         ✕
                       </button>

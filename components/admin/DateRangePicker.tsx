@@ -116,9 +116,9 @@ export function DateRangePicker({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/60 backdrop-blur-sm" onClick={onClose}>
       <div 
-        className="relative w-full max-w-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-candy-lg shadow-soft-xl p-4"
+        className="relative w-full max-w-sm bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-candy-lg shadow-soft-xl p-3 sm:p-4"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}
@@ -130,66 +130,66 @@ export function DateRangePicker({
         </button>
 
         {/* Header */}
-        <div className="mb-3">
-          <h3 className="text-base font-black text-gray-900 dark:text-white mb-1">
+        <div className="mb-2 sm:mb-3">
+          <h3 className="text-sm sm:text-base font-black text-gray-900 dark:text-white mb-1">
             Вибір періоду
           </h3>
         </div>
 
         {/* Quick Select Buttons */}
-        <div className="grid grid-cols-2 gap-1.5 mb-3">
+        <div className="grid grid-cols-2 gap-1 sm:gap-1.5 mb-2 sm:mb-3">
           <button
             onClick={() => handleQuickSelect('today')}
-            className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded-candy-xs transition-all"
+            className="px-1.5 sm:px-2 py-1 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded-candy-xs transition-all touch-manipulation"
           >
             Сьогодні
           </button>
           <button
             onClick={() => handleQuickSelect('tomorrow')}
-            className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded-candy-xs transition-all"
+            className="px-1.5 sm:px-2 py-1 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded-candy-xs transition-all touch-manipulation"
           >
             Завтра
           </button>
           <button
             onClick={() => handleQuickSelect('week')}
-            className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded-candy-xs transition-all"
+            className="px-1.5 sm:px-2 py-1 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded-candy-xs transition-all touch-manipulation"
           >
-            Цей тиждень
+            Тиждень
           </button>
           <button
             onClick={() => handleQuickSelect('month')}
-            className="px-2 py-1 text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded-candy-xs transition-all"
+            className="px-1.5 sm:px-2 py-1 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded-candy-xs transition-all touch-manipulation"
           >
-            Цей місяць
+            Місяць
           </button>
         </div>
 
         {/* Calendar */}
-        <div className="mb-3">
+        <div className="mb-2 sm:mb-3">
           {/* Month Navigation */}
-          <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center justify-between mb-1.5 sm:mb-2">
             <button
               onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-              className="p-1 rounded-candy-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-1 rounded-candy-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors touch-manipulation"
             >
-              <ChevronLeftIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              <ChevronLeftIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600 dark:text-gray-400" />
             </button>
-            <div className="text-sm font-black text-gray-900 dark:text-white">
+            <div className="text-xs sm:text-sm font-black text-gray-900 dark:text-white">
               {format(currentMonth, 'LLLL yyyy', { locale: uk })}
             </div>
             <button
               onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-              className="p-1 rounded-candy-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+              className="p-1 rounded-candy-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors touch-manipulation"
             >
-              <ChevronRightIcon className="w-4 h-4 text-gray-600 dark:text-gray-400" />
+              <ChevronRightIcon className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-600 dark:text-gray-400" />
             </button>
           </div>
 
           {/* Calendar Grid */}
-          <div className="grid grid-cols-7 gap-1">
+          <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
             {/* Day Headers */}
             {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
-              <div key={day} className="text-center text-[10px] font-bold text-gray-500 dark:text-gray-400 py-1">
+              <div key={day} className="text-center text-[9px] sm:text-[10px] font-bold text-gray-500 dark:text-gray-400 py-0.5 sm:py-1">
                 {day}
               </div>
             ))}
@@ -209,14 +209,14 @@ export function DateRangePicker({
                   onClick={() => handleDateClick(day)}
                   onMouseEnter={() => setHoverDate(day)}
                   className={cn(
-                    'relative p-1.5 rounded-candy-xs text-[10px] font-bold transition-all',
+                    'relative p-1 sm:p-1.5 rounded-candy-xs text-[9px] sm:text-[10px] font-bold transition-all touch-manipulation min-h-[32px] sm:min-h-[36px] flex items-center justify-center',
                     !isCurrentMonth && 'opacity-30',
                     isToday && 'ring-1 ring-candy-purple',
                     inRange && !isStart && !isEnd && 'bg-candy-purple/20',
                     isStart && 'bg-gradient-to-r from-candy-purple to-candy-blue text-white',
                     isEnd && 'bg-gradient-to-r from-candy-blue to-candy-purple text-white',
                     isHovered && !isStart && !isEnd && 'bg-candy-purple/10',
-                    !inRange && isCurrentMonth && 'hover:bg-gray-100 dark:hover:bg-gray-700',
+                    !inRange && isCurrentMonth && 'hover:bg-gray-100 dark:hover:bg-gray-700 active:bg-gray-200 dark:active:bg-gray-600',
                     !inRange && isCurrentMonth && 'text-gray-900 dark:text-white'
                   )}
                 >
@@ -229,9 +229,9 @@ export function DateRangePicker({
 
         {/* Selected Dates Display */}
         {(startDate || endDate) && (
-          <div className="mb-3 p-2 bg-gray-50 dark:bg-gray-900 rounded-candy-xs text-xs">
-            <div className="text-gray-600 dark:text-gray-400 mb-1">Вибраний період:</div>
-            <div className="font-bold text-gray-900 dark:text-white">
+          <div className="mb-2 sm:mb-3 p-1.5 sm:p-2 bg-gray-50 dark:bg-gray-900 rounded-candy-xs text-[10px] sm:text-xs">
+            <div className="text-gray-600 dark:text-gray-400 mb-0.5 sm:mb-1">Вибраний період:</div>
+            <div className="font-bold text-gray-900 dark:text-white break-words">
               {startDate && format(startDate, 'dd.MM.yyyy', { locale: uk })}
               {endDate && ` - ${format(endDate, 'dd.MM.yyyy', { locale: uk })}`}
             </div>
@@ -239,16 +239,16 @@ export function DateRangePicker({
         )}
 
         {/* Actions */}
-        <div className="flex gap-2">
+        <div className="flex gap-1.5 sm:gap-2">
           <button
             onClick={handleClear}
-            className="flex-1 px-3 py-1.5 text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white font-bold rounded-candy-xs hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
+            className="flex-1 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white font-bold rounded-candy-xs hover:bg-gray-50 dark:hover:bg-gray-700 transition-all touch-manipulation"
           >
             Очистити
           </button>
           <button
             onClick={handleApply}
-            className="flex-1 px-3 py-1.5 text-xs bg-gradient-to-r from-candy-purple to-candy-blue text-white font-black rounded-candy-xs shadow-soft-lg hover:shadow-soft-xl transition-all"
+            className="flex-1 px-2 sm:px-3 py-1.5 text-[10px] sm:text-xs bg-gradient-to-r from-candy-purple to-candy-blue text-white font-black rounded-candy-xs shadow-soft-lg hover:shadow-soft-xl transition-all touch-manipulation"
           >
             Застосувати
           </button>
