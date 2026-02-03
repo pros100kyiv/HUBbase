@@ -12,6 +12,13 @@ interface QuickClientCardProps {
   onCancel?: () => void
   initialPhone?: string
   initialName?: string
+  editingClient?: {
+    id: string
+    name: string
+    phone: string
+    email?: string | null
+    notes?: string | null
+  } | null
 }
 
 export function QuickClientCard({
@@ -20,12 +27,13 @@ export function QuickClientCard({
   onCancel,
   initialPhone = '',
   initialName = '',
+  editingClient = null,
 }: QuickClientCardProps) {
   const [formData, setFormData] = useState({
-    name: initialName,
-    phone: initialPhone,
-    email: '',
-    notes: '',
+    name: editingClient?.name || initialName,
+    phone: editingClient?.phone || initialPhone,
+    email: editingClient?.email || '',
+    notes: editingClient?.notes || '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showErrorToast, setShowErrorToast] = useState(false)
@@ -73,38 +81,14 @@ export function QuickClientCard({
     }
 
     try {
-      // Перевіряємо, чи клієнт вже існує
-      const checkResponse = await fetch(`/api/clients?businessId=${businessId}&phone=${encodeURIComponent(normalizedPhone)}`)
       let client
-      
-      if (checkResponse.ok) {
-        const existingClients = await checkResponse.json()
-        if (existingClients.length > 0) {
-          // Оновлюємо існуючого клієнта
-          client = existingClients[0]
-          const updateResponse = await fetch(`/api/clients/${client.id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              name: formData.name.trim(),
-              email: formData.email.trim() || null,
-              notes: formData.notes.trim() || null,
-            }),
-          })
-          
-          if (updateResponse.ok) {
-            client = await updateResponse.json()
-          }
-        }
-      }
 
-      // Якщо клієнта не знайдено, створюємо нового
-      if (!client) {
-        const createResponse = await fetch('/api/clients', {
-          method: 'POST',
+      // Якщо редагуємо існуючого клієнта
+      if (editingClient) {
+        const updateResponse = await fetch(`/api/clients/${editingClient.id}`, {
+          method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            businessId,
             name: formData.name.trim(),
             phone: normalizedPhone,
             email: formData.email.trim() || null,
@@ -112,17 +96,63 @@ export function QuickClientCard({
           }),
         })
 
-        if (!createResponse.ok) {
-          const error = await createResponse.json()
-          throw new Error(error.error || 'Не вдалося створити клієнта')
+        if (!updateResponse.ok) {
+          const error = await updateResponse.json()
+          throw new Error(error.error || 'Не вдалося оновити клієнта')
         }
 
-        client = await createResponse.json()
+        client = await updateResponse.json()
+      } else {
+        // Перевіряємо, чи клієнт вже існує
+        const checkResponse = await fetch(`/api/clients?businessId=${businessId}&phone=${encodeURIComponent(normalizedPhone)}`)
+        
+        if (checkResponse.ok) {
+          const existingClients = await checkResponse.json()
+          if (existingClients.length > 0) {
+            // Оновлюємо існуючого клієнта
+            client = existingClients[0]
+            const updateResponse = await fetch(`/api/clients/${client.id}`, {
+              method: 'PATCH',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                name: formData.name.trim(),
+                email: formData.email.trim() || null,
+                notes: formData.notes.trim() || null,
+              }),
+            })
+            
+            if (updateResponse.ok) {
+              client = await updateResponse.json()
+            }
+          }
+        }
+
+        // Якщо клієнта не знайдено, створюємо нового
+        if (!client) {
+          const createResponse = await fetch('/api/clients', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              businessId,
+              name: formData.name.trim(),
+              phone: normalizedPhone,
+              email: formData.email.trim() || null,
+              notes: formData.notes.trim() || null,
+            }),
+          })
+
+          if (!createResponse.ok) {
+            const error = await createResponse.json()
+            throw new Error(error.error || 'Не вдалося створити клієнта')
+          }
+
+          client = await createResponse.json()
+        }
       }
 
       toast({
         title: 'Успішно!',
-        description: 'Картка клієнта створена',
+        description: editingClient ? 'Картка клієнта оновлена' : 'Картка клієнта створена',
         type: 'success',
       })
 
@@ -155,10 +185,10 @@ export function QuickClientCard({
         {/* Header */}
         <div className="mb-6">
           <h2 className="text-2xl md:text-3xl font-black text-candy-blue dark:text-blue-400 mb-2">
-            Швидке створення клієнта
+            {editingClient ? 'Редагувати клієнта' : 'Швидке створення клієнта'}
           </h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Заповніть основну інформацію про клієнта
+            {editingClient ? 'Оновіть інформацію про клієнта' : 'Заповніть основну інформацію про клієнта'}
           </p>
         </div>
 
@@ -249,12 +279,12 @@ export function QuickClientCard({
               {isSubmitting ? (
                 <>
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                  Створення...
+                  {editingClient ? 'Збереження...' : 'Створення...'}
                 </>
               ) : (
                 <>
                   <CheckIcon className="w-5 h-5" />
-                  Створити клієнта
+                  {editingClient ? 'Зберегти зміни' : 'Створити клієнта'}
                 </>
               )}
             </button>

@@ -8,6 +8,8 @@ export async function GET(
   try {
     const resolvedParams = await Promise.resolve(params)
     const { id } = resolvedParams
+    const { searchParams } = new URL(request.url)
+    const businessId = searchParams.get('businessId')
 
     const client = await prisma.client.findUnique({
       where: { id },
@@ -20,6 +22,11 @@ export async function GET(
 
     if (!client) {
       return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+    }
+
+    // Перевірка businessId для ізоляції даних
+    if (businessId && client.businessId !== businessId) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
     return NextResponse.json(client)
@@ -37,7 +44,23 @@ export async function PATCH(
     const resolvedParams = await Promise.resolve(params)
     const { id } = resolvedParams
     const body = await request.json()
-    const { name, phone, email, notes } = body
+    const { name, phone, email, notes, businessId } = body
+
+    // КРИТИЧНО: Перевірка businessId для ізоляції даних
+    if (businessId) {
+      const client = await prisma.client.findUnique({
+        where: { id },
+        select: { businessId: true },
+      })
+
+      if (!client) {
+        return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+      }
+
+      if (client.businessId !== businessId) {
+        return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+      }
+    }
 
     const updateData: any = {}
     if (name !== undefined) updateData.name = name.trim()
@@ -61,6 +84,21 @@ export async function PATCH(
       where: { id },
       data: updateData,
     })
+
+    // Оновлюємо номер телефону в Реєстрі телефонів (якщо змінився)
+    if (phone !== undefined && businessId) {
+      try {
+        const { addClientPhoneToDirectory } = await import('@/lib/services/management-center')
+        await addClientPhoneToDirectory(
+          updateData.phone,
+          businessId,
+          client.id,
+          client.name
+        )
+      } catch (error) {
+        console.error('Error updating client phone in directory:', error)
+      }
+    }
 
     return NextResponse.json(client)
   } catch (error: any) {
@@ -91,6 +129,27 @@ export async function DELETE(
   try {
     const resolvedParams = await Promise.resolve(params)
     const { id } = resolvedParams
+    const { searchParams } = new URL(request.url)
+    const businessId = searchParams.get('businessId')
+
+    // КРИТИЧНО: Перевірка businessId для ізоляції даних
+    if (!businessId) {
+      return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
+    }
+
+    // Перевіряємо, чи клієнт належить цьому бізнесу
+    const client = await prisma.client.findUnique({
+      where: { id },
+      select: { businessId: true },
+    })
+
+    if (!client) {
+      return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+    }
+
+    if (client.businessId !== businessId) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
+    }
 
     await prisma.client.delete({
       where: { id },

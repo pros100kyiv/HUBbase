@@ -2,19 +2,24 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { format, isAfter } from 'date-fns'
+import { format, isAfter, differenceInDays } from 'date-fns'
+import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
-import { ChevronDownIcon, ChevronUpIcon, UsersIcon, SearchIcon, DownloadIcon, FilterIcon, CheckIcon, CalendarIcon, PhoneIcon } from '@/components/icons'
+import { ChevronDownIcon, ChevronUpIcon, UsersIcon, SearchIcon, DownloadIcon, FilterIcon, CheckIcon, CalendarIcon, PhoneIcon, UserIcon, XIcon, SettingsIcon } from '@/components/icons'
+import { QuickClientCard } from '@/components/admin/QuickClientCard'
+import { toast } from '@/components/ui/toast'
 
 interface Client {
+  id: string
   phone: string
   name: string
-  appointmentsCount: number
-  lastVisit: string
+  email?: string | null
+  notes?: string | null
+  totalAppointments: number
   totalSpent: number
+  firstAppointmentDate?: string | null
+  lastAppointmentDate?: string | null
   appointments: any[]
-  servicesUsed: string[]
-  nextAppointment?: string
 }
 
 interface ClientDetails {
@@ -22,6 +27,9 @@ interface ClientDetails {
   lastVisit: string
   nextAppointment?: string
   servicesUsed: Array<{ id: string; name: string; count: number }>
+  lifetimeValue: number
+  averageOrderValue: number
+  retentionRate: number
 }
 
 export default function ClientsPage() {
@@ -30,6 +38,7 @@ export default function ClientsPage() {
   const [clients, setClients] = useState<Client[]>([])
   const [services, setServices] = useState<any[]>([])
   const [masters, setMasters] = useState<any[]>([])
+  const [appointments, setAppointments] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [loading, setLoading] = useState(true)
   const [expandedClient, setExpandedClient] = useState<string | null>(null)
@@ -39,6 +48,8 @@ export default function ClientsPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set())
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards')
+  const [showQuickClientCard, setShowQuickClientCard] = useState(false)
+  const [editingClient, setEditingClient] = useState<Client | null>(null)
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -57,115 +68,153 @@ export default function ClientsPage() {
   useEffect(() => {
     if (!business) return
 
-    Promise.all([
-      fetch(`/api/services?businessId=${business.id}`)
-        .then((res) => res.json())
-        .then((data) => setServices(data || [])),
-      fetch(`/api/masters?businessId=${business.id}`)
-        .then((res) => res.json())
-        .then((data) => setMasters(data || [])),
-      fetch(`/api/appointments?businessId=${business.id}`)
-        .then((res) => res.json())
-        .then((appointments) => {
-          const clientsMap = new Map<string, Client>()
+    const loadData = async () => {
+      try {
+        setLoading(true)
+        
+        const [servicesRes, mastersRes, clientsRes, appointmentsRes] = await Promise.all([
+          fetch(`/api/services?businessId=${business.id}`),
+          fetch(`/api/masters?businessId=${business.id}`),
+          fetch(`/api/clients?businessId=${business.id}`),
+          fetch(`/api/appointments?businessId=${business.id}`),
+        ])
 
-          appointments.forEach((apt: any) => {
-            const existing = clientsMap.get(apt.clientPhone) || {
-              phone: apt.clientPhone,
-              name: apt.clientName,
-              appointmentsCount: 0,
-              lastVisit: apt.startTime,
-              totalSpent: 0,
-              appointments: [] as any[],
-              servicesUsed: [] as string[],
-            }
+        const [servicesData, mastersData, clientsData, appointmentsData] = await Promise.all([
+          servicesRes.json(),
+          mastersRes.json(),
+          clientsRes.json(),
+          appointmentsRes.json(),
+        ])
 
-            existing.appointmentsCount++
-            existing.appointments.push(apt)
-            
-            if (new Date(apt.startTime) > new Date(existing.lastVisit)) {
-              existing.lastVisit = apt.startTime
-            }
-
-            try {
-              if (apt.services) {
-                const aptServices = JSON.parse(apt.services)
-                existing.servicesUsed.push(...aptServices)
+        setServices(servicesData || [])
+        setMasters(mastersData || [])
+        setAppointments(appointmentsData || [])
+        
+        // Об'єднуємо дані клієнтів з appointments для розрахунку статистики
+        const clientsWithStats = (clientsData || []).map((client: any) => {
+          const clientAppointments = (appointmentsData || []).filter(
+            (apt: any) => apt.clientPhone === client.phone
+          )
+          
+          // Розраховуємо totalSpent з виконаних записів
+          let totalSpent = 0
+          clientAppointments.forEach((apt: any) => {
+            if (apt.status === 'Done') {
+              try {
+                const aptServices = typeof apt.services === 'string' 
+                  ? JSON.parse(apt.services) 
+                  : apt.services || []
+                
+                aptServices.forEach((serviceId: string) => {
+                  const service = servicesData.find((s: any) => s.id === serviceId || s.name === serviceId)
+                  if (service) {
+                    totalSpent += service.price || 0
+                  }
+                })
+                
+                // Додаємо customPrice якщо є
+                if (apt.customPrice) {
+                  totalSpent += apt.customPrice
+                }
+              } catch (e) {
+                // Ignore
               }
-            } catch (e) {
-              // Ignore
-            }
-
-            clientsMap.set(apt.clientPhone, existing)
-          })
-
-          const clientsArray = Array.from(clientsMap.values()).map((client) => {
-            const now = new Date()
-            const futureAppointments = client.appointments
-              .filter((apt: any) => isAfter(new Date(apt.startTime), now) && apt.status !== 'Cancelled')
-              .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-            
-            return {
-              ...client,
-              nextAppointment: futureAppointments.length > 0 ? futureAppointments[0].startTime : undefined,
             }
           })
 
-          setClients(clientsArray)
-          setLoading(false)
+          return {
+            ...client,
+            totalAppointments: clientAppointments.length,
+            totalSpent: totalSpent || client.totalSpent || 0,
+            appointments: clientAppointments,
+            firstAppointmentDate: clientAppointments.length > 0
+              ? clientAppointments[clientAppointments.length - 1]?.startTime
+              : null,
+            lastAppointmentDate: clientAppointments.length > 0
+              ? clientAppointments[0]?.startTime
+              : null,
+          }
         })
-    ]).catch((error) => {
-      console.error('Error loading data:', error)
-      setLoading(false)
-    })
+
+        setClients(clientsWithStats)
+        setLoading(false)
+      } catch (error) {
+        console.error('Error loading data:', error)
+        setLoading(false)
+      }
+    }
+
+    loadData()
   }, [business])
 
   const calculateClientDetails = (client: Client): ClientDetails => {
     const serviceMap = new Map<string, { id: string; name: string; count: number }>()
     let totalSpent = 0
+    const completedAppointments = client.appointments.filter((apt: any) => apt.status === 'Done')
 
-    client.appointments.forEach((apt: any) => {
-      // Only count completed appointments for revenue
-      if (apt.status === 'Done') {
-        try {
-          if (apt.services) {
-            const aptServices = JSON.parse(apt.services)
-            aptServices.forEach((serviceName: string) => {
-              const service = services.find((s) => s.name === serviceName)
-              if (service) {
-                totalSpent += service.price
-                const existing = serviceMap.get(service.id) || { id: service.id, name: service.name, count: 0 }
-                existing.count++
-                serviceMap.set(service.id, existing)
-              }
-            })
-          }
-        } catch (e) {
-          // Try parsing as array of service names
-          try {
-            if (Array.isArray(apt.services)) {
-              apt.services.forEach((serviceName: string) => {
-                const service = services.find((s) => s.name === serviceName)
-                if (service) {
-                  totalSpent += service.price
-                  const existing = serviceMap.get(service.id) || { id: service.id, name: service.name, count: 0 }
-                  existing.count++
-                  serviceMap.set(service.id, existing)
-                }
-              })
+    completedAppointments.forEach((apt: any) => {
+      try {
+        const aptServices = typeof apt.services === 'string' 
+          ? JSON.parse(apt.services) 
+          : apt.services || []
+        
+        aptServices.forEach((serviceId: string) => {
+          const service = services.find((s) => s.id === serviceId || s.name === serviceId)
+          if (service) {
+            const price = service.price || 0
+            totalSpent += price
+            const existing = serviceMap.get(service.id) || { 
+              id: service.id, 
+              name: service.name, 
+              count: 0 
             }
-          } catch (e2) {
-            // Ignore
+            existing.count++
+            serviceMap.set(service.id, existing)
           }
+        })
+        
+        if (apt.customPrice) {
+          totalSpent += apt.customPrice
         }
+      } catch (e) {
+        // Ignore
       }
     })
 
+    const now = new Date()
+    const futureAppointments = client.appointments
+      .filter((apt: any) => isAfter(new Date(apt.startTime), now) && apt.status !== 'Cancelled')
+      .sort((a: any, b: any) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+
+    const averageOrderValue = completedAppointments.length > 0 
+      ? totalSpent / completedAppointments.length 
+      : 0
+
+    // Розраховуємо retention rate (спрощено)
+    const firstVisit = client.firstAppointmentDate 
+      ? new Date(client.firstAppointmentDate) 
+      : null
+    const lastVisit = client.lastAppointmentDate 
+      ? new Date(client.lastAppointmentDate) 
+      : null
+    
+    let retentionRate = 0
+    if (firstVisit && lastVisit) {
+      const daysBetween = differenceInDays(lastVisit, firstVisit)
+      const daysSinceFirst = differenceInDays(now, firstVisit)
+      if (daysSinceFirst > 0) {
+        retentionRate = Math.min(100, (daysBetween / daysSinceFirst) * 100)
+      }
+    }
+
     return {
       totalSpent,
-      lastVisit: client.lastVisit,
-      nextAppointment: client.nextAppointment,
+      lastVisit: client.lastAppointmentDate || client.firstAppointmentDate || new Date().toISOString(),
+      nextAppointment: futureAppointments.length > 0 ? futureAppointments[0].startTime : undefined,
       servicesUsed: Array.from(serviceMap.values()),
+      lifetimeValue: totalSpent,
+      averageOrderValue,
+      retentionRate,
     }
   }
 
@@ -186,10 +235,16 @@ export default function ClientsPage() {
 
   const getAppointmentTotal = (appointment: any): number => {
     const servicesList = getAppointmentServices(appointment)
-    return servicesList.reduce((total, serviceName) => {
-      const service = services.find(s => s.name === serviceName)
-      return total + (service?.price || 0)
+    let total = servicesList.reduce((sum, serviceId) => {
+      const service = services.find(s => s.id === serviceId || s.name === serviceId)
+      return sum + (service?.price || 0)
     }, 0)
+    
+    if (appointment.customPrice) {
+      total += appointment.customPrice
+    }
+    
+    return total
   }
 
   const getStatusColor = (status: string) => {
@@ -227,14 +282,102 @@ export default function ClientsPage() {
   }
 
   const handleClientClick = (client: Client) => {
-    if (expandedClient === client.phone) {
+    if (expandedClient === client.id) {
       setExpandedClient(null)
     } else {
-      setExpandedClient(client.phone)
-      if (!clientDetails[client.phone]) {
+      setExpandedClient(client.id)
+      if (!clientDetails[client.id]) {
         const details = calculateClientDetails(client)
-        setClientDetails((prev) => ({ ...prev, [client.phone]: details }))
+        setClientDetails((prev) => ({ ...prev, [client.id]: details }))
       }
+    }
+  }
+
+  const handleDeleteClient = async (clientId: string) => {
+    if (!confirm('Ви впевнені, що хочете видалити цього клієнта? Цю дію неможливо скасувати.')) {
+      return
+    }
+
+    try {
+      const response = await fetch(`/api/clients/${clientId}?businessId=${business.id}`, {
+        method: 'DELETE',
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Не вдалося видалити клієнта')
+      }
+
+      toast({ title: 'Клієнта видалено', type: 'success' })
+      setClients((prev) => prev.filter((c) => c.id !== clientId))
+      setExpandedClient(null)
+    } catch (error) {
+      console.error('Error deleting client:', error)
+      toast({
+        title: 'Помилка',
+        description: error instanceof Error ? error.message : 'Не вдалося видалити клієнта',
+        type: 'error',
+      })
+    }
+  }
+
+  const handleEditClient = (client: Client) => {
+    setEditingClient(client)
+    setShowQuickClientCard(true)
+  }
+
+  const handleClientCreated = () => {
+    setShowQuickClientCard(false)
+    setEditingClient(null)
+    // Перезавантажуємо дані
+    if (business) {
+      fetch(`/api/clients?businessId=${business.id}`)
+        .then((res) => res.json())
+        .then((data) => {
+          const clientsWithStats = (data || []).map((client: any) => {
+            const clientAppointments = appointments.filter(
+              (apt: any) => apt.clientPhone === client.phone
+            )
+            
+            let totalSpent = 0
+            clientAppointments.forEach((apt: any) => {
+              if (apt.status === 'Done') {
+                try {
+                  const aptServices = typeof apt.services === 'string' 
+                    ? JSON.parse(apt.services) 
+                    : apt.services || []
+                  
+                  aptServices.forEach((serviceId: string) => {
+                    const service = services.find((s: any) => s.id === serviceId || s.name === serviceId)
+                    if (service) {
+                      totalSpent += service.price || 0
+                    }
+                  })
+                  
+                  if (apt.customPrice) {
+                    totalSpent += apt.customPrice
+                  }
+                } catch (e) {
+                  // Ignore
+                }
+              }
+            })
+
+            return {
+              ...client,
+              totalAppointments: clientAppointments.length,
+              totalSpent,
+              appointments: clientAppointments,
+              firstAppointmentDate: clientAppointments.length > 0
+                ? clientAppointments[clientAppointments.length - 1]?.startTime
+                : null,
+              lastAppointmentDate: clientAppointments.length > 0
+                ? clientAppointments[0]?.startTime
+                : null,
+            }
+          })
+          setClients(clientsWithStats)
+        })
     }
   }
 
@@ -245,15 +388,22 @@ export default function ClientsPage() {
         const query = searchQuery.toLowerCase()
         const matchesName = client.name.toLowerCase().includes(query)
         const matchesPhone = client.phone.includes(query)
-        if (!matchesName && !matchesPhone) return false
+        const matchesEmail = client.email?.toLowerCase().includes(query) || false
+        if (!matchesName && !matchesPhone && !matchesEmail) return false
       }
 
       // Segment filter
       if (filterSegment !== 'all') {
-        const daysSinceLastVisit = Math.floor((new Date().getTime() - new Date(client.lastVisit).getTime()) / (1000 * 60 * 60 * 24))
+        const lastVisit = client.lastAppointmentDate 
+          ? new Date(client.lastAppointmentDate) 
+          : null
+        const daysSinceLastVisit = lastVisit 
+          ? Math.floor((new Date().getTime() - lastVisit.getTime()) / (1000 * 60 * 60 * 24))
+          : 999
+        
         switch (filterSegment) {
           case 'vip':
-            if (client.totalSpent < 5000 || client.appointmentsCount < 10) return false
+            if (client.totalSpent < 5000 || client.totalAppointments < 10) return false
             break
           case 'active':
             if (daysSinceLastVisit > 30) return false
@@ -273,13 +423,15 @@ export default function ClientsPage() {
           comparison = a.name.localeCompare(b.name)
           break
         case 'visits':
-          comparison = a.appointmentsCount - b.appointmentsCount
+          comparison = a.totalAppointments - b.totalAppointments
           break
         case 'spent':
           comparison = a.totalSpent - b.totalSpent
           break
         case 'lastVisit':
-          comparison = new Date(a.lastVisit).getTime() - new Date(b.lastVisit).getTime()
+          const aDate = a.lastAppointmentDate ? new Date(a.lastAppointmentDate).getTime() : 0
+          const bDate = b.lastAppointmentDate ? new Date(b.lastAppointmentDate).getTime() : 0
+          comparison = aDate - bDate
           break
         default:
           comparison = 0
@@ -288,18 +440,20 @@ export default function ClientsPage() {
     })
 
   const handleExportCSV = () => {
-    const csvHeaders = ['Ім\'я', 'Телефон', 'Кількість візитів', 'Зароблено', 'Останній візит', 'Наступний візит', 'Послуги']
+    const csvHeaders = ['Ім\'я', 'Телефон', 'Email', 'Кількість візитів', 'Зароблено', 'Останній візит', 'Наступний візит', 'Послуги', 'Примітки']
     const csvRows = filteredClients.map(client => {
-      const details = clientDetails[client.phone] || calculateClientDetails(client)
+      const details = clientDetails[client.id] || calculateClientDetails(client)
       const servicesList = details.servicesUsed.map(s => `${s.name} (${s.count})`).join('; ')
       return [
         client.name,
         client.phone,
-        client.appointmentsCount,
-        client.totalSpent,
-        format(new Date(client.lastVisit), 'dd.MM.yyyy HH:mm'),
-        client.nextAppointment ? format(new Date(client.nextAppointment), 'dd.MM.yyyy HH:mm') : 'Немає',
-        servicesList
+        client.email || '',
+        client.totalAppointments,
+        Math.round(client.totalSpent),
+        client.lastAppointmentDate ? format(new Date(client.lastAppointmentDate), 'dd.MM.yyyy HH:mm') : 'Немає',
+        details.nextAppointment ? format(new Date(details.nextAppointment), 'dd.MM.yyyy HH:mm') : 'Немає',
+        servicesList,
+        client.notes || ''
       ]
     })
     
@@ -315,13 +469,13 @@ export default function ClientsPage() {
     link.click()
   }
 
-  const toggleSelectClient = (phone: string) => {
+  const toggleSelectClient = (id: string) => {
     setSelectedClients(prev => {
       const next = new Set(prev)
-      if (next.has(phone)) {
-        next.delete(phone)
+      if (next.has(id)) {
+        next.delete(id)
       } else {
-        next.add(phone)
+        next.add(id)
       }
       return next
     })
@@ -331,25 +485,29 @@ export default function ClientsPage() {
     if (selectedClients.size === filteredClients.length) {
       setSelectedClients(new Set())
     } else {
-      setSelectedClients(new Set(filteredClients.map(c => c.phone)))
+      setSelectedClients(new Set(filteredClients.map(c => c.id)))
     }
   }
 
   // Calculate statistics
   const stats = {
     total: filteredClients.length,
-    vip: filteredClients.filter(c => c.totalSpent >= 5000 && c.appointmentsCount >= 10).length,
+    vip: filteredClients.filter(c => c.totalSpent >= 5000 && c.totalAppointments >= 10).length,
     active: filteredClients.filter(c => {
-      const daysSinceLastVisit = Math.floor((new Date().getTime() - new Date(c.lastVisit).getTime()) / (1000 * 60 * 60 * 24))
+      const lastVisit = c.lastAppointmentDate ? new Date(c.lastAppointmentDate) : null
+      if (!lastVisit) return false
+      const daysSinceLastVisit = Math.floor((new Date().getTime() - lastVisit.getTime()) / (1000 * 60 * 60 * 24))
       return daysSinceLastVisit <= 30
     }).length,
     inactive: filteredClients.filter(c => {
-      const daysSinceLastVisit = Math.floor((new Date().getTime() - new Date(c.lastVisit).getTime()) / (1000 * 60 * 60 * 24))
+      const lastVisit = c.lastAppointmentDate ? new Date(c.lastAppointmentDate) : null
+      if (!lastVisit) return true
+      const daysSinceLastVisit = Math.floor((new Date().getTime() - lastVisit.getTime()) / (1000 * 60 * 60 * 24))
       return daysSinceLastVisit > 90
     }).length,
     totalRevenue: filteredClients.reduce((sum, c) => sum + c.totalSpent, 0),
     avgRevenue: filteredClients.length > 0 ? filteredClients.reduce((sum, c) => sum + c.totalSpent, 0) / filteredClients.length : 0,
-    avgVisits: filteredClients.length > 0 ? filteredClients.reduce((sum, c) => sum + c.appointmentsCount, 0) / filteredClients.length : 0,
+    avgVisits: filteredClients.length > 0 ? filteredClients.reduce((sum, c) => sum + c.totalAppointments, 0) / filteredClients.length : 0,
   }
 
   if (!business || loading) {
@@ -373,7 +531,17 @@ export default function ClientsPage() {
               Управління базою клієнтів та їх історією
             </p>
           </div>
-          <div className="flex gap-1.5">
+          <div className="flex gap-1.5 flex-wrap">
+            <button
+              onClick={() => {
+                setEditingClient(null)
+                setShowQuickClientCard(true)
+              }}
+              className="px-3 py-1.5 bg-gradient-to-r from-candy-blue to-candy-purple text-white font-black rounded-candy-xs text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5"
+            >
+              <UserIcon className="w-4 h-4" />
+              Додати клієнта
+            </button>
             <button
               onClick={() => setViewMode(viewMode === 'cards' ? 'table' : 'cards')}
               className="px-2.5 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-xs text-xs font-bold"
@@ -426,7 +594,7 @@ export default function ClientsPage() {
               <SearchIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Пошук за ім'ям або телефоном..."
+                placeholder="Пошук за ім'ям, телефоном або email..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
@@ -475,8 +643,10 @@ export default function ClientsPage() {
               <div className="flex gap-1.5">
                 <button
                   onClick={() => {
-                    const phones = Array.from(selectedClients).join(', ')
-                    window.open(`tel:${phones.split(',')[0]}`)
+                    const selectedClient = clients.find(c => selectedClients.has(c.id))
+                    if (selectedClient) {
+                      window.open(`tel:${selectedClient.phone}`)
+                    }
                   }}
                   className="px-2 py-1 text-[10px] bg-candy-blue text-white rounded-candy-xs font-bold hover:opacity-80 transition-all"
                 >
@@ -484,7 +654,10 @@ export default function ClientsPage() {
                 </button>
                 <button
                   onClick={() => {
-                    router.push(`/dashboard/appointments?clientPhone=${Array.from(selectedClients)[0]}`)
+                    const selectedClient = clients.find(c => selectedClients.has(c.id))
+                    if (selectedClient) {
+                      router.push(`/dashboard/appointments?clientPhone=${selectedClient.phone}`)
+                    }
                   }}
                   className="px-2 py-1 text-[10px] bg-candy-mint text-white rounded-candy-xs font-bold hover:opacity-80 transition-all"
                 >
@@ -514,14 +687,17 @@ export default function ClientsPage() {
             {searchQuery ? "Клієнтів не знайдено" : "Немає клієнтів"}
           </h3>
           <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-            {searchQuery ? "Спробуйте інший пошуковий запит" : "Клієнти з'являться після перших записів"}
+            {searchQuery ? "Спробуйте інший пошуковий запит" : "Додайте першого клієнта або створіть запис"}
           </p>
           {!searchQuery && (
             <button
-              onClick={() => router.push('/dashboard/appointments')}
+              onClick={() => {
+                setEditingClient(null)
+                setShowQuickClientCard(true)
+              }}
               className="px-3 py-1.5 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-xs text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95"
             >
-              Створити перший запис
+              Додати клієнта
             </button>
           )}
         </div>
@@ -544,6 +720,7 @@ export default function ClientsPage() {
                     </th>
                     <th className="text-left p-2 font-black">Ім'я</th>
                     <th className="text-left p-2 font-black">Телефон</th>
+                    <th className="text-left p-2 font-black">Email</th>
                     <th className="text-center p-2 font-black">Візити</th>
                     <th className="text-right p-2 font-black">Зароблено</th>
                     <th className="text-left p-2 font-black">Останній візит</th>
@@ -552,10 +729,10 @@ export default function ClientsPage() {
                 </thead>
                 <tbody>
                   {filteredClients.map((client) => {
-                    const isSelected = selectedClients.has(client.phone)
+                    const isSelected = selectedClients.has(client.id)
                     return (
                       <tr
-                        key={client.phone}
+                        key={client.id}
                         className={cn(
                           "border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50",
                           isSelected && "bg-gradient-to-r from-candy-purple/10 to-candy-blue/10"
@@ -563,7 +740,7 @@ export default function ClientsPage() {
                       >
                         <td className="p-2">
                           <button
-                            onClick={() => toggleSelectClient(client.phone)}
+                            onClick={() => toggleSelectClient(client.id)}
                             className={cn(
                               "w-4 h-4 rounded border-2 flex items-center justify-center transition-all",
                               isSelected
@@ -576,12 +753,15 @@ export default function ClientsPage() {
                         </td>
                         <td className="p-2 font-bold">{client.name}</td>
                         <td className="p-2">{client.phone}</td>
-                        <td className="p-2 text-center">{client.appointmentsCount}</td>
+                        <td className="p-2 text-gray-600 dark:text-gray-400">{client.email || '-'}</td>
+                        <td className="p-2 text-center">{client.totalAppointments}</td>
                         <td className="p-2 text-right font-black text-candy-purple">
                           {Math.round(client.totalSpent)} грн
                         </td>
                         <td className="p-2">
-                          {format(new Date(client.lastVisit), 'dd.MM.yyyy')}
+                          {client.lastAppointmentDate 
+                            ? format(new Date(client.lastAppointmentDate), 'dd.MM.yyyy')
+                            : 'Немає'}
                         </td>
                         <td className="p-2">
                           <div className="flex gap-1 justify-center">
@@ -601,6 +781,20 @@ export default function ClientsPage() {
                             >
                               <CalendarIcon className="w-3 h-3" />
                             </button>
+                            <button
+                              onClick={() => handleEditClient(client)}
+                              className="p-1 text-candy-purple hover:bg-candy-purple/10 rounded-candy-xs transition-all"
+                              title="Редагувати"
+                            >
+                              <SettingsIcon className="w-3 h-3" />
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClient(client.id)}
+                              className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-candy-xs transition-all"
+                              title="Видалити"
+                            >
+                              <XIcon className="w-3 h-3" />
+                            </button>
                           </div>
                         </td>
                       </tr>
@@ -612,13 +806,13 @@ export default function ClientsPage() {
           )}
 
           {viewMode === 'cards' && filteredClients.map((client) => {
-            const isExpanded = expandedClient === client.phone
-            const details = clientDetails[client.phone]
-            const isSelected = selectedClients.has(client.phone)
+            const isExpanded = expandedClient === client.id
+            const details = clientDetails[client.id] || (isExpanded ? calculateClientDetails(client) : null)
+            const isSelected = selectedClients.has(client.id)
 
             return (
               <div
-                key={client.phone}
+                key={client.id}
                 className={cn(
                   "card-candy overflow-hidden transition-all",
                   isExpanded && "shadow-soft-2xl",
@@ -629,7 +823,7 @@ export default function ClientsPage() {
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <button
-                        onClick={() => toggleSelectClient(client.phone)}
+                        onClick={() => toggleSelectClient(client.id)}
                         className={cn(
                           "w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all",
                           isSelected
@@ -649,13 +843,18 @@ export default function ClientsPage() {
                         <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
                           {client.phone}
                         </p>
+                        {client.email && (
+                          <p className="text-[10px] text-gray-500 dark:text-gray-500 truncate">
+                            {client.email}
+                          </p>
+                        )}
                       </div>
                     </div>
 
                     <div className="flex items-center gap-3 flex-shrink-0">
                       <div className="text-center">
                         <div className="text-sm font-black text-candy-purple">
-                          {client.appointmentsCount}
+                          {client.totalAppointments}
                         </div>
                         <div className="text-[10px] text-gray-500 dark:text-gray-400">Візитів</div>
                       </div>
@@ -681,6 +880,20 @@ export default function ClientsPage() {
                           title="Створити запис"
                         >
                           <CalendarIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleEditClient(client)}
+                          className="p-1.5 text-candy-purple hover:bg-candy-purple/10 rounded-candy-xs transition-all"
+                          title="Редагувати"
+                        >
+                          <SettingsIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => handleDeleteClient(client.id)}
+                          className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-candy-xs transition-all"
+                          title="Видалити"
+                        >
+                          <XIcon className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleClientClick(client)}
@@ -736,6 +949,14 @@ export default function ClientsPage() {
                           )}
                         </div>
 
+                        {/* Client Notes */}
+                        {client.notes && (
+                          <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-candy-xs border border-gray-200 dark:border-gray-700">
+                            <div className="text-[10px] text-gray-600 dark:text-gray-400 font-bold mb-1">Примітки</div>
+                            <div className="text-xs text-gray-900 dark:text-white">{client.notes}</div>
+                          </div>
+                        )}
+
                         {/* Appointment History */}
                         <div>
                           <div className="flex items-center justify-between mb-2">
@@ -789,14 +1010,14 @@ export default function ClientsPage() {
                                         
                                         {servicesList.length > 0 && (
                                           <div className="flex flex-wrap gap-1 mb-1">
-                                            {servicesList.map((serviceName, idx) => {
-                                              const service = services.find(s => s.name === serviceName)
+                                            {servicesList.map((serviceId, idx) => {
+                                              const service = services.find(s => s.id === serviceId || s.name === serviceId)
                                               return (
                                                 <span
                                                   key={idx}
                                                   className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-candy-pink/10 text-candy-pink border border-candy-pink/30"
                                                 >
-                                                  {serviceName} {service ? `(${service.price} грн)` : ''}
+                                                  {service?.name || serviceId} {service ? `(${service.price} грн)` : ''}
                                                 </span>
                                               )
                                             })}
@@ -816,14 +1037,6 @@ export default function ClientsPage() {
                                             {Math.round(total)} грн
                                           </div>
                                         )}
-                                        <button
-                                          onClick={() => {
-                                            router.push(`/dashboard/appointments?edit=${appointment.id}`)
-                                          }}
-                                          className="text-[10px] text-candy-blue hover:underline"
-                                        >
-                                          Редагувати
-                                        </button>
                                       </div>
                                     </div>
                                   </div>
@@ -867,9 +1080,23 @@ export default function ClientsPage() {
           })}
         </div>
       )}
+
+      {/* Quick Client Card Modal */}
+      {showQuickClientCard && business && (
+        <QuickClientCard
+          businessId={business.id}
+          initialPhone={editingClient?.phone || ''}
+          initialName={editingClient?.name || ''}
+          editingClient={editingClient}
+          onSuccess={(client) => {
+            handleClientCreated()
+          }}
+          onCancel={() => {
+            setShowQuickClientCard(false)
+            setEditingClient(null)
+          }}
+        />
+      )}
     </div>
   )
 }
-
-
-
