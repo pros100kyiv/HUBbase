@@ -5,6 +5,8 @@ import { BusinessNiche } from '@prisma/client'
 // Перевіряє чи параметр є UUID (ID) чи slug
 // CUID має формат: c[0-9a-z]{24} або схожий
 function isUUID(str: string): boolean {
+  if (!str || typeof str !== 'string') return false
+  
   // Перевіряємо UUID формат
   const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
   if (uuidRegex.test(str)) return true
@@ -13,9 +15,10 @@ function isUUID(str: string): boolean {
   const cuidRegex = /^c[0-9a-z]{24}$/i
   if (cuidRegex.test(str)) return true
   
-  // Якщо це не UUID і не CUID, але має достатню довжину - вважаємо ID
-  // (може бути інший формат ID)
-  return str.length > 10 && !str.includes('-') && !str.includes('_')
+  // Якщо це не UUID і не CUID, але має достатню довжину і не схоже на slug - вважаємо ID
+  // Slug зазвичай має дефіси та малі літери
+  const isSlugLike = str.includes('-') || str.includes('_') || /[A-Z]/.test(str)
+  return str.length > 10 && !isSlugLike
 }
 
 const businessSelect = {
@@ -95,11 +98,30 @@ export async function PATCH(
     console.log('Is UUID?', isUUID(param))
 
     // PATCH тільки для ID (CUID або UUID)
+    // Але якщо це не UUID, спробуємо знайти по slug і використати його ID
+    let businessId = param
     if (!isUUID(param)) {
-      console.error('Invalid business ID format:', param)
-      return NextResponse.json({ 
-        error: 'Невірний формат ідентифікатора бізнесу. Будь ласка, увійдіть знову.' 
-      }, { status: 400 })
+      console.log('Param is not UUID, trying to find by slug:', param)
+      try {
+        const businessBySlug = await prisma.business.findUnique({
+          where: { slug: param },
+          select: { id: true }
+        })
+        if (businessBySlug) {
+          businessId = businessBySlug.id
+          console.log('Found business by slug, using ID:', businessId)
+        } else {
+          console.error('Business not found by slug:', param)
+          return NextResponse.json({ 
+            error: 'Бізнес не знайдено. Будь ласка, увійдіть знову.' 
+          }, { status: 404 })
+        }
+      } catch (slugError) {
+        console.error('Error finding business by slug:', slugError)
+        return NextResponse.json({ 
+          error: 'Невірний формат ідентифікатора бізнесу. Будь ласка, увійдіть знову.' 
+        }, { status: 400 })
+      }
     }
 
     const body = await request.json()
@@ -154,12 +176,12 @@ export async function PATCH(
     let currentBusiness
     try {
       currentBusiness = await prisma.business.findUnique({
-        where: { id: param },
+        where: { id: businessId },
         select: { phone: true, name: true },
       })
 
       if (!currentBusiness) {
-        console.error('Business not found:', param)
+        console.error('Business not found:', businessId)
         return NextResponse.json({ 
           error: 'Бізнес не знайдено. Будь ласка, увійдіть знову.' 
         }, { status: 404 })
@@ -174,7 +196,7 @@ export async function PATCH(
     let business
     try {
       business = await prisma.business.update({
-        where: { id: param },
+        where: { id: businessId },
         data: {
         ...(name !== undefined && { name }),
         ...(email !== undefined && { email }),
@@ -276,7 +298,7 @@ export async function PATCH(
     // Синхронізуємо всі дані в ManagementCenter (ПОВНЕ ДУБЛЮВАННЯ)
     try {
       const { syncBusinessToManagementCenter } = await import('@/lib/services/management-center')
-      await syncBusinessToManagementCenter(param)
+      await syncBusinessToManagementCenter(businessId)
     } catch (error) {
       console.error('Error syncing business to Management Center:', error)
       // Не викидаємо помилку, щоб не зламати оновлення бізнесу
@@ -287,7 +309,7 @@ export async function PATCH(
       try {
         const { updateBusinessPhoneInDirectory } = await import('@/lib/services/management-center')
         await updateBusinessPhoneInDirectory(
-          param,
+          businessId,
           currentBusiness.phone,
           phone || null,
           business.name

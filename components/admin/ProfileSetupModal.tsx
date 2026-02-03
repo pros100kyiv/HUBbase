@@ -57,6 +57,16 @@ export function ProfileSetupModal({ business, onComplete }: ProfileSetupModalPro
     setErrors({})
     setIsSaving(true)
 
+    // Перевірка наявності business.id
+    if (!business?.id) {
+      const errorMsg = 'Помилка: ID бізнесу не знайдено. Будь ласка, увійдіть знову.'
+      setErrorMessage(errorMsg)
+      setShowErrorToast(true)
+      setErrors({ submit: errorMsg })
+      setIsSaving(false)
+      return
+    }
+
     // Валідація
     if (!formData.name.trim()) {
       setErrors({ name: 'Назва бізнесу обов\'язкова' })
@@ -72,9 +82,16 @@ export function ProfileSetupModal({ business, onComplete }: ProfileSetupModalPro
 
     // Валідація телефону (український формат)
     const phoneRegex = /^(\+380|380|0)[0-9]{9}$/
-    const cleanPhone = formData.phone.replace(/\s/g, '')
+    const cleanPhone = formData.phone.replace(/\s/g, '').replace(/[()-]/g, '')
     if (!phoneRegex.test(cleanPhone)) {
       setErrors({ phone: 'Невірний формат телефону. Використовуйте формат: +380XXXXXXXXX' })
+      setIsSaving(false)
+      return
+    }
+
+    // Перевірка кастомної категорії
+    if (formData.niche === 'OTHER' && !formData.customNiche.trim()) {
+      setErrors({ customNiche: 'Вкажіть вашу категорію бізнесу' })
       setIsSaving(false)
       return
     }
@@ -83,24 +100,50 @@ export function ProfileSetupModal({ business, onComplete }: ProfileSetupModalPro
       // Генеруємо ідентифікатор, якщо його немає
       let identifier = business?.businessIdentifier
       if (!identifier) {
-        identifier = Math.floor(10000 + Math.random() * 90000).toString()
-        // Перевіряємо унікальність
-        const checkResponse = await fetch(`/api/business/check-identifier?identifier=${identifier}`)
-        if (checkResponse.ok) {
-          const checkData = await checkResponse.json()
-          if (checkData.exists) {
-            // Якщо існує, генеруємо новий
-            identifier = Math.floor(10000 + Math.random() * 90000).toString()
+        // Генеруємо унікальний ідентифікатор
+        let attempts = 0
+        while (!identifier && attempts < 10) {
+          const candidate = Math.floor(10000 + Math.random() * 90000).toString()
+          try {
+            const checkResponse = await fetch(`/api/business/check-identifier?identifier=${candidate}`)
+            if (checkResponse.ok) {
+              const checkData = await checkResponse.json()
+              if (!checkData.exists) {
+                identifier = candidate
+                break
+              }
+            }
+          } catch (checkError) {
+            console.warn('Error checking identifier:', checkError)
+            // Якщо перевірка не вдалася, використовуємо кандидата
+            identifier = candidate
+            break
           }
+          attempts++
+        }
+        
+        if (!identifier) {
+          // Якщо не вдалося згенерувати унікальний, використовуємо timestamp
+          identifier = Date.now().toString().slice(-5)
         }
       }
 
       // Нормалізуємо телефон
-      const normalizedPhone = cleanPhone.startsWith('+380') 
-        ? cleanPhone 
-        : cleanPhone.startsWith('380')
-        ? `+${cleanPhone}`
-        : `+380${cleanPhone.slice(1)}`
+      let normalizedPhone = cleanPhone
+      if (normalizedPhone.startsWith('0')) {
+        normalizedPhone = `+380${normalizedPhone.slice(1)}`
+      } else if (normalizedPhone.startsWith('380')) {
+        normalizedPhone = `+${normalizedPhone}`
+      } else if (!normalizedPhone.startsWith('+380')) {
+        normalizedPhone = `+380${normalizedPhone}`
+      }
+
+      // Перевіряємо довжину нормалізованого телефону
+      if (normalizedPhone.length !== 13) {
+        setErrors({ phone: 'Невірний формат телефону. Має бути 13 символів: +380XXXXXXXXX' })
+        setIsSaving(false)
+        return
+      }
 
       const response = await fetch(`/api/business/${business.id}`, {
         method: 'PATCH',
@@ -118,7 +161,7 @@ export function ProfileSetupModal({ business, onComplete }: ProfileSetupModalPro
       const data = await response.json()
 
       if (!response.ok) {
-        const errorMsg = data.error || 'Помилка при збереженні профілю'
+        const errorMsg = data.error || 'Помилка при збереженні профілю. Будь ласка, спробуйте ще раз.'
         setErrorMessage(errorMsg)
         setShowErrorToast(true)
         setErrors({ submit: errorMsg })
