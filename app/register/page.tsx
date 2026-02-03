@@ -61,12 +61,25 @@ function RegisterForm() {
       // Перевіряємо чи є всі необхідні поля
       if (!data.business || !data.business.id || !data.business.name) {
         setErrors({ submit: 'Невірні дані бізнесу' })
+        setIsLoading(false)
         return
       }
 
       // Зберігаємо бізнес в localStorage (в продакшені використовуйте cookies)
       localStorage.setItem('business', JSON.stringify(data.business))
-      router.push('/dashboard')
+      
+      // Показуємо повідомлення про успіх
+      if (data.isLogin) {
+        setErrorMessage('Успішний вхід в існуючий акаунт')
+      } else {
+        setErrorMessage('Бізнес успішно зареєстровано та синхронізовано з базою даних')
+      }
+      setShowErrorToast(true)
+      
+      // Перенаправляємо на dashboard через невелику затримку для показу повідомлення
+      setTimeout(() => {
+        router.push('/dashboard')
+      }, 1000)
     } catch (error) {
       setErrorMessage('Помилка при реєстрації. Будь ласка, спробуйте ще раз.')
       setShowErrorToast(true)

@@ -25,11 +25,70 @@ export async function POST(request: Request) {
     const userAgent = getUserAgent(request)
     const deviceId = generateDeviceId(clientIp, userAgent)
 
+    // Перевіряємо, чи email вже існує - якщо так, спробуємо автоматично увійти
+    const existingBusiness = await prisma.business.findUnique({
+      where: { email: validated.email.toLowerCase().trim() }
+    })
+
+    if (existingBusiness) {
+      // Перевіряємо пароль
+      const { verifyPassword } = await import('@/lib/auth')
+      const passwordMatch = existingBusiness.password 
+        ? await verifyPassword(validated.password, existingBusiness.password)
+        : false
+
+      if (passwordMatch) {
+        // Автоматичний вхід - додаємо пристрій до довірених
+        const updatedTrustedDevices = addTrustedDevice(existingBusiness.trustedDevices, deviceId)
+        await prisma.business.update({
+          where: { id: existingBusiness.id },
+          data: { trustedDevices: updatedTrustedDevices }
+        })
+
+        // Синхронізуємо з ManagementCenter
+        try {
+          const { syncBusinessToManagementCenter } = await import('@/lib/services/management-center')
+          await syncBusinessToManagementCenter(existingBusiness.id)
+        } catch (syncError) {
+          console.error('Error syncing to ManagementCenter:', syncError)
+        }
+
+        return NextResponse.json({
+          success: true,
+          business: {
+            id: existingBusiness.id,
+            name: existingBusiness.name,
+            slug: existingBusiness.slug,
+            email: existingBusiness.email,
+            phone: existingBusiness.phone,
+            address: existingBusiness.address,
+            description: existingBusiness.description,
+            logo: existingBusiness.logo,
+            avatar: existingBusiness.avatar,
+            primaryColor: existingBusiness.primaryColor,
+            secondaryColor: existingBusiness.secondaryColor,
+            backgroundColor: existingBusiness.backgroundColor,
+            surfaceColor: existingBusiness.surfaceColor,
+            isActive: existingBusiness.isActive,
+            businessIdentifier: existingBusiness.businessIdentifier,
+            profileCompleted: existingBusiness.profileCompleted,
+            niche: existingBusiness.niche,
+            customNiche: existingBusiness.customNiche,
+          },
+          message: 'Успішний вхід в існуючий акаунт',
+          isLogin: true
+        }, { status: 200 })
+      } else {
+        // Пароль не співпадає
+        return NextResponse.json(
+          { error: 'Email вже зареєстровано. Невірний пароль. Спробуйте увійти або використайте інший email.' },
+          { status: 409 }
+        )
+      }
+    }
+
     // Генеруємо slug з назви
     const slug = generateSlug(validated.name)
-
-    // Хешуємо пароль для збереження в Центрі управління
-    const hashedPassword = await hashPassword(validated.password)
 
     // Створюємо бізнес (автоматично реєструється в Центрі управління)
     const business = await createBusiness({
@@ -42,35 +101,48 @@ export async function POST(request: Request) {
 
     // Додаємо пристрій до довірених при реєстрації
     const updatedTrustedDevices = addTrustedDevice(business.trustedDevices, deviceId)
-    await prisma.business.update({
+    const updatedBusiness = await prisma.business.update({
       where: { id: business.id },
       data: { trustedDevices: updatedTrustedDevices }
     })
+
+    // Синхронізуємо з ManagementCenter (повна синхронізація)
+    try {
+      const { syncBusinessToManagementCenter } = await import('@/lib/services/management-center')
+      await syncBusinessToManagementCenter(business.id)
+    } catch (syncError) {
+      console.error('Error syncing to ManagementCenter:', syncError)
+      // Не викидаємо помилку, щоб не зламати реєстрацію
+    }
+
+    // Перевіряємо, чи дані синхронізовані в admin_control_center (через тригер)
+    // Тригер автоматично створить запис при INSERT в Business
 
     // Повертаємо успішну відповідь з даними бізнесу
     return NextResponse.json({
       success: true,
       business: {
-        id: business.id,
-        name: business.name,
-        slug: business.slug,
-        email: business.email,
-        phone: business.phone,
-        address: business.address,
-        description: business.description,
-        logo: business.logo,
-        avatar: business.avatar,
-        primaryColor: business.primaryColor,
-        secondaryColor: business.secondaryColor,
-        backgroundColor: business.backgroundColor,
-        surfaceColor: business.surfaceColor,
-        isActive: business.isActive,
-        businessIdentifier: business.businessIdentifier,
-        profileCompleted: business.profileCompleted,
-        niche: business.niche,
-        customNiche: business.customNiche,
+        id: updatedBusiness.id,
+        name: updatedBusiness.name,
+        slug: updatedBusiness.slug,
+        email: updatedBusiness.email,
+        phone: updatedBusiness.phone,
+        address: updatedBusiness.address,
+        description: updatedBusiness.description,
+        logo: updatedBusiness.logo,
+        avatar: updatedBusiness.avatar,
+        primaryColor: updatedBusiness.primaryColor,
+        secondaryColor: updatedBusiness.secondaryColor,
+        backgroundColor: updatedBusiness.backgroundColor,
+        surfaceColor: updatedBusiness.surfaceColor,
+        isActive: updatedBusiness.isActive,
+        businessIdentifier: updatedBusiness.businessIdentifier,
+        profileCompleted: updatedBusiness.profileCompleted,
+        niche: updatedBusiness.niche,
+        customNiche: updatedBusiness.customNiche,
       },
-      message: 'Бізнес успішно зареєстровано'
+      message: 'Бізнес успішно зареєстровано та синхронізовано з базою даних',
+      isLogin: false
     }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
