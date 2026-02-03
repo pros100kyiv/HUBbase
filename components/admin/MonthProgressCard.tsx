@@ -1,8 +1,8 @@
 'use client'
 
 interface MonthProgressCardProps {
-  progress: number
-  overview: Array<{ label: string; value: number }>
+  progress?: number
+  overview?: Array<{ label: string; value: number }>
 }
 
 export function MonthProgressCard({ progress = 30, overview }: MonthProgressCardProps) {
