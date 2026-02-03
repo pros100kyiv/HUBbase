@@ -14,14 +14,14 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
   const widgetIdRef = useRef<string | null>(null)
 
   useEffect(() => {
-    const botName = 'xbasesbot' // Дефолтний бот
-    const widgetId = `telegram-auth-${Date.now()}`
-    widgetIdRef.current = widgetId
+    if (typeof window === 'undefined' || !containerRef.current) return
 
-    // Глобальна функція для обробки авторизації
-    ;(window as any)[`onTelegramAuth_${widgetId}`] = async (user: any) => {
+    const botName = 'xbasesbot' // Дефолтний бот
+
+    // Глобальна функція для обробки авторизації (статична назва, як Telegram вимагає)
+    ;(window as any).onTelegramAuth = async (user: any) => {
       try {
-        console.log('[TelegramAuthButton] OAuth callback received:', user, 'isRegister:', isRegister)
+        console.log('[TelegramAuthButton] ✅ OAuth callback received:', user, 'isRegister:', isRegister)
         
         const response = await fetch('/api/auth/telegram-oauth', {
           method: 'POST',
@@ -37,6 +37,7 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
         if (response.ok && data.success) {
           if (data.business) {
             localStorage.setItem('business', JSON.stringify(data.business))
+            console.log('[TelegramAuthButton] ✅ Business saved to localStorage')
           }
           
           // Показуємо повідомлення
@@ -54,17 +55,19 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
           }
           
           // Автоматично переходимо на dashboard
+          console.log('[TelegramAuthButton] ✅ Redirecting to dashboard...')
           window.location.href = '/dashboard'
         } else {
+          console.error('[TelegramAuthButton] ❌ Error:', data.error)
           alert(data.error || 'Помилка авторизації через Telegram')
         }
       } catch (error) {
-        console.error('Telegram auth error:', error)
+        console.error('[TelegramAuthButton] ❌ Telegram auth error:', error)
         alert('Помилка при авторизації через Telegram')
       }
     }
 
-    if (!containerRef.current) return
+    console.log('[TelegramAuthButton] ✅ Global function registered: onTelegramAuth')
 
     // Очищаємо контейнер
     containerRef.current.innerHTML = ''
@@ -74,9 +77,17 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
     script.src = 'https://telegram.org/js/telegram-widget.js?22'
     script.setAttribute('data-telegram-login', botName)
     script.setAttribute('data-size', 'large')
-    script.setAttribute('data-onauth', `onTelegramAuth_${widgetId}(user)`)
+    script.setAttribute('data-onauth', 'onTelegramAuth(user)') // Використовуємо статичну назву
     script.setAttribute('data-request-access', 'write')
     script.async = true
+
+    script.onerror = () => {
+      console.error('[TelegramAuthButton] ❌ Failed to load Telegram Widget script')
+    }
+
+    script.onload = () => {
+      console.log('[TelegramAuthButton] ✅ Telegram Widget script loaded')
+    }
 
     containerRef.current.appendChild(script)
 
@@ -85,11 +96,13 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
       if (containerRef.current) {
         containerRef.current.innerHTML = ''
       }
-      if (widgetIdRef.current) {
-        delete (window as any)[`onTelegramAuth_${widgetIdRef.current}`]
+      // Видаляємо глобальну функцію при unmount
+      if (typeof window !== 'undefined') {
+        delete (window as any).onTelegramAuth
+        console.log('[TelegramAuthButton] Cleanup: removed global onTelegramAuth')
       }
     }
-  }, [router, isRegister])
+  }, [isRegister]) // Видаляємо router з залежностей, він не потрібен
 
   return (
     <div className="w-full flex justify-center">
