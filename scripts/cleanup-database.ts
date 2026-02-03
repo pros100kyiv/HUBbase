@@ -261,6 +261,7 @@ async function cleanupDatabase() {
         email: true,
         telegramId: true,
         googleId: true,
+        password: true, // Додано для перевірки стандартної реєстрації
         createdAt: true
       },
       orderBy: {
