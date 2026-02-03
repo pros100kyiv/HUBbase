@@ -26,7 +26,8 @@
     "telegram:update-tokens": "tsx scripts/update-telegram-token.ts",
     "db:cleanup": "tsx scripts/cleanup-database.ts",
     "db:sync-management": "tsx scripts/sync-all-businesses-to-management-center.ts",
-    "db:apply-rls": "tsx scripts/apply-rls-manual.ts"
+    "db:apply-rls": "tsx scripts/apply-rls-manual.ts",
+    "db:diagnose": "tsx scripts/diagnose-and-fix-database.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
