@@ -14,20 +14,19 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
   useEffect(() => {
     if (typeof window === 'undefined' || !containerRef.current) return
 
-    const botName = 'xbasesbot' // Дефолтний бот
+    const botName = 'xbasesbot'
 
-    // Глобальна функція для обробки авторизації (статична назва, як Telegram вимагає)
+    // Глобальна функція для обробки авторизації
     ;(window as any).onTelegramAuth = async (user: any) => {
       try {
         setIsLoading(true)
-        console.log('[TelegramAuthButton] ✅ OAuth callback received:', user, 'isRegister:', isRegister)
+        console.log('[TelegramAuthButton] OAuth callback:', user)
         
         const response = await fetch('/api/auth/telegram-oauth', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
-            telegramData: user,
-            forceRegister: isRegister // Примусово створюємо бізнес при реєстрації
+            telegramData: user
           })
         })
         
@@ -36,20 +35,19 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
         if (response.ok && data.success) {
           if (data.business) {
             localStorage.setItem('business', JSON.stringify(data.business))
-            console.log('[TelegramAuthButton] ✅ Business saved to localStorage')
+            console.log('[TelegramAuthButton] Business saved')
           }
           
-          // Автоматично переходимо на dashboard (використовуємо router для правильного перенаправлення)
-          console.log('[TelegramAuthButton] ✅ Redirecting to dashboard...')
-          // Використовуємо window.location.replace для правильного перенаправлення без історії
-          window.location.replace('/dashboard')
+          // Перенаправлення на dashboard
+          console.log('[TelegramAuthButton] Redirecting to dashboard...')
+          window.location.href = '/dashboard'
         } else {
-          console.error('[TelegramAuthButton] ❌ Error:', data.error)
+          console.error('[TelegramAuthButton] Error:', data.error)
           alert(data.error || 'Помилка авторизації через Telegram')
           setIsLoading(false)
         }
       } catch (error) {
-        console.error('[TelegramAuthButton] ❌ Telegram auth error:', error)
+        console.error('[TelegramAuthButton] Error:', error)
         alert('Помилка при авторизації через Telegram')
         setIsLoading(false)
       }
@@ -60,7 +58,7 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
       containerRef.current.innerHTML = ''
     }
 
-    // Створюємо скрипт для Telegram Login Widget (прихований)
+    // Створюємо скрипт для Telegram Login Widget
     const script = document.createElement('script')
     script.src = 'https://telegram.org/js/telegram-widget.js?22'
     script.setAttribute('data-telegram-login', botName)
@@ -68,7 +66,6 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
     script.setAttribute('data-onauth', 'onTelegramAuth(user)')
     script.setAttribute('data-request-access', 'write')
     script.setAttribute('data-userpic', 'false')
-    // ВАЖЛИВО: не вказуємо data-auth-url, щоб Telegram не перенаправляв сам
     script.async = true
 
     if (containerRef.current) {
@@ -83,81 +80,20 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
         delete (window as any).onTelegramAuth
       }
     }
-  }, [isRegister])
-
-  const handleClick = () => {
-    setIsLoading(true)
-    // Знаходимо iframe і клікаємо на нього через програмний клік
-    const iframe = containerRef.current?.querySelector('iframe') as HTMLIFrameElement
-    if (iframe && iframe.contentWindow) {
-      try {
-        // Пробуємо клікнути на iframe
-        iframe.focus()
-        // Створюємо подію кліку
-        const event = new MouseEvent('click', {
-          bubbles: true,
-          cancelable: true,
-          view: window
-        })
-        iframe.dispatchEvent(event)
-      } catch (e) {
-        console.warn('Cannot click iframe directly, trying alternative method')
-      }
-    }
-    
-    // Альтернативний метод: чекаємо поки iframe завантажиться і клікаємо
-    const checkInterval = setInterval(() => {
-      const iframe = containerRef.current?.querySelector('iframe') as HTMLIFrameElement
-      if (iframe) {
-        try {
-          // Створюємо прямий клік на iframe
-          iframe.style.pointerEvents = 'auto'
-          iframe.focus()
-          // Використовуємо dispatchEvent для кліку
-          const clickEvent = new MouseEvent('click', {
-            bubbles: true,
-            cancelable: true,
-            view: window
-          })
-          iframe.dispatchEvent(clickEvent)
-          clearInterval(checkInterval)
-        } catch (e) {
-          // Якщо не вдалося, пробуємо через contentWindow
-          try {
-            iframe.contentWindow?.postMessage('click', '*')
-          } catch (e2) {
-            console.warn('Cannot interact with iframe')
-          }
-        }
-      }
-    }, 100)
-    
-    setTimeout(() => {
-      clearInterval(checkInterval)
-      setIsLoading(false)
-    }, 3000)
-  }
+  }, [])
 
   return (
     <div className="w-full relative" style={{ height: '48px' }}>
-      {/* Telegram Login Widget - прихований, але активний для кліків */}
+      {/* Telegram Login Widget - прихований */}
       <div 
         ref={containerRef} 
         className="absolute inset-0 w-full h-full"
         style={{ zIndex: 1 }}
       />
-      {/* Власна кнопка, яка виглядає як Google кнопка - overlay поверх iframe */}
+      {/* Власна кнопка - overlay */}
       <div
         className="absolute inset-0 w-full h-full py-3 rounded-lg bg-white text-gray-700 font-medium flex items-center justify-center gap-3 hover:bg-gray-50 transition-all shadow-md cursor-pointer"
         style={{ zIndex: 2, pointerEvents: 'none' }}
-        onClick={(e) => {
-          // Клік проходить через overlay до iframe
-          e.stopPropagation()
-          const iframe = containerRef.current?.querySelector('iframe')
-          if (iframe) {
-            iframe.click()
-          }
-        }}
       >
         {/* Telegram іконка */}
         <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -185,4 +121,3 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
     </div>
   )
 }
-
