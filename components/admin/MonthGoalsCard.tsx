@@ -27,18 +27,18 @@ export function MonthGoalsCard({ goals, onToggleGoal, onEdit }: MonthGoalsCardPr
   const totalCount = displayGoals.length
 
   return (
-    <div className="bg-white rounded-xl p-6 card-floating">
+    <div className="rounded-xl p-6 card-floating">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-black" style={{ letterSpacing: '-0.01em' }}>
+        <h3 className="text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
           Month Goal's
         </h3>
         <div className="flex items-center gap-2">
-          <span className="text-sm text-gray-600 font-medium">{completedCount}/{totalCount}</span>
+          <span className="text-sm text-gray-300 font-medium">{completedCount}/{totalCount}</span>
           <button 
             onClick={onEdit}
-            className="p-2 hover:bg-gray-200 rounded-lg transition-colors"
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
           >
-            <svg className="w-4 h-4 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
             </svg>
           </button>
@@ -49,22 +49,22 @@ export function MonthGoalsCard({ goals, onToggleGoal, onEdit }: MonthGoalsCardPr
         {displayGoals.map((goal) => (
           <div 
             key={goal.id}
-            className="flex items-center gap-3 cursor-pointer hover:bg-gray-200 rounded-lg p-2 -mx-2 transition-colors"
+            className="flex items-center gap-3 cursor-pointer hover:bg-white/10 rounded-lg p-2 -mx-2 transition-colors"
             onClick={() => onToggleGoal?.(goal.id)}
           >
             <div className={`w-5 h-5 rounded border-2 flex items-center justify-center transition-colors ${
               goal.completed 
-                ? 'bg-black border-black' 
-                : 'bg-white border-gray-300'
+                ? 'bg-white border-white' 
+                : 'bg-transparent border-gray-400'
             }`}>
               {goal.completed && (
-                <CheckIcon className="w-3 h-3 text-white" />
+                <CheckIcon className="w-3 h-3 text-black" />
               )}
             </div>
             <span className={`text-sm flex-1 ${
               goal.completed 
-                ? 'text-gray-500 line-through' 
-                : 'text-gray-900'
+                ? 'text-gray-400 line-through' 
+                : 'text-gray-200'
             }`}>
               {goal.text}
             </span>

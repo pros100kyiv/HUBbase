@@ -94,7 +94,7 @@ export function MobileAppointmentCard({
   }
 
   return (
-    <div className={cn("bg-white rounded-lg p-3 overflow-hidden transition-all card-floating", getStatusBorderColor(appointment.status))}>
+    <div className={cn("rounded-lg p-3 overflow-hidden transition-all card-floating", getStatusBorderColor(appointment.status))}>
       {/* Header with time and status */}
       <div className="flex items-center justify-between gap-1.5">
         <div className="flex items-center gap-1.5 flex-1 min-w-0">
@@ -107,12 +107,12 @@ export function MobileAppointmentCard({
             </span>
           </div>
           <div className="flex-1 min-w-0 overflow-hidden">
-            <p className="font-black text-black text-sm mb-0.5 truncate">{appointment.clientName}</p>
-            <p className="text-xs text-gray-600 font-medium mb-0.5 truncate">{appointment.clientPhone}</p>
+            <p className="font-black text-white text-sm mb-0.5 truncate">{appointment.clientName}</p>
+            <p className="text-xs text-gray-300 font-medium mb-0.5 truncate">{appointment.clientPhone}</p>
             {appointment.masterName && (
               <div className="flex items-center gap-1 min-w-0">
-                <UserIcon className="w-3 h-3 text-gray-500 flex-shrink-0" />
-                <p className="text-[10px] text-gray-500 font-semibold truncate min-w-0">
+                <UserIcon className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                <p className="text-[10px] text-gray-400 font-semibold truncate min-w-0">
                   {appointment.masterName}
                 </p>
               </div>
@@ -197,11 +197,11 @@ export function MobileAppointmentCard({
           )}
           <div className="flex items-center gap-1 flex-shrink-0">
             <ClockIcon className="w-3 h-3 text-gray-400" />
-            <span className="text-[10px] font-bold text-gray-600">
+            <span className="text-[10px] font-bold text-gray-300">
               {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
             </span>
             <span className="text-[9px] text-gray-400">•</span>
-            <span className="text-[10px] text-gray-500 font-semibold">
+            <span className="text-[10px] text-gray-400 font-semibold">
               {Math.round((endTime.getTime() - startTime.getTime()) / 60000)} хв
             </span>
           </div>

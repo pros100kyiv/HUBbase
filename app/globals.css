@@ -86,14 +86,14 @@
     border-color: rgba(255, 255, 255, 0.1);
   }
   
-  /* White cards on dark background - floating effect */
+  /* Dark cards on dark background - floating effect (replaced white) */
   .bg-gray-100 {
-    background-color: #FFFFFF;
-    color: #000000;
+    background-color: #1F1F1F;
+    color: #FFFFFF;
     box-shadow: 
-      0 10px 25px -5px rgba(0, 0, 0, 0.4),
-      0 8px 10px -6px rgba(0, 0, 0, 0.3),
-      0 0 0 1px rgba(255, 255, 255, 0.1);
+      0 10px 25px -5px rgba(0, 0, 0, 0.6),
+      0 8px 10px -6px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.08);
     transform: translateY(0);
     transition: transform 0.2s ease, box-shadow 0.2s ease;
   }
@@ -101,9 +101,10 @@
   .bg-gray-100:hover {
     transform: translateY(-2px);
     box-shadow: 
-      0 15px 35px -5px rgba(0, 0, 0, 0.5),
-      0 10px 15px -6px rgba(0, 0, 0, 0.4),
-      0 0 0 1px rgba(255, 255, 255, 0.15);
+      0 15px 35px -5px rgba(0, 0, 0, 0.7),
+      0 10px 15px -6px rgba(0, 0, 0, 0.6),
+      0 0 0 1px rgba(255, 255, 255, 0.12);
+    background-color: #252525;
   }
   
   /* Dark cards on dark background */
@@ -112,23 +113,25 @@
     color: #FFFFFF;
   }
   
-  /* Floating white card style */
+  /* Floating dark card style (replaced white) */
   .card-floating {
-    background-color: #FFFFFF;
+    background-color: #1F1F1F;
+    color: #FFFFFF;
     box-shadow: 
-      0 10px 25px -5px rgba(0, 0, 0, 0.4),
-      0 8px 10px -6px rgba(0, 0, 0, 0.3),
-      0 0 0 1px rgba(255, 255, 255, 0.1);
+      0 10px 25px -5px rgba(0, 0, 0, 0.6),
+      0 8px 10px -6px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.08);
     transform: translateY(0);
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
   }
   
   .card-floating:hover {
     transform: translateY(-2px);
     box-shadow: 
-      0 15px 35px -5px rgba(0, 0, 0, 0.5),
-      0 10px 15px -6px rgba(0, 0, 0, 0.4),
-      0 0 0 1px rgba(255, 255, 255, 0.15);
+      0 15px 35px -5px rgba(0, 0, 0, 0.7),
+      0 10px 15px -6px rgba(0, 0, 0, 0.6),
+      0 0 0 1px rgba(255, 255, 255, 0.12);
+    background-color: #252525;
   }
   
   .dark body {

@@ -20,9 +20,9 @@ export function WeeklyProcessCard({ data }: WeeklyProcessCardProps) {
   const maxValue = Math.max(...chartData.flatMap(d => [d.work, d.meditation]))
 
   return (
-    <div className="bg-white rounded-xl p-6 card-floating">
+    <div className="rounded-xl p-6 card-floating">
       <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-black" style={{ letterSpacing: '-0.01em' }}>
+        <h3 className="text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
           Weekly process
         </h3>
         <div className="w-6 h-6 rounded-full bg-gray-200 flex items-center justify-center">
@@ -36,11 +36,11 @@ export function WeeklyProcessCard({ data }: WeeklyProcessCardProps) {
       <div className="flex items-center gap-4 mb-4">
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-black"></div>
-          <span className="text-xs text-gray-600">Work</span>
+          <span className="text-xs text-gray-300">Work</span>
         </div>
         <div className="flex items-center gap-2">
           <div className="w-3 h-3 rounded-full bg-gray-400"></div>
-          <span className="text-xs text-gray-600">Meditation</span>
+          <span className="text-xs text-gray-300">Meditation</span>
         </div>
       </div>
 
@@ -69,7 +69,7 @@ export function WeeklyProcessCard({ data }: WeeklyProcessCardProps) {
       {/* Days */}
       <div className="flex justify-between mt-2">
         {chartData.map((d, i) => (
-          <div key={i} className="text-xs text-gray-600 font-medium">
+          <div key={i} className="text-xs text-gray-300 font-medium">
             {d.day}
           </div>
         ))}
