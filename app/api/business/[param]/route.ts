@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { BusinessNiche } from '@prisma/client'
 
 // Перевіряє чи параметр є UUID (ID) чи slug
 // CUID має формат: c[0-9a-z]{24} або схожий
@@ -150,14 +151,31 @@ export async function PATCH(
     } = body
 
     // Отримуємо поточний бізнес для порівняння телефону
-    const currentBusiness = await prisma.business.findUnique({
-      where: { id: param },
-      select: { phone: true, name: true },
-    })
+    let currentBusiness
+    try {
+      currentBusiness = await prisma.business.findUnique({
+        where: { id: param },
+        select: { phone: true, name: true },
+      })
 
-    const business = await prisma.business.update({
-      where: { id: param },
-      data: {
+      if (!currentBusiness) {
+        console.error('Business not found:', param)
+        return NextResponse.json({ 
+          error: 'Бізнес не знайдено. Будь ласка, увійдіть знову.' 
+        }, { status: 404 })
+      }
+    } catch (error) {
+      console.error('Error fetching current business:', error)
+      return NextResponse.json({ 
+        error: 'Помилка при отриманні даних бізнесу. Будь ласка, спробуйте ще раз.' 
+      }, { status: 500 })
+    }
+
+    let business
+    try {
+      business = await prisma.business.update({
+        where: { id: param },
+        data: {
         ...(name !== undefined && { name }),
         ...(email !== undefined && { email }),
         ...(phone !== undefined && { phone: phone || null }),
@@ -175,7 +193,11 @@ export async function PATCH(
         ...(workingHours !== undefined && { workingHours: workingHours || null }),
         ...(location !== undefined && { location: location || null }),
         // Профіль
-        ...(niche !== undefined && { niche }),
+        ...(niche !== undefined && { 
+          niche: Object.values(BusinessNiche).includes(niche as BusinessNiche) 
+            ? (niche as BusinessNiche) 
+            : BusinessNiche.OTHER 
+        }),
         ...(customNiche !== undefined && { customNiche: customNiche || null }),
         ...(businessIdentifier !== undefined && { businessIdentifier: businessIdentifier || null }),
         ...(profileCompleted !== undefined && { profileCompleted }),
@@ -204,7 +226,52 @@ export async function PATCH(
         ...(reminderEmailEnabled !== undefined && { reminderEmailEnabled }),
       },
       select: businessSelect,
-    })
+      })
+    } catch (updateError: any) {
+      console.error('Error updating business in database:', updateError)
+      
+      // Детальна обробка помилок оновлення
+      if (updateError?.code === 'P2025') {
+        return NextResponse.json({ 
+          error: 'Бізнес не знайдено. Будь ласка, увійдіть знову.' 
+        }, { status: 404 })
+      }
+      
+      if (updateError?.code === 'P2002') {
+        // Unique constraint violation
+        const target = updateError?.meta?.target
+        if (Array.isArray(target)) {
+          if (target.includes('email')) {
+            return NextResponse.json({ 
+              error: 'Email вже використовується іншим бізнесом' 
+            }, { status: 409 })
+          }
+          if (target.includes('businessIdentifier')) {
+            return NextResponse.json({ 
+              error: 'Ідентифікатор бізнесу вже зайнятий. Спробуйте ще раз.' 
+            }, { status: 409 })
+          }
+          if (target.includes('slug')) {
+            return NextResponse.json({ 
+              error: 'URL-адреса вже зайнята' 
+            }, { status: 409 })
+          }
+        }
+        return NextResponse.json({ 
+          error: 'Ці дані вже використовуються іншим бізнесом' 
+        }, { status: 409 })
+      }
+      
+      // Якщо це помилка валідації
+      if (updateError?.code === 'P2003') {
+        return NextResponse.json({ 
+          error: 'Невірний формат даних. Перевірте введені значення.' 
+        }, { status: 400 })
+      }
+      
+      // Інші помилки
+      throw updateError
+    }
 
     // Синхронізуємо всі дані в ManagementCenter (ПОВНЕ ДУБЛЮВАННЯ)
     try {
@@ -233,33 +300,17 @@ export async function PATCH(
 
     return NextResponse.json({ business })
   } catch (error) {
-    console.error('Error updating business:', error)
+    console.error('Unexpected error updating business:', error)
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : String(error),
+      stack: error instanceof Error ? error.stack : undefined,
+      name: error instanceof Error ? error.name : undefined,
+    })
     
-    // Детальна обробка помилок
-    let errorMessage = 'Помилка при оновленні профілю'
-    
-    if (error instanceof Error) {
-      // Перевірка на помилки бази даних
-      if (error.message.includes('Unique constraint') || error.message.includes('duplicate')) {
-        if (error.message.includes('email')) {
-          errorMessage = 'Email вже використовується іншим бізнесом'
-        } else if (error.message.includes('businessIdentifier')) {
-          errorMessage = 'Ідентифікатор бізнесу вже зайнятий. Спробуйте ще раз.'
-        } else if (error.message.includes('slug')) {
-          errorMessage = 'URL-адреса вже зайнята'
-        } else {
-          errorMessage = 'Ці дані вже використовуються іншим бізнесом'
-        }
-      } else if (error.message.includes('Record to update not found')) {
-        errorMessage = 'Бізнес не знайдено. Будь ласка, увійдіть знову.'
-      } else if (error.message.includes('invalid input syntax')) {
-        errorMessage = 'Невірний формат даних. Перевірте введені значення.'
-      } else {
-        errorMessage = 'Помилка при збереженні профілю. Будь ласка, спробуйте ще раз.'
-      }
-    }
-    
-    return NextResponse.json({ error: errorMessage }, { status: 500 })
+    // Загальна обробка несподіваних помилок
+    return NextResponse.json({ 
+      error: 'Помилка при збереженні профілю. Будь ласка, спробуйте ще раз.' 
+    }, { status: 500 })
   }
 }
 
