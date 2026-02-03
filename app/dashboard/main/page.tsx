@@ -129,10 +129,10 @@ export default function MainPage() {
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-black mb-2">
+            <h1 className="text-2xl font-bold text-black mb-2" style={{ letterSpacing: '-0.02em' }}>
               Dashboard
             </h1>
-            <p className="text-sm text-gray-600">
+            <p className="text-sm text-gray-600" style={{ letterSpacing: '-0.01em' }}>
               {hasAppointments ? `Сьогодні у вас ${todayAppointments.length} ${todayAppointments.length === 1 ? 'запис' : 'записів'}` : 'Сьогодні в тебе нічого немає'}
             </p>
           </div>
@@ -156,7 +156,7 @@ export default function MainPage() {
               className={cn(
                 'px-4 py-2 rounded-lg font-medium text-sm transition-all',
                 activeTab === 'working'
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-sm'
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
                   : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
               )}
             >
@@ -167,7 +167,7 @@ export default function MainPage() {
               className={cn(
                 'px-4 py-2 rounded-lg font-medium text-sm transition-all',
                 activeTab === 'overdue'
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-sm'
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
                   : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
               )}
             >
@@ -180,7 +180,7 @@ export default function MainPage() {
             <>
               {hasAppointments ? (
                 <div className="card-modern p-6">
-                  <h2 className="text-lg font-semibold text-black mb-4">
+                  <h2 className="text-lg font-semibold text-black mb-4" style={{ letterSpacing: '-0.01em' }}>
                     Записи на сьогодні
                   </h2>
                   <div className="space-y-2">
@@ -236,9 +236,10 @@ export default function MainPage() {
                           <div
                             key={appointment.id}
                             className="p-4 rounded-lg bg-white border border-gray-200 hover:shadow-md transition-all"
+                            style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}
                           >
                             <div className="flex items-center gap-4">
-                              <div className="flex flex-col items-center justify-center w-16 h-16 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white flex-shrink-0 shadow-sm">
+                              <div className="flex flex-col items-center justify-center w-16 h-16 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white flex-shrink-0" style={{ boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
                                 <span className="text-base font-bold">
                                   {format(startTime, 'HH:mm')}
                                 </span>

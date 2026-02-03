@@ -74,7 +74,7 @@ export function Navbar() {
   if (pathname?.startsWith('/dashboard')) {
     return (
       <>
-        <nav className="fixed top-0 left-0 md:left-64 right-0 z-50 bg-gray-100 border-b border-gray-200 shadow-sm">
+        <nav className="fixed top-0 left-0 md:left-64 right-0 z-50 bg-gray-100 border-b border-gray-200">
           <div className="px-6">
             <div className="flex justify-between items-center h-16">
               {/* Left side - Menu button (mobile) and Hi User */}
@@ -91,13 +91,13 @@ export function Navbar() {
                   <MenuIcon className="w-5 h-5 text-gray-700" />
                 </button>
                 
-                <h2 className="text-base font-medium text-black">Hi, User!</h2>
+                <h2 className="text-base font-medium text-black" style={{ letterSpacing: '-0.01em' }}>Hi, User!</h2>
               </div>
 
               {/* Right side - Actions */}
               <div className="flex items-center gap-3">
                 {/* + Create Button */}
-                <button className="px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors shadow-sm">
+                <button className="px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors" style={{ boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' }}>
                   + Create
                 </button>
                 

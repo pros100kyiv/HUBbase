@@ -26,7 +26,7 @@ export function MobileWidget({
   trend,
   iconColor = 'orange',
 }: MobileWidgetProps) {
-  const baseClasses = 'rounded-xl bg-white border border-gray-200 p-6 shadow-sm transition-all duration-200 overflow-hidden'
+  const baseClasses = 'rounded-xl bg-white border border-gray-200 p-6 transition-all duration-200 overflow-hidden'
   const clickableClasses = onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5' : ''
 
   const iconGradientClasses = {
@@ -52,6 +52,7 @@ export function MobileWidget({
       <div
         onClick={onClick}
         className={cn(baseClasses, clickableClasses, className)}
+        style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}
       >
         {icon && (
           <div className="flex items-center justify-between mb-4">

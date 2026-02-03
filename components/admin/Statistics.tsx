@@ -62,7 +62,7 @@ export function Statistics({ businessId }: StatisticsProps) {
     <div className="card-modern card-modern-hover p-6">
       {/* Period Selector */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-black">Статистика</h2>
+        <h2 className="text-xl font-bold text-black" style={{ letterSpacing: '-0.02em' }}>Статистика</h2>
         <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
           <button
             onClick={() => setPeriod('day')}
