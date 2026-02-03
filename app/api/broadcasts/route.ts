@@ -102,7 +102,7 @@ export async function POST(request: Request) {
         business.emailFromName || 'Xbase'
       )
       const emails = recipients.map(r => r.email).filter(Boolean) as string[]
-      const html = `<div style="font-family: Arial, sans-serif; padding: 20px;">
+      const html = `<div style="font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif; padding: 20px;">
         <h2>Повідомлення від ${business.name}</h2>
         <p>${message.replace(/\n/g, '<br>')}</p>
       </div>`

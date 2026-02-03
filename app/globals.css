@@ -25,6 +25,7 @@
     --card-foreground: 15 23 42;
     --popover: 255 255 255;
     --popover-foreground: 15 23 42;
+    --font-sans: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
   }
   
   .dark {
@@ -51,6 +52,7 @@
   
   * {
     @apply border-border;
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
   }
   
   body {
@@ -66,6 +68,17 @@
   .dark body {
     background: #0F172A;
     color: #F8FAFC;
+  }
+  
+  /* Ensure all text elements use Inter */
+  html, body, h1, h2, h3, h4, h5, h6, p, span, div, a, button, input, textarea, select, label, li, td, th, 
+  [class*="text-"], [class*="font-"] {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif !important;
+  }
+  
+  /* Ensure Tailwind utility classes use Inter */
+  .font-sans, .font-body, .font-display {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif !important;
   }
 }
 
