@@ -17,43 +17,15 @@ export async function POST(request: Request) {
 
     const telegramId = BigInt(telegramData.id)
     
-    // Якщо forceRegister=true (реєстрація) - завжди створюємо новий унікальний бізнес
-    if (forceRegister) {
-      // Перевіряємо, чи існує бізнес з таким Telegram ID
-      const existingBusiness = await prisma.business.findUnique({
-        where: { telegramId }
-      })
-      
-      // Якщо існує - видаляємо telegramId з попереднього бізнесу, щоб створити новий
-      if (existingBusiness) {
-        await prisma.business.update({
-          where: { id: existingBusiness.id },
-          data: { telegramId: null }
-        })
-        
-        // Також видаляємо зв'язок з TelegramUser, якщо він існує
-        const existingTelegramUser = await prisma.telegramUser.findUnique({
-          where: { telegramId }
-        })
-        if (existingTelegramUser) {
-          await prisma.telegramUser.delete({
-            where: { id: existingTelegramUser.id         }
-      })
-      }
-    }
-
-    // Якщо дійшли сюди і forceRegister=true - створюємо новий бізнес
-    // Якщо forceRegister=false і акаунт не знайдено - також створюємо новий бізнес
-      
-      // Переходимо до створення нового бізнесу (код буде нижче)
-    } else {
-      // Якщо це вхід (не реєстрація) - перевіряємо існуючий акаунт
-      const existingBusiness = await prisma.business.findUnique({
-        where: { telegramId }
-      })
-      
-      // Якщо бізнес знайдено через Telegram ID - автоматичний вхід
-      if (existingBusiness) {
+    // ЗАВЖДИ спочатку перевіряємо, чи акаунт вже існує
+    // Якщо існує - робимо вхід (незалежно від forceRegister)
+    // Якщо не існує - створюємо новий
+    const existingBusiness = await prisma.business.findUnique({
+      where: { telegramId }
+    })
+    
+    // Якщо бізнес знайдено через Telegram ID - автоматичний вхід
+    if (existingBusiness) {
       // Оновлюємо дані бізнесу
       await prisma.business.update({
         where: { id: existingBusiness.id },
@@ -165,7 +137,6 @@ export async function POST(request: Request) {
           role: telegramUser.role
         }
       })
-      }
     }
 
     // Якщо businessId вказано - прив'язуємо до існуючого бізнесу

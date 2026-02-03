@@ -39,9 +39,10 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
             console.log('[TelegramAuthButton] ✅ Business saved to localStorage')
           }
           
-          // Автоматично переходимо на dashboard
+          // Автоматично переходимо на dashboard (використовуємо router для правильного перенаправлення)
           console.log('[TelegramAuthButton] ✅ Redirecting to dashboard...')
-          window.location.href = '/dashboard'
+          // Використовуємо window.location.replace для правильного перенаправлення без історії
+          window.location.replace('/dashboard')
         } else {
           console.error('[TelegramAuthButton] ❌ Error:', data.error)
           alert(data.error || 'Помилка авторизації через Telegram')
@@ -67,6 +68,7 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
     script.setAttribute('data-onauth', 'onTelegramAuth(user)')
     script.setAttribute('data-request-access', 'write')
     script.setAttribute('data-userpic', 'false')
+    // ВАЖЛИВО: не вказуємо data-auth-url, щоб Telegram не перенаправляв сам
     script.async = true
 
     if (containerRef.current) {
