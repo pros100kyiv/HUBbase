@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { TelegramAuthButton } from '@/components/auth/TelegramAuthButton'
+import { ErrorToast } from '@/components/ui/error-toast'
 
 export default function RegisterPage() {
   const router = useRouter()
@@ -14,6 +15,8 @@ export default function RegisterPage() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
+  const [showErrorToast, setShowErrorToast] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -30,6 +33,9 @@ export default function RegisterPage() {
       const data = await response.json()
 
       if (!response.ok) {
+        // Показуємо маленьке вікно з помилкою
+        setErrorMessage(data.error || 'Помилка при реєстрації')
+        setShowErrorToast(true)
         setErrors({ submit: data.error || 'Помилка при реєстрації' })
         return
       }
@@ -44,6 +50,8 @@ export default function RegisterPage() {
       localStorage.setItem('business', JSON.stringify(data.business))
       router.push('/dashboard')
     } catch (error) {
+      setErrorMessage('Помилка при реєстрації. Будь ласка, спробуйте ще раз.')
+      setShowErrorToast(true)
       setErrors({ submit: 'Помилка при реєстрації' })
     } finally {
       setIsLoading(false)
@@ -211,6 +219,14 @@ export default function RegisterPage() {
               </button>
             </div>
           </form>
+
+          {/* Error Toast */}
+          {showErrorToast && (
+            <ErrorToast
+              message={errorMessage}
+              onClose={() => setShowErrorToast(false)}
+            />
+          )}
       </div>
     </div>
   )

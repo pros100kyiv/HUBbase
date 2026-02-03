@@ -58,14 +58,34 @@ export async function POST(request: Request) {
     // Перевірка на дублікат email
     if (error instanceof Error && error.message.includes('Unique constraint')) {
       return NextResponse.json(
-        { error: 'Email вже зареєстровано' },
+        { error: 'Email вже зареєстровано. Спробуйте увійти або використайте інший email.' },
         { status: 409 }
       )
     }
 
+    // Обробка помилок бази даних
+    if (error instanceof Error) {
+      // Якщо таблиця не існує - дружнє повідомлення
+      if (error.message.includes('does not exist') || error.message.includes('admin_control_center')) {
+        console.error('Database table missing:', error)
+        return NextResponse.json(
+          { error: 'Система тимчасово недоступна. Будь ласка, спробуйте пізніше або зверніться до підтримки.' },
+          { status: 503 }
+        )
+      }
+      
+      // Якщо користувач не зареєстрований
+      if (error.message.includes('not found') || error.message.includes('does not exist')) {
+        return NextResponse.json(
+          { error: 'Ви ще не зареєстровані. Будь ласка, зареєструйтесь спочатку.' },
+          { status: 404 }
+        )
+      }
+    }
+
     console.error('Registration error:', error)
     return NextResponse.json(
-      { error: 'Помилка при реєстрації', details: error instanceof Error ? error.message : String(error) },
+      { error: 'Помилка при реєстрації. Будь ласка, спробуйте ще раз або зверніться до підтримки.' },
       { status: 500 }
     )
   }

@@ -15,6 +15,17 @@ interface RegisterBusinessData {
  */
 export async function syncBusinessToManagementCenter(businessId: string) {
   try {
+    // Перевіряємо, чи існує таблиця ManagementCenter
+    try {
+      await prisma.$queryRaw`SELECT 1 FROM "ManagementCenter" LIMIT 1`
+    } catch (tableError: any) {
+      if (tableError?.message?.includes('does not exist') || tableError?.code === '42P01') {
+        console.warn('ManagementCenter table does not exist, skipping sync')
+        return null
+      }
+      throw tableError
+    }
+
     const business = await prisma.business.findUnique({
       where: { id: businessId },
     })

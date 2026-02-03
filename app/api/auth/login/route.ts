@@ -49,8 +49,27 @@ export async function POST(request: Request) {
 
     if (!business) {
       console.log('Authentication failed for email:', validated.email)
+      // Перевіряємо, чи користувач існує
+      const { prisma } = await import('@/lib/prisma')
+      const existingBusiness = await prisma.business.findUnique({
+        where: { email: validated.email.toLowerCase().trim() },
+        select: { id: true }
+      })
+      
+      if (!existingBusiness) {
+        return NextResponse.json(
+          {
+            error: 'Ви ще не зареєстровані. Будь ласка, зареєструйтесь спочатку.',
+            needsRegistration: true
+          },
+          { status: 404 }
+        )
+      }
+      
       return NextResponse.json(
-        { error: 'Невірний email або пароль' },
+        {
+          error: 'Невірний пароль. Спробуйте ще раз або відновіть пароль.',
+        },
         { status: 401 }
       )
     }
@@ -105,8 +124,19 @@ export async function POST(request: Request) {
     }
 
     console.error('Login error:', error)
+    
+    // Обробка помилок бази даних
+    if (error instanceof Error) {
+      if (error.message.includes('does not exist') || error.message.includes('admin_control_center')) {
+        return NextResponse.json(
+          { error: 'Система тимчасово недоступна. Будь ласка, спробуйте пізніше.' },
+          { status: 503 }
+        )
+      }
+    }
+    
     return NextResponse.json(
-      { error: 'Помилка при вході', details: error instanceof Error ? error.message : String(error) },
+      { error: 'Помилка при вході. Будь ласка, спробуйте ще раз.' },
       { status: 500 }
     )
   }

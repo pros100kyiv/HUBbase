@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { TelegramAuthButton } from '@/components/auth/TelegramAuthButton'
+import { ErrorToast } from '@/components/ui/error-toast'
 
 function LoginForm() {
   const router = useRouter()
@@ -13,6 +14,9 @@ function LoginForm() {
   })
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
+  const [showErrorToast, setShowErrorToast] = useState(false)
+  const [errorMessage, setErrorMessage] = useState('')
+  const [needsRegistration, setNeedsRegistration] = useState(false)
 
   useEffect(() => {
     const error = searchParams.get('error')
@@ -47,6 +51,11 @@ function LoginForm() {
 
       if (!response.ok) {
         console.error('Login error:', data)
+        
+        // Показуємо маленьке вікно з помилкою
+        setErrorMessage(data.error || 'Помилка при вході')
+        setNeedsRegistration(data.needsRegistration || false)
+        setShowErrorToast(true)
         setErrors({ submit: data.error || 'Помилка при вході' })
         setIsLoading(false)
         return
@@ -62,6 +71,8 @@ function LoginForm() {
       localStorage.setItem('business', JSON.stringify(data.business))
       router.push('/dashboard')
     } catch (error) {
+      setErrorMessage('Помилка при вході. Будь ласка, спробуйте ще раз.')
+      setShowErrorToast(true)
       setErrors({ submit: 'Помилка при вході' })
     } finally {
       setIsLoading(false)
@@ -202,6 +213,16 @@ function LoginForm() {
             </button>
           </div>
         </form>
+
+        {/* Error Toast */}
+        {showErrorToast && (
+          <ErrorToast
+            message={errorMessage}
+            needsRegistration={needsRegistration}
+            onRegister={() => router.push('/register')}
+            onClose={() => setShowErrorToast(false)}
+          />
+        )}
       </div>
     </div>
   )
