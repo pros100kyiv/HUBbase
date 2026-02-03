@@ -26,7 +26,7 @@ export function MobileWidget({
   trend,
   iconColor = 'orange',
 }: MobileWidgetProps) {
-  const baseClasses = 'rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 p-6 shadow-sm transition-all duration-200 overflow-hidden'
+  const baseClasses = 'rounded-xl bg-white border border-gray-200 p-6 shadow-sm transition-all duration-200 overflow-hidden'
   const clickableClasses = onClick ? 'cursor-pointer hover:shadow-md hover:-translate-y-0.5' : ''
 
   const iconGradientClasses = {
@@ -39,12 +39,12 @@ export function MobileWidget({
   }
   
   const valueGradientClasses = {
-    orange: 'text-orange-600 dark:text-orange-400',
-    blue: 'text-blue-600 dark:text-blue-400',
-    green: 'text-green-600 dark:text-green-400',
-    purple: 'text-purple-600 dark:text-purple-400',
-    pink: 'text-pink-600 dark:text-pink-400',
-    cyan: 'text-cyan-600 dark:text-cyan-400',
+    orange: 'text-orange-600',
+    blue: 'text-blue-600',
+    green: 'text-green-600',
+    purple: 'text-purple-600',
+    pink: 'text-pink-600',
+    cyan: 'text-cyan-600',
   }
 
   if (onClick || title || value) {
@@ -62,9 +62,9 @@ export function MobileWidget({
               <span
                 className={cn(
                   'text-xs font-semibold px-2 py-1 rounded-full flex items-center gap-1',
-                  trend === 'up' && 'text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-900/20',
-                  trend === 'down' && 'text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20',
-                  trend === 'neutral' && 'text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-slate-700'
+                  trend === 'up' && 'text-green-600 bg-green-50',
+                  trend === 'down' && 'text-red-600 bg-red-50',
+                  trend === 'neutral' && 'text-gray-400 bg-gray-100'
                 )}
               >
                 {trend === 'up' && '↑'}
@@ -76,16 +76,16 @@ export function MobileWidget({
         )}
         {title && (
           <div className="mb-2">
-            <p className="text-sm text-slate-600 dark:text-slate-400 font-medium mb-1">
+            <p className="text-sm text-gray-600 font-medium mb-1">
               {title}
             </p>
             {subtitle && (
-              <p className="text-xs text-slate-500 dark:text-slate-500 leading-tight">{subtitle}</p>
+              <p className="text-xs text-gray-500 leading-tight">{subtitle}</p>
             )}
           </div>
         )}
         {value !== undefined && (
-          <p className={cn("text-2xl font-bold text-slate-900 dark:text-slate-50", valueGradientClasses[iconColor])}>
+          <p className={cn("text-2xl font-bold text-black", valueGradientClasses[iconColor])}>
             {value}
           </p>
         )}

@@ -74,7 +74,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="relative min-h-screen bg-slate-50 dark:bg-slate-900">
+    <div className="relative min-h-screen bg-gray-50">
       {/* Top Navbar */}
       <Navbar />
       

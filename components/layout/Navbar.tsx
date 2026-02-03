@@ -74,10 +74,10 @@ export function Navbar() {
   if (pathname?.startsWith('/dashboard')) {
     return (
       <>
-        <nav className="fixed top-0 left-0 md:left-64 right-0 z-50 bg-white dark:bg-slate-800 border-b border-slate-200 dark:border-slate-700 shadow-sm">
-          <div className="px-4 lg:px-6">
+        <nav className="fixed top-0 left-0 md:left-64 right-0 z-50 bg-gray-100 border-b border-gray-200 shadow-sm">
+          <div className="px-6">
             <div className="flex justify-between items-center h-16">
-              {/* Left side - Menu button (mobile) and Search */}
+              {/* Left side - Menu button (mobile) and Hi User */}
               <div className="flex items-center gap-4 flex-1">
                 <button
                   onClick={() => {
@@ -85,39 +85,32 @@ export function Navbar() {
                     setMobileMenuOpen(newState)
                     setMobileMenuState(newState)
                   }}
-                  className="md:hidden p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+                  className="md:hidden p-2 rounded-lg hover:bg-gray-200 transition-colors"
                   aria-label="Відкрити меню"
                 >
-                  <MenuIcon className="w-5 h-5 text-slate-700 dark:text-slate-300" />
+                  <MenuIcon className="w-5 h-5 text-gray-700" />
                 </button>
                 
-                {/* Search Bar */}
-                <div className="hidden md:flex items-center flex-1 max-w-md">
-                  <div className="relative w-full">
-                    <input
-                      type="text"
-                      placeholder="Search placeholder"
-                      className="w-full pl-10 pr-4 py-2 bg-slate-50 dark:bg-slate-700 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-900 dark:text-slate-100 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-                    />
-                    <svg className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                    </svg>
-                  </div>
-                </div>
+                <h2 className="text-base font-medium text-black">Hi, User!</h2>
               </div>
 
               {/* Right side - Actions */}
               <div className="flex items-center gap-3">
-                {/* Chat Icon */}
-                <button className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors relative">
-                  <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
+                {/* + Create Button */}
+                <button className="px-4 py-2 bg-black text-white rounded-lg text-sm font-medium hover:bg-gray-800 transition-colors shadow-sm">
+                  + Create
+                </button>
+                
+                {/* Search Icon */}
+                <button className="p-2 rounded-lg hover:bg-gray-200 transition-colors">
+                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                 </button>
                 
                 {/* Notifications Icon */}
-                <button className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors relative">
-                  <svg className="w-5 h-5 text-slate-600 dark:text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button className="p-2 rounded-lg hover:bg-gray-200 transition-colors relative">
+                  <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                   </svg>
                   {business && (
@@ -125,32 +118,15 @@ export function Navbar() {
                   )}
                 </button>
                 
-                {/* Theme Toggle */}
-                {mounted && (
-                  <button
-                    onClick={toggleTheme}
-                    className="p-2 rounded-lg border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700 transition-all duration-200"
-                    title={theme === 'light' ? 'Увімкнути темну тему' : 'Увімкнути світлу тему'}
-                  >
-                    {theme === 'light' ? (
-                      <MoonIcon className="w-5 h-5" />
-                    ) : (
-                      <SunIcon className="w-5 h-5" />
-                    )}
-                  </button>
-                )}
-                
-                {/* Profile */}
+                {/* Profile Icon */}
                 {business && (
-                  <div className="flex items-center gap-3 pl-3 border-l border-slate-200 dark:border-slate-700">
-                    <div className="text-right hidden sm:block">
-                      <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">{business.name || 'User'}</p>
-                      <p className="text-xs text-slate-500 dark:text-slate-400">{business.email?.split('@')[0] || 'Admin'}</p>
+                  <button className="p-2 rounded-lg hover:bg-gray-200 transition-colors">
+                    <div className="w-8 h-8 rounded-full bg-gray-300 flex items-center justify-center">
+                      <svg className="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                      </svg>
                     </div>
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-r from-indigo-500 to-purple-600 flex items-center justify-center text-white font-semibold shadow-md">
-                      {business.name?.charAt(0)?.toUpperCase() || 'U'}
-                    </div>
-                  </div>
+                  </button>
                 )}
               </div>
             </div>

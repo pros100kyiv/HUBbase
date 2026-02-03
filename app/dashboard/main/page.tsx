@@ -129,10 +129,10 @@ export default function MainPage() {
       <div className="mb-6">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 dark:text-slate-50 mb-2">
+            <h1 className="text-2xl font-bold text-black mb-2">
               Dashboard
             </h1>
-            <p className="text-sm text-slate-600 dark:text-slate-400">
+            <p className="text-sm text-gray-600">
               {hasAppointments ? `Сьогодні у вас ${todayAppointments.length} ${todayAppointments.length === 1 ? 'запис' : 'записів'}` : 'Сьогодні в тебе нічого немає'}
             </p>
           </div>
@@ -156,8 +156,8 @@ export default function MainPage() {
               className={cn(
                 'px-4 py-2 rounded-lg font-medium text-sm transition-all',
                 activeTab === 'working'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-sm'
+                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
               )}
             >
               Робочий день
@@ -167,8 +167,8 @@ export default function MainPage() {
               className={cn(
                 'px-4 py-2 rounded-lg font-medium text-sm transition-all',
                 activeTab === 'overdue'
-                  ? 'bg-indigo-600 text-white shadow-sm'
-                  : 'bg-white dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700'
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-sm'
+                  : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
               )}
             >
               Протерміновані
@@ -180,7 +180,7 @@ export default function MainPage() {
             <>
               {hasAppointments ? (
                 <div className="card-modern p-6">
-                  <h2 className="text-lg font-semibold text-slate-900 dark:text-slate-50 mb-4">
+                  <h2 className="text-lg font-semibold text-black mb-4">
                     Записи на сьогодні
                   </h2>
                   <div className="space-y-2">
@@ -202,18 +202,18 @@ export default function MainPage() {
                           switch (status) {
                             case 'Pending':
                             case 'Очікує':
-                              return 'bg-orange-100 dark:bg-orange-900/20 text-orange-600 dark:text-orange-400'
+                              return 'bg-orange-100 text-orange-600'
                             case 'Confirmed':
                             case 'Підтверджено':
-                              return 'bg-green-100 dark:bg-green-900/20 text-green-600 dark:text-green-400'
+                              return 'bg-green-100 text-green-600'
                             case 'Done':
                             case 'Виконано':
-                              return 'bg-blue-100 dark:bg-blue-900/20 text-blue-600 dark:text-blue-400'
+                              return 'bg-blue-100 text-blue-600'
                             case 'Cancelled':
                             case 'Скасовано':
-                              return 'bg-red-100 dark:bg-red-900/20 text-red-600 dark:text-red-400'
+                              return 'bg-red-100 text-red-600'
                             default:
-                              return 'bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-400'
+                              return 'bg-gray-100 text-gray-600'
                           }
                         }
 
@@ -235,10 +235,10 @@ export default function MainPage() {
                         return (
                           <div
                             key={appointment.id}
-                            className="p-4 rounded-lg bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:shadow-md transition-all"
+                            className="p-4 rounded-lg bg-white border border-gray-200 hover:shadow-md transition-all"
                           >
                             <div className="flex items-center gap-4">
-                              <div className="flex flex-col items-center justify-center w-16 h-16 rounded-lg gradient-indigo text-white flex-shrink-0 shadow-sm">
+                              <div className="flex flex-col items-center justify-center w-16 h-16 rounded-lg bg-gradient-to-r from-blue-500 to-purple-600 text-white flex-shrink-0 shadow-sm">
                                 <span className="text-base font-bold">
                                   {format(startTime, 'HH:mm')}
                                 </span>
@@ -248,14 +248,14 @@ export default function MainPage() {
                               </div>
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2 mb-1">
-                                  <p className="text-sm font-semibold text-slate-900 dark:text-slate-50">
+                                  <p className="text-sm font-semibold text-black">
                                     {appointment.clientName}
                                   </p>
                                   <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium', getStatusColor(appointment.status))}>
                                     {getStatusLabel(appointment.status)}
                                   </span>
                                 </div>
-                                <div className="flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400">
+                                <div className="flex items-center gap-2 text-xs text-gray-600">
                                   {appointment.masterName && (
                                     <span>Спеціаліст: {appointment.masterName}</span>
                                   )}

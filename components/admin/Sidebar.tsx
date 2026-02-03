@@ -57,15 +57,26 @@ export function Sidebar({ className }: SidebarProps) {
     }
   }, [business])
 
-  const navItems: NavItem[] = [
-    { id: 'main', label: 'Головна', icon: <HomeIcon />, path: '/dashboard' },
-    { id: 'appointments', label: 'Записи', icon: <CalendarIcon />, path: '/dashboard/appointments' },
-    { id: 'clients', label: 'Клієнти', icon: <UsersIcon />, path: '/dashboard/clients' },
-    { id: 'masters', label: 'Спеціалісти', icon: <UserIcon />, path: '/dashboard/masters' },
-    { id: 'analytics', label: 'Аналітика', icon: <ChartIcon />, path: '/dashboard/analytics' },
-    { id: 'social', label: 'Соцмережі', icon: <ShareIcon />, path: '/dashboard/social' },
-    { id: 'notifications', label: 'Сповіщення', icon: <BellIcon />, path: '#', badge: pendingCount, onClick: () => setShowNotifications(true) },
-    { id: 'settings', label: 'Налаштування', icon: <SettingsIcon />, path: '/dashboard/settings' },
+  // Main Navigation
+  const mainNavItems: NavItem[] = [
+    { id: 'main', label: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },
+    { id: 'appointments', label: 'Calendar', icon: <CalendarIcon />, path: '/dashboard/appointments' },
+    { id: 'clients', label: 'My task', icon: <UsersIcon />, path: '/dashboard/clients' },
+    { id: 'analytics', label: "Static's", icon: <ChartIcon />, path: '/dashboard/analytics' },
+    { id: 'masters', label: 'Document', icon: <UserIcon />, path: '/dashboard/masters' },
+  ]
+
+  // Integration Section
+  const integrationItems: NavItem[] = [
+    { id: 'social', label: 'Slack', icon: <ShareIcon />, path: '/dashboard/social' },
+    { id: 'telegram', label: 'Discord', icon: <ShareIcon />, path: '/dashboard/social' },
+    { id: 'add-plugin', label: 'Add Plugin', icon: <ShareIcon />, path: '/dashboard/social' },
+  ]
+
+  // Teams Section
+  const teamsItems: NavItem[] = [
+    { id: 'team-seo', label: 'Seo', icon: <UsersIcon />, path: '/dashboard/clients' },
+    { id: 'team-marketing', label: 'Marketing', icon: <UsersIcon />, path: '/dashboard/clients' },
   ]
 
   const handleNotificationUpdate = () => {
@@ -77,62 +88,91 @@ export function Sidebar({ className }: SidebarProps) {
     }
   }
 
+  const renderNavItem = (item: NavItem) => {
+    const isActive = pathname === item.path || (item.path === '/dashboard' && pathname === '/dashboard')
+    return (
+      <button
+        key={item.id}
+        onClick={() => {
+          if (item.onClick) {
+            item.onClick()
+          } else {
+            router.push(item.path)
+          }
+        }}
+        className={cn(
+          'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-all duration-200 relative group',
+          isActive
+            ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-sm'
+            : 'text-gray-700 hover:bg-gray-100'
+        )}
+        title={item.label}
+      >
+        <div className={cn('w-5 h-5 flex-shrink-0', isActive ? 'text-white' : 'text-gray-600 group-hover:text-gray-900')}>
+          {item.icon}
+        </div>
+        <span className={cn("text-sm font-medium flex-1", isActive ? 'text-white' : 'text-gray-900')}>
+          {item.label}
+        </span>
+        {item.badge && item.badge > 0 && (
+          <span className={cn(
+            "text-xs font-semibold px-2 py-0.5 rounded-full min-w-[20px] text-center",
+            isActive 
+              ? "bg-white/20 text-white" 
+              : "bg-red-500 text-white"
+          )}>
+            {item.badge}
+          </span>
+        )}
+      </button>
+    )
+  }
+
   return (
     <>
-      <aside className={cn('bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 w-0 md:w-64 min-h-screen fixed left-0 top-0 z-40 shadow-sm hidden md:block', className)}>
+      <aside className={cn('bg-white border-r border-gray-200 w-0 md:w-64 min-h-screen fixed left-0 top-0 z-40 shadow-sm hidden md:block', className)}>
         {/* Logo Section */}
-        <div className="p-6 border-b border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg gradient-indigo flex items-center justify-center text-white font-bold text-lg shadow-md">
-              X
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-slate-900 dark:text-slate-50">Xbase</h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Booking System</p>
-            </div>
-          </div>
+        <div className="p-6 border-b border-gray-200">
+          <h1 className="text-xl font-bold text-black">Growth</h1>
         </div>
         
-        <nav className="p-4 space-y-1">
-          {navItems.map((item) => {
-            const isActive = pathname === item.path || (item.path === '/dashboard' && pathname === '/dashboard')
-            return (
-              <button
-                key={item.id}
-                onClick={() => {
-                  if (item.onClick) {
-                    item.onClick()
-                  } else {
-                    router.push(item.path)
-                  }
-                }}
-                className={cn(
-                  'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 relative group',
-                  isActive
-                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md'
-                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700/50'
-                )}
-                title={item.label}
-              >
-                <div className={cn('w-5 h-5 flex-shrink-0', isActive ? 'text-white' : 'text-slate-600 dark:text-slate-400 group-hover:text-indigo-600 dark:group-hover:text-indigo-400')}>
-                  {item.icon}
-                </div>
-                <span className={cn("text-sm font-medium flex-1", isActive ? 'text-white' : 'text-slate-900 dark:text-slate-100')}>
-                  {item.label}
-                </span>
-                {item.badge && item.badge > 0 && (
-                  <span className={cn(
-                    "text-xs font-semibold px-2 py-0.5 rounded-full min-w-[20px] text-center",
-                    isActive 
-                      ? "bg-white/20 text-white" 
-                      : "bg-red-500 text-white"
-                  )}>
-                    {item.badge}
-                  </span>
-                )}
-              </button>
-            )
-          })}
+        <nav className="p-4 space-y-6">
+          {/* Main Navigation */}
+          <div className="space-y-1">
+            {mainNavItems.map(renderNavItem)}
+          </div>
+
+          {/* INTEGRATION Section */}
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 mb-2">INTEGRATION</p>
+            {integrationItems.map(renderNavItem)}
+          </div>
+
+          {/* TEAMS Section */}
+          <div className="space-y-1">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-4 mb-2">TEAMS</p>
+            {teamsItems.map(renderNavItem)}
+          </div>
+
+          {/* Settings */}
+          <div className="space-y-1 pt-4 border-t border-gray-200">
+            <button
+              onClick={() => router.push('/dashboard/settings')}
+              className={cn(
+                'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-all duration-200',
+                pathname === '/dashboard/settings'
+                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-sm'
+                  : 'text-gray-700 hover:bg-gray-100'
+              )}
+            >
+              <div className={cn('w-5 h-5 flex-shrink-0', pathname === '/dashboard/settings' ? 'text-white' : 'text-gray-600')}>
+                <SettingsIcon />
+              </div>
+              <span className={cn("text-sm font-medium", pathname === '/dashboard/settings' ? 'text-white' : 'text-gray-900')}>
+                Setting
+              </span>
+            </button>
+          </div>
         </nav>
       </aside>
       {business?.id && (

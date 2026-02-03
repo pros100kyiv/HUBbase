@@ -62,14 +62,14 @@ export function Statistics({ businessId }: StatisticsProps) {
     <div className="card-modern card-modern-hover p-6">
       {/* Period Selector */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-bold text-slate-900 dark:text-slate-50">Статистика</h2>
-        <div className="flex gap-2 bg-slate-100 dark:bg-slate-700 p-1 rounded-lg">
+        <h2 className="text-xl font-bold text-black">Статистика</h2>
+        <div className="flex gap-2 bg-gray-100 p-1 rounded-lg">
           <button
             onClick={() => setPeriod('day')}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
               period === 'day'
-                ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-600 hover:text-black'
             }`}
           >
             День
@@ -78,8 +78,8 @@ export function Statistics({ businessId }: StatisticsProps) {
             onClick={() => setPeriod('week')}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
               period === 'week'
-                ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-600 hover:text-black'
             }`}
           >
             Тиждень
@@ -88,8 +88,8 @@ export function Statistics({ businessId }: StatisticsProps) {
             onClick={() => setPeriod('month')}
             className={`px-4 py-1.5 rounded-md text-sm font-medium transition-all duration-200 ${
               period === 'month'
-                ? 'bg-white dark:bg-slate-600 text-indigo-600 dark:text-indigo-400 shadow-sm'
-                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-slate-100'
+                ? 'bg-white text-blue-600 shadow-sm'
+                : 'text-gray-600 hover:text-black'
             }`}
           >
             Місяць
