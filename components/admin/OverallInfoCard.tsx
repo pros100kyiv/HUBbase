@@ -1,24 +1,10 @@
 'use client'
 
-import { EyeIcon, ArrowUpIcon, CheckIcon } from '@/components/icons'
-
 interface OverallInfoCardProps {
-  totalTasks: number
-  stoppedProjects: number
-  totalProjects: number
-  inProgress: number
-  completed: number
+  onGeneratePlan?: () => void
 }
 
-export function OverallInfoCard({
-  totalTasks,
-  stoppedProjects,
-  totalProjects,
-  inProgress,
-  completed,
-}: OverallInfoCardProps) {
-  const progress = totalProjects > 0 ? (completed / totalProjects) * 100 : 0
-
+export function OverallInfoCard({ onGeneratePlan }: OverallInfoCardProps) {
   return (
     <div className="bg-[#1A1A1A] text-white rounded-xl p-6 card-floating">
       <div className="flex items-center justify-between mb-6">
@@ -43,50 +29,92 @@ export function OverallInfoCard({
         </div>
       </div>
 
-      <div className="flex items-start gap-8 mb-6">
-        <div>
-          <div className="text-4xl font-bold text-white mb-1" style={{ letterSpacing: '-0.02em' }}>
-            {totalTasks}
-          </div>
-          <div className="text-sm text-gray-300">Виконано за весь час</div>
-        </div>
-        <div>
-          <div className="text-4xl font-bold text-white mb-1" style={{ letterSpacing: '-0.02em' }}>
-            {stoppedProjects}
-          </div>
-          <div className="text-sm text-gray-300">Проєктів зупинено</div>
-        </div>
-      </div>
+      {/* Empty State with less bright colors */}
+      <div className="text-center">
+        {/* Illustration */}
+        <div className="mb-6 flex justify-center">
+          <div className="relative w-56 h-40">
+            {/* Background shape - less bright */}
+            <div className="absolute inset-0 bg-gradient-to-br from-purple-400/10 to-blue-400/10 rounded-3xl blur-2xl"></div>
+            
+            {/* Monitor */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2">
+              <div className="relative">
+                {/* Monitor base - less bright */}
+                <div className="w-28 h-20 bg-gradient-to-br from-purple-500/15 to-purple-600/15 rounded-lg border-2 border-purple-400/20 shadow-lg">
+                  {/* Screen content */}
+                  <div className="absolute inset-2 flex flex-col gap-1">
+                    <div className="flex gap-1">
+                      <div className="w-2 h-2 rounded-full bg-purple-300/25"></div>
+                      <div className="w-2 h-2 rounded-full bg-purple-300/25"></div>
+                      <div className="w-2 h-2 rounded-full bg-purple-300/25"></div>
+                    </div>
+                    <div className="flex-1 bg-purple-400/10 rounded"></div>
+                  </div>
+                </div>
+                {/* Monitor stand */}
+                <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-14 h-2 bg-purple-500/15 rounded"></div>
+              </div>
+            </div>
 
-      {/* Progress Bar */}
-      <div className="mb-6">
-        <div className="h-1 bg-white/10 rounded-full overflow-hidden">
-          <div 
-            className="h-full bg-white/30 rounded-full transition-all"
-            style={{ width: `${progress}%` }}
-          />
-        </div>
-      </div>
+            {/* Plant - less bright */}
+            <div className="absolute left-6 top-12">
+              <div className="relative">
+                {/* Pot */}
+                <div className="w-6 h-5 bg-purple-400/20 rounded-b-lg"></div>
+                {/* Leaves */}
+                <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                  <div className="w-5 h-5 bg-purple-300/25 rounded-full"></div>
+                  <div className="absolute -top-1.5 left-1.5 w-3 h-3 bg-purple-300/25 rounded-full"></div>
+                  <div className="absolute -top-1.5 -left-1.5 w-3 h-3 bg-purple-300/25 rounded-full"></div>
+                </div>
+              </div>
+            </div>
 
-      {/* Small Cards */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="bg-white rounded-lg p-3 border border-white/10" style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.2)' }}>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-700 font-medium">{totalProjects} Проєктів</span>
-            <EyeIcon className="w-4 h-4 text-gray-500" />
+            {/* Coffee cup - less bright */}
+            <div className="absolute right-6 top-14">
+              <div className="relative">
+                {/* Cup */}
+                <div className="w-5 h-6 bg-purple-400/20 rounded-b-lg border-2 border-purple-300/20">
+                  <div className="absolute top-0 left-0 right-0 h-1.5 bg-purple-300/15 rounded-t-lg"></div>
+                </div>
+                {/* Steam */}
+                <div className="absolute -top-2.5 left-1/2 -translate-x-1/2 flex gap-0.5">
+                  <div className="w-0.5 h-2 bg-purple-200/25 rounded-full animate-pulse"></div>
+                  <div className="w-0.5 h-3 bg-purple-200/25 rounded-full animate-pulse" style={{ animationDelay: '0.2s' }}></div>
+                  <div className="w-0.5 h-2 bg-purple-200/25 rounded-full animate-pulse" style={{ animationDelay: '0.4s' }}></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Floating dots - less bright */}
+            <div className="absolute top-3 left-10 w-1.5 h-1.5 bg-purple-300/20 rounded-full"></div>
+            <div className="absolute bottom-6 right-12 w-1 h-1 bg-purple-300/20 rounded-full"></div>
+            <div className="absolute top-10 right-6 w-0.5 h-0.5 bg-purple-300/20 rounded-full"></div>
           </div>
         </div>
-        <div className="bg-white rounded-lg p-3 border border-white/10" style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.2)' }}>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-700 font-medium">{inProgress} В процесі</span>
-            <ArrowUpIcon className="w-4 h-4 text-gray-500" />
+
+        {/* Text - less bright */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-center gap-2">
+            <div className="px-4 py-2 bg-blue-500/10 rounded-lg">
+              <span className="text-sm font-semibold text-gray-300">Сьогодні без завдань</span>
+              <span className="ml-2 text-yellow-400/70">🔄</span>
+            </div>
           </div>
-        </div>
-        <div className="bg-white rounded-lg p-3 border border-white/10" style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.2)' }}>
-          <div className="flex items-center justify-between">
-            <span className="text-xs text-gray-700 font-medium">{completed} Завершено</span>
-            <CheckIcon className="w-4 h-4 text-gray-500" />
+          
+          <div className="px-4 py-2 bg-blue-500/10 rounded-lg inline-block">
+            <p className="text-sm text-gray-400">
+              Можеш використати момент і додати справи на день
+            </p>
           </div>
+
+          <button
+            onClick={onGeneratePlan}
+            className="text-purple-300/80 hover:text-purple-200/80 underline text-sm font-medium transition-colors"
+          >
+            Згенерувати план на день
+          </button>
         </div>
       </div>
     </div>

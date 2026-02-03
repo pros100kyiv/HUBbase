@@ -191,11 +191,7 @@ export default function MainPage() {
 
           {/* Overall Information Card */}
           <OverallInfoCard
-            totalTasks={totalTasks}
-            stoppedProjects={stoppedProjects}
-            totalProjects={totalProjects}
-            inProgress={inProgress}
-            completed={completed}
+            onGeneratePlan={() => console.log('Generate plan for day')}
           />
 
           {/* Tasks Section */}
