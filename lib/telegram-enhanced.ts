@@ -64,38 +64,14 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     return rolePermissions.includes('*') || rolePermissions.includes(permission)
   }
 
-  // Головне меню з кнопками
+  // Головне меню з кнопками (спрощене - тільки сповіщення)
   const getMainMenu = (role: string) => {
     const buttons: any[] = []
 
-    if (hasPermission(role, 'view_stats')) {
-      buttons.push([Markup.button.callback('📊 Статистика', 'menu_stats')])
-    }
-
-    if (hasPermission(role, 'view_revenue')) {
-      buttons.push([Markup.button.callback('💰 Аналітика прибутку', 'menu_revenue')])
-    }
-
-    if (hasPermission(role, 'view_alerts')) {
-      buttons.push([Markup.button.callback('⚠️ Сповіщення', 'menu_alerts')])
-    }
-
-    if (hasPermission(role, 'create_broadcast')) {
-      buttons.push([Markup.button.callback('📢 Створити розсилку', 'menu_broadcast_create')])
-      buttons.push([Markup.button.callback('📋 Мої розсилки', 'menu_broadcasts')])
-    }
-
+    // Тільки сповіщення та нагадування
     if (hasPermission(role, 'create_broadcast')) {
       buttons.push([Markup.button.callback('⏰ Створити нагадування', 'menu_reminder_create')])
       buttons.push([Markup.button.callback('📝 Мої нагадування', 'menu_reminders')])
-    }
-
-    if (hasPermission(role, 'manage_users')) {
-      buttons.push([Markup.button.callback('👥 Користувачі', 'menu_users')])
-    }
-
-    if (hasPermission(role, '*')) {
-      buttons.push([Markup.button.callback('🔧 Моніторинг', 'menu_monitor')])
     }
 
     buttons.push([Markup.button.callback('ℹ️ Допомога', 'menu_help')])
@@ -139,6 +115,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
         await ctx.reply(
           `✅ Вітаємо, ${ctx.from?.first_name || 'користувач'}!\n\n` +
           `Ваша роль: ${getRoleName(telegramUser.role)}\n\n` +
+          `Ви отримуватимете сповіщення про нові записи та нагадування.\n\n` +
           `Оберіть дію:`,
           getMainMenu(telegramUser.role)
         )
@@ -189,6 +166,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
         `✅ Активація успішна!\n\n` +
         `Вітаємо, ${ctx.from?.first_name || 'користувач'}!\n` +
         `Ваша роль: ${getRoleName(userWithPassword.role)}\n\n` +
+        `Ви отримуватимете сповіщення про нові записи та нагадування.\n\n` +
         `Оберіть дію:`,
         getMainMenu(userWithPassword.role)
       )
@@ -198,218 +176,8 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     }
   })
 
-  // Callback для головного меню
-  bot.action('menu_stats', async (ctx: Context) => {
-    const user = await getUser(ctx)
-    if (!user || !hasPermission(user.role, 'view_stats')) {
-      await ctx.answerCbQuery('❌ У вас немає прав для перегляду статистики.')
-      return
-    }
-
-    await logAction('callback', 'menu_stats', null, ctx.from?.id?.toString())
-
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'
-    const stats = await fetch(`${baseUrl}/api/statistics?businessId=${config.businessId}&period=month`)
-      .then(res => res.json())
-      .catch(() => null)
-
-    if (!stats) {
-      await ctx.answerCbQuery('❌ Не вдалося завантажити статистику.')
-      return
-    }
-
-    await ctx.editMessageText(
-      `📊 Статистика за місяць:\n\n` +
-      `📅 Всього візитів: ${stats.totalAppointments || 0}\n` +
-      `✅ Завершено: ${stats.completedAppointments || 0}\n` +
-      `⏳ Підтверджено: ${stats.confirmedAppointments || 0}\n` +
-      `❌ Скасовано: ${stats.cancelledAppointments || 0}\n` +
-      `💰 Дохід: ${formatCurrency(stats.totalRevenue || 0)}\n` +
-      `👥 Клієнтів: ${stats.uniqueClients || 0}\n\n` +
-      `Оберіть дію:`,
-      getMainMenu(user.role)
-    )
-  })
-
-  // Callback для аналітики прибутку
-  bot.action('menu_revenue', async (ctx: Context) => {
-    const user = await getUser(ctx)
-    if (!user || !hasPermission(user.role, 'view_revenue')) {
-      await ctx.answerCbQuery('❌ У вас немає прав для перегляду аналітики.')
-      return
-    }
-
-    await logAction('callback', 'menu_revenue', null, ctx.from?.id?.toString())
-
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'
-    const revenue = await fetch(`${baseUrl}/api/analytics/revenue?businessId=${config.businessId}&period=month`)
-      .then(res => res.json())
-      .catch(() => null)
-
-    if (!revenue) {
-      await ctx.answerCbQuery('❌ Не вдалося завантажити аналітику.')
-      return
-    }
-
-    const trendIcon = revenue.revenueChange > 0 ? '📈' : revenue.revenueChange < 0 ? '📉' : '➡️'
-
-    await ctx.editMessageText(
-      `💰 Аналітика прибутку:\n\n` +
-      `💵 Поточний прибуток: ${formatCurrency(revenue.currentRevenue || 0)}\n` +
-      `${trendIcon} Зміна: ${revenue.revenueChange > 0 ? '+' : ''}${revenue.revenueChange?.toFixed(1) || 0}%\n\n` +
-      `🔮 Прогнозований прибуток: ${formatCurrency(revenue.forecastedRevenue || 0)}\n\n` +
-      `📋 Топ послуги:\n${revenue.serviceAnalytics?.slice(0, 5).map((s: any, i: number) => 
-        `${i + 1}. ${s.serviceName}: ${formatCurrency(s.revenue)}`
-      ).join('\n') || 'Немає даних'}\n\n` +
-      `Оберіть дію:`,
-      getMainMenu(user.role)
-    )
-  })
-
-  // Callback для сповіщень
-  bot.action('menu_alerts', async (ctx: Context) => {
-    const user = await getUser(ctx)
-    if (!user || !hasPermission(user.role, 'view_alerts')) {
-      await ctx.answerCbQuery('❌ У вас немає прав для перегляду сповіщень.')
-      return
-    }
-
-    await logAction('callback', 'menu_alerts', null, ctx.from?.id?.toString())
-
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'
-    const alertsData = await fetch(`${baseUrl}/api/analytics/alerts?businessId=${config.businessId}`)
-      .then(res => res.json())
-      .catch(() => ({ alerts: [] }))
-
-    if (!alertsData.alerts || alertsData.alerts.length === 0) {
-      await ctx.editMessageText(
-        '✅ Немає активних сповіщень.\n\nОберіть дію:',
-        getMainMenu(user.role)
-      )
-      return
-    }
-
-    const alertsText = alertsData.alerts.map((alert: any, i: number) => {
-      const icon = alert.type === 'critical' ? '🔴' : alert.type === 'warning' ? '🟡' : '🔵'
-      return `${icon} ${i + 1}. ${alert.message}\n   Зміна: ${alert.change > 0 ? '+' : ''}${alert.change.toFixed(1)}%`
-    }).join('\n\n')
-
-    await ctx.editMessageText(
-      `⚠️ Активні сповіщення:\n\n${alertsText}\n\nОберіть дію:`,
-      getMainMenu(user.role)
-    )
-  })
-
-  // Callback для створення розсилки
-  bot.action('menu_broadcast_create', async (ctx: Context) => {
-    const user = await getUser(ctx)
-    if (!user || !hasPermission(user.role, 'create_broadcast')) {
-      await ctx.answerCbQuery('❌ У вас немає прав для створення розсилок.')
-      return
-    }
-
-    await ctx.answerCbQuery('📢 Створення розсилки')
-    await ctx.reply(
-      `📢 Створення розсилки\n\n` +
-      `Для створення розсилки використайте веб-інтерфейс:\n` +
-      `Налаштування → Telegram → Розсилки\n\n` +
-      `Або поверніться до головного меню:`,
-      getMainMenu(user.role)
-    )
-  })
-
-  // Callback для списку розсилок
-  bot.action('menu_broadcasts', async (ctx: Context) => {
-    const user = await getUser(ctx)
-    if (!user || !hasPermission(user.role, 'create_broadcast')) {
-      await ctx.answerCbQuery('❌ У вас немає прав для перегляду розсилок.')
-      return
-    }
-
-    await logAction('callback', 'menu_broadcasts', null, ctx.from?.id?.toString())
-
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'
-    const broadcasts = await fetch(`${baseUrl}/api/telegram/broadcasts?businessId=${config.businessId}`)
-      .then(res => res.json())
-      .catch(() => [])
-
-    if (!broadcasts || broadcasts.length === 0) {
-      await ctx.editMessageText(
-        '📋 Немає створених розсилок.\n\nОберіть дію:',
-        getMainMenu(user.role)
-      )
-      return
-    }
-
-    const broadcastsText = broadcasts.slice(0, 5).map((b: any, i: number) => {
-      const statusIcon = b.status === 'sent' ? '✅' : b.status === 'scheduled' ? '⏰' : '📝'
-      return `${statusIcon} ${i + 1}. ${b.title}\n   Статус: ${b.status === 'draft' ? 'Чернетка' : b.status === 'sent' ? 'Відправлено' : 'Заплановано'}`
-    }).join('\n\n')
-
-    await ctx.editMessageText(
-      `📋 Мої розсилки:\n\n${broadcastsText}\n\nОберіть дію:`,
-      getMainMenu(user.role)
-    )
-  })
-
-  // Callback для користувачів
-  bot.action('menu_users', async (ctx: Context) => {
-    const user = await getUser(ctx)
-    if (!user || !hasPermission(user.role, 'manage_users')) {
-      await ctx.answerCbQuery('❌ У вас немає прав для перегляду користувачів.')
-      return
-    }
-
-    await logAction('callback', 'menu_users', null, ctx.from?.id?.toString())
-
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'
-    const users = await fetch(`${baseUrl}/api/telegram/users?businessId=${config.businessId}`)
-      .then(res => res.json())
-      .catch(() => [])
-
-    if (!users || users.length === 0) {
-      await ctx.editMessageText(
-        '👥 Немає зареєстрованих користувачів.\n\nОберіть дію:',
-        getMainMenu(user.role)
-      )
-      return
-    }
-
-    const usersText = users.slice(0, 10).map((u: any, i: number) => {
-      return `${i + 1}. ${u.firstName || ''} ${u.lastName || ''} (${getRoleName(u.role)})`
-    }).join('\n')
-
-    await ctx.editMessageText(
-      `👥 Користувачі бота:\n\n${usersText}\n\nОберіть дію:`,
-      getMainMenu(user.role)
-    )
-  })
-
-  // Callback для моніторингу (розробник)
-  bot.action('menu_monitor', async (ctx: Context) => {
-    const user = await getUser(ctx)
-    if (!user || !hasPermission(user.role, '*')) {
-      await ctx.answerCbQuery('❌ У вас немає прав для моніторингу.')
-      return
-    }
-
-    await logAction('callback', 'menu_monitor', null, ctx.from?.id?.toString())
-
-    const logs = await prisma.telegramLog.findMany({
-      where: { businessId: config.businessId },
-      orderBy: { createdAt: 'desc' },
-      take: 10,
-    })
-
-    const logsText = logs.map((log, i) => {
-      return `${i + 1}. [${log.action}] ${log.command || log.message || 'N/A'}`
-    }).join('\n')
-
-    await ctx.editMessageText(
-      `🔧 Останні дії:\n\n${logsText || 'Немає логів'}\n\nОберіть дію:`,
-      getMainMenu(user.role)
-    )
-  })
+  // Видалено всі зайві меню (статистика, аналітика, користувачі, моніторинг)
+  // Залишено тільки нагадування та сповіщення
 
   // Callback для створення нагадування
   bot.action('menu_reminder_create', async (ctx: Context) => {
@@ -619,24 +387,13 @@ function getAvailableCommands(role: string): string[] {
   const rolePermissions = permissions[role] || []
   const hasPermission = (perm: string) => rolePermissions.includes('*') || rolePermissions.includes(perm)
 
-  const commands: string[] = ['/start - Початок роботи']
-
-  if (hasPermission('view_stats')) {
-    commands.push('📊 Статистика - через меню')
-  }
-
-  if (hasPermission('view_revenue')) {
-    commands.push('💰 Аналітика прибутку - через меню')
-  }
-
-  if (hasPermission('view_alerts')) {
-    commands.push('⚠️ Сповіщення - через меню')
-  }
+  const commands: string[] = ['/start - Початок роботи / активація']
 
   if (hasPermission('create_broadcast')) {
-    commands.push('📢 Створення розсилок - через веб-інтерфейс')
     commands.push('⏰ Створення нагадувань - /reminder <текст>')
   }
+
+  commands.push('ℹ️ Ви отримуватимете сповіщення про нові записи автоматично')
 
   return commands
 }

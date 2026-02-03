@@ -23,7 +23,8 @@
     "telegram:oauth": "tsx scripts/setup-telegram-oauth.ts",
     "telegram:webhook": "tsx scripts/setup-webhook.ts",
     "telegram:webhook-all": "tsx scripts/setup-webhook-all.ts",
-    "telegram:update-tokens": "tsx scripts/update-telegram-token.ts"
+    "telegram:update-tokens": "tsx scripts/update-telegram-token.ts",
+    "db:cleanup": "tsx scripts/cleanup-database.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
