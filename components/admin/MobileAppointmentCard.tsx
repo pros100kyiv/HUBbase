@@ -3,7 +3,7 @@
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
-import { ClockIcon, CheckIcon, XIcon, UserIcon } from '@/components/icons'
+import { ClockIcon, CheckIcon, XIcon, UserIcon, SettingsIcon } from '@/components/icons'
 
 interface Appointment {
   id: string
@@ -20,11 +20,13 @@ interface Appointment {
 interface MobileAppointmentCardProps {
   appointment: Appointment
   onStatusChange?: (id: string, status: string) => void
+  onEdit?: (appointment: Appointment) => void
 }
 
 export function MobileAppointmentCard({
   appointment,
   onStatusChange,
+  onEdit,
 }: MobileAppointmentCardProps) {
   const startTime = new Date(appointment.startTime)
   const endTime = new Date(appointment.endTime)

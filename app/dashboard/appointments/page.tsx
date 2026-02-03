@@ -6,6 +6,7 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, ea
 import { uk } from 'date-fns/locale'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
 import { CreateAppointmentForm } from '@/components/admin/CreateAppointmentForm'
+import { EditAppointmentForm } from '@/components/admin/EditAppointmentForm'
 import { QuickClientCard } from '@/components/admin/QuickClientCard'
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon, FilterIcon, DownloadIcon, CheckIcon, UserIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
@@ -43,6 +44,8 @@ export default function AppointmentsPage() {
   const [masters, setMasters] = useState<any[]>([])
   const [services, setServices] = useState<any[]>([])
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [showEditForm, setShowEditForm] = useState(false)
+  const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
   const [showQuickClientCard, setShowQuickClientCard] = useState(false)
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar')
 
@@ -109,6 +112,18 @@ export default function AppointmentsPage() {
 
   const handleAppointmentCreated = () => {
     setShowCreateForm(false)
+    reloadAppointments()
+  }
+
+  const handleAppointmentUpdated = () => {
+    setShowEditForm(false)
+    setEditingAppointment(null)
+    reloadAppointments()
+  }
+
+  const reloadAppointments = () => {
+    if (!business) return
+    
     const start = startOfMonth(currentMonth)
     const end = endOfMonth(currentMonth)
     const startStr = format(start, 'yyyy-MM-dd')
@@ -124,6 +139,11 @@ export default function AppointmentsPage() {
         setAppointments(withMasters)
       })
       .catch((error) => console.error('Error reloading appointments:', error))
+  }
+
+  const handleEditAppointment = (appointment: Appointment) => {
+    setEditingAppointment(appointment)
+    setShowEditForm(true)
   }
 
   const handleStatusChange = async (id: string, status: string) => {
@@ -609,6 +629,7 @@ export default function AppointmentsPage() {
                                 key={appointment.id}
                                 appointment={appointment}
                                 onStatusChange={handleStatusChange}
+                                onEdit={handleEditAppointment}
                               />
                             ))}
                         </div>
@@ -620,7 +641,51 @@ export default function AppointmentsPage() {
             </div>
           )}
 
-          {!selectedDate && !showCreateForm && (
+          {/* List View */}
+          {viewMode === 'list' && !showCreateForm && (
+            <div className="card-candy p-3">
+              <h3 className="text-base font-black text-gray-900 dark:text-white mb-3">
+                Всі записи ({filteredAppointments.length})
+              </h3>
+              {filteredAppointments.length === 0 ? (
+                <div className="text-center py-12">
+                  <div className="mb-4 flex justify-center">
+                    <CalendarIcon className="w-16 h-16 text-gray-300 dark:text-gray-600" />
+                  </div>
+                  <p className="text-gray-500 dark:text-gray-400 text-sm font-medium mb-2">
+                    Немає записів
+                  </p>
+                  <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
+                    Створіть новий запис, щоб почати
+                  </p>
+                  <button
+                    onClick={() => {
+                      setShowCreateForm(true)
+                      setSelectedDate(new Date())
+                    }}
+                    className="px-4 py-2 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95"
+                  >
+                    Створити новий запис
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-2">
+                  {filteredAppointments
+                    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                    .map((appointment) => (
+                      <MobileAppointmentCard
+                        key={appointment.id}
+                        appointment={appointment}
+                        onStatusChange={handleStatusChange}
+                        onEdit={handleEditAppointment}
+                      />
+                    ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {viewMode === 'calendar' && !selectedDate && !showCreateForm && (
             <div className="card-candy p-12 text-center">
               <div className="mb-6 flex justify-center">
                 <div className="w-32 h-32 bg-gradient-to-br from-candy-purple/20 to-candy-blue/20 rounded-full flex items-center justify-center">
@@ -726,6 +791,21 @@ export default function AppointmentsPage() {
             }
           }}
           onCancel={() => setShowQuickClientCard(false)}
+        />
+      )}
+
+      {/* Edit Appointment Form Modal */}
+      {showEditForm && editingAppointment && business && (
+        <EditAppointmentForm
+          appointment={editingAppointment}
+          businessId={business.id}
+          masters={masters}
+          services={services}
+          onSuccess={handleAppointmentUpdated}
+          onCancel={() => {
+            setShowEditForm(false)
+            setEditingAppointment(null)
+          }}
         />
       )}
     </div>
