@@ -40,15 +40,15 @@ export function LastProjectsCard({ projects }: LastProjectsCardProps) {
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-black mb-4" style={{ letterSpacing: '-0.01em' }}>
+      <h3 className="text-lg font-semibold text-white mb-4" style={{ letterSpacing: '-0.01em' }}>
         Last project's
       </h3>
       <div className="grid grid-cols-3 gap-4">
         {displayProjects.map((project) => (
           <div
             key={project.id}
-            className="bg-gray-800 text-white rounded-xl p-6 relative"
-            style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}
+            className="bg-[#1A1A1A] text-white rounded-xl p-6 relative"
+            style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}
           >
             <div className="absolute top-4 right-4">
               <div className="relative w-12 h-12">

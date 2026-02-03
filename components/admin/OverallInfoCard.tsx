@@ -20,7 +20,7 @@ export function OverallInfoCard({
   const progress = totalProjects > 0 ? (completed / totalProjects) * 100 : 0
 
   return (
-    <div className="bg-gray-800 text-white rounded-xl p-6" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}>
+    <div className="bg-[#1A1A1A] text-white rounded-xl p-6" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
       <div className="flex items-center justify-between mb-6">
         <h3 className="text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
           Over all information

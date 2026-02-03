@@ -74,7 +74,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="relative min-h-screen bg-gray-50">
+    <div className="relative min-h-screen bg-[#0F0F0F]">
       {/* Top Navbar */}
       <Navbar />
       
@@ -85,7 +85,7 @@ export default function DashboardLayout({
       <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       
       {/* Main Content Area */}
-      <main className="relative ml-0 md:ml-64 pt-16 min-h-screen">
+      <main className="relative ml-0 md:ml-64 pt-16 min-h-screen bg-[#0F0F0F]">
         <div className="p-6">
           {children}
         </div>

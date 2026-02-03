@@ -28,7 +28,7 @@ export function TasksInProcessCard({ tasks, onAddNote, onEdit, onDelete }: Tasks
   const displayTasks = tasks.length > 0 ? tasks : defaultTasks
 
   return (
-    <div className="bg-gray-100 rounded-xl p-6" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}>
+    <div className="bg-white rounded-xl p-6" style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}>
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-black" style={{ letterSpacing: '-0.01em' }}>
           Task In process ({displayTasks.length})
@@ -42,7 +42,7 @@ export function TasksInProcessCard({ tasks, onAddNote, onEdit, onDelete }: Tasks
         {displayTasks.map((task) => (
           <div 
             key={task.id}
-            className="bg-white rounded-lg p-4 relative"
+            className="bg-gray-50 rounded-lg p-4 relative"
             style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)' }}
           >
             <div className="flex items-start justify-between mb-3">
