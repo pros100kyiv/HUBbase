@@ -108,11 +108,10 @@ export function GlobalSearch({ businessId, isOpen, onClose }: GlobalSearchProps)
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+    <div className="fixed inset-0 z-50 flex items-start justify-center pt-20 px-4">
       {/* Backdrop */}
       <div 
         className="absolute inset-0 bg-black/70"
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
         onClick={onClose}
       />
       

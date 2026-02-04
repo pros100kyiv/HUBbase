@@ -178,7 +178,7 @@ export function MasterScheduleModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/70" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-black/70">
       <div className="relative w-full max-w-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-candy-lg shadow-soft-xl p-3 sm:p-4 max-h-[90vh] sm:max-h-[85vh] overflow-y-auto">
         {/* Close Button */}
         <button
