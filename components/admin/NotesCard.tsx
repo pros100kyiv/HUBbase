@@ -302,9 +302,7 @@ export function NotesCard({ businessId }: NotesCardProps) {
                     </span>
                   </div>
                   
-                  {dateNotes.length === 0 ? (
-                    <p className="text-[10px] md:text-xs text-gray-500">Немає нотаток</p>
-                  ) : (
+                  {dateNotes.length > 0 && (
                     <div className="space-y-1.5 md:space-y-2">
                       {dateNotes.map((note) => (
                         <div
