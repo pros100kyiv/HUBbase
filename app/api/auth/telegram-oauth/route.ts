@@ -277,6 +277,12 @@ export async function POST(request: Request) {
     })
 
     if (existingByEmail) {
+      // Генеруємо businessIdentifier якщо відсутній
+      let businessIdentifier = existingByEmail.businessIdentifier
+      if (!businessIdentifier) {
+        businessIdentifier = await generateBusinessIdentifier()
+      }
+
       // Оновлюємо існуючий бізнес: прив'язуємо Telegram
       const updatedBusiness = await prisma.business.update({
         where: { id: existingByEmail.id },
@@ -284,6 +290,7 @@ export async function POST(request: Request) {
           telegramId: telegramId,
           telegramChatId: telegramData.id.toString(),
           avatar: telegramData.photo_url || existingByEmail.avatar,
+          businessIdentifier: businessIdentifier, // Оновлюємо businessIdentifier
         }
       })
 
