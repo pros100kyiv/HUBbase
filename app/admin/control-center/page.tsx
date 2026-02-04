@@ -165,9 +165,9 @@ export default function ControlCenterPage() {
 
   if (isLoadingAuth) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 flex items-center justify-center">
+      <div className="min-h-screen flex items-center justify-center" style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}>
         <div className="text-center">
-          <p className="text-gray-500 dark:text-gray-400 mb-4">Перевірка доступу...</p>
+          <p className="text-gray-300 mb-4" style={{ letterSpacing: '-0.01em' }}>Перевірка доступу...</p>
         </div>
       </div>
     )
@@ -178,19 +178,19 @@ export default function ControlCenterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800 p-4 md:p-6">
+    <div className="min-h-screen p-4 md:p-6" style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}>
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl md:text-4xl font-black text-gray-900 dark:text-white mb-2">
+        <h1 className="text-3xl md:text-4xl font-black text-white mb-2" style={{ letterSpacing: '-0.02em' }}>
           🎯 Центр управління
         </h1>
-        <p className="text-gray-600 dark:text-gray-400">
+        <p className="text-gray-300">
           Управління всіма бізнесами та процесами системи
         </p>
       </div>
 
       {/* Tabs */}
-      <div className="mb-6 flex flex-wrap gap-2 border-b border-gray-200 dark:border-gray-700 overflow-x-auto">
+      <div className="mb-6 flex flex-wrap gap-2 border-b border-white/10 overflow-x-auto">
         {tabs.map((tab) => {
           const Icon = tab.icon
           return (
@@ -199,9 +199,10 @@ export default function ControlCenterPage() {
               onClick={() => setActiveTab(tab.id as Tab)}
               className={`px-4 py-2 flex items-center gap-2 font-medium transition-colors border-b-2 whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'border-blue-500 text-blue-600 dark:text-blue-400'
-                  : 'border-transparent text-gray-600 dark:text-gray-400 hover:text-gray-900 dark:hover:text-white'
+                  ? 'border-white text-white'
+                  : 'border-transparent text-gray-400 hover:text-white'
               }`}
+              style={{ letterSpacing: '-0.01em' }}
             >
               <Icon className="w-5 h-5" />
               {tab.label}
@@ -211,7 +212,7 @@ export default function ControlCenterPage() {
       </div>
 
       {/* Tab Content */}
-      <div className="bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6">
+      <div className="card-floating rounded-xl p-6">
         {activeTab === 'overview' && (
           <OverviewTab stats={stats} loading={loading} />
         )}
@@ -327,7 +328,7 @@ function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+      <h2 className="text-2xl font-bold mb-6 text-white">
         Статистика системи
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -340,11 +341,11 @@ function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
             >
               <div className="flex items-center justify-between mb-4">
                 <Icon className={`w-8 h-8 text-${card.color}-500`} />
-                <span className="text-3xl font-black text-gray-900 dark:text-white">
+                <span className="text-3xl font-black text-white">
                   {card.value}
                 </span>
               </div>
-              <p className="text-gray-600 dark:text-gray-400 font-medium">
+              <p className="text-gray-300 font-medium">
                 {card.title}
               </p>
             </div>
@@ -577,14 +578,14 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
             }
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="w-full pl-10 pr-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white"
           />
         </div>
         
         <select
           value={searchBy}
           onChange={(e) => setSearchBy(e.target.value as any)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="px-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white"
           title="Тип пошуку"
         >
           <option value="all">Всюди</option>
@@ -596,7 +597,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
         <select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="px-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white"
         >
           <option value="all">Всі статуси</option>
           <option value="active">Активні</option>
@@ -608,16 +609,17 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
             <select
               value={bulkAction}
               onChange={(e) => setBulkAction(e.target.value)}
-              className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700"
+              className="px-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white focus:outline-none focus:border-white/20"
             >
-              <option value="">Оберіть дію</option>
-              <option value="activate">Активувати</option>
-              <option value="deactivate">Деактивувати</option>
-              <option value="delete">Видалити</option>
+              <option value="" className="bg-[#2A2A2A]">Оберіть дію</option>
+              <option value="activate" className="bg-[#2A2A2A]">Активувати</option>
+              <option value="deactivate" className="bg-[#2A2A2A]">Деактивувати</option>
+              <option value="delete" className="bg-[#2A2A2A]">Видалити</option>
             </select>
             <button
               onClick={handleBulkAction}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+              className="px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-semibold"
+              style={{ letterSpacing: '-0.01em', boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
             >
               Застосувати ({selectedBusinesses.length})
             </button>
@@ -643,7 +645,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
             }))
             const csv = [
               Object.keys(data[0] || {}).join(','),
-              ...data.map(row => Object.values(row).map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+              ...data.map((row: Record<string, any>) => Object.values(row).map((v: any) => `"${String(v).replace(/"/g, '""')}"`).join(','))
             ].join('\n')
             const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
             const link = document.createElement('a')
@@ -651,7 +653,8 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
             link.download = `businesses-${new Date().toISOString().split('T')[0]}.csv`
             link.click()
           }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+          className="px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 flex items-center gap-2 font-semibold transition-colors"
+          style={{ letterSpacing: '-0.01em', boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
         >
           <DownloadIcon className="w-5 h-5" />
           Експорт CSV
@@ -665,7 +668,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
-                <tr className="border-b border-gray-200 dark:border-gray-700">
+                <tr className="border-b border-white/10">
                   <th className="text-left py-3 px-4">
                     <input
                       type="checkbox"
@@ -680,22 +683,22 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                       }}
                     />
                   </th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">ID</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Назва</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Email</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Телефон</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Тип реєстрації</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Статус</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Дії</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Останній вхід</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Дії</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-300">ID</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-300">Назва</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-300">Email</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-300">Телефон</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-300">Тип реєстрації</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-300">Статус</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-300">Дії</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-300">Останній вхід</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-300">Дії</th>
                 </tr>
               </thead>
               <tbody>
                 {(search ? filteredBusinesses : businesses).map((business: Business) => (
                   <tr
                     key={business.id}
-                    className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"
+                    className="border-b border-gray-100 dark:border-gray-700 hover:bg-white/10/50"
                   >
                     <td className="py-3 px-4">
                       <input
@@ -713,7 +716,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                     <td className="py-3 px-4">
                       {business.businessIdentifier ? (
                         <div className="flex items-center gap-2">
-                          <span className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400">
+                          <span className="font-mono text-sm font-bold text-blue-400">
                             {business.businessIdentifier}
                           </span>
                           <button
@@ -731,14 +734,14 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                       )}
                     </td>
                     <td className="py-3 px-4">
-                      <div className="font-medium text-gray-900 dark:text-white cursor-pointer" onClick={() => onBusinessClick(business.businessId)}>
+                      <div className="font-medium text-white cursor-pointer" onClick={() => onBusinessClick(business.businessId)}>
                         {business.name}
                       </div>
                     </td>
-                    <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                    <td className="py-3 px-4 text-gray-300">
                       {business.email}
                     </td>
-                    <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
+                    <td className="py-3 px-4 text-gray-300">
                       {business.phone || '-'}
                     </td>
                     <td className="py-3 px-4">
@@ -767,7 +770,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                         </button>
                       )}
                     </td>
-                    <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
+                    <td className="py-3 px-4 text-sm text-gray-300">
                       {formatDate(business.lastLoginAt)}
                     </td>
                     <td className="py-3 px-4">
@@ -820,7 +823,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
           {/* Статистика */}
           <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
-              <div className="text-sm text-blue-600 dark:text-blue-400 mb-1">Всього {search ? '(знайдено)' : ''}</div>
+              <div className="text-sm text-blue-400 mb-1">Всього {search ? '(знайдено)' : ''}</div>
               <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
                 {search ? filteredBusinesses.length : businesses.length}
               </div>
@@ -845,15 +848,15 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
 
           {filteredBusinesses.length === 0 && search && (
             <div className="text-center py-12">
-              <p className="text-gray-500 dark:text-gray-400 mb-2">Нічого не знайдено</p>
-              <p className="text-sm text-gray-400 dark:text-gray-500">
+              <p className="text-gray-300 mb-2" style={{ letterSpacing: '-0.01em' }}>Нічого не знайдено</p>
+              <p className="text-sm text-gray-400">
                 Спробуйте змінити параметри пошуку
               </p>
             </div>
           )}
 
           <div className="mt-6 flex justify-between items-center">
-            <div className="text-sm text-gray-600 dark:text-gray-400">
+            <div className="text-sm text-gray-300">
               Показано {filteredBusinesses.length} з {businesses.length} бізнесів
               {search && ` (фільтр: "${search}")`}
             </div>
@@ -861,14 +864,16 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
               <button
                 onClick={() => setPage(Math.max(1, page - 1))}
                 disabled={page === 1}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50"
+                className="px-4 py-2 border border-white/10 rounded-lg disabled:opacity-50 bg-white/5 text-white hover:bg-white/10 transition-colors"
+                style={{ letterSpacing: '-0.01em' }}
               >
                 Назад
               </button>
               <button
                 onClick={() => setPage(Math.min(totalPages, page + 1))}
                 disabled={page === totalPages}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg disabled:opacity-50"
+                className="px-4 py-2 border border-white/10 rounded-lg disabled:opacity-50 bg-white/5 text-white hover:bg-white/10 transition-colors"
+                style={{ letterSpacing: '-0.01em' }}
               >
                 Вперед
               </button>
@@ -880,31 +885,32 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
       {/* Block Modal */}
       {blockModalOpen && selectedBusiness && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+          <div className="card-floating rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold mb-4 text-white" style={{ letterSpacing: '-0.02em' }}>
               Заблокувати акаунт
             </h3>
             <div className="mb-4">
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                Бізнес: <span className="font-semibold">{selectedBusiness.name}</span>
+              <p className="text-sm text-gray-300 mb-2">
+                Бізнес: <span className="font-semibold text-white">{selectedBusiness.name}</span>
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
-                ID: <span className="font-mono font-semibold">{selectedBusiness.businessIdentifier}</span>
+              <p className="text-sm text-gray-300 mb-2">
+                ID: <span className="font-mono font-semibold text-blue-400">{selectedBusiness.businessIdentifier}</span>
               </p>
-              <p className="text-sm text-gray-600 dark:text-gray-400">
-                Email: <span className="font-semibold">{selectedBusiness.email}</span>
+              <p className="text-sm text-gray-300">
+                Email: <span className="font-semibold text-white">{selectedBusiness.email}</span>
               </p>
             </div>
             <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+              <label className="block text-sm font-medium text-gray-300 mb-2" style={{ letterSpacing: '-0.01em' }}>
                 Причина блокування (необов'язково)
               </label>
               <textarea
                 value={blockReason}
                 onChange={(e) => setBlockReason(e.target.value)}
                 placeholder="Введіть причину блокування..."
-                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+                className="w-full px-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white placeholder-gray-400 resize-none focus:outline-none focus:border-white/20"
                 rows={3}
+                style={{ letterSpacing: '-0.01em' }}
               />
             </div>
             <div className="flex gap-2 justify-end">
@@ -914,15 +920,17 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                   setSelectedBusiness(null)
                   setBlockReason('')
                 }}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                className="px-4 py-2 border border-white/10 rounded-lg text-gray-300 hover:bg-white/10 transition-colors bg-white/5"
                 disabled={isBlocking}
+                style={{ letterSpacing: '-0.01em' }}
               >
                 Скасувати
               </button>
               <button
                 onClick={handleBlockConfirm}
                 disabled={isBlocking}
-                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors"
+                style={{ letterSpacing: '-0.01em' }}
               >
                 {isBlocking ? 'Блокування...' : 'Заблокувати'}
               </button>
@@ -968,7 +976,7 @@ function PhonesTab() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+      <h2 className="text-2xl font-bold mb-6 text-white">
         Телефонний довідник
       </h2>
       
@@ -976,7 +984,7 @@ function PhonesTab() {
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value as any)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+          className="px-4 py-2 border border-white/10 rounded-lg"
         >
           <option value="all">Всі категорії</option>
           <option value="BUSINESS">Бізнеси</option>
@@ -988,7 +996,7 @@ function PhonesTab() {
           placeholder="Пошук по номеру..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+          className="flex-1 px-4 py-2 border border-white/10 rounded-lg"
         />
       </div>
 
@@ -998,7 +1006,7 @@ function PhonesTab() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
+              <tr className="border-b border-white/10">
                 <th className="text-left py-3 px-4">Номер</th>
                 <th className="text-left py-3 px-4">Категорія</th>
                 <th className="text-left py-3 px-4">Назва</th>
@@ -1070,7 +1078,7 @@ function ActivityTab() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+      <h2 className="text-2xl font-bold mb-6 text-white">
         Архів дій
       </h2>
       
@@ -1078,7 +1086,7 @@ function ActivityTab() {
         <select
           value={actionType}
           onChange={(e) => setActionType(e.target.value)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+          className="px-4 py-2 border border-white/10 rounded-lg"
         >
           <option value="all">Всі дії</option>
           <option value="business_created">Створення бізнесу</option>
@@ -1092,7 +1100,7 @@ function ActivityTab() {
       ) : (
         <div className="space-y-4">
           {logs.map((log: any, index: number) => (
-            <div key={index} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+            <div key={index} className="border border-white/10 rounded-lg p-4">
               <div className="flex justify-between items-start">
                 <div>
                   <div className="font-medium">{log.action_type}</div>
@@ -1121,10 +1129,10 @@ function ActivityTab() {
 function GraphTab() {
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+      <h2 className="text-2xl font-bold mb-6 text-white">
         Граф зв'язків
       </h2>
-      <p className="text-gray-600 dark:text-gray-400">
+      <p className="text-gray-300">
         Візуалізація зв'язків між бізнесами, клієнтами та майстрами (в розробці)
       </p>
     </div>
@@ -1165,13 +1173,13 @@ function AnalyticsTab({ stats }: { stats: any }) {
   return (
     <div>
       <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <h2 className="text-2xl font-bold text-white">
           Аналітика
         </h2>
         <select
           value={period}
           onChange={(e) => setPeriod(e.target.value as any)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+          className="px-4 py-2 border border-white/10 rounded-lg"
         >
           <option value="day">День</option>
           <option value="week">Тиждень</option>
@@ -1182,16 +1190,16 @@ function AnalyticsTab({ stats }: { stats: any }) {
 
       {analytics && (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Всього бізнесів</div>
+          <div className="bg-white/5 rounded-lg p-6">
+            <div className="text-sm text-gray-300 mb-2">Всього бізнесів</div>
             <div className="text-3xl font-bold">{analytics.overview?.totalBusinesses || 0}</div>
           </div>
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Активні</div>
+          <div className="bg-white/5 rounded-lg p-6">
+            <div className="text-sm text-gray-300 mb-2">Активні</div>
             <div className="text-3xl font-bold">{analytics.overview?.activeBusinesses || 0}</div>
           </div>
-          <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-            <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Реєстрацій за період</div>
+          <div className="bg-white/5 rounded-lg p-6">
+            <div className="text-sm text-gray-300 mb-2">Реєстрацій за період</div>
             <div className="text-3xl font-bold">{analytics.registrations?.total || 0}</div>
           </div>
         </div>
@@ -1228,7 +1236,7 @@ function IntegrationsTab() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+      <h2 className="text-2xl font-bold mb-6 text-white">
         Інтеграції
       </h2>
       {loading ? (
@@ -1236,7 +1244,7 @@ function IntegrationsTab() {
       ) : (
         <div className="space-y-4">
           {integrations.map((integration: any) => (
-            <div key={integration.id} className="border border-gray-200 dark:border-gray-700 rounded-lg p-4">
+            <div key={integration.id} className="border border-white/10 rounded-lg p-4">
               <div className="flex justify-between items-center">
                 <div>
                   <div className="font-medium">{integration.platform}</div>
@@ -1264,10 +1272,10 @@ function IntegrationsTab() {
 function SecurityTab() {
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+      <h2 className="text-2xl font-bold mb-6 text-white">
         Безпека
       </h2>
-      <p className="text-gray-600 dark:text-gray-400">
+      <p className="text-gray-300">
         Управління безпекою та доступом (в розробці)
       </p>
     </div>
@@ -1316,13 +1324,13 @@ function FinancesTab() {
   return (
     <div>
       <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <h2 className="text-2xl font-bold text-white">
           Фінанси
         </h2>
         <select
           value={period}
           onChange={(e) => setPeriod(e.target.value as any)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+          className="px-4 py-2 border border-white/10 rounded-lg"
         >
           <option value="day">День</option>
           <option value="week">Тиждень</option>
@@ -1334,12 +1342,12 @@ function FinancesTab() {
       {finances && (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-              <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Загальний дохід</div>
+            <div className="bg-white/5 rounded-lg p-6">
+              <div className="text-sm text-gray-300 mb-2">Загальний дохід</div>
               <div className="text-3xl font-bold">{formatCurrency(finances.totalRevenue || 0)}</div>
             </div>
-            <div className="bg-gray-50 dark:bg-gray-700 rounded-lg p-6">
-              <div className="text-sm text-gray-600 dark:text-gray-400 mb-2">Всього платежів</div>
+            <div className="bg-white/5 rounded-lg p-6">
+              <div className="text-sm text-gray-300 mb-2">Всього платежів</div>
               <div className="text-3xl font-bold">{finances.totalPayments || 0}</div>
             </div>
           </div>
@@ -1348,7 +1356,7 @@ function FinancesTab() {
             <h3 className="text-xl font-bold mb-4">Топ бізнеси за доходами</h3>
             <div className="space-y-2">
               {finances.topBusinesses?.map((business: any, index: number) => (
-                <div key={index} className="flex justify-between items-center border-b border-gray-200 dark:border-gray-700 py-2">
+                <div key={index} className="flex justify-between items-center border-b border-white/10 py-2">
                   <div>{business.businessName}</div>
                   <div className="font-bold">{formatCurrency(business.revenue)}</div>
                 </div>
@@ -1393,7 +1401,7 @@ function ClientsTab() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+      <h2 className="text-2xl font-bold mb-6 text-white">
         Клієнти
       </h2>
       
@@ -1403,7 +1411,7 @@ function ClientsTab() {
           placeholder="Пошук клієнтів..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+          className="w-full px-4 py-2 border border-white/10 rounded-lg"
         />
       </div>
 
@@ -1413,7 +1421,7 @@ function ClientsTab() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
+              <tr className="border-b border-white/10">
                 <th className="text-left py-3 px-4">Ім'я</th>
                 <th className="text-left py-3 px-4">Телефон</th>
                 <th className="text-left py-3 px-4">Бізнес</th>
@@ -1449,10 +1457,10 @@ function ClientsTab() {
 function SettingsTab() {
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+      <h2 className="text-2xl font-bold mb-6 text-white">
         Налаштування Центру управління
       </h2>
-      <p className="text-gray-600 dark:text-gray-400">
+      <p className="text-gray-300">
         Системні налаштування (в розробці)
       </p>
     </div>
@@ -1621,7 +1629,7 @@ function AdminsTab() {
   return (
     <div>
       <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-gray-900 dark:text-white">
+        <h2 className="text-2xl font-bold text-white">
           Адміністратори
         </h2>
         <button
@@ -1651,13 +1659,13 @@ function AdminsTab() {
             placeholder="Пошук по email або імені..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+            className="w-full pl-10 pr-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white"
           />
         </div>
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value as any)}
-          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          className="px-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white"
         >
           <option value="all">Всі ролі</option>
           <option value="SUPER_ADMIN">Супер адмін</option>
@@ -1672,7 +1680,7 @@ function AdminsTab() {
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
-              <tr className="border-b border-gray-200 dark:border-gray-700">
+              <tr className="border-b border-white/10">
                 <th className="text-left py-3 px-4">Email</th>
                 <th className="text-left py-3 px-4">Ім'я</th>
                 <th className="text-left py-3 px-4">Роль</th>
@@ -1699,7 +1707,7 @@ function AdminsTab() {
                     </span>
                   </td>
                   <td className="py-3 px-4">
-                    <div className="text-sm text-gray-600 dark:text-gray-400">
+                    <div className="text-sm text-gray-300">
                       {admin.permissions?.length || 0} прав
                     </div>
                   </td>
@@ -1710,7 +1718,7 @@ function AdminsTab() {
                       <span className="px-2 py-1 rounded text-xs bg-red-100 text-red-800">Неактивний</span>
                     )}
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
+                  <td className="py-3 px-4 text-sm text-gray-300">
                     {admin.lastLoginAt ? format(new Date(admin.lastLoginAt), 'dd.MM.yyyy HH:mm', { locale: uk }) : 'Ніколи'}
                   </td>
                   <td className="py-3 px-4">
@@ -1739,8 +1747,8 @@ function AdminsTab() {
       {/* Create/Edit Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white dark:bg-gray-800 rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
-            <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+          <div className="card-floating rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+            <h3 className="text-xl font-bold mb-4 text-white">
               {editingAdmin ? 'Редагувати адміна' : 'Створити нового адміна'}
             </h3>
 
@@ -1752,7 +1760,7 @@ function AdminsTab() {
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   disabled={!!editingAdmin}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white disabled:opacity-50"
+                  className="w-full px-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white disabled:opacity-50"
                   required
                 />
               </div>
@@ -1765,7 +1773,7 @@ function AdminsTab() {
                   type="password"
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white"
                   required={!editingAdmin}
                 />
               </div>
@@ -1776,7 +1784,7 @@ function AdminsTab() {
                   type="text"
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white"
                 />
               </div>
 
@@ -1785,7 +1793,7 @@ function AdminsTab() {
                 <select
                   value={formData.role}
                   onChange={(e) => setFormData({ ...formData, role: e.target.value as any })}
-                  className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+                  className="w-full px-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white"
                 >
                   <option value="SUPER_ADMIN">Супер адмін</option>
                   <option value="ADMIN">Адмін</option>
@@ -1795,7 +1803,7 @@ function AdminsTab() {
 
               <div>
                 <label className="block mb-2 text-sm font-medium">Права доступу</label>
-                <div className="space-y-2 border border-gray-300 dark:border-gray-600 rounded-lg p-4">
+                <div className="space-y-2 border border-white/10 rounded-lg p-4">
                   {allPermissions.map((permission) => (
                     <label key={permission} className="flex items-center gap-2 cursor-pointer">
                       <input
@@ -1804,7 +1812,7 @@ function AdminsTab() {
                         onChange={() => togglePermission(permission)}
                         className="w-4 h-4"
                       />
-                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                      <span className="text-sm text-gray-300">
                         {permission.replace(/_/g, ' ')}
                       </span>
                     </label>
@@ -1839,7 +1847,7 @@ function AdminsTab() {
                     isActive: true,
                   })
                 }}
-                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
+                className="px-4 py-2 border border-white/10 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
               >
                 Скасувати
               </button>
@@ -1880,7 +1888,7 @@ function ExportTab() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold mb-6 text-gray-900 dark:text-white">
+      <h2 className="text-2xl font-bold mb-6 text-white">
         Експорт/Імпорт даних
       </h2>
       
@@ -1890,7 +1898,7 @@ function ExportTab() {
           <select
             value={exportFormat}
             onChange={(e) => setExportFormat(e.target.value as any)}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+            className="w-full px-4 py-2 border border-white/10 rounded-lg"
           >
             <option value="csv">CSV</option>
             <option value="excel">Excel</option>
@@ -1903,7 +1911,7 @@ function ExportTab() {
           <select
             value={exportType}
             onChange={(e) => setExportType(e.target.value as any)}
-            className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg"
+            className="w-full px-4 py-2 border border-white/10 rounded-lg"
           >
             <option value="businesses">Бізнеси</option>
             <option value="clients">Клієнти</option>
