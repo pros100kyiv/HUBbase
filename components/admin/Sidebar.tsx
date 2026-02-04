@@ -3,7 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
-import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, BellIcon, ShareIcon } from '@/components/icons'
+import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon } from '@/components/icons'
 import { NotificationsPanel } from './NotificationsPanel'
 
 interface NavItem {
@@ -59,24 +59,11 @@ export function Sidebar({ className }: SidebarProps) {
 
   // Main Navigation
   const mainNavItems: NavItem[] = [
-    { id: 'main', label: 'Dashboard', icon: <HomeIcon />, path: '/dashboard' },
-    { id: 'appointments', label: 'Calendar', icon: <CalendarIcon />, path: '/dashboard/appointments' },
-    { id: 'clients', label: 'My task', icon: <UsersIcon />, path: '/dashboard/clients' },
-    { id: 'analytics', label: "Static's", icon: <ChartIcon />, path: '/dashboard/analytics' },
-    { id: 'masters', label: 'Document', icon: <UserIcon />, path: '/dashboard/masters' },
-  ]
-
-  // Integration Section
-  const integrationItems: NavItem[] = [
-    { id: 'social', label: 'Slack', icon: <ShareIcon />, path: '/dashboard/social' },
-    { id: 'telegram', label: 'Discord', icon: <ShareIcon />, path: '/dashboard/social' },
-    { id: 'add-plugin', label: 'Add Plugin', icon: <ShareIcon />, path: '/dashboard/social' },
-  ]
-
-  // Teams Section
-  const teamsItems: NavItem[] = [
-    { id: 'team-seo', label: 'Seo', icon: <UsersIcon />, path: '/dashboard/clients' },
-    { id: 'team-marketing', label: 'Marketing', icon: <UsersIcon />, path: '/dashboard/clients' },
+    { id: 'main', label: 'Головна', icon: <HomeIcon />, path: '/dashboard/main' },
+    { id: 'appointments', label: 'Записи', icon: <CalendarIcon />, path: '/dashboard/appointments' },
+    { id: 'clients', label: 'Клієнти', icon: <UsersIcon />, path: '/dashboard/clients' },
+    { id: 'masters', label: 'Спеціалісти', icon: <UserIcon />, path: '/dashboard/masters' },
+    { id: 'analytics', label: 'Аналітика', icon: <ChartIcon />, path: '/dashboard/analytics' },
   ]
 
   const handleNotificationUpdate = () => {
@@ -89,7 +76,7 @@ export function Sidebar({ className }: SidebarProps) {
   }
 
   const renderNavItem = (item: NavItem) => {
-    const isActive = pathname === item.path || (item.path === '/dashboard' && pathname === '/dashboard')
+    const isActive = pathname === item.path || (item.path === '/dashboard/main' && pathname === '/dashboard/main')
     return (
       <button
         key={item.id}
@@ -143,18 +130,6 @@ export function Sidebar({ className }: SidebarProps) {
             {mainNavItems.map(renderNavItem)}
           </div>
 
-          {/* INTEGRATION Section */}
-          <div className="space-y-1">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 mb-2" style={{ letterSpacing: '0.1em' }}>INTEGRATION</p>
-            {integrationItems.map(renderNavItem)}
-          </div>
-
-          {/* TEAMS Section */}
-          <div className="space-y-1">
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-4 mb-2" style={{ letterSpacing: '0.1em' }}>TEAMS</p>
-            {teamsItems.map(renderNavItem)}
-          </div>
-
           {/* Settings */}
           <div className="space-y-1 pt-4 border-t" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
             <button
@@ -170,7 +145,7 @@ export function Sidebar({ className }: SidebarProps) {
                 <SettingsIcon />
               </div>
               <span className={cn("text-sm font-medium", pathname === '/dashboard/settings' ? 'text-white' : 'text-gray-300')}>
-                Setting
+                Налаштування
               </span>
             </button>
           </div>

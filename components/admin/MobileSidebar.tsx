@@ -69,7 +69,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   }, [business])
 
   const navItems: NavItem[] = [
-    { id: 'main', label: 'Головна', icon: <HomeIcon />, path: '/dashboard' },
+    { id: 'main', label: 'Головна', icon: <HomeIcon />, path: '/dashboard/main' },
     { id: 'appointments', label: 'Записи', icon: <CalendarIcon />, path: '/dashboard/appointments' },
     { id: 'clients', label: 'Клієнти', icon: <UsersIcon />, path: '/dashboard/clients' },
     { id: 'masters', label: 'Спеціалісти', icon: <UserIcon />, path: '/dashboard/masters' },
