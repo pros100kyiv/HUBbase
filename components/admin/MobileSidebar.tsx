@@ -87,69 +87,69 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     onClose()
   }
 
+  const sidebarStyle = {
+    backgroundColor: 'rgba(20, 20, 20, 0.85)',
+    backdropFilter: 'blur(25px)',
+    WebkitBackdropFilter: 'blur(25px)' as const,
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+  }
+
   return (
     <>
       {/* Mobile Sidebar Overlay */}
       {isOpen && (
         <div
-          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
           onClick={onClose}
         />
       )}
 
-      {/* Mobile Sidebar */}
+      {/* Mobile Sidebar — у стилі Dashboard (темний glass) */}
       <aside
         className={cn(
-          'fixed top-0 left-0 h-full w-72 bg-white dark:bg-slate-800 border-r border-slate-200 dark:border-slate-700 z-50 transform transition-transform duration-300 ease-in-out md:hidden shadow-lg',
+          'fixed top-0 left-0 h-full w-72 border-r z-50 transform transition-transform duration-300 ease-in-out md:hidden',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
+        style={sidebarStyle}
       >
-        {/* Header */}
-        <div className="flex items-center justify-between p-6 border-b border-slate-200 dark:border-slate-700">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-lg gradient-indigo flex items-center justify-center text-white font-bold text-lg shadow-md">
-              X
-            </div>
-            <div>
-              <h1 className="text-lg font-bold text-slate-900 dark:text-slate-50">Xbase</h1>
-              <p className="text-xs text-slate-500 dark:text-slate-400">Booking System</p>
-            </div>
-          </div>
+        {/* Header — як у десктопному Sidebar */}
+        <div className="flex items-center justify-between p-6 border-b" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+          <h1 className="text-xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>Growth</h1>
           <button
             onClick={onClose}
-            className="p-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+            className="p-2 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
+            aria-label="Закрити меню"
           >
-            <XIcon className="w-6 h-6 text-slate-700 dark:text-slate-300" />
+            <XIcon className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Navigation */}
+        {/* Navigation — ті самі стилі, що в Sidebar */}
         <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-88px)]">
           {navItems.map((item) => {
-            const isActive = pathname === item.path || (item.path === '/dashboard' && pathname === '/dashboard')
+            const isActive = pathname === item.path || (item.path === '/dashboard/main' && pathname === '/dashboard/main')
             return (
               <button
                 key={item.id}
                 onClick={() => handleNavClick(item)}
                 className={cn(
-                  'w-full flex items-center gap-3 px-4 py-3 rounded-lg text-left transition-all duration-200 relative',
+                  'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-all duration-200 relative group',
                   isActive
-                    ? 'bg-gradient-to-r from-indigo-500 to-purple-600 text-white shadow-md'
-                    : 'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700'
+                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                    : 'text-gray-300 hover:bg-white/10 hover:text-white'
                 )}
+                style={isActive ? { boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' } : {}}
               >
-                <div className={cn('w-5 h-5 flex-shrink-0', isActive ? 'text-white' : 'text-slate-600 dark:text-slate-400')}>
+                <div className={cn('w-5 h-5 flex-shrink-0', isActive ? 'text-white' : 'text-gray-400 group-hover:text-white')}>
                   {item.icon}
                 </div>
-                <span className={cn('text-sm font-medium flex-1', isActive ? 'text-white' : 'text-slate-900 dark:text-slate-100')}>
+                <span className={cn('text-sm font-medium flex-1', isActive ? 'text-white' : 'text-gray-300')}>
                   {item.label}
                 </span>
-                {item.badge && item.badge > 0 && (
+                {item.badge != null && item.badge > 0 && (
                   <span className={cn(
                     'text-xs font-semibold px-2 py-0.5 rounded-full min-w-[20px] text-center',
-                    isActive
-                      ? 'bg-white/20 text-white'
-                      : 'bg-red-500 text-white'
+                    isActive ? 'bg-white/20 text-white' : 'bg-red-500 text-white'
                   )}>
                     {item.badge}
                   </span>
