@@ -28,7 +28,9 @@
     "db:sync-management": "tsx scripts/sync-all-businesses-to-management-center.ts",
     "db:apply-rls": "tsx scripts/apply-rls-manual.ts",
     "db:diagnose": "tsx scripts/diagnose-and-fix-database.ts",
-    "db:create-email-index": "tsx scripts/create-email-index.ts"
+    "db:create-email-index": "tsx scripts/create-email-index.ts",
+    "test-data:generate": "tsx scripts/generate-test-data.ts",
+    "test-data:clean": "tsx scripts/clean-test-data.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
