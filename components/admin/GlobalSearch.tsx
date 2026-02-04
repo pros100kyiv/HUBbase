@@ -108,7 +108,7 @@ export function GlobalSearch({ businessId, isOpen, onClose }: GlobalSearchProps)
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-start justify-center pt-20 px-4 overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-start sm:items-center justify-center pt-4 sm:pt-20 px-2 sm:px-4 overflow-y-auto">
       {/* Backdrop */}
       <div 
         className="fixed inset-0 bg-black/70"
@@ -116,7 +116,7 @@ export function GlobalSearch({ businessId, isOpen, onClose }: GlobalSearchProps)
       />
       
       {/* Search Modal */}
-      <div className="relative w-full max-w-2xl bg-[#2A2A2A] rounded-xl shadow-2xl border border-white/10 my-auto max-h-[calc(100vh-6rem)] overflow-y-auto">
+      <div className="relative w-full sm:max-w-2xl bg-[#2A2A2A] rounded-xl shadow-2xl border border-white/10 sm:my-auto max-h-[calc(100vh-1rem)] sm:max-h-[calc(100vh-6rem)] overflow-y-auto">
         {/* Search Input */}
         <div className="p-4 border-b border-white/10">
           <div className="flex items-center gap-3">

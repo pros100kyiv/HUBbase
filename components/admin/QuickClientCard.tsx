@@ -174,8 +174,8 @@ export function QuickClientCard({
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 overflow-y-auto">
-      <div className="relative w-full max-w-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-candy-lg shadow-soft-xl p-6 my-auto max-h-[calc(100vh-2rem)] overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 overflow-y-auto">
+      <div className="relative w-full sm:max-w-md bg-white dark:bg-gray-800 border-t sm:border border-gray-200 dark:border-gray-700 rounded-t-xl sm:rounded-candy-lg shadow-soft-xl p-4 sm:p-6 sm:my-auto max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-y-auto">
         {/* Close button */}
         {onCancel && (
           <button

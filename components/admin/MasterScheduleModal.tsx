@@ -178,8 +178,8 @@ export function MasterScheduleModal({
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-center justify-center p-2 sm:p-4 bg-black/70 overflow-y-auto">
-      <div className="relative w-full max-w-lg bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-candy-lg shadow-soft-xl p-3 sm:p-4 my-auto max-h-[calc(100vh-1rem)] sm:max-h-[calc(100vh-2rem)] overflow-y-auto">
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 overflow-y-auto">
+      <div className="relative w-full sm:max-w-lg bg-white dark:bg-gray-800 border-t sm:border border-gray-200 dark:border-gray-700 rounded-t-xl sm:rounded-candy-lg shadow-soft-xl p-3 sm:p-4 sm:my-auto max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-y-auto">
         {/* Close Button */}
         <button
           onClick={onClose}
