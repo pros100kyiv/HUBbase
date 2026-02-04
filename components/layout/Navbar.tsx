@@ -8,6 +8,7 @@ import { SunIcon, MoonIcon, MenuIcon } from '@/components/icons'
 import { setMobileMenuState } from '@/app/dashboard/layout'
 import { AccountInfo } from '@/components/layout/AccountInfo'
 import { GlobalSearch } from '@/components/admin/GlobalSearch'
+import { AccountProfileButton } from '@/components/layout/AccountProfileButton'
 
 // Оновлюємо бізнес при зміні localStorage
 if (typeof window !== 'undefined') {
@@ -133,16 +134,8 @@ export function Navbar() {
                   )}
                 </button>
                 
-                {/* Profile Icon */}
-                {business && (
-                  <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
-                    <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center border border-white/30">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                      </svg>
-                    </div>
-                  </button>
-                )}
+                {/* Profile Icon with Dropdown */}
+                {business && <AccountProfileButton business={business} router={router} />}
               </div>
             </div>
           </div>
