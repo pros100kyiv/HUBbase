@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { BookingProvider } from '@/contexts/BookingContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
+import { NavigationProgressProvider } from '@/contexts/NavigationProgressContext'
 import { ToastContainer } from '@/components/ui/toast'
 
 export const metadata: Metadata = {
@@ -44,8 +45,10 @@ export default function RootLayout({
       <body suppressHydrationWarning>
         <ThemeProvider>
           <BookingProvider>
-            <ToastContainer />
-            {children}
+            <NavigationProgressProvider>
+              <ToastContainer />
+              {children}
+            </NavigationProgressProvider>
           </BookingProvider>
         </ThemeProvider>
       </body>

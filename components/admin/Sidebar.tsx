@@ -3,6 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
+import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
 import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon } from '@/components/icons'
 import { NotificationsPanel } from './NotificationsPanel'
 
@@ -22,6 +23,7 @@ interface SidebarProps {
 export function Sidebar({ className }: SidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const { startNavigation } = useNavigationProgress()
   const [business, setBusiness] = useState<any>(null)
   const [pendingCount, setPendingCount] = useState(0)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -84,6 +86,7 @@ export function Sidebar({ className }: SidebarProps) {
           if (item.onClick) {
             item.onClick()
           } else {
+            startNavigation()
             router.push(item.path)
           }
         }}
@@ -133,7 +136,7 @@ export function Sidebar({ className }: SidebarProps) {
           {/* Settings */}
           <div className="space-y-1 pt-4 border-t" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
             <button
-              onClick={() => router.push('/dashboard/settings')}
+              onClick={() => { startNavigation(); router.push('/dashboard/settings') }}
               className={cn(
                 'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-all duration-200',
                 pathname === '/dashboard/settings'

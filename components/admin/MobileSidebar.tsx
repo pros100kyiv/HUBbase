@@ -3,6 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 import { cn } from '@/lib/utils'
+import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
 import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, BellIcon, XIcon } from '@/components/icons'
 import { NotificationsPanel } from './NotificationsPanel'
 
@@ -23,6 +24,7 @@ interface MobileSidebarProps {
 export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const router = useRouter()
   const pathname = usePathname()
+  const { startNavigation } = useNavigationProgress()
   const [business, setBusiness] = useState<any>(null)
   const [pendingCount, setPendingCount] = useState(0)
   const [showNotifications, setShowNotifications] = useState(false)
@@ -82,6 +84,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     if (item.onClick) {
       item.onClick()
     } else {
+      startNavigation()
       router.push(item.path)
     }
     onClose()

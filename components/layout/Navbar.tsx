@@ -4,6 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { useEffect, useState } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
+import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
 import { SunIcon, MoonIcon, MenuIcon } from '@/components/icons'
 import { setMobileMenuState } from '@/app/dashboard/layout'
 import { AccountInfo } from '@/components/layout/AccountInfo'
@@ -51,9 +52,12 @@ export function Navbar() {
     return () => clearInterval(interval)
   }, [pathname])
 
+  const { startNavigation } = useNavigationProgress()
+
   const handleLogout = () => {
     localStorage.removeItem('business')
     setBusiness(null)
+    startNavigation()
     router.push('/login')
   }
 
@@ -101,7 +105,7 @@ export function Navbar() {
               <div className="flex items-center gap-2 md:gap-3">
                 {/* Записати Button - Hidden on mobile (shown near Dashboard title) */}
                 <button 
-                  onClick={() => router.push('/dashboard/appointments?create=true')}
+                  onClick={() => { startNavigation(); router.push('/dashboard/appointments?create=true') }}
                   className="hidden md:flex px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors" 
                   style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                 >
@@ -177,7 +181,7 @@ export function Navbar() {
             {business && (
               <div className="hidden md:flex gap-1.5 ml-4">
                 <button
-                  onClick={() => router.push('/dashboard')}
+                  onClick={() => { startNavigation(); router.push('/dashboard') }}
                   className={`px-2.5 py-1 rounded-candy-xs text-xs font-bold transition-all duration-200 ${
                     pathname === '/dashboard' 
                       ? 'candy-purple text-white shadow-soft-lg' 
@@ -187,7 +191,7 @@ export function Navbar() {
                   Панель
                 </button>
                 <button
-                  onClick={() => router.push('/dashboard/settings')}
+                  onClick={() => { startNavigation(); router.push('/dashboard/settings') }}
                   className={`px-2.5 py-1 rounded-candy-xs text-xs font-bold transition-all duration-200 ${
                     pathname === '/dashboard/settings' 
                       ? 'candy-purple text-white shadow-soft-lg' 
@@ -242,7 +246,7 @@ export function Navbar() {
             ) : (
               <Button
                 size="sm"
-                onClick={() => router.push('/login')}
+                onClick={() => { startNavigation(); router.push('/login') }}
                 className="text-xs px-3 py-1.5 h-auto"
               >
                 Увійти

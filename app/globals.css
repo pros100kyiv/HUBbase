@@ -285,6 +285,26 @@
     }
   }
 
+  /* Top navigation progress bar (indeterminate) */
+  @keyframes navigation-progress {
+    0% {
+      transform: translateX(-100%);
+    }
+    50% {
+      transform: translateX(200%);
+    }
+    100% {
+      transform: translateX(-100%);
+    }
+  }
+
+  /* Loading state: dots opacity (for loading.tsx) */
+  @keyframes loading-dots-opacity {
+    0%, 33% { opacity: 0.3; }
+    50% { opacity: 1; }
+    66%, 100% { opacity: 0.3; }
+  }
+
   /* Hover Effects */
   .hover-lift {
     transition: transform 0.2s ease, box-shadow 0.2s ease;
