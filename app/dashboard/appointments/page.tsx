@@ -32,12 +32,17 @@ export default function AppointmentsPage() {
   const router = useRouter()
   const [business, setBusiness] = useState<any>(null)
   const [appointments, setAppointments] = useState<Appointment[]>([])
-  const [currentMonth, setCurrentMonth] = useState(() => {
+  const [calendarReady, setCalendarReady] = useState(false)
+  const [currentMonth, setCurrentMonth] = useState<Date | null>(null)
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+
+  // Initialize calendar dates only on client to avoid hydration mismatch
+  useEffect(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    return today
-  })
-  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+    setCurrentMonth(today)
+    setCalendarReady(true)
+  }, [])
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [filterMaster, setFilterMaster] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
@@ -359,11 +364,11 @@ export default function AppointmentsPage() {
       }, 0)
   }
 
-  const monthStart = startOfMonth(currentMonth)
-  const monthEnd = endOfMonth(currentMonth)
-  const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 })
-  const calendarEnd = endOfWeek(monthEnd, { weekStartsOn: 1 })
-  const calendarDays = eachDayOfInterval({ start: calendarStart, end: calendarEnd })
+  const monthStart = currentMonth ? startOfMonth(currentMonth) : null
+  const monthEnd = currentMonth ? endOfMonth(currentMonth) : null
+  const calendarStart = monthStart ? startOfWeek(monthStart, { weekStartsOn: 1 }) : null
+  const calendarEnd = monthEnd ? endOfWeek(monthEnd, { weekStartsOn: 1 }) : null
+  const calendarDays = calendarStart && calendarEnd ? eachDayOfInterval({ start: calendarStart, end: calendarEnd }) : []
 
   const getAppointmentsForDay = (day: Date) => {
     return filteredAppointments.filter((apt) => isSameDay(new Date(apt.startTime), day))
@@ -536,118 +541,126 @@ export default function AppointmentsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
         {/* Main Content */}
         <div className="lg:col-span-2 space-y-3">
-          {/* Month Navigation */}
+          {/* Month Navigation & Calendar - only after client mount to avoid hydration mismatch */}
           <div className="rounded-xl p-4 card-floating">
-            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
-              <h2 className="text-base font-black text-white">
-                {format(currentMonth, 'LLLL yyyy', { locale: uk })}
-              </h2>
-              <div className="flex gap-1.5">
-                <button
-                  onClick={() => {
-                    const prev = new Date(currentMonth)
-                    prev.setMonth(prev.getMonth() - 1)
-                    setCurrentMonth(prev)
-                    setSelectedDate(null)
-                  }}
-                  className="p-1 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-all active:scale-95"
-                >
-                  <ChevronLeftIcon className="w-4 h-4" />
-                </button>
-                <button
-                  onClick={() => {
-                    const today = new Date()
-                    today.setHours(0, 0, 0, 0)
-                    setCurrentMonth(today)
-                    setSelectedDate(today)
-                  }}
-                  className="px-2.5 py-1 bg-white text-black font-bold rounded-lg text-xs hover:bg-gray-100 transition-all active:scale-95"
-                  style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
-                >
-                  Сьогодні
-                </button>
-                <button
-                  onClick={() => {
-                    const next = new Date(currentMonth)
-                    next.setMonth(next.getMonth() + 1)
-                    setCurrentMonth(next)
-                    setSelectedDate(null)
-                  }}
-                  className="p-1 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-all active:scale-95"
-                >
-                  <ChevronRightIcon className="w-4 h-4" />
-                </button>
+            {!calendarReady || !currentMonth ? (
+              <div className="flex items-center justify-center py-12 text-gray-400">
+                <span className="text-sm">Завантаження календаря...</span>
               </div>
-            </div>
-
-            {/* Status Filters */}
-            <div className="flex gap-1.5 mb-2 flex-wrap">
-              {['all', 'Pending', 'Confirmed', 'Done', 'Cancelled'].map((status) => (
-                <button
-                  key={status}
-                  onClick={() => setFilterStatus(status)}
-                  className={cn(
-                    'px-2.5 py-1 rounded-lg text-xs font-bold transition-all active:scale-95 whitespace-nowrap',
-                    filterStatus === status
-                      ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                      : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white border border-white/10'
-                  )}
-                  style={filterStatus === status ? { boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' } : {}}
-                >
-                  {status === 'all' ? 'Всі' : status === 'Pending' ? 'Очікує' : status === 'Confirmed' ? 'Підтверджено' : status === 'Done' ? 'Виконано' : 'Скасовано'}
-                </button>
-              ))}
-            </div>
-
-            {/* Calendar Grid */}
-            <div className="grid grid-cols-7 gap-1">
-              {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
-                <div key={day} className="text-center text-xs font-bold text-gray-400 py-1">
-                  {day}
+            ) : (
+              <>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
+                  <h2 className="text-base font-black text-white">
+                    {format(currentMonth, 'LLLL yyyy', { locale: uk })}
+                  </h2>
+                  <div className="flex gap-1.5">
+                    <button
+                      onClick={() => {
+                        const prev = new Date(currentMonth)
+                        prev.setMonth(prev.getMonth() - 1)
+                        setCurrentMonth(prev)
+                        setSelectedDate(null)
+                      }}
+                      className="p-1 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-all active:scale-95"
+                    >
+                      <ChevronLeftIcon className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => {
+                        const today = new Date()
+                        today.setHours(0, 0, 0, 0)
+                        setCurrentMonth(today)
+                        setSelectedDate(today)
+                      }}
+                      className="px-2.5 py-1 bg-white text-black font-bold rounded-lg text-xs hover:bg-gray-100 transition-all active:scale-95"
+                      style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+                    >
+                      Сьогодні
+                    </button>
+                    <button
+                      onClick={() => {
+                        const next = new Date(currentMonth)
+                        next.setMonth(next.getMonth() + 1)
+                        setCurrentMonth(next)
+                        setSelectedDate(null)
+                      }}
+                      className="p-1 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-all active:scale-95"
+                    >
+                      <ChevronRightIcon className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-              ))}
-              
-              {calendarDays.map((day) => {
-                const dayAppointments = getAppointmentsForDay(day)
-                const isToday = isSameDay(day, new Date())
-                const isSelected = selectedDate && isSameDay(day, selectedDate)
-                const isCurrentMonth = day.getMonth() === currentMonth.getMonth()
 
-                return (
-                  <button
-                    key={day.toISOString()}
-                    onClick={() => {
-                      if (isCurrentMonth) {
-                        setSelectedDate(day)
-                      }
-                    }}
-                    className={cn(
-                      'relative p-1 rounded-lg border transition-all min-h-[40px] flex flex-col items-center justify-start',
-                      !isCurrentMonth && 'opacity-30',
-                      isSelected
-                        ? 'border-blue-500 bg-blue-500/20 shadow-md'
-                        : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10',
-                      isToday && !isSelected && 'ring-1 ring-blue-500/50',
-                      isCurrentMonth && 'cursor-pointer active:scale-95'
-                    )}
-                  >
-                    <div className={cn(
-                      'text-xs font-black mb-0.5',
-                      isToday ? 'text-blue-400' : 'text-white'
-                    )}>
-                      {format(day, 'd')}
+                {/* Status Filters */}
+                <div className="flex gap-1.5 mb-2 flex-wrap">
+                  {['all', 'Pending', 'Confirmed', 'Done', 'Cancelled'].map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => setFilterStatus(status)}
+                      className={cn(
+                        'px-2.5 py-1 rounded-lg text-xs font-bold transition-all active:scale-95 whitespace-nowrap',
+                        filterStatus === status
+                          ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                          : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white border border-white/10'
+                      )}
+                      style={filterStatus === status ? { boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' } : {}}
+                    >
+                      {status === 'all' ? 'Всі' : status === 'Pending' ? 'Очікує' : status === 'Confirmed' ? 'Підтверджено' : status === 'Done' ? 'Виконано' : 'Скасовано'}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Calendar Grid */}
+                <div className="grid grid-cols-7 gap-1">
+                  {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
+                    <div key={day} className="text-center text-xs font-bold text-gray-400 py-1">
+                      {day}
                     </div>
-                    {dayAppointments.length > 0 && (
-                      <div className="w-full mt-auto">
-                        <div className="text-[10px] font-black text-blue-400 text-center bg-blue-500/20 rounded-full py-0.5">
-                          {dayAppointments.length}
+                  ))}
+                  
+                  {calendarDays.map((day) => {
+                    const dayAppointments = getAppointmentsForDay(day)
+                    const isToday = isSameDay(day, new Date())
+                    const isSelected = selectedDate && isSameDay(day, selectedDate)
+                    const isDayInCurrentMonth = currentMonth !== null && day.getMonth() === currentMonth.getMonth()
+
+                    return (
+                      <button
+                        key={day.toISOString()}
+                        onClick={() => {
+                          if (isDayInCurrentMonth) {
+                            setSelectedDate(new Date(day.getTime()))
+                          }
+                        }}
+                        className={cn(
+                          'relative p-1 rounded-lg border transition-all min-h-[40px] flex flex-col items-center justify-start',
+                          !isDayInCurrentMonth && 'opacity-30',
+                          isSelected
+                            ? 'border-blue-500 bg-blue-500/20 shadow-md'
+                            : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10',
+                          isToday && !isSelected && 'ring-1 ring-blue-500/50',
+                          isDayInCurrentMonth && 'cursor-pointer active:scale-95'
+                        )}
+                      >
+                        <div className={cn(
+                          'text-xs font-black mb-0.5',
+                          isToday ? 'text-blue-400' : 'text-white'
+                        )}>
+                          {format(day, 'd')}
                         </div>
-                      </div>
-                    )}
-                  </button>
-                )
-              })}
-            </div>
+                        {dayAppointments.length > 0 && (
+                          <div className="w-full mt-auto">
+                            <div className="text-[10px] font-black text-blue-400 text-center bg-blue-500/20 rounded-full py-0.5">
+                              {dayAppointments.length}
+                            </div>
+                          </div>
+                        )}
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            )}
           </div>
 
           {/* Selected Date Details */}
