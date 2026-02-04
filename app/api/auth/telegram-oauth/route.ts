@@ -168,7 +168,7 @@ export async function POST(request: Request) {
           surfaceColor: updatedBusiness.surfaceColor,
           isActive: updatedBusiness.isActive,
           telegramChatId: updatedBusiness.telegramChatId || null,
-          businessIdentifier: updatedBusiness.businessIdentifier || null,
+          businessIdentifier: businessIdentifier, // Використовуємо згенерований або існуючий
           profileCompleted: updatedBusiness.profileCompleted || false,
         },
         user: {
@@ -370,7 +370,7 @@ export async function POST(request: Request) {
           surfaceColor: updatedBusiness.surfaceColor,
           isActive: updatedBusiness.isActive,
           telegramChatId: updatedBusiness.telegramChatId || null,
-          businessIdentifier: updatedBusiness.businessIdentifier || null,
+          businessIdentifier: businessIdentifier, // Використовуємо згенерований або існуючий
           profileCompleted: updatedBusiness.profileCompleted || false,
         },
         user: {

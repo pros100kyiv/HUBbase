@@ -119,6 +119,7 @@ model Business {
   smsMessages                  SMSMessage[] // SMS повідомлення
   socialIntegrations           SocialIntegration[] // Інтеграції з соцмережами
   notes                        Note[] // Нотатки
+  modules                      BusinessModule[] // Модулі/розширення бізнесу
   createdAt                    DateTime            @default(now())
   updatedAt                    DateTime            @updatedAt
 
@@ -126,6 +127,7 @@ model Business {
   @@index([email])
   @@index([googleId])
   @@index([niche])
+  @@index([businessIdentifier])
 }
 
 model Master {
@@ -396,17 +398,17 @@ model TelegramUser {
 
 // Коди підтвердження для Telegram OAuth
 model TelegramVerification {
-  id              String    @id @default(cuid())
-  code            String    @unique // 6-значний код підтвердження
-  telegramId      BigInt    // Telegram ID користувача
-  telegramData    String?   // JSON: дані з Telegram OAuth (first_name, last_name, username, photo_url)
-  action          String    // 'login' | 'register'
-  deviceId        String?   // ID пристрою (якщо потрібне підтвердження пристрою)
-  businessId      String?   // ID бізнесу (для реєстрації)
-  expiresAt       DateTime  // Термін дії коду (5 хвилин)
-  verified        Boolean   @default(false) // Чи підтверджено код
-  verifiedAt      DateTime? // Дата підтвердження
-  createdAt       DateTime  @default(now())
+  id           String    @id @default(cuid())
+  code         String    @unique // 6-значний код підтвердження
+  telegramId   BigInt // Telegram ID користувача
+  telegramData String? // JSON: дані з Telegram OAuth (first_name, last_name, username, photo_url)
+  action       String // 'login' | 'register'
+  deviceId     String? // ID пристрою (якщо потрібне підтвердження пристрою)
+  businessId   String? // ID бізнесу (для реєстрації)
+  expiresAt    DateTime // Термін дії коду (5 хвилин)
+  verified     Boolean   @default(false) // Чи підтверджено код
+  verifiedAt   DateTime? // Дата підтвердження
+  createdAt    DateTime  @default(now())
 
   @@index([code])
   @@index([telegramId])
@@ -615,19 +617,39 @@ model SocialIntegration {
 
 // Нотатки
 model Note {
-  id          String    @id @default(cuid())
-  businessId  String
-  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  text        String
-  completed   Boolean   @default(false)
-  date        DateTime  // Дата нотатки
-  order      Int       @default(0) // Порядок сортування
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id         String   @id @default(cuid())
+  businessId String
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  text       String
+  completed  Boolean  @default(false)
+  date       DateTime // Дата нотатки
+  order      Int      @default(0) // Порядок сортування
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
 
   @@index([businessId])
   @@index([date])
   @@index([businessId, date])
+}
+
+// Модулі/розширення бізнесу
+model BusinessModule {
+  id          String    @id @default(cuid())
+  businessId  String
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  moduleKey   String // Унікальний ключ модуля (наприклад: 'advanced-analytics', 'custom-reports', 'api-integration')
+  moduleName  String // Назва модуля для відображення
+  isEnabled   Boolean   @default(true) // Чи увімкнений модуль
+  settings    String? // JSON: налаштування модуля
+  metadata    String? // JSON: додаткові метадані (версія, дата активації, тощо)
+  activatedAt DateTime? // Дата активації модуля
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@unique([businessId, moduleKey])
+  @@index([businessId])
+  @@index([moduleKey])
+  @@index([isEnabled])
 }
 
 // ============================================
@@ -846,17 +868,17 @@ enum AdminPermission {
 }
 
 model Admin {
-  id            String          @id @default(cuid())
-  email         String          @unique // Email адміна
-  password      String // Хешований пароль
-  name          String? // Ім'я адміна
-  role          AdminRole       @default(ADMIN) // Роль адміна
-  permissions   String? // JSON: масив AdminPermission
-  isActive      Boolean         @default(true) // Чи активний адмін
-  lastLoginAt   DateTime? // Останній вхід
-  createdBy     String? // ID адміна, який створив цього адміна
-  createdAt     DateTime        @default(now())
-  updatedAt     DateTime        @updatedAt
+  id          String    @id @default(cuid())
+  email       String    @unique // Email адміна
+  password    String // Хешований пароль
+  name        String? // Ім'я адміна
+  role        AdminRole @default(ADMIN) // Роль адміна
+  permissions String? // JSON: масив AdminPermission
+  isActive    Boolean   @default(true) // Чи активний адмін
+  lastLoginAt DateTime? // Останній вхід
+  createdBy   String? // ID адміна, який створив цього адміна
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
 
   @@index([email])
   @@index([role])

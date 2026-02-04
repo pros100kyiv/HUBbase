@@ -52,6 +52,11 @@ const businessSelect = {
   telegramId: true,
 }
 
+type BusinessSelect = typeof businessSelect
+type BusinessResult = {
+  [K in keyof BusinessSelect]: BusinessSelect[K] extends true ? any : never
+}
+
 export async function GET(
   request: Request,
   { params }: { params: Promise<{ param: string }> | { param: string } }
@@ -60,14 +65,14 @@ export async function GET(
     const resolvedParams = await Promise.resolve(params)
     const { param } = resolvedParams
 
-    let business
+    let business: BusinessResult | null = null
 
     // Спочатку пробуємо знайти за businessIdentifier (число)
     if (/^\d+$/.test(param)) {
       business = await prisma.business.findUnique({
         where: { businessIdentifier: param },
         select: businessSelect,
-      })
+      }) as BusinessResult | null
     }
 
     // Якщо не знайдено за businessIdentifier, пробуємо за ID
@@ -75,7 +80,7 @@ export async function GET(
       business = await prisma.business.findUnique({
         where: { id: param },
         select: businessSelect,
-      })
+      }) as BusinessResult | null
     }
 
     // Якщо не знайдено, пробуємо за slug
@@ -83,21 +88,21 @@ export async function GET(
       business = await prisma.business.findUnique({
         where: { slug: param },
         select: businessSelect,
-      })
+      }) as BusinessResult | null
     }
 
     // Якщо все ще не знайдено, пробуємо універсальну функцію
     if (!business) {
-      business = await findBusinessByIdentifier(param)
-      if (business) {
+      const foundBusiness = await findBusinessByIdentifier(param)
+      if (foundBusiness) {
         // Відфільтруємо тільки потрібні поля
-        const filtered: any = {}
+        const filtered: Partial<BusinessResult> = {}
         Object.keys(businessSelect).forEach(key => {
-          if (key in business) {
-            filtered[key] = (business as any)[key]
+          if (key in foundBusiness) {
+            (filtered as any)[key] = (foundBusiness as any)[key]
           }
         })
-        business = filtered
+        business = filtered as BusinessResult
       }
     }
 
