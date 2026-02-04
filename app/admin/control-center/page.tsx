@@ -337,7 +337,7 @@ function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
           return (
             <div
               key={index}
-              className="bg-gradient-to-br from-white to-gray-50 dark:from-gray-700 dark:to-gray-800 rounded-lg p-6 shadow-md border border-gray-200 dark:border-gray-600"
+              className="card-floating rounded-xl p-6"
             >
               <div className="flex items-center justify-between mb-4">
                 <Icon className={`w-8 h-8 text-${card.color}-500`} />
@@ -698,7 +698,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                 {(search ? filteredBusinesses : businesses).map((business: Business) => (
                   <tr
                     key={business.id}
-                    className="border-b border-gray-100 dark:border-gray-700 hover:bg-white/10/50"
+                    className="border-b border-white/10 hover:bg-white/5"
                   >
                     <td className="py-3 px-4">
                       <input
@@ -748,7 +748,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                       <span className={`px-2 py-1 rounded text-xs font-medium ${
                         business.registrationType === 'telegram' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
                         business.registrationType === 'google' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-                        'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                        'bg-gray-500/20 text-gray-300 border border-gray-500/50'
                       }`}>
                         {business.registrationType === 'telegram' ? 'Telegram' :
                          business.registrationType === 'google' ? 'Google' :
@@ -1016,7 +1016,7 @@ function PhonesTab() {
             </thead>
             <tbody>
               {phones.map((phone: any) => (
-                <tr key={phone.id} className="border-b border-gray-100 dark:border-gray-700">
+                <tr key={phone.id} className="border-b border-white/10 hover:bg-white/5">
                   <td className="py-3 px-4 font-medium">{phone.phone}</td>
                   <td className="py-3 px-4">
                     <span className={`px-2 py-1 rounded text-xs ${
@@ -1431,7 +1431,7 @@ function ClientsTab() {
             </thead>
             <tbody>
               {clients.map((client: any) => (
-                <tr key={client.id} className="border-b border-gray-100 dark:border-gray-700">
+                <tr key={client.id} className="border-b border-white/10 hover:bg-white/5">
                   <td className="py-3 px-4 font-medium">{client.name}</td>
                   <td className="py-3 px-4">{client.phone}</td>
                   <td className="py-3 px-4">{client.business?.name || '-'}</td>
@@ -1692,7 +1692,7 @@ function AdminsTab() {
             </thead>
             <tbody>
               {admins.map((admin: any) => (
-                <tr key={admin.id} className="border-b border-gray-100 dark:border-gray-700">
+                <tr key={admin.id} className="border-b border-white/10 hover:bg-white/5">
                   <td className="py-3 px-4 font-medium">{admin.email}</td>
                   <td className="py-3 px-4">{admin.name || '-'}</td>
                   <td className="py-3 px-4">
