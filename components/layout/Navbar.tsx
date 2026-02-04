@@ -7,6 +7,7 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { SunIcon, MoonIcon, MenuIcon } from '@/components/icons'
 import { setMobileMenuState } from '@/app/dashboard/layout'
 import { AccountInfo } from '@/components/layout/AccountInfo'
+import { GlobalSearch } from '@/components/admin/GlobalSearch'
 
 // Оновлюємо бізнес при зміні localStorage
 if (typeof window !== 'undefined') {
@@ -61,6 +62,7 @@ export function Navbar() {
   }
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [searchOpen, setSearchOpen] = useState(false)
 
   // Close mobile menu when pathname changes
   useEffect(() => {
@@ -101,12 +103,25 @@ export function Navbar() {
                   + Create
                 </button>
                 
-                {/* Search Icon */}
-                <button className="p-2 rounded-lg hover:bg-white/10 transition-colors">
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                {/* Search Button */}
+                <button 
+                  onClick={() => setSearchOpen(true)}
+                  className="px-3 py-2 rounded-lg hover:bg-white/10 transition-colors flex items-center gap-2 border border-white/10"
+                >
+                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
+                  <span className="text-sm text-gray-300 hidden md:block">Пошук</span>
                 </button>
+                
+                {/* Global Search Modal */}
+                {business && (
+                  <GlobalSearch
+                    businessId={business.id}
+                    isOpen={searchOpen}
+                    onClose={() => setSearchOpen(false)}
+                  />
+                )}
                 
                 {/* Notifications Icon */}
                 <button className="p-2 rounded-lg hover:bg-white/10 transition-colors relative">

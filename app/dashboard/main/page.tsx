@@ -185,6 +185,7 @@ export default function MainPage() {
                 masterName: apt.masterName,
               }
             })}
+            onBookAppointment={() => router.push('/dashboard/appointments?create=true')}
           />
 
           {/* Tasks Section */}

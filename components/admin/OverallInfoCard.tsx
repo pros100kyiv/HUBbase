@@ -2,6 +2,7 @@
 
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
+import { useRouter } from 'next/navigation'
 
 interface Task {
   id: string
@@ -13,10 +14,20 @@ interface Task {
 
 interface OverallInfoCardProps {
   tasks?: Task[]
+  onBookAppointment?: () => void
 }
 
-export function OverallInfoCard({ tasks = [] }: OverallInfoCardProps) {
+export function OverallInfoCard({ tasks = [], onBookAppointment }: OverallInfoCardProps) {
+  const router = useRouter()
   const hasTasks = tasks && tasks.length > 0
+
+  const handleBookAppointment = () => {
+    if (onBookAppointment) {
+      onBookAppointment()
+    } else {
+      router.push('/dashboard/appointments?create=true')
+    }
+  }
 
   return (
     <div className="bg-[#1A1A1A] text-white rounded-xl p-6 card-floating">
@@ -165,6 +176,15 @@ export function OverallInfoCard({ tasks = [] }: OverallInfoCardProps) {
                 Можеш використати момент і додати справи на день
               </p>
             </div>
+
+            {/* Book Appointment Button */}
+            <button
+              onClick={handleBookAppointment}
+              className="mt-4 px-6 py-3 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors"
+              style={{ letterSpacing: '-0.01em', boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+            >
+              Записати на послугу
+            </button>
           </div>
         </div>
       )}
