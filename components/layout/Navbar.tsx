@@ -77,22 +77,9 @@ export function Navbar() {
   if (pathname?.startsWith('/dashboard')) {
     return (
       <>
-        {/* Mobile: Sticky Записати button at the very top */}
-        <div className="md:hidden fixed top-0 left-0 right-0 z-[60] bg-[#1A1A1A] border-b border-white/10">
-          <div className="px-4 py-3">
-            <button 
-              onClick={() => router.push('/dashboard/appointments?create=true')}
-              className="w-full px-4 py-3 bg-white text-black rounded-lg text-base font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]" 
-              style={{ boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.4)' }}
-            >
-              Записати
-            </button>
-          </div>
-        </div>
-        
-        <nav className="fixed top-0 md:top-0 left-0 md:left-64 right-0 z-50 border-b" style={{ backgroundColor: 'rgba(20, 20, 20, 0.85)', backdropFilter: 'blur(25px)', WebkitBackdropFilter: 'blur(25px)', borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+        <nav className="fixed top-0 left-0 md:left-64 right-0 z-50 border-b" style={{ backgroundColor: 'rgba(20, 20, 20, 0.85)', backdropFilter: 'blur(25px)', WebkitBackdropFilter: 'blur(25px)', borderColor: 'rgba(255, 255, 255, 0.1)' }}>
           <div className="px-3 md:px-6">
-            <div className="flex justify-between items-center h-14 md:h-16 md:pt-0 pt-[60px]">
+            <div className="flex justify-between items-center h-14 md:h-16">
               {/* Left side - Menu button (mobile) and Hi User */}
               <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
                 <button
@@ -112,7 +99,7 @@ export function Navbar() {
 
               {/* Right side - Actions */}
               <div className="flex items-center gap-2 md:gap-3">
-                {/* Записати Button - Hidden on mobile (shown in sticky bar) */}
+                {/* Записати Button - Hidden on mobile (shown near Dashboard title) */}
                 <button 
                   onClick={() => router.push('/dashboard/appointments?create=true')}
                   className="hidden md:flex px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors" 

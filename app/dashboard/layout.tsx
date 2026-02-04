@@ -85,7 +85,7 @@ export default function DashboardLayout({
       <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       
       {/* Main Content Area */}
-      <main className="relative ml-0 md:ml-64 pt-[74px] md:pt-16 min-h-screen" style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}>
+      <main className="relative ml-0 md:ml-64 pt-14 md:pt-16 min-h-screen" style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}>
         <div className="p-3 md:p-6 pb-6">
           {children}
         </div>

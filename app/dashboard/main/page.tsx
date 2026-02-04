@@ -159,10 +159,18 @@ export default function MainPage() {
         {/* Left Column - Main Content (3 columns) */}
         <div className="lg:col-span-3 space-y-3 md:space-y-6">
           {/* Header */}
-          <div>
+          <div className="flex items-center justify-between gap-3">
             <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
               Dashboard
             </h1>
+            {/* Mobile: Записати button next to Dashboard title */}
+            <button 
+              onClick={() => router.push('/dashboard/appointments?create=true')}
+              className="md:hidden px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] flex-shrink-0" 
+              style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+            >
+              Записати
+            </button>
           </div>
 
           {/* My Day Card */}
