@@ -12,7 +12,12 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
   themeColor: '#050505',
+  viewportFit: 'cover', // safe area for notched devices
 }
 
 export default function RootLayout({

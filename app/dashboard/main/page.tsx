@@ -117,26 +117,23 @@ export default function MainPage() {
     )
   }
 
-  // Convert appointments to tasks format
-  const tasks = todayAppointments.slice(0, 2).map((apt, index) => {
-    const startTime = new Date(apt.startTime)
-    const isToday = format(startTime, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
-    const isTomorrow = format(startTime, 'yyyy-MM-dd') === format(new Date(Date.now() + 86400000), 'yyyy-MM-dd')
-    
-    let timeLabel = format(startTime, 'HH:mm')
-    if (isToday) {
-      timeLabel = 'Tonight'
-    } else if (isTomorrow) {
-      timeLabel = 'Next Morning'
-    }
-    
-    return {
-      id: apt.id,
-      title: apt.clientName,
-      time: timeLabel,
-      icon: index === 0 ? 'users' as const : 'user' as const,
-    }
-  })
+  // Найближчі записи для картки (до 4 записів, сортовані по часу)
+  const tasks = [...todayAppointments]
+    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+    .slice(0, 4)
+    .map((apt) => {
+      const startTime = new Date(apt.startTime)
+      const timeStr = format(startTime, 'HH:mm')
+      const isToday = format(startTime, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
+      const timeLabel = isToday ? timeStr : `${format(startTime, 'd MMM')}, ${timeStr}`
+      return {
+        id: apt.id,
+        clientName: apt.clientName,
+        masterName: apt.masterName,
+        time: timeLabel,
+        status: apt.status,
+      }
+    })
 
   // Calculate today's statistics
   const todayTotal = todayAppointments.length

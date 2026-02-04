@@ -103,7 +103,7 @@ export default function AppointmentsPage() {
   }, [business])
 
   useEffect(() => {
-    if (!business) return
+    if (!business || !currentMonth) return
 
     const start = startOfMonth(currentMonth)
     const end = endOfMonth(currentMonth)
@@ -140,7 +140,7 @@ export default function AppointmentsPage() {
   }
 
   const reloadAppointments = async () => {
-    if (!business) return
+    if (!business || !currentMonth) return
     
     try {
       // Спочатку завантажуємо masters, якщо їх немає
@@ -252,6 +252,7 @@ export default function AppointmentsPage() {
   }
 
   const handleExportCSV = () => {
+    const monthForFilename = currentMonth ?? new Date()
     const csvHeaders = ['Дата', 'Час', 'Клієнт', 'Телефон', 'Спеціаліст', 'Послуги', 'Статус', 'Примітки']
     const csvRows = filteredAppointments.map(apt => {
       const start = new Date(apt.startTime)
@@ -289,7 +290,7 @@ export default function AppointmentsPage() {
     const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
     link.href = URL.createObjectURL(blob)
-    link.download = `записи_${format(currentMonth, 'MM_yyyy', { locale: uk })}.csv`
+    link.download = `записи_${format(monthForFilename, 'MM_yyyy', { locale: uk })}.csv`
     link.click()
   }
 
