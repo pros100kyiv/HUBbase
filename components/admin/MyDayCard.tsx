@@ -42,6 +42,7 @@ export function MyDayCard({
   const router = useRouter()
   const [internalSelectedDate, setInternalSelectedDate] = useState(() => startOfDay(new Date()))
   const [showDatePicker, setShowDatePicker] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
   
   const selectedDate = externalSelectedDate || internalSelectedDate
   const isToday = isSameDay(selectedDate, new Date())
@@ -194,10 +195,26 @@ export function MyDayCard({
       {/* Appointments List */}
       {appointments.length > 0 ? (
         <div className="space-y-2 md:space-y-3 mb-4">
-          <h4 className="text-xs md:text-sm font-semibold text-gray-300 uppercase mb-2 md:mb-3" style={{ letterSpacing: '0.05em' }}>
-            Записи {isToday ? 'на сьогодні' : `на ${format(selectedDate, 'd MMMM', { locale: uk })}`}
-          </h4>
-          <div className="space-y-2 max-h-48 md:max-h-64 overflow-y-auto">
+          <div className="flex items-center justify-between mb-2 md:mb-3">
+            <h4 className="text-xs md:text-sm font-semibold text-gray-300 uppercase" style={{ letterSpacing: '0.05em' }}>
+              Записи {isToday ? 'на сьогодні' : `на ${format(selectedDate, 'd MMMM', { locale: uk })}`}
+            </h4>
+            <button
+              onClick={() => setIsExpanded(!isExpanded)}
+              className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-400 hover:text-white transition-colors"
+            >
+              <span>{isExpanded ? 'Згорнути' : 'Розгорнути'}</span>
+              <svg 
+                className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                fill="none" 
+                stroke="currentColor" 
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+          </div>
+          <div className={`space-y-2 ${isExpanded ? '' : 'max-h-48 md:max-h-64'} overflow-y-auto transition-all duration-300`}>
             {appointments.map((apt) => {
               const startTime = new Date(apt.startTime)
               const endTime = new Date(apt.endTime)
