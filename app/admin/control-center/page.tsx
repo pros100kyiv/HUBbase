@@ -633,7 +633,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
               alert('Немає даних для експорту')
               return
             }
-            const data = dataToExport.map((b: Business) => ({
+            const data: Record<string, string>[] = dataToExport.map((b: Business) => ({
               ID: b.businessIdentifier || '-',
               Назва: b.name,
               Email: b.email,
@@ -645,7 +645,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
             }))
             const csv = [
               Object.keys(data[0] || {}).join(','),
-              ...data.map((row: Record<string, any>) => Object.values(row).map((v: any) => `"${String(v).replace(/"/g, '""')}"`).join(','))
+              ...data.map((row: Record<string, string>) => Object.values(row).map((v: string) => `"${String(v).replace(/"/g, '""')}"`).join(','))
             ].join('\n')
             const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
             const link = document.createElement('a')
