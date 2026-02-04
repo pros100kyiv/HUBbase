@@ -195,17 +195,17 @@ export function MyDayCard({
       {/* Appointments List */}
       {appointments.length > 0 ? (
         <div className="space-y-2 md:space-y-3 mb-4">
-          <div className="flex items-center justify-between mb-2 md:mb-3">
-            <h4 className="text-xs md:text-sm font-semibold text-gray-300 uppercase" style={{ letterSpacing: '0.05em' }}>
+          <div className="flex items-center justify-between mb-2 md:mb-3 gap-2">
+            <h4 className="text-xs md:text-sm font-semibold text-gray-300 uppercase flex-1" style={{ letterSpacing: '0.05em' }}>
               Записи {isToday ? 'на сьогодні' : `на ${format(selectedDate, 'd MMMM', { locale: uk })}`}
             </h4>
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="flex items-center gap-1.5 px-2 py-1 text-xs text-gray-400 hover:text-white transition-colors"
+              className="flex items-center gap-1.5 px-3 py-1.5 md:px-2 md:py-1 text-xs bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-gray-300 hover:text-white transition-all active:scale-[0.95] flex-shrink-0"
             >
-              <span>{isExpanded ? 'Згорнути' : 'Розгорнути'}</span>
+              <span className="hidden sm:inline">{isExpanded ? 'Згорнути' : 'Розгорнути'}</span>
               <svg 
-                className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                className={`w-4 h-4 sm:w-4 sm:h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
