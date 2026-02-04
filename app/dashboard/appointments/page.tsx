@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, eachDayOfInterval } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
@@ -30,7 +30,6 @@ interface Appointment {
 
 export default function AppointmentsPage() {
   const router = useRouter()
-  const searchParams = useSearchParams()
   const [business, setBusiness] = useState<any>(null)
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [currentMonth, setCurrentMonth] = useState(() => {
@@ -67,12 +66,15 @@ export default function AppointmentsPage() {
 
   // Check for create parameter in URL
   useEffect(() => {
-    if (searchParams.get('create') === 'true') {
-      setShowCreateForm(true)
-      // Remove parameter from URL
-      router.replace('/dashboard/appointments', { scroll: false })
+    if (typeof window !== 'undefined') {
+      const params = new URLSearchParams(window.location.search)
+      if (params.get('create') === 'true') {
+        setShowCreateForm(true)
+        // Remove parameter from URL
+        router.replace('/dashboard/appointments', { scroll: false })
+      }
     }
-  }, [searchParams, router])
+  }, [router])
 
   useEffect(() => {
     if (!business) return
