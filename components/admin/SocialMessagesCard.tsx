@@ -218,9 +218,9 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
 
           {/* Reply Modal */}
           {selectedMessage && (
-            <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
-              <div className="fixed inset-0 bg-black/70" onClick={() => setSelectedMessage(null)} />
-              <div className="relative w-full sm:max-w-md bg-[#2A2A2A] rounded-t-xl sm:rounded-xl p-4 sm:p-6 border-t sm:border border-white/10 sm:my-auto max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-y-auto">
+            <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setSelectedMessage(null)} />
+              <div className="relative w-full max-w-md bg-[#2A2A2A] rounded-xl sm:rounded-xl p-4 sm:p-6 border border-white/10 shadow-2xl my-auto max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">
                     <div className={cn(
