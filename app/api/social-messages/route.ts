@@ -50,10 +50,19 @@ export async function GET(request: Request) {
       },
     ]
 
-    // Фільтруємо тільки повідомлення з підключених платформ
-    const connectedPlatforms = integrations.map(i => i.platform)
+    // Якщо немає підключених інтеграцій, все одно показуємо мок-дані для демонстрації
+    // В реальному застосунку тут буде перевірка підключених платформ
+    const connectedPlatforms = integrations.length > 0 
+      ? integrations.map(i => i.platform)
+      : ['telegram', 'instagram', 'whatsapp'] // Для демонстрації
+    
     const filteredMessages = mockMessages.filter(m => 
       connectedPlatforms.includes(m.platform)
+    )
+
+    // Сортуємо за часом (новіші першими)
+    filteredMessages.sort((a, b) => 
+      new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
     )
 
     return NextResponse.json(filteredMessages)
