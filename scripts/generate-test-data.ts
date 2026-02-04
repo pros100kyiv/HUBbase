@@ -62,18 +62,52 @@ function getDateForDay(startDate: Date, dayOffset: number): Date {
 async function main() {
   console.log('🚀 Початок генерації тестових даних...\n')
 
-  // Знаходимо бізнес - спочатку шукаємо за email або беремо перший
+  // Знаходимо бізнес - спочатку шукаємо за email, businessIdentifier або беремо перший
   const businessEmail = process.argv[2] // Можна передати email як аргумент
-  let business = businessEmail 
-    ? await prisma.business.findUnique({ where: { email: businessEmail } })
-    : await prisma.business.findFirst()
+  const businessId = process.argv[3] // Або businessIdentifier
+  
+  let business = null
+  
+  if (businessEmail) {
+    business = await prisma.business.findUnique({ 
+      where: { email: businessEmail.toLowerCase().trim() } 
+    })
+    if (!business) {
+      console.log(`⚠️  Бізнес з email ${businessEmail} не знайдено, шукаємо за businessIdentifier...`)
+    }
+  }
+  
+  if (!business && businessId) {
+    business = await prisma.business.findUnique({ 
+      where: { businessIdentifier: businessId } 
+    })
+  }
+  
+  if (!business) {
+    // Шукаємо за email diachenko333@telegram.xbase.online якщо не вказано інше
+    const defaultEmail = 'diachenko333@telegram.xbase.online'
+    business = await prisma.business.findUnique({ 
+      where: { email: defaultEmail } 
+    })
+  }
+  
+  if (!business) {
+    // Якщо все ще не знайдено, беремо перший
+    business = await prisma.business.findFirst()
+  }
   
   if (!business) {
     console.log('❌ Бізнес не знайдено. Спочатку створіть бізнес через реєстрацію або seed.')
     return
   }
 
-  console.log(`✅ Використовуємо бізнес: ${business.name} (${business.id})\n`)
+  console.log(`✅ Використовуємо бізнес: ${business.name}`)
+  console.log(`   Email: ${business.email}`)
+  console.log(`   ID: ${business.id}`)
+  if (business.businessIdentifier) {
+    console.log(`   Business ID: ${business.businessIdentifier}`)
+  }
+  console.log('')
 
   // Створюємо майстрів (5-6)
   console.log('👨‍💼 Створюємо майстрів...')
