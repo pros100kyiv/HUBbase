@@ -128,10 +128,34 @@ export async function PATCH(
     console.log('PATCH request received with param:', param)
     console.log('Is UUID?', isUUID(param))
 
-    // PATCH тільки для ID (CUID або UUID)
-    // Але якщо це не UUID, спробуємо знайти по slug і використати його ID
+    // PATCH підтримує: businessIdentifier (число), ID (CUID/UUID), або slug
     let businessId = param
-    if (!isUUID(param)) {
+    
+    // Якщо це число (businessIdentifier), знаходимо внутрішній ID
+    if (/^\d+$/.test(param)) {
+      console.log('Param is businessIdentifier, finding by identifier:', param)
+      try {
+        const businessByIdentifier = await prisma.business.findUnique({
+          where: { businessIdentifier: param },
+          select: { id: true }
+        })
+        if (businessByIdentifier) {
+          businessId = businessByIdentifier.id
+          console.log('Found business by identifier, using ID:', businessId)
+        } else {
+          console.error('Business not found by identifier:', param)
+          return NextResponse.json({ 
+            error: 'Бізнес не знайдено за вказаним ідентифікатором.' 
+          }, { status: 404 })
+        }
+      } catch (identifierError) {
+        console.error('Error finding business by identifier:', identifierError)
+        return NextResponse.json({ 
+          error: 'Помилка при пошуку бізнесу за ідентифікатором.' 
+        }, { status: 400 })
+      }
+    } else if (!isUUID(param)) {
+      // Якщо це не UUID, спробуємо знайти по slug
       console.log('Param is not UUID, trying to find by slug:', param)
       try {
         const businessBySlug = await prisma.business.findUnique({
@@ -201,6 +225,8 @@ export async function PATCH(
       remindersEnabled,
       reminderSmsEnabled,
       reminderEmailEnabled,
+      // Block/Unblock
+      isActive,
     } = body
 
     // Отримуємо поточний бізнес для порівняння телефону
@@ -277,6 +303,8 @@ export async function PATCH(
         ...(remindersEnabled !== undefined && { remindersEnabled }),
         ...(reminderSmsEnabled !== undefined && { reminderSmsEnabled }),
         ...(reminderEmailEnabled !== undefined && { reminderEmailEnabled }),
+        // Block/Unblock
+        ...(isActive !== undefined && { isActive }),
       },
       select: businessSelect,
       })

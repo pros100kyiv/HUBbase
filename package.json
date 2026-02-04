@@ -31,7 +31,9 @@
     "db:create-email-index": "tsx scripts/create-email-index.ts",
     "test-data:generate": "tsx scripts/generate-test-data.ts",
     "test-data:clean": "tsx scripts/clean-test-data.ts",
-    "business:update-identifiers": "tsx scripts/update-business-identifiers.ts"
+    "business:update-identifiers": "tsx scripts/update-business-identifiers.ts",
+    "business:block": "tsx scripts/block-business.ts",
+    "business:unblock": "tsx scripts/block-business.ts"
   },
   "dependencies": {
     "@google/generative-ai": "^0.21.0",
