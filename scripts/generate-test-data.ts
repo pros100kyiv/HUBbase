@@ -13,9 +13,25 @@ const lastNames = [
   'Кравченко', 'Іваненко', 'Савченко', 'Бойко', 'Ткачук', 'Романенко', 'Лисенко'
 ]
 
+const masterNames = [
+  'Олександр', 'Дмитро', 'Андрій', 'Максим', 'Володимир', 'Іван'
+]
+
+const masterBios = [
+  'Досвідчений майстер з 10-річним стажем. Спеціалізується на класичних стрижках.',
+  'Професійний барбер з 8-річним досвідом. Експерт з сучасних тенденцій.',
+  'Майстер з 12-річним стажем. Спеціалізація на бородах та вусах.',
+  'Молодий талановитий майстер з креативним підходом до стрижок.',
+  'Ветеран індустрії з 15-річним досвідом. Майстер всіх видів стрижок.',
+  'Спеціаліст з догляду за волоссям та стилізації. 7 років досвіду.'
+]
+
 const servicesNames = [
-  'Чоловіча стрижка', 'Стрижка бороди', 'Комплекс', 'Дитяча стрижка',
-  'Укладка', 'Фарбування', 'Манікюр', 'Педикюр', 'Масаж', 'Обличчя'
+  'Чоловіча стрижка', 'Стрижка бороди', 'Комплекс (стрижка + борода)', 
+  'Дитяча стрижка', 'Укладка волосся', 'Фарбування', 
+  'Манікюр', 'Педикюр', 'Масаж голови', 'Обличчя (брошура)',
+  'Стрижка під насадку', 'Класична стрижка', 'Модна стрижка',
+  'Стрижка + миття', 'Повний комплекс догляду'
 ]
 
 const statuses = ['Pending', 'Confirmed', 'Done', 'Cancelled']
@@ -37,15 +53,20 @@ function getRandomEmail(name: string): string {
   return `${cleanName}${Math.floor(Math.random() * 1000)}@${getRandomElement(domains)}`
 }
 
-function getRandomDate(start: Date, end: Date): Date {
-  return new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()))
+function getDateForDay(startDate: Date, dayOffset: number): Date {
+  const date = new Date(startDate)
+  date.setDate(date.getDate() + dayOffset)
+  return date
 }
 
 async function main() {
   console.log('🚀 Початок генерації тестових даних...\n')
 
-  // Знаходимо перший бізнес або створюємо тестовий
-  let business = await prisma.business.findFirst()
+  // Знаходимо бізнес - спочатку шукаємо за email або беремо перший
+  const businessEmail = process.argv[2] // Можна передати email як аргумент
+  let business = businessEmail 
+    ? await prisma.business.findUnique({ where: { email: businessEmail } })
+    : await prisma.business.findFirst()
   
   if (!business) {
     console.log('❌ Бізнес не знайдено. Спочатку створіть бізнес через реєстрацію або seed.')
@@ -54,58 +75,77 @@ async function main() {
 
   console.log(`✅ Використовуємо бізнес: ${business.name} (${business.id})\n`)
 
-  // Отримуємо майстрів та послуги
+  // Створюємо майстрів (5-6)
+  console.log('👨‍💼 Створюємо майстрів...')
+  const existingMasters = await prisma.master.findMany({
+    where: { businessId: business.id },
+  })
+
+  const mastersToCreate = 6 - existingMasters.length
+  if (mastersToCreate > 0) {
+    for (let i = 0; i < mastersToCreate; i++) {
+      const name = masterNames[i] || `Майстер ${i + 1}`
+      const bio = masterBios[i] || `Досвідчений майстер з ${5 + i * 2}-річним стажем`
+      
+      try {
+        await prisma.master.create({
+          data: {
+            businessId: business.id,
+            name,
+            bio,
+            rating: 4.5 + Math.random() * 0.5,
+            isActive: true,
+          },
+        })
+      } catch (error) {
+        console.log(`⚠️  Помилка створення майстра ${name}: ${error}`)
+      }
+    }
+  }
+
   const masters = await prisma.master.findMany({
     where: { businessId: business.id },
   })
+  console.log(`✅ Майстрів: ${masters.length}\n`)
+
+  // Створюємо послуги (10-12)
+  console.log('💼 Створюємо послуги...')
+  const existingServices = await prisma.service.findMany({
+    where: { businessId: business.id },
+  })
+
+  const servicesToCreate = 12 - existingServices.length
+  if (servicesToCreate > 0) {
+    for (let i = 0; i < servicesToCreate; i++) {
+      const serviceName = servicesNames[i] || `Послуга ${i + 1}`
+      const basePrice = [300, 400, 500, 600, 700, 800, 900, 1000, 1200, 1500, 2000, 2500][i] || 500
+      
+      try {
+        await prisma.service.create({
+          data: {
+            businessId: business.id,
+            name: serviceName,
+            price: basePrice * 100, // в копійках
+            duration: [30, 45, 60, 75, 90, 120][i % 6] || 45,
+            category: i < 5 ? 'Стрижка' : i < 8 ? 'Догляд' : 'Комплекс',
+            isActive: true,
+          },
+        })
+      } catch (error) {
+        console.log(`⚠️  Помилка створення послуги ${serviceName}: ${error}`)
+      }
+    }
+  }
 
   const services = await prisma.service.findMany({
     where: { businessId: business.id },
   })
+  console.log(`✅ Послуг: ${services.length}\n`)
 
-  if (masters.length === 0) {
-    console.log('❌ Майстри не знайдені. Створюємо тестових майстрів...')
-    for (let i = 0; i < 3; i++) {
-      await prisma.master.create({
-        data: {
-          businessId: business.id,
-          name: getRandomElement(firstNames),
-          bio: `Досвідчений майстер з ${5 + i * 2}-річним стажем`,
-          rating: 4.5 + Math.random() * 0.5,
-        },
-      })
-    }
-    const newMasters = await prisma.master.findMany({
-      where: { businessId: business.id },
-    })
-    masters.push(...newMasters)
-  }
-
-  if (services.length === 0) {
-    console.log('❌ Послуги не знайдені. Створюємо тестові послуги...')
-    for (let i = 0; i < 5; i++) {
-      await prisma.service.create({
-        data: {
-          businessId: business.id,
-          name: servicesNames[i] || `Послуга ${i + 1}`,
-          price: (300 + Math.random() * 500) * 100, // в копійках
-          duration: 30 + i * 15,
-          category: 'Основні',
-        },
-      })
-    }
-    const newServices = await prisma.service.findMany({
-      where: { businessId: business.id },
-    })
-    services.push(...newServices)
-  }
-
-  console.log(`✅ Майстрів: ${masters.length}, Послуг: ${services.length}\n`)
-
-  // Створюємо клієнтів
+  // Створюємо клієнтів (20)
   console.log('📝 Створюємо клієнтів...')
   const clients = []
-  for (let i = 0; i < 15; i++) {
+  for (let i = 0; i < 20; i++) {
     const firstName = getRandomElement(firstNames)
     const lastName = getRandomElement(lastNames)
     const name = `${firstName} ${lastName}`
@@ -126,8 +166,9 @@ async function main() {
           name,
           phone,
           email,
-          notes: i % 3 === 0 ? `Примітка для клієнта ${name}` : null,
-          tags: i % 2 === 0 ? JSON.stringify(['VIP', 'Постійний']) : null,
+          notes: i % 4 === 0 ? `Примітка для клієнта ${name}` : null,
+          tags: i % 3 === 0 ? JSON.stringify(['VIP', 'Постійний']) : null,
+          isActive: true,
         },
       })
       clients.push(client)
@@ -137,60 +178,94 @@ async function main() {
   }
   console.log(`✅ Створено ${clients.length} клієнтів\n`)
 
-  // Створюємо записи (appointments)
-  console.log('📅 Створюємо записи...')
+  // Створюємо записи (appointments) - розкидаємо рівномірно по датах
+  console.log('📅 Створюємо записи (розкидаємо по датах)...')
   const today = new Date()
+  today.setHours(0, 0, 0, 0)
+  
   const startDate = new Date(today)
-  startDate.setDate(startDate.getDate() - 7) // 7 днів назад
+  startDate.setDate(startDate.getDate() - 14) // 14 днів назад
+  
   const endDate = new Date(today)
-  endDate.setDate(endDate.getDate() + 14) // 14 днів вперед
+  endDate.setDate(endDate.getDate() + 21) // 21 день вперед
+
+  const totalDays = Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24))
+  const appointmentsPerDay = Math.ceil(25 / totalDays) // ~25 записів загалом
 
   const appointments = []
-  for (let i = 0; i < 15; i++) {
-    const master = getRandomElement(masters)
-    const client = getRandomElement(clients)
-    const service = getRandomElement(services)
-    
-    // Генеруємо випадкову дату в межах діапазону
-    const appointmentDate = getRandomDate(startDate, endDate)
-    const hour = 9 + Math.floor(Math.random() * 9) // 9:00 - 18:00
-    const minute = [0, 15, 30, 45][Math.floor(Math.random() * 4)]
-    
-    appointmentDate.setHours(hour, minute, 0, 0)
-    
-    const startTime = new Date(appointmentDate)
-    const endTime = new Date(appointmentDate)
-    endTime.setMinutes(endTime.getMinutes() + service.duration)
+  let appointmentIndex = 0
 
-    const status = getRandomElement(statuses)
-    const statusUk = statusesUk[statuses.indexOf(status)]
+  // Проходимо по кожному дню
+  for (let dayOffset = 0; dayOffset < totalDays; dayOffset++) {
+    const appointmentDate = getDateForDay(startDate, dayOffset)
+    const dayOfWeek = appointmentDate.getDay()
+    
+    // Пропускаємо неділю (0) або зменшуємо кількість записів
+    if (dayOfWeek === 0) continue
 
-    try {
-      const appointment = await prisma.appointment.create({
-        data: {
-          businessId: business.id,
-          masterId: master.id,
-          clientId: client.id,
-          clientName: client.name,
-          clientPhone: client.phone,
-          clientEmail: client.email,
-          startTime,
-          endTime,
-          status: statusUk, // Використовуємо українську версію
-          services: JSON.stringify([service.id]),
-          notes: i % 4 === 0 ? `Примітка до запису ${i + 1}` : null,
-          isFromBooking: i % 3 === 0,
-          source: i % 3 === 0 ? 'qr' : 'phone',
-        },
-      })
-      appointments.push(appointment)
-    } catch (error) {
-      console.log(`⚠️  Помилка створення запису ${i + 1}: ${error}`)
+    // Кількість записів на день (більше в робочі дні)
+    const recordsForDay = dayOfWeek === 6 ? 1 : (dayOfWeek < 5 ? appointmentsPerDay + 1 : appointmentsPerDay)
+    
+    for (let i = 0; i < recordsForDay && appointmentIndex < 25; i++) {
+      const master = getRandomElement(masters)
+      const client = getRandomElement(clients)
+      const service = getRandomElement(services)
+      
+      // Розподіляємо записи по часу (9:00 - 18:00)
+      const hour = 9 + Math.floor(Math.random() * 9)
+      const minute = [0, 15, 30, 45][Math.floor(Math.random() * 4)]
+      
+      const startTime = new Date(appointmentDate)
+      startTime.setHours(hour, minute, 0, 0)
+      
+      const endTime = new Date(startTime)
+      endTime.setMinutes(endTime.getMinutes() + service.duration)
+
+      // Розподіляємо статуси залежно від дати
+      let status: string
+      if (appointmentDate < today) {
+        // Минулі записи - більшість виконані
+        status = Math.random() > 0.2 ? 'Виконано' : (Math.random() > 0.5 ? 'Скасовано' : 'Очікує')
+      } else if (appointmentDate.getTime() === today.getTime()) {
+        // Сьогоднішні записи - різні статуси
+        status = getRandomElement(['Очікує', 'Підтверджено', 'Виконано'])
+      } else {
+        // Майбутні записи - більшість підтверджені або очікують
+        status = Math.random() > 0.3 ? 'Підтверджено' : 'Очікує'
+      }
+
+      try {
+        const appointment = await prisma.appointment.create({
+          data: {
+            businessId: business.id,
+            masterId: master.id,
+            clientId: client.id,
+            clientName: client.name,
+            clientPhone: client.phone,
+            clientEmail: client.email,
+            startTime,
+            endTime,
+            status,
+            services: JSON.stringify([service.id]),
+            notes: appointmentIndex % 5 === 0 ? `Примітка до запису ${appointmentIndex + 1}` : null,
+            isFromBooking: appointmentIndex % 3 === 0,
+            source: appointmentIndex % 3 === 0 ? 'qr' : (appointmentIndex % 2 === 0 ? 'phone' : 'walk_in'),
+          },
+        })
+        appointments.push(appointment)
+        appointmentIndex++
+      } catch (error) {
+        // Якщо конфлікт часу, пропускаємо
+        if (error instanceof Error && error.message.includes('Unique constraint')) {
+          continue
+        }
+        console.log(`⚠️  Помилка створення запису ${appointmentIndex + 1}: ${error}`)
+      }
     }
   }
   console.log(`✅ Створено ${appointments.length} записів\n`)
 
-  // Створюємо нотатки
+  // Створюємо нотатки (20) - розкидаємо по датах
   console.log('📝 Створюємо нотатки...')
   const noteTexts = [
     'Зв\'язатися з клієнтом про наступний візит',
@@ -203,11 +278,17 @@ async function main() {
     'Підготувати звіт за місяць',
     'Зв\'язатися з постачальником',
     'Оновити інформацію на сайті',
+    'Провести навчання персоналу',
+    'Перевірити обладнання',
+    'Підготувати маркетингову кампанію',
+    'Зустрітися з новим клієнтом',
+    'Оновити соціальні мережі',
   ]
 
   const notes = []
-  for (let i = 0; i < 12; i++) {
-    const noteDate = getRandomDate(startDate, endDate)
+  for (let i = 0; i < 20; i++) {
+    const dayOffset = Math.floor(Math.random() * totalDays)
+    const noteDate = getDateForDay(startDate, dayOffset)
     noteDate.setHours(0, 0, 0, 0)
     
     try {
@@ -216,7 +297,7 @@ async function main() {
           businessId: business.id,
           text: getRandomElement(noteTexts),
           date: noteDate,
-          completed: Math.random() > 0.6,
+          completed: Math.random() > 0.5,
           order: i,
         },
       })
@@ -247,4 +328,3 @@ main()
     await prisma.$disconnect()
     process.exit(1)
   })
-
