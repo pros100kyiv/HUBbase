@@ -289,9 +289,9 @@ export function MyDayCard({
 
       {/* Date Picker Modal */}
       {showDatePicker && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setShowDatePicker(false)} />
-          <div className="relative w-full max-w-sm bg-[#2A2A2A] rounded-xl p-6 border border-white/10 z-10 shadow-2xl overflow-y-auto max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+          <div className="absolute inset-0 bg-black/70" onClick={() => setShowDatePicker(false)} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
+          <div className="relative w-full max-w-sm bg-[#2A2A2A] rounded-xl p-6 border border-white/10 z-10 shadow-2xl overflow-y-auto max-h-[90vh]" style={{ position: 'relative', zIndex: 10 }}>
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">Виберіть дату</h3>
               <button

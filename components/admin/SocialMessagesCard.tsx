@@ -218,8 +218,8 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
 
           {/* Reply Modal */}
           {selectedMessage && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-              <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setSelectedMessage(null)} />
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
+              <div className="absolute inset-0 bg-black/70" onClick={() => setSelectedMessage(null)} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} />
               <div className="relative w-full max-w-md bg-[#2A2A2A] rounded-xl p-6 border border-white/10">
                 <div className="flex items-center justify-between mb-4">
                   <div className="flex items-center gap-3">

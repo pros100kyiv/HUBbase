@@ -174,7 +174,7 @@ export function QuickClientCard({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70" style={{ position: 'fixed', top: 0, left: 0, right: 0, bottom: 0 }}>
       <div className="relative w-full max-w-md bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-candy-lg shadow-soft-xl p-6">
         {/* Close button */}
         {onCancel && (
