@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
-import { OverallInfoCard } from '@/components/admin/OverallInfoCard'
+import { MyDayCard } from '@/components/admin/MyDayCard'
 import { WeeklyProcessCard } from '@/components/admin/WeeklyProcessCard'
 import { MonthProgressCard } from '@/components/admin/MonthProgressCard'
 import { MonthGoalsCard } from '@/components/admin/MonthGoalsCard'
@@ -145,12 +145,11 @@ export default function MainPage() {
     }
   })
 
-  // Calculate overall info
-  const totalTasks = stats?.totalAppointments || 0
-  const stoppedProjects = 0 // Can be calculated from cancelled appointments
-  const totalProjects = stats?.totalAppointments || 0
-  const inProgress = stats?.confirmedAppointments || 0
-  const completed = stats?.completedAppointments || 0
+  // Calculate today's statistics
+  const todayTotal = todayAppointments.length
+  const todayCompleted = todayAppointments.filter(apt => apt.status === 'Done' || apt.status === 'Виконано').length
+  const todayPending = todayAppointments.filter(apt => apt.status === 'Pending' || apt.status === 'Очікує').length
+  const todayConfirmed = todayAppointments.filter(apt => apt.status === 'Confirmed' || apt.status === 'Підтверджено').length
 
   // Convert appointments to projects format
   const projects = todayAppointments.slice(0, 3).map((apt, index) => ({
@@ -173,18 +172,13 @@ export default function MainPage() {
             </h1>
           </div>
 
-          {/* Overall Information Card */}
-          <OverallInfoCard
-            tasks={todayAppointments.map((apt) => {
-              const startTime = new Date(apt.startTime)
-              return {
-                id: apt.id,
-                title: apt.clientName,
-                time: format(startTime, 'HH:mm'),
-                status: apt.status,
-                masterName: apt.masterName,
-              }
-            })}
+          {/* My Day Card */}
+          <MyDayCard
+            appointments={todayAppointments}
+            totalAppointments={todayTotal}
+            completedAppointments={todayCompleted}
+            pendingAppointments={todayPending}
+            confirmedAppointments={todayConfirmed}
             onBookAppointment={() => router.push('/dashboard/appointments?create=true')}
           />
 
