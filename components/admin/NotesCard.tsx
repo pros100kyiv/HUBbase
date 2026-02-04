@@ -405,8 +405,8 @@ export function NotesCard({ businessId }: NotesCardProps) {
       {/* Edit Modal */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowEditModal(false)} />
-          <div className="relative w-full max-w-md bg-[#2A2A2A] rounded-xl p-6 border border-white/10">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowEditModal(false)} />
+          <div className="relative w-full max-w-md bg-[#2A2A2A] rounded-xl p-6 border border-white/10 z-10">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">
                 {editingNote ? 'Редагувати нотатку' : 'Створити нотатку'}
@@ -480,8 +480,8 @@ export function NotesCard({ businessId }: NotesCardProps) {
       {/* Date Picker Modal */}
       {showDatePicker && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="fixed inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowDatePicker(false)} />
-          <div className="relative w-full max-w-sm bg-[#2A2A2A] rounded-xl p-6 border border-white/10">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setShowDatePicker(false)} />
+          <div className="relative w-full max-w-sm bg-[#2A2A2A] rounded-xl p-6 border border-white/10 z-10">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">Виберіть дату</h3>
               <button
