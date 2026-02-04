@@ -399,8 +399,8 @@ export function NotesCard({ businessId }: NotesCardProps) {
       {/* Edit Modal */}
       {showEditModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-300" onClick={() => setShowEditModal(false)} />
-          <div className="absolute left-1/2 top-1/2 -translate-y-1/2 w-full max-w-md bg-[#2A2A2A] rounded-xl p-6 border border-white/10 z-10 animate-slide-in-from-left shadow-2xl overflow-y-auto max-h-[90vh] backdrop-blur-sm">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setShowEditModal(false)} />
+          <div className="relative w-full max-w-md bg-[#2A2A2A] rounded-xl p-6 border border-white/10 z-10 shadow-2xl overflow-y-auto max-h-[90vh]">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">
                 {editingNote ? 'Редагувати нотатку' : 'Створити нотатку'}
@@ -474,8 +474,8 @@ export function NotesCard({ businessId }: NotesCardProps) {
       {/* Date Picker Modal */}
       {showDatePicker && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-md transition-opacity duration-300" onClick={() => setShowDatePicker(false)} />
-          <div className="absolute left-1/2 top-1/2 -translate-y-1/2 w-full max-w-sm bg-[#2A2A2A] rounded-xl p-6 border border-white/10 z-10 animate-slide-in-from-left shadow-2xl overflow-y-auto max-h-[90vh] backdrop-blur-sm">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-md" onClick={() => setShowDatePicker(false)} />
+          <div className="relative w-full max-w-sm bg-[#2A2A2A] rounded-xl p-6 border border-white/10 z-10 shadow-2xl overflow-y-auto max-h-[90vh]">
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">Виберіть дату</h3>
               <button
