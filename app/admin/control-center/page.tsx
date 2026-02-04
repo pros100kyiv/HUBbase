@@ -359,26 +359,101 @@ function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
 function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, setStatusFilter, page, setPage, totalPages, onBusinessClick, formatDate }: any) {
   const [selectedBusinesses, setSelectedBusinesses] = useState<string[]>([])
   const [bulkAction, setBulkAction] = useState<string>('')
+  const [blockModalOpen, setBlockModalOpen] = useState(false)
+  const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null)
+  const [blockReason, setBlockReason] = useState('')
+  const [isBlocking, setIsBlocking] = useState(false)
 
   const handleBulkAction = async () => {
     if (!bulkAction || selectedBusinesses.length === 0) return
 
     try {
       for (const businessId of selectedBusinesses) {
-        await fetch('/api/admin/control-center', {
-          method: 'PATCH',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({
-            businessId,
-            action: bulkAction,
-          }),
-        })
+        // Знаходимо businessIdentifier для бізнесу
+        const business = businesses.find((b: Business) => b.businessId === businessId)
+        if (business && business.businessIdentifier) {
+          await fetch('/api/business/block', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            body: JSON.stringify({
+              businessIdentifier: business.businessIdentifier,
+              isActive: bulkAction === 'activate',
+              reason: bulkAction === 'deactivate' ? 'Масове блокування' : undefined,
+            }),
+          })
+        }
       }
       setSelectedBusinesses([])
       setBulkAction('')
       window.location.reload()
     } catch (error) {
       console.error('Error performing bulk action:', error)
+      alert('Помилка при виконанні дії')
+    }
+  }
+
+  const handleBlockClick = (business: Business) => {
+    setSelectedBusiness(business)
+    setBlockReason('')
+    setBlockModalOpen(true)
+  }
+
+  const handleBlockConfirm = async () => {
+    if (!selectedBusiness || !selectedBusiness.businessIdentifier) return
+
+    setIsBlocking(true)
+    try {
+      const response = await fetch('/api/business/block', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          businessIdentifier: selectedBusiness.businessIdentifier,
+          isActive: false,
+          reason: blockReason || 'Блокування через центр управління',
+        }),
+      })
+
+      if (response.ok) {
+        setBlockModalOpen(false)
+        setSelectedBusiness(null)
+        setBlockReason('')
+        window.location.reload()
+      } else {
+        const data = await response.json()
+        alert(data.error || 'Помилка при блокуванні')
+      }
+    } catch (error) {
+      console.error('Error blocking business:', error)
+      alert('Помилка при блокуванні акаунту')
+    } finally {
+      setIsBlocking(false)
+    }
+  }
+
+  const handleUnblock = async (business: Business) => {
+    if (!business.businessIdentifier) return
+
+    if (!confirm(`Розблокувати акаунт "${business.name}"?`)) return
+
+    try {
+      const response = await fetch('/api/business/block', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          businessIdentifier: business.businessIdentifier,
+          isActive: true,
+        }),
+      })
+
+      if (response.ok) {
+        window.location.reload()
+      } else {
+        const data = await response.json()
+        alert(data.error || 'Помилка при розблоковуванні')
+      }
+    } catch (error) {
+      console.error('Error unblocking business:', error)
+      alert('Помилка при розблоковуванні акаунту')
     }
   }
 
@@ -452,11 +527,13 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                       }}
                     />
                   </th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">ID</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Назва</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Email</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Телефон</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Тип реєстрації</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Статус</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Дії</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Останній вхід</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-700 dark:text-gray-300">Дії</th>
                 </tr>
@@ -481,14 +558,18 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                       />
                     </td>
                     <td className="py-3 px-4">
+                      {business.businessIdentifier ? (
+                        <span className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400">
+                          {business.businessIdentifier}
+                        </span>
+                      ) : (
+                        <span className="text-sm text-gray-400">-</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4">
                       <div className="font-medium text-gray-900 dark:text-white cursor-pointer" onClick={() => onBusinessClick(business.businessId)}>
                         {business.name}
                       </div>
-                      {business.businessIdentifier && (
-                        <div className="text-sm text-gray-500">
-                          ID: {business.businessIdentifier}
-                        </div>
-                      )}
                     </td>
                     <td className="py-3 px-4 text-gray-600 dark:text-gray-400">
                       {business.email}
@@ -522,12 +603,29 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                       {formatDate(business.lastLoginAt)}
                     </td>
                     <td className="py-3 px-4">
-                      <button 
-                        onClick={() => onBusinessClick(business.businessId)}
-                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300"
-                      >
-                        Деталі →
-                      </button>
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => onBusinessClick(business.businessId)}
+                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm"
+                        >
+                          Деталі
+                        </button>
+                        {business.isActive ? (
+                          <button
+                            onClick={() => handleBlockClick(business)}
+                            className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors"
+                          >
+                            Заблокувати
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleUnblock(business)}
+                            className="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition-colors"
+                          >
+                            Розблокувати
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -557,6 +655,60 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
             </div>
           </div>
         </>
+      )}
+
+      {/* Block Modal */}
+      {blockModalOpen && selectedBusiness && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
+          <div className="bg-white dark:bg-gray-800 rounded-lg shadow-xl p-6 w-full max-w-md">
+            <h3 className="text-xl font-bold mb-4 text-gray-900 dark:text-white">
+              Заблокувати акаунт
+            </h3>
+            <div className="mb-4">
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                Бізнес: <span className="font-semibold">{selectedBusiness.name}</span>
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400 mb-2">
+                ID: <span className="font-mono font-semibold">{selectedBusiness.businessIdentifier}</span>
+              </p>
+              <p className="text-sm text-gray-600 dark:text-gray-400">
+                Email: <span className="font-semibold">{selectedBusiness.email}</span>
+              </p>
+            </div>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                Причина блокування (необов'язково)
+              </label>
+              <textarea
+                value={blockReason}
+                onChange={(e) => setBlockReason(e.target.value)}
+                placeholder="Введіть причину блокування..."
+                className="w-full px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+                rows={3}
+              />
+            </div>
+            <div className="flex gap-2 justify-end">
+              <button
+                onClick={() => {
+                  setBlockModalOpen(false)
+                  setSelectedBusiness(null)
+                  setBlockReason('')
+                }}
+                className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700"
+                disabled={isBlocking}
+              >
+                Скасувати
+              </button>
+              <button
+                onClick={handleBlockConfirm}
+                disabled={isBlocking}
+                className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isBlocking ? 'Блокування...' : 'Заблокувати'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   )
