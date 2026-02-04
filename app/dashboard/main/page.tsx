@@ -10,7 +10,7 @@ import { MonthGoalsCard } from '@/components/admin/MonthGoalsCard'
 import { TasksInProcessCard } from '@/components/admin/TasksInProcessCard'
 import { AddTaskCard } from '@/components/admin/AddTaskCard'
 import { LastProjectsCard } from '@/components/admin/LastProjectsCard'
-import { DateNavigationCard } from '@/components/admin/DateNavigationCard'
+import { SocialMessagesCard } from '@/components/admin/SocialMessagesCard'
 
 interface Appointment {
   id: string
@@ -199,8 +199,10 @@ export default function MainPage() {
 
         {/* Right Column - Sidebar (1 column) */}
         <div className="lg:col-span-1 space-y-6">
-          {/* Date Navigation */}
-          <DateNavigationCard />
+          {/* Social Messages */}
+          {business?.id && (
+            <SocialMessagesCard businessId={business.id} />
+          )}
 
           {/* Calendar Card */}
           <WeeklyProcessCard businessId={business?.id} />
