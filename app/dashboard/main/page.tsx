@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { format } from 'date-fns'
+import { format, startOfDay } from 'date-fns'
 import { MyDayCard } from '@/components/admin/MyDayCard'
 import { WeeklyProcessCard } from '@/components/admin/WeeklyProcessCard'
 import { MonthProgressCard } from '@/components/admin/MonthProgressCard'
@@ -28,6 +28,7 @@ export default function MainPage() {
   const router = useRouter()
   const [business, setBusiness] = useState<any>(null)
   const [stats, setStats] = useState<any>(null)
+  const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()))
   const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -57,9 +58,13 @@ export default function MainPage() {
       .catch((error) => {
         console.error('Error loading statistics:', error)
       })
+  }, [business])
 
-    // Load today's appointments
-    const today = format(new Date(), 'yyyy-MM-dd')
+  useEffect(() => {
+    if (!business) return
+
+    // Load appointments for selected date
+    const dateStr = format(selectedDate, 'yyyy-MM-dd')
     
     Promise.all([
       fetch(`/api/masters?businessId=${business.id}`)
@@ -67,7 +72,7 @@ export default function MainPage() {
           if (!res.ok) throw new Error('Failed to fetch masters')
           return res.json()
         }),
-      fetch(`/api/appointments?date=${today}&businessId=${business.id}`)
+      fetch(`/api/appointments?date=${dateStr}&businessId=${business.id}`)
         .then((res) => {
           if (!res.ok) throw new Error('Failed to fetch appointments')
           return res.json()
@@ -89,7 +94,7 @@ export default function MainPage() {
         setTodayAppointments([])
         setLoading(false)
       })
-  }, [business])
+  }, [business, selectedDate])
 
   const handleAddTask = () => {
     router.push('/dashboard/appointments')
@@ -168,6 +173,8 @@ export default function MainPage() {
             pendingAppointments={todayPending}
             confirmedAppointments={todayConfirmed}
             onBookAppointment={() => router.push('/dashboard/appointments?create=true')}
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
           />
 
           {/* Tasks Section */}
