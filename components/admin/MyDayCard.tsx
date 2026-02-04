@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { format, addDays, subDays, isSameDay, startOfDay } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { useRouter } from 'next/navigation'
+import { ModalPortal } from '@/components/ui/modal-portal'
 
 interface Appointment {
   id: string
@@ -306,9 +307,38 @@ export function MyDayCard({
 
       {/* Date Picker Modal */}
       {showDatePicker && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4 overflow-y-auto" style={{ WebkitOverflowScrolling: 'touch' }}>
-          <div className="fixed inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setShowDatePicker(false)} />
-          <div className="relative w-full max-w-sm bg-[#2A2A2A] rounded-xl sm:rounded-xl p-4 sm:p-6 border border-white/10 shadow-2xl my-auto max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
+        <ModalPortal>
+          <div 
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4" 
+            style={{ 
+              WebkitOverflowScrolling: 'touch',
+              overscrollBehavior: 'contain',
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0
+            }}
+          >
+            <div 
+              className="fixed inset-0 bg-black/70 backdrop-blur-sm" 
+              onClick={() => setShowDatePicker(false)}
+              style={{ 
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0
+              }}
+            />
+            <div 
+              className="relative w-[95%] sm:w-full max-w-sm bg-[#2A2A2A] rounded-xl p-4 sm:p-6 border border-white/10 shadow-2xl max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-y-auto animate-in fade-in zoom-in-95 duration-200"
+              style={{ 
+                position: 'relative',
+                zIndex: 10000
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
             <div className="flex items-center justify-between mb-4">
               <h3 className="text-lg font-semibold text-white">Виберіть дату</h3>
               <button
@@ -342,8 +372,9 @@ export function MyDayCard({
                 Сьогодні
               </button>
             </div>
+            </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   )

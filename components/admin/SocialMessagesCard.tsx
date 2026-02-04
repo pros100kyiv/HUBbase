@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
+import { ModalPortal } from '@/components/ui/modal-portal'
 
 interface SocialMessage {
   id: string
@@ -218,27 +219,44 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
 
           {/* Reply Modal */}
           {selectedMessage && (
-            <div 
-              className="fixed inset-0 z-[100] flex items-center justify-center p-3 sm:p-4" 
-              style={{ 
-                WebkitOverflowScrolling: 'touch',
-                overflowY: 'auto',
-                overscrollBehavior: 'contain'
-              }}
-            >
+            <ModalPortal>
               <div 
-                className="fixed inset-0 bg-black/70 backdrop-blur-sm" 
-                onClick={() => setSelectedMessage(null)}
-                style={{ position: 'fixed' }}
-              />
-              <div 
-                className="relative w-full max-w-md bg-[#2A2A2A] rounded-xl sm:rounded-xl border border-white/10 shadow-2xl my-auto animate-in fade-in zoom-in-95 duration-200 flex flex-col"
+                className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4" 
                 style={{ 
-                  maxHeight: 'calc(100vh - 1.5rem)',
-                  display: 'flex',
-                  flexDirection: 'column'
+                  WebkitOverflowScrolling: 'touch',
+                  overscrollBehavior: 'contain',
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  bottom: 0
                 }}
               >
+                {/* Backdrop */}
+                <div 
+                  className="fixed inset-0 bg-black/70 backdrop-blur-sm" 
+                  onClick={() => setSelectedMessage(null)}
+                  style={{ 
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0
+                  }}
+                />
+                
+                {/* Modal Content */}
+                <div 
+                  className="relative w-[95%] sm:w-full max-w-md bg-[#2A2A2A] rounded-xl border border-white/10 shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col"
+                  style={{ 
+                    maxHeight: 'calc(100vh - 1.5rem)',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    position: 'relative',
+                    zIndex: 10000
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                >
                 {/* Header - Fixed */}
                 <div className="flex items-center justify-between p-4 sm:p-6 pb-3 sm:pb-4 flex-shrink-0 border-b border-white/10">
                   <div className="flex items-center gap-3 min-w-0 flex-1">
@@ -309,8 +327,9 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
                     {sending ? 'Відправка...' : 'Відправити'}
                   </button>
                 </div>
+                </div>
               </div>
-            </div>
+            </ModalPortal>
           )}
         </>
       )}
