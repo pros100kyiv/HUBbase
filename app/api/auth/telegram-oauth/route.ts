@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { generateDeviceId, getClientIp, getUserAgent, addTrustedDevice } from '@/lib/utils/device'
 import { ensureAdminControlCenterTable } from '@/lib/database/ensure-admin-control-center'
+import { generateBusinessIdentifier } from '@/lib/utils/business-identifier'
 
 /**
  * API для автоматичної реєстрації/входу через Telegram OAuth
@@ -58,6 +59,12 @@ export async function POST(request: Request) {
     
     // КРОК 2: Якщо акаунт знайдено - робимо ВХІД
     if (business) {
+      // Генеруємо businessIdentifier якщо відсутній
+      let businessIdentifier = business.businessIdentifier
+      if (!businessIdentifier) {
+        businessIdentifier = await generateBusinessIdentifier()
+      }
+
       // Оновлюємо дані бізнесу
       const updatedBusiness = await prisma.business.update({
         where: { id: business.id },
@@ -65,6 +72,7 @@ export async function POST(request: Request) {
           telegramChatId: telegramData.id.toString(),
           avatar: telegramData.photo_url || business.avatar,
           telegramId: business.telegramId || telegramId, // Переконаємося що telegramId встановлено
+          businessIdentifier: businessIdentifier, // Оновлюємо businessIdentifier
         }
       })
 
@@ -398,8 +406,8 @@ export async function POST(request: Request) {
     // Отримуємо токен бота
     const defaultBotToken = process.env.DEFAULT_TELEGRAM_BOT_TOKEN || '8258074435:AAHTKLTw6UDd92BV0Go-2ZQ_f2g_3QTXiIo'
     
-    // Генеруємо ідентифікатор бізнесу
-    const businessIdentifier = Math.floor(10000 + Math.random() * 90000).toString()
+    // Генеруємо унікальний ідентифікатор бізнесу
+    const businessIdentifier = await generateBusinessIdentifier()
 
     // Створюємо новий бізнес з додаванням пристрою до довірених
     const newBusiness = await prisma.business.create({

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { BusinessNiche } from '@prisma/client'
+import { findBusinessByIdentifier } from '@/lib/utils/business-identifier'
 
 // Перевіряє чи параметр є UUID (ID) чи slug
 // CUID має формат: c[0-9a-z]{24} або схожий
@@ -61,18 +62,43 @@ export async function GET(
 
     let business
 
-    // Якщо це UUID, шукаємо по ID
-    if (isUUID(param)) {
+    // Спочатку пробуємо знайти за businessIdentifier (число)
+    if (/^\d+$/.test(param)) {
+      business = await prisma.business.findUnique({
+        where: { businessIdentifier: param },
+        select: businessSelect,
+      })
+    }
+
+    // Якщо не знайдено за businessIdentifier, пробуємо за ID
+    if (!business && isUUID(param)) {
       business = await prisma.business.findUnique({
         where: { id: param },
         select: businessSelect,
       })
-    } else {
-      // Інакше шукаємо по slug
+    }
+
+    // Якщо не знайдено, пробуємо за slug
+    if (!business) {
       business = await prisma.business.findUnique({
         where: { slug: param },
         select: businessSelect,
       })
+    }
+
+    // Якщо все ще не знайдено, пробуємо універсальну функцію
+    if (!business) {
+      business = await findBusinessByIdentifier(param)
+      if (business) {
+        // Відфільтруємо тільки потрібні поля
+        const filtered: any = {}
+        Object.keys(businessSelect).forEach(key => {
+          if (key in business) {
+            filtered[key] = (business as any)[key]
+          }
+        })
+        business = filtered
+      }
     }
 
     if (!business) {

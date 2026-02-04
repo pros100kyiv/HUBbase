@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs'
 import { prisma } from './prisma'
 import { registerBusinessInManagementCenter } from './services/management-center'
+import { generateBusinessIdentifier } from './utils/business-identifier'
 
 export async function hashPassword(password: string): Promise<string> {
   return bcrypt.hash(password, 10)
@@ -31,6 +32,9 @@ export async function createBusiness(data: {
   // Автоматично встановлюємо токен Telegram бота при реєстрації
   const defaultTelegramBotToken = process.env.DEFAULT_TELEGRAM_BOT_TOKEN || '8258074435:AAHTKLTw6UDd92BV0Go-2ZQ_f2g_3QTXiIo'
   
+  // Генеруємо businessIdentifier якщо не вказано
+  const businessIdentifier = data.businessIdentifier || await generateBusinessIdentifier()
+  
   const business = await prisma.business.create({
     data: {
       name: data.name,
@@ -39,7 +43,7 @@ export async function createBusiness(data: {
       slug: data.slug,
       googleId: data.googleId,
       phone: data.phone || null,
-      businessIdentifier: data.businessIdentifier || null,
+      businessIdentifier: businessIdentifier,
       niche: (data.niche as BusinessNiche) || BusinessNiche.OTHER,
       customNiche: data.customNiche || null,
       telegramBotToken: defaultTelegramBotToken,
@@ -101,6 +105,7 @@ export async function authenticateBusiness(email: string, password: string) {
         socialMedia: true,
         workingHours: true,
         location: true,
+        businessIdentifier: true, // Додаємо businessIdentifier
       },
     })
 
@@ -148,6 +153,7 @@ export async function authenticateBusiness(email: string, password: string) {
             isActive: true,
             password: true,
             googleId: true,
+            businessIdentifier: true, // Додаємо businessIdentifier
             createdAt: true,
             updatedAt: true,
           },

@@ -5,6 +5,7 @@ import { generateDeviceId, getClientIp, getUserAgent, addTrustedDevice } from '@
 import { ensureAdminControlCenterTable } from '@/lib/database/ensure-admin-control-center'
 import { prisma } from '@/lib/prisma'
 import { BusinessNiche } from '@prisma/client'
+import { generateBusinessIdentifier } from '@/lib/utils/business-identifier'
 
 const registerSchema = z.object({
   name: z.string().min(1, 'Назва обов\'язкова'),
@@ -88,6 +89,24 @@ export async function POST(request: Request) {
       // Автоматично встановлюємо токен Telegram бота
       const defaultTelegramBotToken = process.env.DEFAULT_TELEGRAM_BOT_TOKEN || '8258074435:AAHTKLTw6UDd92BV0Go-2ZQ_f2g_3QTXiIo'
 
+      // Генеруємо унікальний businessIdentifier
+      let businessIdentifier: string
+      let attempts = 0
+      do {
+        businessIdentifier = await generateBusinessIdentifier()
+        const exists = await tx.business.findUnique({
+          where: { businessIdentifier },
+          select: { id: true },
+        })
+        if (!exists) break
+        attempts++
+        if (attempts > 10) {
+          // Якщо не вдалося знайти унікальний за 10 спроб, використовуємо timestamp
+          businessIdentifier = Date.now().toString().slice(-8)
+          break
+        }
+      } while (true)
+
       // Створюємо бізнес в транзакції
       const business = await tx.business.create({
         data: {
@@ -96,6 +115,7 @@ export async function POST(request: Request) {
           password: hashedPassword,
           slug: finalSlug,
           phone: validated.phone || null,
+          businessIdentifier: businessIdentifier,
           niche: BusinessNiche.OTHER,
           customNiche: null,
           telegramBotToken: defaultTelegramBotToken,
