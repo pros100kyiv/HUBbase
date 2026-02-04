@@ -292,19 +292,13 @@ export function NotesCard({ businessId }: NotesCardProps) {
                       : 'bg-white/5 border-white/10'
                   )}
                 >
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="mb-3">
                     <span className={cn(
                       'text-xs font-medium',
                       isDateToday ? 'text-blue-400' : 'text-gray-400'
                     )}>
                       {isDateToday ? 'Сьогодні' : format(date, 'd MMM', { locale: uk })}
                     </span>
-                    <button
-                      onClick={() => handleDateSelect(date)}
-                      className="text-xs text-gray-400 hover:text-white transition-colors"
-                    >
-                      Відкрити
-                    </button>
                   </div>
                   
                   {dateNotes.length === 0 ? (
