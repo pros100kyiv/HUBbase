@@ -31,6 +31,8 @@
     "db:create-email-index": "tsx scripts/create-email-index.ts",
     "test-data:generate": "tsx scripts/generate-test-data.ts",
     "test-data:clean": "tsx scripts/clean-test-data.ts",
+    "test-clients:add": "tsx scripts/add-test-clients.ts",
+    "test-clients:remove": "tsx scripts/remove-test-clients.ts",
     "business:update-identifiers": "tsx scripts/update-business-identifiers.ts",
     "business:block": "tsx scripts/block-business.ts",
     "business:unblock": "tsx scripts/block-business.ts"
