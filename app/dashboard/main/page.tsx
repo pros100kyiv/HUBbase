@@ -155,12 +155,12 @@ export default function MainPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
         {/* Left Column - Main Content (3 columns) */}
-        <div className="lg:col-span-3 space-y-6">
+        <div className="lg:col-span-3 space-y-3 md:space-y-6">
           {/* Header */}
           <div>
-            <h1 className="text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
+            <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
               Dashboard
             </h1>
           </div>
@@ -178,7 +178,7 @@ export default function MainPage() {
           />
 
           {/* Tasks Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
             <TasksInProcessCard 
               tasks={tasks}
               onAddNote={(id) => console.log('Add note:', id)}
@@ -193,7 +193,7 @@ export default function MainPage() {
         </div>
 
         {/* Right Column - Sidebar (1 column) */}
-        <div className="lg:col-span-1 space-y-6">
+        <div className="lg:col-span-1 space-y-3 md:space-y-6">
           {/* Social Messages */}
           {business?.id && (
             <SocialMessagesCard businessId={business.id} />

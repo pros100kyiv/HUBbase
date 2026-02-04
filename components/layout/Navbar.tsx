@@ -77,32 +77,45 @@ export function Navbar() {
   if (pathname?.startsWith('/dashboard')) {
     return (
       <>
-        <nav className="fixed top-0 left-0 md:left-64 right-0 z-50 border-b" style={{ backgroundColor: 'rgba(20, 20, 20, 0.85)', backdropFilter: 'blur(25px)', WebkitBackdropFilter: 'blur(25px)', borderColor: 'rgba(255, 255, 255, 0.1)' }}>
-          <div className="px-6">
-            <div className="flex justify-between items-center h-16">
+        {/* Mobile: Sticky Записати button at the very top */}
+        <div className="md:hidden fixed top-0 left-0 right-0 z-[60] bg-[#1A1A1A] border-b border-white/10">
+          <div className="px-4 py-3">
+            <button 
+              onClick={() => router.push('/dashboard/appointments?create=true')}
+              className="w-full px-4 py-3 bg-white text-black rounded-lg text-base font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]" 
+              style={{ boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.4)' }}
+            >
+              Записати
+            </button>
+          </div>
+        </div>
+        
+        <nav className="fixed top-0 md:top-0 left-0 md:left-64 right-0 z-50 border-b" style={{ backgroundColor: 'rgba(20, 20, 20, 0.85)', backdropFilter: 'blur(25px)', WebkitBackdropFilter: 'blur(25px)', borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+          <div className="px-3 md:px-6">
+            <div className="flex justify-between items-center h-14 md:h-16 md:pt-0 pt-[60px]">
               {/* Left side - Menu button (mobile) and Hi User */}
-              <div className="flex items-center gap-4 flex-1">
+              <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
                 <button
                   onClick={() => {
                     const newState = !mobileMenuOpen
                     setMobileMenuOpen(newState)
                     setMobileMenuState(newState)
                   }}
-                  className="md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors"
+                  className="md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors flex-shrink-0"
                   aria-label="Відкрити меню"
                 >
                   <MenuIcon className="w-5 h-5 text-white" />
                 </button>
                 
-                <h2 className="text-base font-medium text-white" style={{ letterSpacing: '-0.01em' }}>Hi, User!</h2>
+                <h2 className="text-sm md:text-base font-medium text-white truncate" style={{ letterSpacing: '-0.01em' }}>Hi, User!</h2>
               </div>
 
               {/* Right side - Actions */}
-              <div className="flex items-center gap-3">
-                {/* Записати Button */}
+              <div className="flex items-center gap-2 md:gap-3">
+                {/* Записати Button - Hidden on mobile (shown in sticky bar) */}
                 <button 
                   onClick={() => router.push('/dashboard/appointments?create=true')}
-                  className="px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors" 
+                  className="hidden md:flex px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors" 
                   style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                 >
                   Записати
@@ -111,7 +124,7 @@ export function Navbar() {
                 {/* Search Button */}
                 <button 
                   onClick={() => setSearchOpen(true)}
-                  className="px-3 py-2 rounded-lg hover:bg-white/10 transition-colors flex items-center gap-2 border border-white/10"
+                  className="p-2 md:px-3 md:py-2 rounded-lg hover:bg-white/10 transition-colors flex items-center gap-2 border border-white/10"
                 >
                   <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />

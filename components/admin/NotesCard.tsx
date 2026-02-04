@@ -213,18 +213,18 @@ export function NotesCard({ businessId }: NotesCardProps) {
 
   return (
     <>
-      <div className="rounded-xl p-6 card-floating">
-        <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
+      <div className="rounded-xl p-4 md:p-6 card-floating">
+        <div className="flex items-center justify-between mb-3 md:mb-4">
+          <h3 className="text-base md:text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
             Нотатки
           </h3>
           <div className="flex items-center gap-2">
-            <span className="text-sm text-gray-300 font-medium">{completedCount}/{totalCount}</span>
+            <span className="text-xs md:text-sm text-gray-300 font-medium">{completedCount}/{totalCount}</span>
             <button 
               onClick={() => handleEdit()}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+              className="p-1.5 md:p-2 hover:bg-white/10 rounded-lg transition-colors"
             >
-              <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3.5 h-3.5 md:w-4 md:h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
               </svg>
             </button>
@@ -232,10 +232,10 @@ export function NotesCard({ businessId }: NotesCardProps) {
         </div>
 
         {/* Date Navigation */}
-        <div className="mb-4 flex items-center justify-between">
+        <div className="mb-3 md:mb-4 flex items-center justify-between gap-2">
           <button
             onClick={() => handleDateChange(-1)}
-            className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
           >
             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
@@ -244,18 +244,18 @@ export function NotesCard({ businessId }: NotesCardProps) {
           
           <button
             onClick={() => setShowDatePicker(true)}
-            className="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-sm text-white"
+            className="px-2 md:px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-xs md:text-sm text-white flex-1 min-w-0"
           >
             {isToday ? (
-              <span>Сьогодні, {format(currentDate, 'd MMM', { locale: uk })}</span>
+              <span className="truncate">Сьогодні, {format(currentDate, 'd MMM', { locale: uk })}</span>
             ) : (
-              <span>{format(currentDate, 'EEEE, d MMM', { locale: uk })}</span>
+              <span className="truncate">{format(currentDate, 'EEEE, d MMM', { locale: uk })}</span>
             )}
           </button>
 
           <button
             onClick={() => handleDateChange(1)}
-            className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+            className="p-1.5 hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
           >
             <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
@@ -286,15 +286,15 @@ export function NotesCard({ businessId }: NotesCardProps) {
                 <div
                   key={index}
                   className={cn(
-                    'flex-shrink-0 w-64 rounded-lg p-4 border transition-colors',
+                    'flex-shrink-0 w-56 md:w-64 rounded-lg p-3 md:p-4 border transition-colors',
                     isSelected
                       ? 'bg-white/10 border-white/20'
                       : 'bg-white/5 border-white/10'
                   )}
                 >
-                  <div className="mb-3">
+                  <div className="mb-2 md:mb-3">
                     <span className={cn(
-                      'text-xs font-medium',
+                      'text-[10px] md:text-xs font-medium',
                       isDateToday ? 'text-blue-400' : 'text-gray-400'
                     )}>
                       {isDateToday ? 'Сьогодні' : format(date, 'd MMM', { locale: uk })}
@@ -302,25 +302,25 @@ export function NotesCard({ businessId }: NotesCardProps) {
                   </div>
                   
                   {dateNotes.length === 0 ? (
-                    <p className="text-xs text-gray-500">Немає нотаток</p>
+                    <p className="text-[10px] md:text-xs text-gray-500">Немає нотаток</p>
                   ) : (
-                    <div className="space-y-2">
+                    <div className="space-y-1.5 md:space-y-2">
                       {dateNotes.map((note) => (
                         <div
                           key={note.id}
-                          className="flex items-center gap-2 text-xs"
+                          className="flex items-center gap-1.5 md:gap-2 text-[10px] md:text-xs"
                         >
                           <div
                             onClick={() => handleToggle(note.id)}
                             className={cn(
-                              'w-4 h-4 rounded border-2 flex items-center justify-center transition-colors cursor-pointer flex-shrink-0',
+                              'w-3.5 h-3.5 md:w-4 md:h-4 rounded border-2 flex items-center justify-center transition-colors cursor-pointer flex-shrink-0',
                               note.completed
                                 ? 'bg-white border-white'
                                 : 'bg-transparent border-gray-400'
                             )}
                           >
                             {note.completed && (
-                              <CheckIcon className="w-2.5 h-2.5 text-black" />
+                              <CheckIcon className="w-2 md:w-2.5 h-2 md:h-2.5 text-black" />
                             )}
                           </div>
                           <span
@@ -345,12 +345,12 @@ export function NotesCard({ businessId }: NotesCardProps) {
 
         {/* Current Date Notes */}
         {loading ? (
-          <div className="text-center py-4 text-sm text-gray-400">Завантаження...</div>
+          <div className="text-center py-4 text-xs md:text-sm text-gray-400">Завантаження...</div>
         ) : (
-          <div className="space-y-3 mt-4">
+          <div className="space-y-2 md:space-y-3 mt-3 md:mt-4">
             {notes.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-sm text-gray-400 mb-2">Немає нотаток на цю дату</p>
+              <div className="text-center py-6 md:py-8">
+                <p className="text-xs md:text-sm text-gray-400 mb-2">Немає нотаток на цю дату</p>
                 <button
                   onClick={() => handleEdit()}
                   className="text-xs text-blue-400 hover:text-blue-300"
@@ -362,7 +362,7 @@ export function NotesCard({ businessId }: NotesCardProps) {
               notes.map((note) => (
                 <div 
                   key={note.id}
-                  className="flex items-center gap-3 cursor-pointer hover:bg-white/10 rounded-lg p-2 -mx-2 transition-colors"
+                  className="flex items-center gap-2 md:gap-3 cursor-pointer hover:bg-white/10 rounded-lg p-2 -mx-2 transition-colors active:scale-[0.98]"
                   onClick={() => handleEdit(note)}
                 >
                   <div
@@ -371,18 +371,18 @@ export function NotesCard({ businessId }: NotesCardProps) {
                       handleToggle(note.id)
                     }}
                     className={cn(
-                      'w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0',
+                      'w-4 h-4 md:w-5 md:h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0',
                       note.completed
                         ? 'bg-white border-white'
                         : 'bg-transparent border-gray-400'
                     )}
                   >
                     {note.completed && (
-                      <CheckIcon className="w-3 h-3 text-black" />
+                      <CheckIcon className="w-2.5 h-2.5 md:w-3 md:h-3 text-black" />
                     )}
                   </div>
                   <span className={cn(
-                    'text-sm flex-1',
+                    'text-xs md:text-sm flex-1',
                     note.completed
                       ? 'text-gray-400 line-through'
                       : 'text-gray-200'

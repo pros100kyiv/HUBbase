@@ -108,12 +108,12 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
   }
 
   return (
-    <div className="rounded-xl p-6 card-floating">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
+    <div className="rounded-xl p-4 md:p-6 card-floating">
+      <div className="flex items-center justify-between mb-3 md:mb-4">
+        <h3 className="text-base md:text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
           Календар записів
         </h3>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 md:gap-2">
           <button
             onClick={handlePrevMonth}
             className="p-1.5 rounded-lg hover:bg-white/10 transition-colors"
@@ -139,17 +139,17 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
         </div>
       </div>
 
-      <div className="mb-3">
-        <h4 className="text-sm font-semibold text-white">
+      <div className="mb-2 md:mb-3">
+        <h4 className="text-xs md:text-sm font-semibold text-white">
           {format(currentMonth, 'LLLL yyyy', { locale: uk })}
         </h4>
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-1">
+      <div className="grid grid-cols-7 gap-0.5 md:gap-1">
         {/* Day headers */}
         {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
-          <div key={day} className="text-center text-[10px] font-bold text-gray-400 py-1">
+          <div key={day} className="text-center text-[9px] md:text-[10px] font-bold text-gray-400 py-0.5 md:py-1">
             {day}
           </div>
         ))}
@@ -166,7 +166,7 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
               key={day.toISOString()}
               onClick={() => handleDayClick(day)}
               className={cn(
-                'relative p-1.5 rounded-lg border transition-all min-h-[32px] flex flex-col items-center justify-center',
+                'relative p-1 md:p-1.5 rounded-lg border transition-all min-h-[28px] md:min-h-[32px] flex flex-col items-center justify-center',
                 !isCurrentMonth && 'opacity-30',
                 isToday
                   ? 'border-blue-500 bg-blue-500/20'
@@ -175,7 +175,7 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
               )}
             >
               <div className={cn(
-                'text-[11px] font-bold mb-0.5',
+                'text-[10px] md:text-[11px] font-bold mb-0.5',
                 isToday ? 'text-blue-400' : isCurrentMonth ? 'text-white' : 'text-gray-500'
               )}>
                 {format(day, 'd')}
@@ -183,7 +183,7 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
               {appointmentCount > 0 && (
                 <div className="w-full mt-auto">
                   <div className={cn(
-                    'text-[9px] font-bold text-center rounded-full py-0.5',
+                    'text-[8px] md:text-[9px] font-bold text-center rounded-full py-0.5',
                     isToday 
                       ? 'bg-blue-500 text-white' 
                       : 'bg-white/20 text-white'

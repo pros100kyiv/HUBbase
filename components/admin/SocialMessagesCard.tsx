@@ -143,18 +143,18 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
   const unreadCount = messages.filter(m => !m.isRead).length
 
   return (
-    <div className="rounded-xl p-6 card-floating">
+    <div className="rounded-xl p-4 md:p-6 card-floating">
       {/* Header */}
-      <div className="flex items-start justify-between mb-4">
-        <div>
-          <h3 className="text-xl font-bold text-white mb-0.5" style={{ letterSpacing: '-0.01em' }}>
+      <div className="flex items-start justify-between mb-3 md:mb-4">
+        <div className="min-w-0 flex-1">
+          <h3 className="text-base md:text-xl font-bold text-white mb-0.5" style={{ letterSpacing: '-0.01em' }}>
             Повідомлення
           </h3>
-          <p className="text-sm text-gray-300 font-normal">З соціальних мереж</p>
+          <p className="text-xs md:text-sm text-gray-300 font-normal">З соціальних мереж</p>
         </div>
         {unreadCount > 0 && (
-          <div className="w-6 h-6 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
-            <span className="text-xs font-bold text-white">{unreadCount}</span>
+          <div className="w-5 h-5 md:w-6 md:h-6 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+            <span className="text-[10px] md:text-xs font-bold text-white">{unreadCount}</span>
           </div>
         )}
       </div>
@@ -173,22 +173,22 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
         </div>
       ) : (
         <>
-          <div className="space-y-3 max-h-[400px] overflow-y-auto pr-1">
+          <div className="space-y-2 md:space-y-3 max-h-[300px] md:max-h-[400px] overflow-y-auto pr-1">
             {messages.map((message) => (
               <button
                 key={message.id}
                 onClick={() => setSelectedMessage(message)}
                 className={cn(
-                  'w-full text-left rounded-lg p-3 transition-colors',
+                  'w-full text-left rounded-lg p-2 md:p-3 transition-colors active:scale-[0.98]',
                   !message.isRead
                     ? 'bg-white/10 border border-white/20'
                     : 'bg-white/5 border border-white/10 hover:bg-white/8'
                 )}
               >
-                <div className="flex items-start gap-3">
+                <div className="flex items-start gap-2 md:gap-3">
                   {/* Platform Icon */}
                   <div className={cn(
-                    'w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white',
+                    'w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white',
                     getPlatformBgColor(message.platform)
                   )}>
                     {getPlatformIcon(message.platform)}
@@ -196,18 +196,18 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
 
                   {/* Content */}
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                      <span className="text-sm font-bold text-white">
+                    <div className="flex items-center gap-1.5 md:gap-2 mb-0.5 md:mb-1 flex-wrap">
+                      <span className="text-xs md:text-sm font-bold text-white truncate">
                         {message.senderName}
                       </span>
-                      <span className="px-2 py-0.5 bg-blue-500/20 text-blue-400 border border-blue-500/50 rounded text-[10px] font-medium">
+                      <span className="px-1.5 md:px-2 py-0.5 bg-blue-500/20 text-blue-400 border border-blue-500/50 rounded text-[9px] md:text-[10px] font-medium flex-shrink-0">
                         {getPlatformShortName(message.platform)}
                       </span>
                     </div>
-                    <p className="text-xs text-gray-300 line-clamp-2 mb-1.5">
+                    <p className="text-[10px] md:text-xs text-gray-300 line-clamp-2 mb-1 md:mb-1.5">
                       {message.message}
                     </p>
-                    <p className="text-[10px] text-gray-500">
+                    <p className="text-[9px] md:text-[10px] text-gray-500">
                       {format(new Date(message.timestamp), 'd MMM, HH:mm', { locale: uk })}
                     </p>
                   </div>

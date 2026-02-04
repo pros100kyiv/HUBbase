@@ -104,15 +104,15 @@ export function MyDayCard({
   }
 
   return (
-    <div className="bg-[#1A1A1A] text-white rounded-xl p-6 card-floating">
+    <div className="bg-[#1A1A1A] text-white rounded-xl p-4 md:p-6 card-floating">
       {/* Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex-1">
-          <h3 className="text-2xl font-bold text-white mb-1" style={{ letterSpacing: '-0.02em' }}>
+      <div className="flex items-center justify-between mb-4 md:mb-6">
+        <div className="flex-1 min-w-0">
+          <h3 className="text-lg md:text-2xl font-bold text-white mb-1" style={{ letterSpacing: '-0.02em' }}>
             МІЙ ДЕНЬ
           </h3>
           {/* Date Navigation */}
-          <div className="flex items-center gap-3 mt-2">
+          <div className="flex items-center gap-2 md:gap-3 mt-2 flex-wrap">
             <button
               onClick={handlePreviousDay}
               className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
@@ -125,12 +125,12 @@ export function MyDayCard({
             
             <button
               onClick={() => setShowDatePicker(true)}
-              className="px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-sm text-white flex items-center gap-2"
+              className="px-2 md:px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-xs md:text-sm text-white flex items-center gap-1 md:gap-2 flex-1 min-w-0"
             >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <span className="capitalize">{dateDisplay}</span>
+              <span className="capitalize truncate">{dateDisplay}</span>
             </button>
             
             <button
@@ -153,9 +153,9 @@ export function MyDayCard({
             )}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {/* Share icon */}
-          <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+        <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+          {/* Share icon - Hidden on mobile */}
+          <button className="hidden md:flex p-2 hover:bg-white/10 rounded-lg transition-colors">
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <circle cx="9" cy="9" r="3" strokeWidth={2} />
               <circle cx="15" cy="15" r="3" strokeWidth={2} />
@@ -164,7 +164,7 @@ export function MyDayCard({
           </button>
           {/* Three dots menu */}
           <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
-            <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-4 h-4 md:w-5 md:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
             </svg>
           </button>
@@ -172,32 +172,32 @@ export function MyDayCard({
       </div>
 
       {/* Statistics Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-          <div className="text-2xl font-bold text-white mb-1">{totalAppointments}</div>
-          <div className="text-xs text-gray-400">Всього записів</div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
+        <div className="bg-white/5 border border-white/10 rounded-lg p-3 md:p-4">
+          <div className="text-xl md:text-2xl font-bold text-white mb-0.5 md:mb-1">{totalAppointments}</div>
+          <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Всього записів</div>
         </div>
-        <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-          <div className="text-2xl font-bold text-green-400 mb-1">{confirmedAppointments}</div>
-          <div className="text-xs text-gray-400">Підтверджено</div>
+        <div className="bg-white/5 border border-white/10 rounded-lg p-3 md:p-4">
+          <div className="text-xl md:text-2xl font-bold text-green-400 mb-0.5 md:mb-1">{confirmedAppointments}</div>
+          <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Підтверджено</div>
         </div>
-        <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-          <div className="text-2xl font-bold text-orange-400 mb-1">{pendingAppointments}</div>
-          <div className="text-xs text-gray-400">Очікує</div>
+        <div className="bg-white/5 border border-white/10 rounded-lg p-3 md:p-4">
+          <div className="text-xl md:text-2xl font-bold text-orange-400 mb-0.5 md:mb-1">{pendingAppointments}</div>
+          <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Очікує</div>
         </div>
-        <div className="bg-white/5 border border-white/10 rounded-lg p-4">
-          <div className="text-2xl font-bold text-blue-400 mb-1">{completedAppointments}</div>
-          <div className="text-xs text-gray-400">Виконано</div>
+        <div className="bg-white/5 border border-white/10 rounded-lg p-3 md:p-4">
+          <div className="text-xl md:text-2xl font-bold text-blue-400 mb-0.5 md:mb-1">{completedAppointments}</div>
+          <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Виконано</div>
         </div>
       </div>
 
       {/* Appointments List */}
       {appointments.length > 0 ? (
-        <div className="space-y-3 mb-4">
-          <h4 className="text-sm font-semibold text-gray-300 uppercase mb-3" style={{ letterSpacing: '0.05em' }}>
+        <div className="space-y-2 md:space-y-3 mb-4">
+          <h4 className="text-xs md:text-sm font-semibold text-gray-300 uppercase mb-2 md:mb-3" style={{ letterSpacing: '0.05em' }}>
             Записи {isToday ? 'на сьогодні' : `на ${format(selectedDate, 'd MMMM', { locale: uk })}`}
           </h4>
-          <div className="space-y-2 max-h-64 overflow-y-auto">
+          <div className="space-y-2 max-h-48 md:max-h-64 overflow-y-auto">
             {appointments.map((apt) => {
               const startTime = new Date(apt.startTime)
               const endTime = new Date(apt.endTime)
@@ -206,17 +206,17 @@ export function MyDayCard({
                 <button
                   key={apt.id}
                   onClick={() => handleAppointmentClick(apt.id)}
-                  className="w-full text-left bg-white/5 border border-white/10 rounded-lg p-4 hover:bg-white/10 transition-colors"
+                  className="w-full text-left bg-white/5 border border-white/10 rounded-lg p-3 md:p-4 hover:bg-white/10 transition-colors active:scale-[0.98]"
                 >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1">
-                      <h5 className="text-sm font-semibold text-white mb-1" style={{ letterSpacing: '-0.01em' }}>
+                  <div className="flex items-start justify-between mb-1 md:mb-2 gap-2">
+                    <div className="flex-1 min-w-0">
+                      <h5 className="text-xs md:text-sm font-semibold text-white mb-0.5 md:mb-1 truncate" style={{ letterSpacing: '-0.01em' }}>
                         {apt.clientName}
                       </h5>
                       {apt.masterName && (
-                        <p className="text-xs text-gray-400 mb-2">{apt.masterName}</p>
+                        <p className="text-[10px] md:text-xs text-gray-400 mb-1 md:mb-2 truncate">{apt.masterName}</p>
                       )}
-                      <div className="flex items-center gap-3 text-xs text-gray-300">
+                      <div className="flex items-center gap-2 md:gap-3 text-[10px] md:text-xs text-gray-300 flex-wrap">
                         <div className="flex items-center gap-1">
                           <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -233,12 +233,12 @@ export function MyDayCard({
                         )}
                       </div>
                     </div>
-                    <div className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(apt.status)}`}>
+                    <div className={`px-1.5 md:px-2 py-0.5 md:py-1 rounded text-[9px] md:text-xs font-medium border flex-shrink-0 ${getStatusColor(apt.status)}`}>
                       {apt.status}
                     </div>
                   </div>
                   {apt.services && (
-                    <div className="text-xs text-gray-400 mt-2">
+                    <div className="text-[10px] md:text-xs text-gray-400 mt-1 md:mt-2 line-clamp-1">
                       {(() => {
                         try {
                           const services = JSON.parse(apt.services)
@@ -269,7 +269,7 @@ export function MyDayCard({
           </p>
           <button
             onClick={handleBookAppointment}
-            className="px-6 py-3 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors"
+            className="px-4 md:px-6 py-2.5 md:py-3 bg-white text-black rounded-lg text-xs md:text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
             style={{ letterSpacing: '-0.01em', boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
           >
             Записати на послугу
