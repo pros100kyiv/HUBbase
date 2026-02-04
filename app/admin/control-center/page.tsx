@@ -363,24 +363,44 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
   const [selectedBusiness, setSelectedBusiness] = useState<Business | null>(null)
   const [blockReason, setBlockReason] = useState('')
   const [isBlocking, setIsBlocking] = useState(false)
+  const [blockInfoModalOpen, setBlockInfoModalOpen] = useState(false)
+  const [blockInfoBusiness, setBlockInfoBusiness] = useState<Business | null>(null)
+  const [blockInfo, setBlockInfo] = useState<any>(null)
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [deleteConfirm, setDeleteConfirm] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [searchBy, setSearchBy] = useState<'all' | 'id' | 'name' | 'email'>('all')
 
   const handleBulkAction = async () => {
     if (!bulkAction || selectedBusinesses.length === 0) return
+
+    if (bulkAction === 'delete') {
+      if (!confirm(`Ви впевнені, що хочете видалити ${selectedBusinesses.length} акаунтів? Цю дію неможливо скасувати!`)) {
+        return
+      }
+    }
 
     try {
       for (const businessId of selectedBusinesses) {
         // Знаходимо businessIdentifier для бізнесу
         const business = businesses.find((b: Business) => b.businessId === businessId)
         if (business && business.businessIdentifier) {
-          await fetch('/api/business/block', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            body: JSON.stringify({
-              businessIdentifier: business.businessIdentifier,
-              isActive: bulkAction === 'activate',
-              reason: bulkAction === 'deactivate' ? 'Масове блокування' : undefined,
-            }),
-          })
+          if (bulkAction === 'delete') {
+            await fetch(`/api/business/delete?businessIdentifier=${business.businessIdentifier}`, {
+              method: 'DELETE',
+              headers: getAuthHeaders(),
+            })
+          } else {
+            await fetch('/api/business/block', {
+              method: 'POST',
+              headers: getAuthHeaders(),
+              body: JSON.stringify({
+                businessIdentifier: business.businessIdentifier,
+                isActive: bulkAction === 'activate',
+                reason: bulkAction === 'deactivate' ? 'Масове блокування' : undefined,
+              }),
+            })
+          }
         }
       }
       setSelectedBusinesses([])
@@ -457,6 +477,91 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
     }
   }
 
+  const handleViewBlockInfo = async (business: Business) => {
+    if (!business.businessIdentifier) return
+
+    setBlockInfoBusiness(business)
+    
+    try {
+      const response = await fetch(`/api/business/block?businessIdentifier=${business.businessIdentifier}`, {
+        headers: getAuthHeaders(),
+      })
+      
+      if (response.ok) {
+        const data = await response.json()
+        setBlockInfo(data.blockInfo)
+        setBlockInfoModalOpen(true)
+      }
+    } catch (error) {
+      console.error('Error fetching block info:', error)
+    }
+  }
+
+  const handleDeleteClick = (business: Business) => {
+    setSelectedBusiness(business)
+    setDeleteConfirm('')
+    setDeleteModalOpen(true)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!selectedBusiness || !selectedBusiness.businessIdentifier) return
+    
+    if (deleteConfirm !== 'ВИДАЛИТИ') {
+      alert('Введіть "ВИДАЛИТИ" для підтвердження')
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      const response = await fetch(`/api/business/delete?businessIdentifier=${selectedBusiness.businessIdentifier}`, {
+        method: 'DELETE',
+        headers: getAuthHeaders(),
+      })
+
+      if (response.ok) {
+        setDeleteModalOpen(false)
+        setSelectedBusiness(null)
+        setDeleteConfirm('')
+        window.location.reload()
+      } else {
+        const data = await response.json()
+        alert(data.error || 'Помилка при видаленні')
+      }
+    } catch (error) {
+      console.error('Error deleting business:', error)
+      alert('Помилка при видаленні акаунту')
+    } finally {
+      setIsDeleting(false)
+    }
+  }
+
+  const handleCopyId = (businessIdentifier: string) => {
+    navigator.clipboard.writeText(businessIdentifier)
+    alert(`ID ${businessIdentifier} скопійовано!`)
+  }
+
+  const filteredBusinesses = businesses.filter((business: Business) => {
+    if (!search) return true
+    
+    const searchLower = search.toLowerCase()
+    
+    switch (searchBy) {
+      case 'id':
+        return business.businessIdentifier?.toLowerCase().includes(searchLower)
+      case 'name':
+        return business.name.toLowerCase().includes(searchLower)
+      case 'email':
+        return business.email.toLowerCase().includes(searchLower)
+      default:
+        return (
+          business.name.toLowerCase().includes(searchLower) ||
+          business.email.toLowerCase().includes(searchLower) ||
+          business.phone?.toLowerCase().includes(searchLower) ||
+          business.businessIdentifier?.toLowerCase().includes(searchLower)
+        )
+    }
+  })
+
   return (
     <div>
       <div className="mb-6 flex flex-col md:flex-row gap-4">
@@ -464,12 +569,29 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
-            placeholder="Пошук по назві, email, телефону..."
+            placeholder={
+              searchBy === 'id' ? 'Пошук за ID (наприклад: 56836)...' :
+              searchBy === 'name' ? 'Пошук за назвою...' :
+              searchBy === 'email' ? 'Пошук за email...' :
+              'Пошук по назві, email, телефону, ID...'
+            }
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-10 pr-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
           />
         </div>
+        
+        <select
+          value={searchBy}
+          onChange={(e) => setSearchBy(e.target.value as any)}
+          className="px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white"
+          title="Тип пошуку"
+        >
+          <option value="all">Всюди</option>
+          <option value="id">За ID</option>
+          <option value="name">За назвою</option>
+          <option value="email">За email</option>
+        </select>
 
         <select
           value={statusFilter}
@@ -491,6 +613,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
               <option value="">Оберіть дію</option>
               <option value="activate">Активувати</option>
               <option value="deactivate">Деактивувати</option>
+              <option value="delete">Видалити</option>
             </select>
             <button
               onClick={handleBulkAction}
@@ -539,7 +662,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                 </tr>
               </thead>
               <tbody>
-                {businesses.map((business: Business) => (
+                {(search ? filteredBusinesses : businesses).map((business: Business) => (
                   <tr
                     key={business.id}
                     className="border-b border-gray-100 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700/50"
@@ -559,9 +682,20 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                     </td>
                     <td className="py-3 px-4">
                       {business.businessIdentifier ? (
-                        <span className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400">
-                          {business.businessIdentifier}
-                        </span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-sm font-bold text-blue-600 dark:text-blue-400">
+                            {business.businessIdentifier}
+                          </span>
+                          <button
+                            onClick={() => handleCopyId(business.businessIdentifier!)}
+                            className="p-1 hover:bg-gray-200 dark:hover:bg-gray-700 rounded transition-colors"
+                            title="Копіювати ID"
+                          >
+                            <svg className="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                            </svg>
+                          </button>
+                        </div>
                       ) : (
                         <span className="text-sm text-gray-400">-</span>
                       )}
@@ -594,16 +728,20 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                           Активний
                         </span>
                       ) : (
-                        <span className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200">
+                        <button
+                          onClick={() => handleViewBlockInfo(business)}
+                          className="px-2 py-1 rounded text-xs font-medium bg-red-100 text-red-800 dark:bg-red-900 dark:text-red-200 hover:bg-red-200 dark:hover:bg-red-800 transition-colors cursor-pointer"
+                          title="Натисніть для перегляду причини блокування"
+                        >
                           Неактивний
-                        </span>
+                        </button>
                       )}
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-600 dark:text-gray-400">
                       {formatDate(business.lastLoginAt)}
                     </td>
                     <td className="py-3 px-4">
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-wrap">
                         <button 
                           onClick={() => onBusinessClick(business.businessId)}
                           className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm"
@@ -611,19 +749,35 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                           Деталі
                         </button>
                         {business.isActive ? (
-                          <button
-                            onClick={() => handleBlockClick(business)}
-                            className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors"
-                          >
-                            Заблокувати
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handleBlockClick(business)}
+                              className="px-3 py-1 bg-red-500 text-white text-xs rounded hover:bg-red-600 transition-colors"
+                            >
+                              Заблокувати
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(business)}
+                              className="px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 transition-colors"
+                            >
+                              Видалити
+                            </button>
+                          </>
                         ) : (
-                          <button
-                            onClick={() => handleUnblock(business)}
-                            className="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition-colors"
-                          >
-                            Розблокувати
-                          </button>
+                          <>
+                            <button
+                              onClick={() => handleUnblock(business)}
+                              className="px-3 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition-colors"
+                            >
+                              Розблокувати
+                            </button>
+                            <button
+                              onClick={() => handleDeleteClick(business)}
+                              className="px-3 py-1 bg-gray-500 text-white text-xs rounded hover:bg-gray-600 transition-colors"
+                            >
+                              Видалити
+                            </button>
+                          </>
                         )}
                       </div>
                     </td>
@@ -631,6 +785,32 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                 ))}
               </tbody>
             </table>
+          </div>
+          
+          {/* Статистика */}
+          <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
+              <div className="text-sm text-blue-600 dark:text-blue-400 mb-1">Всього {search ? '(знайдено)' : ''}</div>
+              <div className="text-2xl font-bold text-blue-900 dark:text-blue-100">
+                {search ? filteredBusinesses.length : businesses.length}
+              </div>
+            </div>
+            <div className="bg-green-50 dark:bg-green-900/20 rounded-lg p-4 border border-green-200 dark:border-green-800">
+              <div className="text-sm text-green-600 dark:text-green-400 mb-1">Активних</div>
+              <div className="text-2xl font-bold text-green-900 dark:text-green-100">
+                {(search ? filteredBusinesses : businesses).filter((b: Business) => b.isActive).length}
+              </div>
+            </div>
+            <div className="bg-red-50 dark:bg-red-900/20 rounded-lg p-4 border border-red-200 dark:border-red-800">
+              <div className="text-sm text-red-600 dark:text-red-400 mb-1">Заблокованих</div>
+              <div className="text-2xl font-bold text-red-900 dark:text-red-100">
+                {(search ? filteredBusinesses : businesses).filter((b: Business) => !b.isActive).length}
+              </div>
+            </div>
+            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-lg p-4 border border-purple-200 dark:border-purple-800">
+              <div className="text-sm text-purple-600 dark:text-purple-400 mb-1">Вибрано</div>
+              <div className="text-2xl font-bold text-purple-900 dark:text-purple-100">{selectedBusinesses.length}</div>
+            </div>
           </div>
 
           <div className="mt-6 flex justify-between items-center">
