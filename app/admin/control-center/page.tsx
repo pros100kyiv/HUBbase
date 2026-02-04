@@ -624,9 +624,37 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
           </div>
         )}
 
-        <button className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2">
+        <button 
+          onClick={() => {
+            const dataToExport = search ? filteredBusinesses : businesses
+            if (dataToExport.length === 0) {
+              alert('Немає даних для експорту')
+              return
+            }
+            const data = dataToExport.map((b: Business) => ({
+              ID: b.businessIdentifier || '-',
+              Назва: b.name,
+              Email: b.email,
+              Телефон: b.phone || '-',
+              Статус: b.isActive ? 'Активний' : 'Неактивний',
+              'Тип реєстрації': b.registrationType === 'telegram' ? 'Telegram' : b.registrationType === 'google' ? 'Google' : 'Стандартна',
+              'Дата реєстрації': formatDate(b.registeredAt),
+              'Останній вхід': formatDate(b.lastLoginAt),
+            }))
+            const csv = [
+              Object.keys(data[0] || {}).join(','),
+              ...data.map(row => Object.values(row).map(v => `"${String(v).replace(/"/g, '""')}"`).join(','))
+            ].join('\n')
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' })
+            const link = document.createElement('a')
+            link.href = URL.createObjectURL(blob)
+            link.download = `businesses-${new Date().toISOString().split('T')[0]}.csv`
+            link.click()
+          }}
+          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 flex items-center gap-2"
+        >
           <DownloadIcon className="w-5 h-5" />
-          Експорт
+          Експорт CSV
         </button>
       </div>
 
@@ -641,9 +669,11 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                   <th className="text-left py-3 px-4">
                     <input
                       type="checkbox"
+                      checked={selectedBusinesses.length === (search ? filteredBusinesses : businesses).length && (search ? filteredBusinesses : businesses).length > 0}
                       onChange={(e) => {
+                        const businessesToSelect = search ? filteredBusinesses : businesses
                         if (e.target.checked) {
-                          setSelectedBusinesses(businesses.map((b: Business) => b.businessId))
+                          setSelectedBusinesses(businessesToSelect.map((b: Business) => b.businessId))
                         } else {
                           setSelectedBusinesses([])
                         }
@@ -813,9 +843,19 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
             </div>
           </div>
 
+          {filteredBusinesses.length === 0 && search && (
+            <div className="text-center py-12">
+              <p className="text-gray-500 dark:text-gray-400 mb-2">Нічого не знайдено</p>
+              <p className="text-sm text-gray-400 dark:text-gray-500">
+                Спробуйте змінити параметри пошуку
+              </p>
+            </div>
+          )}
+
           <div className="mt-6 flex justify-between items-center">
             <div className="text-sm text-gray-600 dark:text-gray-400">
-              Сторінка {page} з {totalPages}
+              Показано {filteredBusinesses.length} з {businesses.length} бізнесів
+              {search && ` (фільтр: "${search}")`}
             </div>
             <div className="flex gap-2">
               <button
