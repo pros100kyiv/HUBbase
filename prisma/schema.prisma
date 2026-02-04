@@ -118,6 +118,7 @@ model Business {
   clientSegments               ClientSegment[] // Сегменти клієнтів
   smsMessages                  SMSMessage[] // SMS повідомлення
   socialIntegrations           SocialIntegration[] // Інтеграції з соцмережами
+  notes                        Note[] // Нотатки
   createdAt                    DateTime            @default(now())
   updatedAt                    DateTime            @updatedAt
 
@@ -610,6 +611,23 @@ model SocialIntegration {
   @@index([businessId])
   @@index([platform])
   @@index([isConnected])
+}
+
+// Нотатки
+model Note {
+  id          String    @id @default(cuid())
+  businessId  String
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  text        String
+  completed   Boolean   @default(false)
+  date        DateTime  // Дата нотатки
+  order      Int       @default(0) // Порядок сортування
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([businessId])
+  @@index([date])
+  @@index([businessId, date])
 }
 
 // ============================================

@@ -6,7 +6,7 @@ import { format } from 'date-fns'
 import { MyDayCard } from '@/components/admin/MyDayCard'
 import { WeeklyProcessCard } from '@/components/admin/WeeklyProcessCard'
 import { MonthProgressCard } from '@/components/admin/MonthProgressCard'
-import { MonthGoalsCard } from '@/components/admin/MonthGoalsCard'
+import { NotesCard } from '@/components/admin/NotesCard'
 import { TasksInProcessCard } from '@/components/admin/TasksInProcessCard'
 import { AddTaskCard } from '@/components/admin/AddTaskCard'
 import { LastProjectsCard } from '@/components/admin/LastProjectsCard'
@@ -30,12 +30,6 @@ export default function MainPage() {
   const [stats, setStats] = useState<any>(null)
   const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
-  const [goals, setGoals] = useState([
-    { id: '1', text: '1h Meditation', completed: true },
-    { id: '2', text: '10m Running', completed: true },
-    { id: '3', text: '30m Workout', completed: true },
-    { id: '4', text: "30m Pooja & read book", completed: false },
-  ])
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -96,12 +90,6 @@ export default function MainPage() {
         setLoading(false)
       })
   }, [business])
-
-  const handleToggleGoal = (id: string) => {
-    setGoals(goals.map(goal => 
-      goal.id === id ? { ...goal, completed: !goal.completed } : goal
-    ))
-  }
 
   const handleAddTask = () => {
     router.push('/dashboard/appointments')
@@ -207,11 +195,10 @@ export default function MainPage() {
           {/* Calendar Card */}
           <WeeklyProcessCard businessId={business?.id} />
 
-          {/* Month Goals Card */}
-          <MonthGoalsCard 
-            goals={goals}
-            onToggleGoal={handleToggleGoal}
-          />
+          {/* Notes Card */}
+          {business?.id && (
+            <NotesCard businessId={business.id} />
+          )}
 
           {/* Month Progress Card */}
           <MonthProgressCard progress={30} />
