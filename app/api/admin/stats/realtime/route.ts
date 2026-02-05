@@ -3,8 +3,8 @@ import { prisma } from '@/lib/prisma'
 import { verifyAdminToken } from '@/lib/middleware/admin-auth'
 
 /** Хвилини для визначення статусу */
-const ONLINE_MINUTES = 5   // вхід за останні 5 хв = онлайн
-const IDLE_MINUTES = 60   // 5–60 хв = в простої, >60 хв = офлайн
+const PAGE_ONLINE_MINUTES = 2   // heartbeat за останні 2 хв = сторінка відкрита (онлайн)
+const IDLE_MINUTES = 60        // 2–60 хв = в простої, >60 хв = офлайн
 
 export async function GET(request: Request) {
   const auth = verifyAdminToken(request as any)
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
 
   try {
     const now = new Date()
-    const onlineThreshold = new Date(now.getTime() - ONLINE_MINUTES * 60 * 1000)
+    const pageOnlineThreshold = new Date(now.getTime() - PAGE_ONLINE_MINUTES * 60 * 1000)
     const idleThreshold = new Date(now.getTime() - IDLE_MINUTES * 60 * 1000)
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
@@ -27,26 +27,29 @@ export async function GET(request: Request) {
       blocked,
     ] = await Promise.all([
       prisma.managementCenter.count(),
+      // Онлайн = сторінка дашборду відкрита (lastSeenAt за останні 2 хв)
       prisma.managementCenter.count({
         where: {
-          lastLoginAt: { gte: onlineThreshold },
+          lastSeenAt: { gte: pageOnlineThreshold },
           isActive: true,
         },
       }),
+      // В простої = був на сторінці 2–60 хв тому
       prisma.managementCenter.count({
         where: {
-          lastLoginAt: {
+          lastSeenAt: {
             gte: idleThreshold,
-            lt: onlineThreshold,
+            lt: pageOnlineThreshold,
           },
           isActive: true,
         },
       }),
+      // Офлайн = lastSeenAt > 60 хв або null
       prisma.managementCenter.count({
         where: {
           OR: [
-            { lastLoginAt: null },
-            { lastLoginAt: { lt: idleThreshold } },
+            { lastSeenAt: null },
+            { lastSeenAt: { lt: idleThreshold } },
           ],
           isActive: true,
         },

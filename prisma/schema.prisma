@@ -724,6 +724,7 @@ model ManagementCenter {
   registrationType             String // 'telegram', 'google', 'standard'
   registeredAt                 DateTime      @default(now()) // Дата реєстрації
   lastLoginAt                  DateTime? // Останній вхід
+  lastSeenAt                   DateTime? // Остання активність (heartbeat з відкритої сторінки дашборду)
   createdAt                    DateTime      @default(now())
   updatedAt                    DateTime      @updatedAt
 

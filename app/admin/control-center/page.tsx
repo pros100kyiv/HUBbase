@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { format } from 'date-fns'
+import { format, formatDistanceToNow } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { 
   BuildingIcon, 
@@ -34,9 +34,24 @@ interface Business {
   isActive: boolean
   registeredAt: Date
   lastLoginAt: Date | null
+  lastSeenAt: Date | null
   registrationType: 'telegram' | 'google' | 'standard'
   businessIdentifier: string | null
   niche: string
+}
+
+const ONLINE_THRESHOLD_MS = 2 * 60 * 1000 // 2 хвилини
+
+function getOnlineStatus(lastSeenAt: Date | string | null) {
+  if (!lastSeenAt) return { isOnline: false, label: 'Офлайн' }
+  const diff = Date.now() - new Date(lastSeenAt).getTime()
+  if (diff < ONLINE_THRESHOLD_MS) {
+    return { isOnline: true, label: 'Онлайн' }
+  }
+  return {
+    isOnline: false,
+    label: `Був(ла) ${formatDistanceToNow(new Date(lastSeenAt), { addSuffix: true, locale: uk })}`,
+  }
 }
 
 // Helper function для отримання заголовків з токеном
@@ -755,16 +770,20 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
               alert('Немає даних для експорту')
               return
             }
-            const data: Record<string, string>[] = dataToExport.map((b: Business) => ({
-              ID: b.businessIdentifier || '-',
-              Назва: b.name,
-              Email: b.email,
-              Телефон: b.phone || '-',
-              Статус: b.isActive ? 'Активний' : 'Неактивний',
-              'Тип реєстрації': b.registrationType === 'telegram' ? 'Telegram' : b.registrationType === 'google' ? 'Google' : 'Стандартна',
-              'Дата реєстрації': formatDate(b.registeredAt),
-              'Останній вхід': formatDate(b.lastLoginAt),
-            }))
+            const data: Record<string, string>[] = dataToExport.map((b: Business) => {
+              const { label } = getOnlineStatus(b.lastSeenAt)
+              return {
+                ID: b.businessIdentifier || '-',
+                Назва: b.name,
+                Email: b.email,
+                Телефон: b.phone || '-',
+                Статус: b.isActive ? 'Активний' : 'Неактивний',
+                Сторінка: label,
+                'Тип реєстрації': b.registrationType === 'telegram' ? 'Telegram' : b.registrationType === 'google' ? 'Google' : 'Стандартна',
+                'Дата реєстрації': formatDate(b.registeredAt),
+                'Останній вхід': formatDate(b.lastLoginAt),
+              }
+            })
             const csv = [
               Object.keys(data[0] || {}).join(','),
               ...data.map((row: Record<string, string>) => Object.values(row).map((v: string) => `"${String(v).replace(/"/g, '""')}"`).join(','))
@@ -811,7 +830,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                   <th className="text-left py-3 px-4 font-semibold text-gray-300">Телефон</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-300">Тип реєстрації</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-300">Статус</th>
-                  <th className="text-left py-3 px-4 font-semibold text-gray-300">Дії</th>
+                  <th className="text-left py-3 px-4 font-semibold text-gray-300">Сторінка</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-300">Останній вхід</th>
                   <th className="text-left py-3 px-4 font-semibold text-gray-300">Дії</th>
                 </tr>
@@ -891,6 +910,23 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                           Неактивний
                         </button>
                       )}
+                    </td>
+                    <td className="py-3 px-4">
+                      {(() => {
+                        const { isOnline, label } = getOnlineStatus(business.lastSeenAt)
+                        return (
+                          <div className="flex items-center gap-2" title={label}>
+                            <span
+                              className={`w-2 h-2 rounded-full shrink-0 ${
+                                isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-500'
+                              }`}
+                            />
+                            <span className={`text-xs ${isOnline ? 'text-green-400' : 'text-gray-400'}`}>
+                              {label}
+                            </span>
+                          </div>
+                        )
+                      })()}
                     </td>
                     <td className="py-3 px-4 text-sm text-gray-300">
                       {formatDate(business.lastLoginAt)}

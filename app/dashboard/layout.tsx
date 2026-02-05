@@ -53,6 +53,43 @@ export default function DashboardLayout({
     globalMobileMenuState = { isOpen: mobileMenuOpen, setIsOpen: setMobileMenuOpen }
   }, [mobileMenuOpen])
 
+  // Heartbeat для статусу онлайн/офлайн в Центрі управління
+  useEffect(() => {
+    const businessData = localStorage.getItem('business')
+    if (!businessData) return
+
+    let businessId: string | null = null
+    try {
+      const parsed = JSON.parse(businessData)
+      businessId = parsed?.id || null
+    } catch {
+      return
+    }
+    if (!businessId) return
+
+    const sendHeartbeat = () => {
+      if (document.visibilityState !== 'visible') return
+      fetch('/api/business/presence', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessId }),
+      }).catch(() => {})
+    }
+
+    sendHeartbeat()
+    const interval = setInterval(sendHeartbeat, 30_000)
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') sendHeartbeat()
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    return () => {
+      clearInterval(interval)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [])
+
   const handleProfileComplete = (updatedBusiness: any) => {
     if (updatedBusiness) {
       setBusiness(updatedBusiness)
