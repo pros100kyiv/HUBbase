@@ -24,19 +24,22 @@ interface SocialMessagesCardProps {
 export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
   const [messages, setMessages] = useState<SocialMessage[]>([])
   const [loading, setLoading] = useState(true)
+  const [collapsed, setCollapsed] = useState(true)
   const [selectedMessage, setSelectedMessage] = useState<SocialMessage | null>(null)
   const [replyText, setReplyText] = useState('')
   const [sending, setSending] = useState(false)
 
   useEffect(() => {
-    loadMessages()
-    const interval = setInterval(loadMessages, 30000)
+    // First load (show skeleton only once)
+    loadMessages(false)
+    // Background refresh: keep indicator up-to-date without UI flicker
+    const interval = setInterval(() => loadMessages(true), 30000)
     return () => clearInterval(interval)
   }, [businessId])
 
-  const loadMessages = async () => {
+  const loadMessages = async (silent = false) => {
     try {
-      setLoading(true)
+      if (!silent) setLoading(true)
       const response = await fetch(`/api/social-messages?businessId=${businessId}`)
       if (response.ok) {
         const data = await response.json()
@@ -46,7 +49,7 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
       console.error('Error loading messages:', error)
       setMessages([])
     } finally {
-      setLoading(false)
+      if (!silent) setLoading(false)
     }
   }
 
@@ -142,25 +145,68 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
   }
 
   const unreadCount = messages.filter(m => !m.isRead).length
+  const hasAny = messages.length > 0
+  const hasUnread = unreadCount > 0
+  const latest = messages[0]
 
   return (
     <div className="rounded-xl p-4 md:p-6 card-floating">
       {/* Header */}
-      <div className="flex items-start justify-between mb-3 md:mb-4">
-        <div className="min-w-0 flex-1">
-          <h3 className="text-base md:text-xl font-bold text-white mb-0.5" style={{ letterSpacing: '-0.01em' }}>
-            Повідомлення
-          </h3>
-          <p className="text-xs md:text-sm text-gray-300 font-normal">З соціальних мереж</p>
-        </div>
-        {unreadCount > 0 && (
-          <div className="w-5 h-5 md:w-6 md:h-6 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
-            <span className="text-[10px] md:text-xs font-bold text-white">{unreadCount}</span>
-          </div>
+      <button
+        type="button"
+        onClick={() => setCollapsed((v) => !v)}
+        className={cn(
+          'w-full flex items-start justify-between gap-3 text-left rounded-lg transition-colors',
+          collapsed ? 'hover:bg-white/5 -m-2 p-2' : ''
         )}
-      </div>
+        aria-expanded={!collapsed}
+      >
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <h3 className="text-base md:text-xl font-bold text-white" style={{ letterSpacing: '-0.01em' }}>
+              Повідомлення
+            </h3>
+            {hasUnread && (
+              <div className="w-5 h-5 md:w-6 md:h-6 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-[10px] md:text-xs font-bold text-white">{unreadCount}</span>
+              </div>
+            )}
+            {!hasUnread && hasAny && (
+              <span className="text-[10px] md:text-xs px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-gray-300">
+                є
+              </span>
+            )}
+          </div>
+          <p className="text-xs md:text-sm text-gray-300 font-normal">
+            {collapsed
+              ? loading
+                ? 'Перевіряю…'
+                : hasUnread
+                  ? 'Є нові повідомлення'
+                  : hasAny
+                    ? 'Є повідомлення'
+                    : 'Немає повідомлень'
+              : 'З соціальних мереж'}
+          </p>
+          {collapsed && !loading && latest && (
+            <p className="text-[10px] md:text-xs text-gray-400 mt-1 line-clamp-1">
+              {latest.senderName}: {latest.message}
+            </p>
+          )}
+        </div>
+        <div className="flex-shrink-0 pt-1">
+          <svg
+            className={cn('w-5 h-5 text-gray-300 transition-transform', collapsed ? '' : 'rotate-180')}
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </div>
+      </button>
 
-      {loading ? (
+      {collapsed ? null : loading ? (
         <div className="text-center py-8">
           <div className="text-sm text-gray-400">Завантаження...</div>
         </div>
