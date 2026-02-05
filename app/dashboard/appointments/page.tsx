@@ -547,13 +547,12 @@ export default function AppointmentsPage() {
                   ))}
                 </div>
 
-                <div className="grid grid-cols-7 gap-2">
+                <div className="grid grid-cols-7 gap-1.5 max-w-md">
                   {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
-                    <div key={day} className="text-center text-sm font-semibold text-gray-400 py-2">
+                    <div key={day} className="text-center text-xs font-semibold text-gray-400 py-1">
                       {day}
                     </div>
                   ))}
-                  
                   {calendarDays.map((day) => {
                     const dayAppointments = getAppointmentsForDay(day)
                     const isToday = isSameDay(day, new Date())
@@ -569,7 +568,7 @@ export default function AppointmentsPage() {
                           }
                         }}
                         className={cn(
-                          'relative p-2 rounded-lg border transition-colors min-h-[44px] flex flex-col items-center justify-start',
+                          'relative p-1.5 rounded-md border transition-colors min-h-[36px] flex flex-col items-center justify-start',
                           !isDayInCurrentMonth && 'opacity-30',
                           isSelected
                             ? 'border-white bg-white/20 text-white shadow-md'
@@ -578,15 +577,12 @@ export default function AppointmentsPage() {
                           isDayInCurrentMonth && 'cursor-pointer active:scale-[0.98]'
                         )}
                       >
-                        <div className={cn(
-                          'text-sm font-semibold mb-0.5',
-                          isToday ? 'text-white' : 'text-white'
-                        )}>
+                        <div className={cn('text-xs font-semibold mb-0.5', isToday ? 'text-white' : 'text-white')}>
                           {format(day, 'd')}
                         </div>
                         {dayAppointments.length > 0 && (
                           <div className="w-full mt-auto">
-                            <div className="text-xs font-semibold text-white text-center bg-white/20 rounded-full py-0.5">
+                            <div className="text-[10px] font-semibold text-white text-center bg-white/20 rounded-full py-0.5 leading-tight">
                               {dayAppointments.length}
                             </div>
                           </div>

@@ -146,14 +146,13 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
       </div>
 
       {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-0.5 md:gap-1">
+      <div className="grid grid-cols-7 gap-0.5">
         {/* Day headers */}
         {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
-          <div key={day} className="text-center text-[9px] md:text-[10px] font-bold text-gray-400 py-0.5 md:py-1">
+          <div key={day} className="text-center text-[9px] font-semibold text-gray-400 py-0.5">
             {day}
           </div>
         ))}
-        
         {/* Calendar days */}
         {calendarDays.map((day) => {
           const dayAppointments = getAppointmentsForDay(day)
@@ -166,7 +165,7 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
               key={day.toISOString()}
               onClick={() => handleDayClick(day)}
               className={cn(
-                'relative p-1 md:p-1.5 rounded-lg border transition-all min-h-[28px] md:min-h-[32px] flex flex-col items-center justify-center',
+                'relative p-0.5 rounded-md border transition-all min-h-[24px] flex flex-col items-center justify-center',
                 !isCurrentMonth && 'opacity-30',
                 isToday
                   ? 'border-blue-500 bg-blue-500/20'
@@ -175,7 +174,7 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
               )}
             >
               <div className={cn(
-                'text-[10px] md:text-[11px] font-bold mb-0.5',
+                'text-[9px] font-semibold mb-0.5 leading-tight',
                 isToday ? 'text-blue-400' : isCurrentMonth ? 'text-white' : 'text-gray-500'
               )}>
                 {format(day, 'd')}
@@ -183,7 +182,7 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
               {appointmentCount > 0 && (
                 <div className="w-full mt-auto">
                   <div className={cn(
-                    'text-[8px] md:text-[9px] font-bold text-center rounded-full py-0.5',
+                    'text-[7px] font-semibold text-center rounded-full py-0.5 leading-tight',
                     isToday 
                       ? 'bg-blue-500 text-white' 
                       : 'bg-white/20 text-white'

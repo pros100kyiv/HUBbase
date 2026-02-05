@@ -113,13 +113,13 @@ export function TimeStep({ businessId }: TimeStepProps) {
                   <button type="button" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="px-2 py-1.5 border border-white/20 bg-white/10 text-white rounded-lg text-xs font-medium hover:bg-white/20 transition-colors" title="Наступний місяць">→</button>
                 </div>
               </div>
-              <div className="rounded-xl p-3 card-floating">
-                <div className="grid grid-cols-7 gap-1 mb-2">
+              <div className="rounded-xl p-2 card-floating max-w-xs mx-auto">
+                <div className="grid grid-cols-7 gap-0.5 mb-1.5">
                   {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
-                    <div key={day} className="text-center text-xs font-semibold text-gray-400">{day}</div>
+                    <div key={day} className="text-center text-[10px] font-semibold text-gray-400">{day}</div>
                   ))}
                 </div>
-                <div className="grid grid-cols-7 gap-1">
+                <div className="grid grid-cols-7 gap-0.5">
                   {calendarDays.map((day) => {
                     const isDayInMonth = day >= monthStart! && day <= monthEnd!
                     const isPastDate = clientToday ? isPast(day) && !isSameDay(day, clientToday) : false
@@ -132,7 +132,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
                         onClick={() => { if (!isPastDate && isDayInMonth) setDate(new Date(day.getTime())) }}
                         disabled={isPastDate || !isDayInMonth}
                         className={cn(
-                          'aspect-square flex items-center justify-center rounded-lg text-xs font-medium transition-colors',
+                          'aspect-square max-w-[32px] max-h-[32px] w-full flex items-center justify-center rounded-md text-[10px] font-medium transition-colors',
                           isSelected && 'bg-white text-black shadow-md ring-2 ring-white/50',
                           isTodayDate && isDayInMonth && !isSelected && 'ring-1 ring-white/30 bg-white/20 text-white',
                           (isPastDate || !isDayInMonth) && 'text-white/20 cursor-not-allowed bg-white/5',
