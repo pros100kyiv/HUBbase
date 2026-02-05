@@ -23,7 +23,10 @@ async function fetchJson<T>(url: string): Promise<{ ok: boolean; data: T | null;
   const res = await fetch(url)
   const data = await res.json().catch(() => null)
   if (!res.ok) {
-    return { ok: false, data: null, error: (data as { error?: string })?.error || res.statusText }
+    const error = (data as { error?: string })?.error || res.statusText
+    const details = (data as { details?: string })?.details
+    if (details) console.error('API error details:', url, details)
+    return { ok: false, data: null, error }
   }
   return { ok: true, data: data as T }
 }

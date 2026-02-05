@@ -2,6 +2,27 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { startOfDay, endOfDay, subDays, subMonths, format, eachDayOfInterval } from 'date-fns'
 
+function parseServices(value: unknown): string[] {
+  if (Array.isArray(value)) return value.filter((v): v is string => typeof v === 'string')
+  if (typeof value !== 'string') return []
+  try {
+    const parsed = JSON.parse(value)
+    return Array.isArray(parsed) ? parsed.filter((v): v is string => typeof v === 'string') : []
+  } catch {
+    return []
+  }
+}
+
+function appointmentRevenue(apt: any, services: { id: string; price: number }[]): number {
+  const custom = apt?.customPrice != null ? Number(apt.customPrice) / 100 : NaN
+  if (Number.isFinite(custom)) return custom
+  const servicesList = parseServices(apt?.services)
+  return servicesList.reduce((sum: number, serviceId: string) => {
+    const service = services.find(s => s.id === serviceId)
+    return sum + (service?.price || 0)
+  }, 0)
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -52,29 +73,19 @@ export async function GET(request: Request) {
     // Поточний прибуток (тільки виконані)
     const completedAppointments = appointments.filter(a => a.status === 'Done')
     const currentRevenue = completedAppointments.reduce((sum, apt) => {
-      const servicesList = JSON.parse(apt.services || '[]')
-      const total = servicesList.reduce((s: number, serviceId: string) => {
-        const service = services.find(s => s.id === serviceId)
-        return s + (service?.price || 0)
-      }, 0)
-      return sum + (apt.customPrice ? Number(apt.customPrice) / 100 : total)
+      return sum + appointmentRevenue(apt, services)
     }, 0)
     
     // Прогнозований прибуток (підтверджені)
     const confirmedAppointments = appointments.filter(a => a.status === 'Confirmed')
     const forecastedRevenue = confirmedAppointments.reduce((sum, apt) => {
-      const servicesList = JSON.parse(apt.services || '[]')
-      const total = servicesList.reduce((s: number, serviceId: string) => {
-        const service = services.find(s => s.id === serviceId)
-        return s + (service?.price || 0)
-      }, 0)
-      return sum + (apt.customPrice ? Number(apt.customPrice) / 100 : total)
+      return sum + appointmentRevenue(apt, services)
     }, 0)
     
     // LTV
     const ltvData = clients.map(client => {
       const clientAppointments = client.appointments.filter(a => a.status === 'Done')
-      const totalSpent = Number(client.totalSpent) / 100
+      const totalSpent = Number(client.totalSpent ?? 0) / 100
       const visits = clientAppointments.length
       const avgOrderValue = visits > 0 ? totalSpent / visits : 0
       const firstVisit = client.firstAppointmentDate ? new Date(client.firstAppointmentDate) : null
@@ -115,7 +126,7 @@ export async function GET(request: Request) {
     // Аналіз послуг
     const serviceAnalysis = services.map(service => {
       const serviceAppointments = completedAppointments.filter(apt => {
-        const servicesList = JSON.parse(apt.services || '[]')
+        const servicesList = parseServices(apt?.services)
         return servicesList.includes(service.id)
       })
       
@@ -139,7 +150,12 @@ export async function GET(request: Request) {
     const masterUtilization = masters.map(master => {
       const masterAppointments = completedAppointments.filter(a => a.masterId === master.id)
       const totalHours = masterAppointments.reduce((sum, apt) => {
-        const duration = (new Date(apt.endTime).getTime() - new Date(apt.startTime).getTime()) / (1000 * 60 * 60)
+        const start = new Date(apt.startTime)
+        const end = new Date(apt.endTime)
+        const startMs = start.getTime()
+        const endMs = end.getTime()
+        if (!Number.isFinite(startMs) || !Number.isFinite(endMs) || endMs <= startMs) return sum
+        const duration = (endMs - startMs) / (1000 * 60 * 60)
         return sum + duration
       }, 0)
       
@@ -149,12 +165,7 @@ export async function GET(request: Request) {
       
       const utilizationRate = availableHours > 0 ? (totalHours / availableHours) * 100 : 0
       const revenue = masterAppointments.reduce((sum, apt) => {
-        const servicesList = JSON.parse(apt.services || '[]')
-        const total = servicesList.reduce((s: number, serviceId: string) => {
-          const service = services.find(s => s.id === serviceId)
-          return s + (service?.price || 0)
-        }, 0)
-        return sum + (apt.customPrice ? Number(apt.customPrice) / 100 : total)
+        return sum + appointmentRevenue(apt, services)
       }, 0)
       
       return {
@@ -179,12 +190,7 @@ export async function GET(request: Request) {
       const dayRevenue = dayAppointments
         .filter(a => a.status === 'Done')
         .reduce((sum, apt) => {
-          const servicesList = JSON.parse(apt.services || '[]')
-          const total = servicesList.reduce((s: number, serviceId: string) => {
-            const service = services.find(s => s.id === serviceId)
-            return s + (service?.price || 0)
-          }, 0)
-          return sum + (apt.customPrice ? Number(apt.customPrice) / 100 : total)
+          return sum + appointmentRevenue(apt, services)
         }, 0)
       
       return {
@@ -220,12 +226,7 @@ export async function GET(request: Request) {
       }
       acc[source].count++
       if (apt.status === 'Done') {
-        const servicesList = JSON.parse(apt.services || '[]')
-        const total = servicesList.reduce((s: number, serviceId: string) => {
-          const service = services.find(s => s.id === serviceId)
-          return s + (service?.price || 0)
-        }, 0)
-        acc[source].revenue += (apt.customPrice ? Number(apt.customPrice) / 100 : total)
+        acc[source].revenue += appointmentRevenue(apt, services)
       }
       return acc
     }, {} as Record<string, { count: number, revenue: number }>)
@@ -257,7 +258,13 @@ export async function GET(request: Request) {
     })
   } catch (error) {
     console.error('Advanced analytics error:', error)
-    return NextResponse.json({ error: 'Failed to calculate analytics' }, { status: 500 })
+    const details =
+      process.env.NODE_ENV === 'production'
+        ? undefined
+        : error instanceof Error
+          ? error.message
+          : String(error)
+    return NextResponse.json({ error: 'Failed to calculate analytics', details }, { status: 500 })
   }
 }
 
