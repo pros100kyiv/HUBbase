@@ -99,97 +99,116 @@ export default function SocialPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-gray-500">Завантаження...</p>
+      <div className="max-w-7xl mx-auto">
+        <p className="text-gray-400">Завантаження...</p>
       </div>
     )
   }
 
   return (
     <div className="max-w-7xl mx-auto">
-      <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-2">
-          Соціальні мережі
-        </h1>
-        <p className="text-base text-gray-600 dark:text-gray-400">
-          Підключіть соціальні мережі для автоматизації та розсилок
-        </p>
-      </div>
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
+        <div className="lg:col-span-3 space-y-3 md:space-y-6">
+          {/* Header - same as Dashboard */}
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
+              Соціальні мережі
+            </h1>
+          </div>
 
-      {/* Telegram OAuth Section */}
-      {business && (
-        <div className="mb-6">
-          <TelegramOAuth businessId={business.id} onConnected={handleTelegramConnected} />
-        </div>
-      )}
+          {/* Telegram OAuth Section */}
+          {business && (
+            <div className="rounded-xl p-4 md:p-6 card-floating">
+              <TelegramOAuth businessId={business.id} onConnected={handleTelegramConnected} />
+            </div>
+          )}
 
-      {/* Other Integrations */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {integrations.map((integration) => (
-          <div
-            key={integration.id}
-            className={cn(
-              "card-candy p-6 relative overflow-hidden",
-              integration.connected && "ring-2 ring-green-500"
-            )}
-          >
-            <div className={cn(
-              "absolute top-0 right-0 w-20 h-20 rounded-full -mr-10 -mt-10 bg-gradient-to-br",
-              integration.color,
-              "opacity-10"
-            )} />
-            
-            <div className="relative">
-              <div className="flex items-center justify-between mb-4">
-                <div className={cn(
-                  "w-12 h-12 rounded-candy-sm bg-gradient-to-br flex items-center justify-center text-white",
-                  integration.color
-                )}>
-                  {integration.icon}
-                </div>
-                {integration.connected ? (
-                  <div className="flex items-center gap-1 text-green-500">
-                    <CheckIcon className="w-4 h-4" />
-                    <span className="text-xs font-bold">Підключено</span>
-                  </div>
-                ) : (
-                  <div className="flex items-center gap-1 text-gray-400">
-                    <XIcon className="w-4 h-4" />
-                    <span className="text-xs font-bold">Не підключено</span>
-                  </div>
+          {/* Integrations */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+            {integrations.map((integration) => (
+              <div
+                key={integration.id}
+                className={cn(
+                  'rounded-xl p-4 md:p-6 card-floating relative overflow-hidden',
+                  integration.connected && 'ring-2 ring-white/30'
                 )}
-              </div>
-
-              <h3 className="text-lg font-black text-gray-900 dark:text-white mb-2">
-                {integration.name}
-              </h3>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mb-4">
-                {integration.description}
-              </p>
-
-              {integration.id === 'telegram' ? (
-                <button
-                  onClick={() => router.push('/dashboard/settings?tab=telegram')}
-                  className={cn(
-                    "w-full px-4 py-2 rounded-candy-xs font-bold text-sm transition-all",
-                    integration.connected
-                      ? "bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300"
-                      : "bg-gradient-to-r from-candy-blue to-candy-purple text-white shadow-soft-lg hover:shadow-soft-xl"
+              >
+                <div className="relative">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center text-white">
+                      {integration.icon}
+                    </div>
+                    {integration.connected ? (
+                      <div className="flex items-center gap-1.5 text-green-400">
+                        <CheckIcon className="w-4 h-4" />
+                        <span className="text-xs font-semibold">Підключено</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-1.5 text-gray-400">
+                        <XIcon className="w-4 h-4" />
+                        <span className="text-xs font-semibold">Не підключено</span>
+                      </div>
+                    )}
+                  </div>
+                  <h3 className="text-base font-semibold text-white mb-1.5">
+                    {integration.name}
+                  </h3>
+                  <p className="text-xs text-gray-400 mb-4">
+                    {integration.description}
+                  </p>
+                  {integration.id === 'telegram' ? (
+                    <button
+                      type="button"
+                      onClick={() => router.push('/dashboard/settings?tab=telegram')}
+                      className={cn(
+                        'w-full px-4 py-2 rounded-lg text-sm font-semibold transition-colors active:scale-[0.98]',
+                        integration.connected
+                          ? 'border border-white/20 bg-white/10 text-white hover:bg-white/20'
+                          : 'bg-white text-black hover:bg-gray-100'
+                      )}
+                      style={!integration.connected ? { boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' } : {}}
+                    >
+                      {integration.connected ? 'Налаштувати' : 'Підключити'}
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled
+                      className="w-full px-4 py-2 rounded-lg text-sm font-medium border border-white/10 bg-white/5 text-gray-500 cursor-not-allowed"
+                    >
+                      Скоро
+                    </button>
                   )}
-                >
-                  {integration.connected ? 'Налаштувати' : 'Підключити'}
-                </button>
-              ) : (
-                <button
-                  disabled
-                  className="w-full px-4 py-2 rounded-candy-xs font-bold text-sm bg-gray-100 dark:bg-gray-700 text-gray-400 cursor-not-allowed"
-                >
-                  Скоро
-                </button>
-              )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="lg:col-span-1 space-y-3 md:space-y-6">
+          <div className="rounded-xl p-4 md:p-6 card-floating">
+            <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>
+              Швидкі дії
+            </h3>
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => router.push('/dashboard/settings?tab=telegram')}
+                className="w-full px-3 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] text-left"
+                style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+              >
+                Налаштування Telegram
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/dashboard/appointments')}
+                className="w-full px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors text-left"
+              >
+                Записи
+              </button>
             </div>
           </div>
-        ))}
+        </div>
       </div>
     </div>
   )
