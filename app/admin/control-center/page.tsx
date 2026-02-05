@@ -198,14 +198,27 @@ export default function ControlCenterPage() {
 
   return (
     <div className="min-h-screen p-4 md:p-6" style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}>
+      {/* Live Stats Bar */}
+      <LiveStatsBar />
+
       {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl md:text-4xl font-black text-white mb-2" style={{ letterSpacing: '-0.02em' }}>
-          🎯 Центр управління
-        </h1>
-        <p className="text-gray-300">
-          Управління всіма бізнесами та процесами системи
-        </p>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl md:text-4xl font-black text-white mb-2" style={{ letterSpacing: '-0.02em' }}>
+            🎯 Центр управління
+          </h1>
+          <p className="text-gray-300">
+            Управління всіма бізнесами та процесами системи · дані оновлюються в реальному часі
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => loadData()}
+          disabled={loading}
+          className="px-4 py-2 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 transition-colors font-medium"
+        >
+          {loading ? 'Оновлення...' : 'Оновити'}
+        </button>
       </div>
 
       {/* Tabs */}
@@ -296,6 +309,95 @@ export default function ControlCenterPage() {
         {activeTab === 'export' && (
           <ExportTab />
         )}
+      </div>
+    </div>
+  )
+}
+
+// Live Stats Bar - реальний час
+function LiveStatsBar() {
+  const [realtimeStats, setRealtimeStats] = useState<{
+    total: number
+    online: number
+    idle: number
+    offline: number
+    newToday: number
+    blocked: number
+    updatedAt?: string
+  } | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchStats = async () => {
+      try {
+        const res = await fetch('/api/admin/stats/realtime', {
+          headers: getAuthHeaders(),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          setRealtimeStats(data)
+        }
+      } catch {
+        // ignore
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchStats()
+    const interval = setInterval(fetchStats, 3000) // кожні 3 сек
+    return () => clearInterval(interval)
+  }, [])
+
+  if (loading && !realtimeStats) {
+    return (
+      <div className="mb-4 rounded-xl p-4 card-floating animate-pulse">
+        <div className="h-12 bg-white/10 rounded-lg" />
+      </div>
+    )
+  }
+
+  const s = realtimeStats || { total: 0, online: 0, idle: 0, offline: 0, newToday: 0, blocked: 0 }
+
+  return (
+    <div className="mb-4 rounded-xl p-4 card-floating">
+      <div className="flex flex-wrap items-center gap-4 md:gap-6">
+        <div className="flex items-center gap-2">
+          <span className="relative flex h-2.5 w-2.5">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+          </span>
+          <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Live</span>
+        </div>
+
+        <div className="flex flex-wrap gap-4 md:gap-6">
+          <div className="flex items-center gap-2">
+            <span className="text-lg md:text-xl font-bold text-white">{s.total}</span>
+            <span className="text-sm text-gray-400">всього</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-lg md:text-xl font-bold text-green-400">{s.online}</span>
+            <span className="text-sm text-gray-400">онлайн</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-lg md:text-xl font-bold text-orange-400">{s.idle}</span>
+            <span className="text-sm text-gray-400">в простої</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-lg md:text-xl font-bold text-gray-400">{s.offline}</span>
+            <span className="text-sm text-gray-400">офлайн</span>
+          </div>
+          {s.newToday > 0 && (
+            <div className="flex items-center gap-2">
+              <span className="text-lg md:text-xl font-bold text-blue-400">+{s.newToday}</span>
+              <span className="text-sm text-gray-400">сьогодні</span>
+            </div>
+          )}
+          <div className="flex items-center gap-2">
+            <span className="text-lg md:text-xl font-bold text-red-400">{s.blocked}</span>
+            <span className="text-sm text-gray-400">заблоковано</span>
+          </div>
+        </div>
       </div>
     </div>
   )
@@ -1088,6 +1190,16 @@ function ActivityTab() {
     loadLogs()
   }, [actionType])
 
+  useEffect(() => {
+    const intervalId = setInterval(loadLogs, TAB_REFRESH_INTERVAL_MS)
+    const onVisibility = () => { if (document.visibilityState === 'visible') loadLogs() }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      clearInterval(intervalId)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [actionType])
+
   const loadLogs = async () => {
     setLoading(true)
     try {
@@ -1181,6 +1293,16 @@ function AnalyticsTab({ stats }: { stats: any }) {
     loadAnalytics()
   }, [period])
 
+  useEffect(() => {
+    const intervalId = setInterval(loadAnalytics, TAB_REFRESH_INTERVAL_MS)
+    const onVisibility = () => { if (document.visibilityState === 'visible') loadAnalytics() }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      clearInterval(intervalId)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
+  }, [period])
+
   const loadAnalytics = async () => {
     setLoading(true)
     try {
@@ -1247,6 +1369,16 @@ function IntegrationsTab() {
 
   useEffect(() => {
     loadIntegrations()
+  }, [])
+
+  useEffect(() => {
+    const intervalId = setInterval(loadIntegrations, TAB_REFRESH_INTERVAL_MS)
+    const onVisibility = () => { if (document.visibilityState === 'visible') loadIntegrations() }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      clearInterval(intervalId)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
   }, [])
 
   const loadIntegrations = async () => {
@@ -1322,6 +1454,16 @@ function FinancesTab() {
 
   useEffect(() => {
     loadFinances()
+  }, [period])
+
+  useEffect(() => {
+    const intervalId = setInterval(loadFinances, TAB_REFRESH_INTERVAL_MS)
+    const onVisibility = () => { if (document.visibilityState === 'visible') loadFinances() }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      clearInterval(intervalId)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
   }, [period])
 
   const loadFinances = async () => {
@@ -1409,6 +1551,16 @@ function ClientsTab() {
 
   useEffect(() => {
     loadClients()
+  }, [search])
+
+  useEffect(() => {
+    const intervalId = setInterval(loadClients, TAB_REFRESH_INTERVAL_MS)
+    const onVisibility = () => { if (document.visibilityState === 'visible') loadClients() }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      clearInterval(intervalId)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
   }, [search])
 
   const loadClients = async () => {
@@ -1530,6 +1682,16 @@ function AdminsTab() {
 
   useEffect(() => {
     loadAdmins()
+  }, [search, roleFilter])
+
+  useEffect(() => {
+    const intervalId = setInterval(loadAdmins, TAB_REFRESH_INTERVAL_MS)
+    const onVisibility = () => { if (document.visibilityState === 'visible') loadAdmins() }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      clearInterval(intervalId)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
   }, [search, roleFilter])
 
   const loadAdmins = async () => {
