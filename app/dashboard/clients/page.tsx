@@ -53,6 +53,7 @@ export default function ClientsPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set())
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards')
+  const [showAllClients, setShowAllClients] = useState(false)
   const [showQuickClientCard, setShowQuickClientCard] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
 
@@ -503,6 +504,16 @@ export default function ClientsPage() {
       return sortOrder === 'asc' ? comparison : -comparison
     })
 
+  const DEFAULT_VISIBLE_CLIENTS = 5
+  // UX: при пошуку показуємо всі результати, без "перші 5"
+  const shouldCollapseClients = !showAllClients && searchQuery.trim().length === 0
+  const visibleClients = shouldCollapseClients
+    ? filteredClients.slice(0, DEFAULT_VISIBLE_CLIENTS)
+    : filteredClients
+  const hiddenClientsCount = Math.max(0, filteredClients.length - visibleClients.length)
+  const allVisibleSelected =
+    visibleClients.length > 0 && visibleClients.every((c) => selectedClients.has(c.id))
+
   const handleExportCSV = () => {
     const csvHeaders = ['Ім\'я', 'Телефон', 'Email', 'Кількість візитів', 'Зароблено', 'Останній візит', 'Наступний візит', 'Послуги', 'Примітки']
     const csvRows = filteredClients.map(client => {
@@ -546,11 +557,16 @@ export default function ClientsPage() {
   }
 
   const toggleSelectAll = () => {
-    if (selectedClients.size === filteredClients.length) {
-      setSelectedClients(new Set())
-    } else {
-      setSelectedClients(new Set(filteredClients.map(c => c.id)))
-    }
+    const visibleIds = visibleClients.map((c) => c.id)
+    setSelectedClients((prev) => {
+      const next = new Set(prev)
+      if (allVisibleSelected) {
+        visibleIds.forEach((id) => next.delete(id))
+      } else {
+        visibleIds.forEach((id) => next.add(id))
+      }
+      return next
+    })
   }
 
   // Calculate statistics
@@ -731,7 +747,7 @@ export default function ClientsPage() {
                         onClick={toggleSelectAll}
                         className="w-4 h-4 rounded border-2 border-white/30 flex items-center justify-center hover:border-white/50 transition-colors"
                       >
-                        {selectedClients.size === filteredClients.length && filteredClients.length > 0 && (
+                        {allVisibleSelected && (
                           <CheckIcon className="w-3 h-3 text-white" />
                         )}
                       </button>
@@ -746,7 +762,7 @@ export default function ClientsPage() {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredClients.map((client) => {
+                  {visibleClients.map((client) => {
                     const isSelected = selectedClients.has(client.id)
                     return (
                       <tr
@@ -793,7 +809,7 @@ export default function ClientsPage() {
             </div>
           )}
 
-          {viewMode === 'cards' && filteredClients.map((client) => {
+          {viewMode === 'cards' && visibleClients.map((client) => {
             const isExpanded = expandedClient === client.id
             const details = clientDetails[client.id] || (isExpanded ? calculateClientDetails(client) : null)
             const isSelected = selectedClients.has(client.id)
@@ -1062,6 +1078,19 @@ export default function ClientsPage() {
                                                 </span>
                                               )
                                             })}
+
+          {searchQuery.trim().length === 0 && filteredClients.length > DEFAULT_VISIBLE_CLIENTS && (
+            <div className="flex justify-center pt-1">
+              <button
+                onClick={() => setShowAllClients((v) => !v)}
+                className="px-4 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
+              >
+                {showAllClients
+                  ? 'Згорнути до 5'
+                  : `Показати ще ${hiddenClientsCount}`}
+              </button>
+            </div>
+          )}
                                           </div>
                                         )}
                                         {appointment.notes && (
