@@ -533,7 +533,7 @@ export default function ClientsPage() {
                 setEditingClient(null)
                 setShowQuickClientCard(true)
               }}
-              className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] flex-shrink-0"
+              className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] flex-shrink-0"
               style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
             >
               Додати клієнта
@@ -648,7 +648,7 @@ export default function ClientsPage() {
                     setEditingClient(null)
                     setShowQuickClientCard(true)
                   }}
-                  className="px-4 py-2 md:px-6 md:py-3 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                  className="px-4 py-2 md:px-6 md:py-3 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98]"
                   style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                 >
                   Додати клієнта
@@ -829,7 +829,7 @@ export default function ClientsPage() {
                             <h4 className="text-sm font-semibold text-white">Історія візитів ({client.appointments.length})</h4>
                             <button
                               onClick={() => router.push(`/dashboard/appointments?clientPhone=${client.phone}`)}
-                              className="px-2.5 py-1.5 text-xs bg-white text-black rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                              className="px-2.5 py-1.5 text-xs bg-white text-black rounded-lg font-medium hover:bg-gray-100 hover:text-gray-900 transition-colors"
                               style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                             >
                               + Новий візит
@@ -916,7 +916,7 @@ export default function ClientsPage() {
           <div className="rounded-xl p-4 md:p-6 card-floating">
             <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>Швидкі дії</h3>
             <div className="space-y-2">
-              <button onClick={() => { setEditingClient(null); setShowQuickClientCard(true) }} className="w-full px-3 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] text-left" style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}>+ Додати клієнта</button>
+              <button onClick={() => { setEditingClient(null); setShowQuickClientCard(true) }} className="w-full px-3 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] text-left" style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}>+ Додати клієнта</button>
               <button onClick={() => router.push('/dashboard/appointments')} className="w-full px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors text-left">Записи</button>
             </div>
           </div>

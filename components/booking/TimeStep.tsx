@@ -109,7 +109,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
                 <div className="flex items-center justify-between gap-1">
                   <button type="button" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="touch-target min-h-[40px] min-w-[40px] px-2 py-2 border border-white/20 bg-white/10 text-white rounded-lg text-xs font-medium hover:bg-white/20 transition-colors flex items-center justify-center" title="Попередній місяць">←</button>
                   <h4 className="text-xs sm:text-sm font-semibold text-white truncate flex-1 text-center px-1">{format(currentMonth, 'MMMM yyyy', { locale: uk })}</h4>
-                  <button type="button" onClick={() => { if (clientToday) { setCurrentMonth(clientToday); setDate(clientToday) } }} className="touch-target min-h-[40px] px-2 sm:px-2.5 py-2 bg-white text-black rounded-lg text-xs font-semibold hover:bg-gray-100 transition-colors flex-shrink-0" style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }} title="Сьогодні">Сьогодні</button>
+                  <button type="button" onClick={() => { if (clientToday) { setCurrentMonth(clientToday); setDate(clientToday) } }} className="touch-target min-h-[40px] px-2 sm:px-2.5 py-2 bg-white text-black rounded-lg text-xs font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors flex-shrink-0" style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }} title="Сьогодні">Сьогодні</button>
                   <button type="button" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="touch-target min-h-[40px] min-w-[40px] px-2 py-2 border border-white/20 bg-white/10 text-white rounded-lg text-xs font-medium hover:bg-white/20 transition-colors flex items-center justify-center" title="Наступний місяць">→</button>
                 </div>
               </div>
@@ -202,7 +202,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
             type="button"
             onClick={() => setStep(4)}
             disabled={!state.selectedDate || !state.selectedTime}
-            className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg bg-white text-black text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg bg-white text-black text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
           >
             Далі

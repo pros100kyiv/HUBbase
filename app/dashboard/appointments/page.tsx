@@ -415,7 +415,7 @@ export default function AppointmentsPage() {
                 setShowCreateForm(true)
                 if (!selectedDate) setSelectedDate(new Date())
               }}
-              className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] flex-shrink-0"
+              className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] flex-shrink-0"
               style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
             >
               Записати
@@ -513,7 +513,7 @@ export default function AppointmentsPage() {
                         setCurrentMonth(today)
                         setSelectedDate(today)
                       }}
-                      className="px-3 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                      className="px-3 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98]"
                       style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                     >
                       Сьогодні
@@ -700,7 +700,7 @@ export default function AppointmentsPage() {
                       setShowCreateForm(true)
                       setSelectedDate(new Date())
                     }}
-                    className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                    className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98]"
                     style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                   >
                     Створити запис
@@ -741,7 +741,7 @@ export default function AppointmentsPage() {
                   setShowCreateForm(true)
                   setSelectedDate(new Date())
                 }}
-                className="px-4 py-2 md:px-6 md:py-3 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                className="px-4 py-2 md:px-6 md:py-3 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98]"
                 style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
               >
                 Створити запис
@@ -805,7 +805,7 @@ export default function AppointmentsPage() {
                   setShowCreateForm(true)
                   setSelectedDate(new Date())
                 }}
-                className="w-full px-3 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] text-left"
+                className="w-full px-3 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] text-left"
                 style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
               >
                 + Запис на сьогодні

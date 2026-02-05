@@ -488,7 +488,7 @@ export function NotesCard({ businessId }: NotesCardProps) {
                 <button
                   onClick={handleSave}
                   disabled={!editText.trim()}
-                  className="flex-1 px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ letterSpacing: '-0.01em' }}
                 >
                   Зберегти

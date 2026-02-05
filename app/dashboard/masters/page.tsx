@@ -521,7 +521,7 @@ export default function MastersPage() {
                   setEditingMaster(null)
                   setShowQuickMasterCard(true)
                 }}
-                className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] flex items-center gap-2"
+                className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] flex items-center gap-2"
                 style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
               >
                 <UserIcon className="w-4 h-4" />
@@ -710,7 +710,7 @@ export default function MastersPage() {
                     setEditingMaster(null)
                     setShowQuickMasterCard(true)
                   }}
-                  className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                  className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98]"
                   style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                 >
                   Додати першого спеціаліста

@@ -44,7 +44,10 @@ export function MyDayCard({
   const [internalSelectedDate, setInternalSelectedDate] = useState(() => startOfDay(new Date()))
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [isExpanded, setIsExpanded] = useState(false)
-  
+  const [showMenu, setShowMenu] = useState(false)
+  const [shareFeedback, setShareFeedback] = useState<'share' | 'copy' | null>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
+
   const selectedDate = externalSelectedDate || internalSelectedDate
   const isToday = isSameDay(selectedDate, new Date())
   
@@ -287,7 +290,7 @@ export function MyDayCard({
           </p>
           <button
             onClick={handleBookAppointment}
-            className="px-4 md:px-6 py-2.5 md:py-3 bg-white text-black rounded-lg text-xs md:text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
+            className="px-4 md:px-6 py-2.5 md:py-3 bg-white text-black rounded-lg text-xs md:text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98]"
             style={{ letterSpacing: '-0.01em', boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
           >
             Записати на послугу

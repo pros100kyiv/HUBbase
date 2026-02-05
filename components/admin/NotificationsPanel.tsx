@@ -100,7 +100,7 @@ function AppointmentCard({ appointment, onConfirm, onReschedule, processing }: A
                 setShowReschedule(false)
               }}
               disabled={processing === appointment.id}
-              className="flex-1 px-2 py-1.5 rounded-lg text-xs font-semibold bg-white text-black hover:bg-gray-100 transition-colors disabled:opacity-50"
+              className="flex-1 px-2 py-1.5 rounded-lg text-xs font-semibold bg-white text-black hover:bg-gray-100 hover:text-gray-900 transition-colors disabled:opacity-50"
               style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
             >
               {processing === appointment.id ? 'Збереження...' : 'Перенести'}
@@ -120,7 +120,7 @@ function AppointmentCard({ appointment, onConfirm, onReschedule, processing }: A
             type="button"
             onClick={() => onConfirm(appointment.id)}
             disabled={processing === appointment.id}
-            className="flex-1 px-2 py-1.5 rounded-lg text-xs font-semibold bg-white text-black hover:bg-gray-100 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+            className="flex-1 px-2 py-1.5 rounded-lg text-xs font-semibold bg-white text-black hover:bg-gray-100 hover:text-gray-900 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
             style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
           >
             <CheckIcon className="w-3 h-3" />

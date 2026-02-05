@@ -188,7 +188,7 @@ function RegisterForm() {
           variant="outline"
           disabled={isLoading}
           onClick={() => { window.location.href = '/api/auth/google' }}
-          className="w-full gap-3 bg-white text-black border-white/30 hover:bg-gray-100 hover:text-black"
+          className="w-full gap-3 bg-white text-black border-white/30 hover:bg-gray-100 hover:text-gray-900"
           size="lg"
         >
           <svg className="w-5 h-5" viewBox="0 0 24 24">

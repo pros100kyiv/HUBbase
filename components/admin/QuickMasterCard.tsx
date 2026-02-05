@@ -319,7 +319,7 @@ export function QuickMasterCard({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-2.5 sm:py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base touch-manipulation"
+            className="w-full py-2.5 sm:py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base touch-manipulation"
             style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
           >
             {isSubmitting ? (

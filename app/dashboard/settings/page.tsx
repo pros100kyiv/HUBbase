@@ -503,7 +503,7 @@ export default function SettingsPage() {
           <p className="text-gray-300 mb-4">Бізнес не знайдено</p>
           <Button
             onClick={() => router.push('/login')}
-            className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors"
+            className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors"
             style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
           >
             Увійти
@@ -660,7 +660,7 @@ export default function SettingsPage() {
                 <Button
                   onClick={handleSaveBusiness}
                   disabled={isSaving}
-                  className="w-full px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 transition-all active:scale-[0.98]"
+                  className="w-full px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all active:scale-[0.98]"
                   style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                 >
                   {isSaving ? 'Збереження...' : 'Зберегти'}
@@ -680,7 +680,7 @@ export default function SettingsPage() {
                     setEditingMaster(null)
                     setMasterForm({ name: '', bio: '', rating: '0', photo: '' })
                   }}
-                  className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                  className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98]"
                   style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                 >
                   + Додати спеціаліста
@@ -770,7 +770,7 @@ export default function SettingsPage() {
                     <div className="flex gap-3 pt-2">
                       <Button
                         onClick={handleSaveMaster}
-                        className="flex-1 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 transition-all active:scale-[0.98]"
+                        className="flex-1 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all active:scale-[0.98]"
                         style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                         disabled={isSaving}
                       >
@@ -854,7 +854,7 @@ export default function SettingsPage() {
                     setEditingService(null)
                     setServiceForm({ name: '', price: '', duration: '', category: '', subcategory: '' })
                   }}
-                  className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                  className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98]"
                   style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                 >
                   + Додати послугу
@@ -965,7 +965,7 @@ export default function SettingsPage() {
                     <div className="flex gap-3 pt-2">
                       <Button
                         onClick={handleSaveService}
-                        className="flex-1 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 transition-all active:scale-[0.98]"
+                        className="flex-1 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all active:scale-[0.98]"
                         style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                       >
                         Зберегти

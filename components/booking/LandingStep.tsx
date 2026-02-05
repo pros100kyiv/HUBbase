@@ -25,7 +25,7 @@ export function LandingStep({ business }: LandingStepProps) {
         </p>
         <button
           type="button"
-          className="px-6 md:px-8 py-3 md:py-4 rounded-lg bg-white text-black font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] hidden md:inline-flex text-sm md:text-base"
+          className="px-6 md:px-8 py-3 md:py-4 rounded-lg bg-white text-black font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] hidden md:inline-flex text-sm md:text-base"
           style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
           onClick={() => setStep(1)}
         >
@@ -36,7 +36,7 @@ export function LandingStep({ business }: LandingStepProps) {
       <div className="fixed bottom-0 left-0 right-0 z-20 md:hidden px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2">
         <button
           type="button"
-          className="w-full min-h-[48px] py-4 rounded-lg bg-white text-black font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] text-sm touch-target"
+          className="w-full min-h-[48px] py-4 rounded-lg bg-white text-black font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] text-sm touch-target"
           style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
           onClick={() => setStep(1)}
         >

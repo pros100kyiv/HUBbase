@@ -321,7 +321,7 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
                   <button
                     onClick={handleReply}
                     disabled={!replyText.trim() || sending}
-                    className="flex-1 px-4 py-2.5 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
+                    className="flex-1 px-4 py-2.5 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
                     style={{ letterSpacing: '-0.01em' }}
                   >
                     {sending ? 'Відправка...' : 'Відправити'}

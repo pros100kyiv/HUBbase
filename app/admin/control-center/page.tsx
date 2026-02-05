@@ -618,7 +618,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
             </select>
             <button
               onClick={handleBulkAction}
-              className="px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 transition-colors font-semibold"
+              className="px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-colors font-semibold"
               style={{ letterSpacing: '-0.01em', boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
             >
               Застосувати ({selectedBusinesses.length})
@@ -653,7 +653,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
             link.download = `businesses-${new Date().toISOString().split('T')[0]}.csv`
             link.click()
           }}
-          className="px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 flex items-center gap-2 font-semibold transition-colors"
+          className="px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 hover:text-gray-900 flex items-center gap-2 font-semibold transition-colors"
           style={{ letterSpacing: '-0.01em', boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
         >
           <DownloadIcon className="w-5 h-5" />

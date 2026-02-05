@@ -164,6 +164,13 @@
     background-color: #050506;
   }
   
+  /* White primary buttons: force dark text on hover so font doesn't blend with background */
+  button[class*="bg-white"]:hover,
+  a[class*="bg-white"]:hover,
+  [role="button"][class*="bg-white"]:hover {
+    color: #111827 !important;
+  }
+
   /* Ensure all text elements use Inter */
   html, body, h1, h2, h3, h4, h5, h6, p, span, div, a, button, input, textarea, select, label, li, td, th, 
   [class*="text-"], [class*="font-"] {
@@ -194,7 +201,7 @@
     @apply text-xl md:text-2xl font-bold text-white tracking-dashboard-title;
   }
   .dashboard-btn-primary {
-    @apply px-4 py-2 text-sm font-semibold rounded-lg bg-white text-black hover:bg-gray-100 active:scale-[0.98] transition-transform;
+    @apply px-4 py-2 text-sm font-semibold rounded-lg bg-white text-black hover:bg-gray-100 hover:text-gray-900 active:scale-[0.98] transition-transform;
     box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.3);
   }
   .dashboard-btn-secondary {

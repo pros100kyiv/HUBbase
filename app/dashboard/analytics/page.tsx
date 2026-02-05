@@ -446,7 +446,7 @@ export default function AnalyticsPage() {
             <div className="space-y-2">
               <button
                 onClick={() => router.push('/dashboard/appointments')}
-                className="w-full px-3 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] text-left"
+                className="w-full px-3 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] text-left"
                 style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
               >
                 Записи

@@ -127,7 +127,7 @@ export function Navbar() {
                 {/* Записати Button - Hidden on mobile (shown near Dashboard title) */}
                 <button 
                   onClick={() => { startNavigation(); router.push('/dashboard/appointments?create=true') }}
-                  className="hidden md:flex px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-gray-100 transition-colors" 
+                  className="hidden md:flex px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-gray-100 hover:text-gray-900 transition-colors" 
                   style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                 >
                   Записати
