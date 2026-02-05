@@ -15,9 +15,11 @@ interface Appointment {
   status: string
   masterName?: string
   services?: string
+  notes?: string | null
 }
 
 interface MyDayCardProps {
+  businessId?: string
   appointments: Appointment[]
   totalAppointments: number
   completedAppointments: number
@@ -30,6 +32,7 @@ interface MyDayCardProps {
 }
 
 export function MyDayCard({
+  businessId,
   appointments,
   totalAppointments,
   completedAppointments,
@@ -47,6 +50,10 @@ export function MyDayCard({
   const [showMenu, setShowMenu] = useState(false)
   const [shareFeedback, setShareFeedback] = useState<'share' | 'copy' | null>(null)
   const [selectedStatus, setSelectedStatus] = useState<'pending' | 'confirmed' | 'done' | null>(null)
+  const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
+  const [historyPhone, setHistoryPhone] = useState<string | null>(null)
+  const [historyLoading, setHistoryLoading] = useState(false)
+  const [historyAppointments, setHistoryAppointments] = useState<Appointment[]>([])
   const menuRef = useRef<HTMLDivElement>(null)
 
   const selectedDate = externalSelectedDate || internalSelectedDate
@@ -87,7 +94,47 @@ export function MyDayCard({
   }
 
   const handleAppointmentClick = (id: string) => {
-    router.push(`/dashboard/appointments?edit=${id}`)
+    const apt = appointments.find((a) => a.id === id) || null
+    setSelectedAppointment(apt)
+  }
+
+  const openClientHistory = (phone: string) => {
+    setHistoryPhone(phone)
+  }
+
+  useEffect(() => {
+    const loadHistory = async () => {
+      if (!businessId || !historyPhone) return
+      try {
+        setHistoryLoading(true)
+        const res = await fetch(
+          `/api/appointments?businessId=${encodeURIComponent(businessId)}&clientPhone=${encodeURIComponent(historyPhone)}`
+        )
+        if (!res.ok) throw new Error('Failed to load client history')
+        const data = await res.json()
+        const arr = Array.isArray(data) ? data : []
+        // Sort newest first for history
+        arr.sort((a: any, b: any) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
+        setHistoryAppointments(arr)
+      } catch (e) {
+        console.error('Error loading client history:', e)
+        setHistoryAppointments([])
+      } finally {
+        setHistoryLoading(false)
+      }
+    }
+    loadHistory()
+  }, [businessId, historyPhone])
+
+  const parseServices = (services?: string) => {
+    if (!services) return []
+    try {
+      const parsed = JSON.parse(services)
+      if (Array.isArray(parsed)) return parsed
+      return [parsed]
+    } catch {
+      return [services]
+    }
   }
 
   const getDaySummaryText = () => {
@@ -384,8 +431,26 @@ export function MyDayCard({
                         )}
                       </div>
                     </div>
-                    <div className={`px-1.5 md:px-2 py-0.5 md:py-1 rounded text-[9px] md:text-xs font-medium border flex-shrink-0 ${getStatusColor(apt.status)}`}>
-                      {apt.status}
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {apt.clientPhone && (
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            openClientHistory(apt.clientPhone)
+                          }}
+                          className="p-1.5 md:p-2 hover:bg-white/10 rounded-lg transition-colors"
+                          title="Історія клієнта"
+                          aria-label="Історія клієнта"
+                        >
+                          <svg className="w-4 h-4 text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M12 2a10 10 0 100 20 10 10 0 000-20z" />
+                          </svg>
+                        </button>
+                      )}
+                      <div className={`px-1.5 md:px-2 py-0.5 md:py-1 rounded text-[9px] md:text-xs font-medium border ${getStatusColor(apt.status)}`}>
+                        {apt.status}
+                      </div>
                     </div>
                   </div>
                   {apt.services && (
@@ -540,6 +605,221 @@ export function MyDayCard({
                     </div>
                   )}
                 </div>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
+      {/* Appointment Details Modal */}
+      {selectedAppointment && (
+        <ModalPortal>
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4"
+            style={{
+              WebkitOverflowScrolling: 'touch',
+              overscrollBehavior: 'contain',
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+          >
+            <div
+              className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={() => setSelectedAppointment(null)}
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+              }}
+            />
+            <div
+              className="relative w-[95%] sm:w-full max-w-lg bg-[#2A2A2A] rounded-xl flex flex-col border border-white/10 shadow-2xl max-h-[85vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
+                <div className="min-w-0">
+                  <h3 className="text-lg font-semibold text-white truncate">{selectedAppointment.clientName}</h3>
+                  <p className="text-xs text-gray-400 truncate">
+                    {format(new Date(selectedAppointment.startTime), 'd MMMM yyyy', { locale: uk })}{' '}
+                    • {format(new Date(selectedAppointment.startTime), 'HH:mm')}–{format(new Date(selectedAppointment.endTime), 'HH:mm')}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setSelectedAppointment(null)}
+                  className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
+                  aria-label="Закрити"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-4 overflow-y-auto space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-gray-400">Статус</span>
+                  <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(selectedAppointment.status)}`}>
+                    {selectedAppointment.status}
+                  </span>
+                </div>
+
+                {selectedAppointment.masterName && (
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs text-gray-400">Спеціаліст</span>
+                    <span className="text-sm text-white truncate">{selectedAppointment.masterName}</span>
+                  </div>
+                )}
+
+                {selectedAppointment.clientPhone && (
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-xs text-gray-400">Телефон</span>
+                    <button
+                      type="button"
+                      onClick={() => navigator.clipboard.writeText(selectedAppointment.clientPhone)}
+                      className="text-sm text-blue-300 hover:text-blue-200 transition-colors"
+                      title="Натисніть щоб скопіювати"
+                    >
+                      {selectedAppointment.clientPhone}
+                    </button>
+                  </div>
+                )}
+
+                {selectedAppointment.services && (
+                  <div>
+                    <div className="text-xs text-gray-400 mb-2">Послуги</div>
+                    <div className="flex flex-wrap gap-2">
+                      {parseServices(selectedAppointment.services).map((s: any, idx: number) => (
+                        <span
+                          key={idx}
+                          className="px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-gray-200"
+                        >
+                          {typeof s === 'string' ? s : s?.name || JSON.stringify(s)}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
+                {selectedAppointment.notes && (
+                  <div className="p-3 bg-white/5 border border-white/10 rounded-lg">
+                    <div className="text-xs text-gray-400 mb-1">Примітки</div>
+                    <div className="text-sm text-gray-200 whitespace-pre-wrap">{selectedAppointment.notes}</div>
+                  </div>
+                )}
+              </div>
+
+              <div className="p-4 border-t border-white/10 flex gap-2 flex-shrink-0">
+                {selectedAppointment.clientPhone && (
+                  <button
+                    type="button"
+                    onClick={() => openClientHistory(selectedAppointment.clientPhone)}
+                    className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-sm font-medium text-white hover:bg-white/20 transition-colors active:scale-[0.98]"
+                  >
+                    Історія клієнта
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={() => router.push(`/dashboard/appointments?edit=${selectedAppointment.id}`)}
+                  className="flex-1 px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                >
+                  Редагувати
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
+      {/* Client History Modal */}
+      {historyPhone && (
+        <ModalPortal>
+          <div
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4"
+            style={{
+              WebkitOverflowScrolling: 'touch',
+              overscrollBehavior: 'contain',
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
+            }}
+          >
+            <div
+              className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+              onClick={() => setHistoryPhone(null)}
+              style={{
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0,
+              }}
+            />
+            <div
+              className="relative w-[95%] sm:w-full max-w-xl bg-[#2A2A2A] rounded-xl flex flex-col border border-white/10 shadow-2xl max-h-[85vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
+                <div className="min-w-0">
+                  <h3 className="text-lg font-semibold text-white truncate">Історія клієнта</h3>
+                  <p className="text-xs text-gray-400 truncate">{historyPhone}</p>
+                </div>
+                <button
+                  onClick={() => setHistoryPhone(null)}
+                  className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
+                  aria-label="Закрити"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-4 overflow-y-auto">
+                {historyLoading ? (
+                  <div className="text-center py-10 text-sm text-gray-400">Завантаження…</div>
+                ) : historyAppointments.length === 0 ? (
+                  <div className="text-center py-10 text-sm text-gray-400">
+                    {businessId ? 'Немає записів для цього клієнта' : 'Немає businessId для пошуку історії'}
+                  </div>
+                ) : (
+                  <div className="space-y-2">
+                    {historyAppointments.map((apt) => {
+                      const start = new Date(apt.startTime)
+                      const end = new Date(apt.endTime)
+                      return (
+                        <button
+                          key={apt.id}
+                          className="w-full text-left bg-white/5 border border-white/10 rounded-lg p-3 hover:bg-white/10 transition-colors active:scale-[0.98]"
+                          onClick={() => {
+                            setSelectedAppointment(apt)
+                            setHistoryPhone(null)
+                          }}
+                        >
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <div className="text-sm font-semibold text-white truncate">{apt.clientName}</div>
+                              <div className="text-xs text-gray-400 truncate">
+                                {format(start, 'd MMM yyyy', { locale: uk })} • {format(start, 'HH:mm')}–{format(end, 'HH:mm')}
+                                {apt.masterName ? ` • ${apt.masterName}` : ''}
+                              </div>
+                            </div>
+                            <div className={`px-2 py-1 rounded text-xs font-medium border flex-shrink-0 ${getStatusColor(apt.status)}`}>
+                              {apt.status}
+                            </div>
+                          </div>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           </div>

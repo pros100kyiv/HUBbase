@@ -133,6 +133,7 @@ export default function MainPage() {
 
           {/* My Day Card */}
           <MyDayCard
+            businessId={business?.id}
             appointments={todayAppointments}
             totalAppointments={todayTotal}
             completedAppointments={todayCompleted}

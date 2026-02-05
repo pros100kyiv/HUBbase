@@ -171,6 +171,7 @@ export async function GET(request: Request) {
     const masterId = searchParams.get('masterId')
     const businessId = searchParams.get('businessId')
     const status = searchParams.get('status')
+    const clientPhone = searchParams.get('clientPhone')
 
     if (!businessId) {
       return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
@@ -209,6 +210,11 @@ export async function GET(request: Request) {
     
     if (masterId) {
       where.masterId = masterId
+    }
+
+    if (clientPhone) {
+      // For client history search: normalize UA phone to match stored format
+      where.clientPhone = normalizeUaPhone(clientPhone)
     }
 
     const appointments = await prisma.appointment.findMany({
