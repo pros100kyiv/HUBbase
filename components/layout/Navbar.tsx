@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { useEffect, useState } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
-import { SunIcon, MoonIcon, MenuIcon, QRIcon } from '@/components/icons'
+import { SunIcon, MoonIcon, OledIcon, MenuIcon, QRIcon } from '@/components/icons'
 import { setMobileMenuState } from '@/app/dashboard/layout'
 import { AccountInfo } from '@/components/layout/AccountInfo'
 import { GlobalSearch } from '@/components/admin/GlobalSearch'
@@ -23,17 +23,23 @@ export function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
   const [business, setBusiness] = useState<any>(null)
-  let theme: 'light' | 'dark' = 'light'
-  let toggleTheme: () => void = () => {}
+  let theme: 'light' | 'dark' | 'oled' = 'light'
+  let cycleTheme: () => void = () => {}
   let mounted = false
-  
+
   try {
     const themeContext = useTheme()
     theme = themeContext.theme
-    toggleTheme = themeContext.toggleTheme
+    cycleTheme = themeContext.cycleTheme
     mounted = themeContext.mounted
   } catch (e) {
     // ThemeProvider not available, use default
+  }
+
+  const themeTitles: Record<string, string> = {
+    light: 'Світла тема',
+    dark: 'Темна тема',
+    oled: 'OLED тема (чорний)',
   }
 
   useEffect(() => {
@@ -105,6 +111,19 @@ export function Navbar() {
 
               {/* Right side - Actions */}
               <div className="flex items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
+                {/* Тема: швидке керування — першим у панелі */}
+                {mounted && (
+                  <button
+                    onClick={cycleTheme}
+                    className="touch-target p-2.5 rounded-lg hover:bg-white/10 transition-colors border border-white/10 flex items-center justify-center flex-shrink-0"
+                    title={themeTitles[theme] || 'Тема'}
+                    aria-label={themeTitles[theme] || 'Змінити тему'}
+                  >
+                    {theme === 'light' && <MoonIcon className="w-5 h-5 text-white" />}
+                    {theme === 'dark' && <SunIcon className="w-5 h-5 text-white" />}
+                    {theme === 'oled' && <OledIcon className="w-5 h-5 text-white" />}
+                  </button>
+                )}
                 {/* Записати Button - Hidden on mobile (shown near Dashboard title) */}
                 <button 
                   onClick={() => { startNavigation(); router.push('/dashboard/appointments?create=true') }}
@@ -167,7 +186,6 @@ export function Navbar() {
                     onUpdate={() => {}}
                   />
                 )}
-                
                 {/* Profile Icon with Dropdown */}
                 {business && <AccountProfileButton business={business} router={router} />}
               </div>
@@ -237,17 +255,17 @@ export function Navbar() {
           </div>
 
           <div className="flex items-center gap-2 flex-shrink-0">
+            {/* Тема: швидке керування у верхній панелі */}
             {mounted && (
               <button
-                onClick={toggleTheme}
-                className="p-1.5 md:p-2 rounded-candy-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 active:scale-95"
-                title={theme === 'light' ? 'Увімкнути темну тему' : 'Увімкнути світлу тему'}
+                onClick={cycleTheme}
+                className="touch-target p-2 rounded-candy-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 active:scale-95 flex items-center justify-center"
+                title={themeTitles[theme] || 'Тема'}
+                aria-label={themeTitles[theme] || 'Змінити тему'}
               >
-                {theme === 'light' ? (
-                  <MoonIcon className="w-4 h-4 md:w-5 md:h-5" />
-                ) : (
-                  <SunIcon className="w-4 h-4 md:w-5 md:h-5" />
-                )}
+                {theme === 'light' && <MoonIcon className="w-4 h-4 md:w-5 md:h-5" />}
+                {theme === 'dark' && <SunIcon className="w-4 h-4 md:w-5 md:h-5" />}
+                {theme === 'oled' && <OledIcon className="w-4 h-4 md:w-5 md:h-5" />}
               </button>
             )}
             {business ? (

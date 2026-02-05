@@ -49,6 +49,29 @@
     --popover: 30 41 59;
     --popover-foreground: 248 250 252;
   }
+
+  /* OLED: справжній чорний фон для AMOLED, економія заряду */
+  .oled {
+    --background: 0 0 0;
+    --foreground: 248 250 252;
+    --border: 22 22 24;
+    --input: 18 18 20;
+    --ring: 99 102 241;
+    --primary: 99 102 241;
+    --primary-foreground: 255 255 255;
+    --secondary: 18 18 20;
+    --secondary-foreground: 248 250 252;
+    --muted: 18 18 20;
+    --muted-foreground: 161 161 170;
+    --accent: 18 18 20;
+    --accent-foreground: 248 250 252;
+    --destructive: 239 68 68;
+    --destructive-foreground: 255 255 255;
+    --card: 18 18 20;
+    --card-foreground: 248 250 252;
+    --popover: 18 18 20;
+    --popover-foreground: 248 250 252;
+  }
   
   * {
     @apply border-border;
@@ -118,6 +141,27 @@
   .dark body {
     background: #0F172A;
     color: #F8FAFC;
+  }
+
+  .oled body {
+    background: #000000;
+    color: #F8FAFC;
+  }
+
+  /* OLED: темні поверхні для карток і панелей */
+  .oled .panel-bg {
+    background-color: rgba(0, 0, 0, 0.95);
+  }
+  .oled .card-floating,
+  .oled .dashboard-card {
+    background-color: #0C0C0E;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
+  }
+  .oled .bg-gray-100 {
+    background-color: #0C0C0E;
+  }
+  .oled .bg-gray-800 {
+    background-color: #050506;
   }
   
   /* Ensure all text elements use Inter */

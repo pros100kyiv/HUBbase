@@ -35,11 +35,15 @@ export default function RootLayout({
                 try {
                   var theme = localStorage.getItem('theme');
                   var systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                  var initialTheme = theme || systemTheme;
-                  if (initialTheme === 'dark') {
-                    document.documentElement.classList.add('dark');
+                  var initialTheme = theme === 'light' || theme === 'dark' || theme === 'oled' ? theme : systemTheme;
+                  var root = document.documentElement;
+                  root.classList.remove('light', 'dark', 'oled');
+                  if (initialTheme === 'oled') {
+                    root.classList.add('dark', 'oled');
+                  } else if (initialTheme === 'dark') {
+                    root.classList.add('dark');
                   } else {
-                    document.documentElement.classList.remove('dark');
+                    root.classList.add('light');
                   }
                 } catch (e) {}
               })();
