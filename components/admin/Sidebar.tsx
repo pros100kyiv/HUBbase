@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
 import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, ShareIcon } from '@/components/icons'
+import { XbaseLogo } from '@/components/layout/XbaseLogo'
 import { NotificationsPanel } from './NotificationsPanel'
 
 interface NavItem {
@@ -125,7 +126,7 @@ export function Sidebar({ className }: SidebarProps) {
       <aside className={cn('border-r w-0 md:w-64 min-h-screen fixed left-0 top-0 z-40 hidden md:block', className)} style={{ backgroundColor: 'rgba(20, 20, 20, 0.85)', backdropFilter: 'blur(25px)', WebkitBackdropFilter: 'blur(25px)', borderColor: 'rgba(255, 255, 255, 0.1)' }}>
         {/* Logo Section */}
         <div className="p-6 border-b" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
-          <h1 className="text-xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>Growth</h1>
+          <XbaseLogo size="sm" />
         </div>
         
         <nav className="p-4 space-y-6">

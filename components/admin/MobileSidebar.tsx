@@ -5,6 +5,7 @@ import { useEffect, useState, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
 import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, BellIcon, XIcon, ShareIcon } from '@/components/icons'
+import { XbaseLogo } from '@/components/layout/XbaseLogo'
 import { NotificationsPanel } from './NotificationsPanel'
 
 interface NavItem {
@@ -118,7 +119,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       >
         {/* Header — як у десктопному Sidebar */}
         <div className="flex items-center justify-between p-6 border-b" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
-          <h1 className="text-xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>Growth</h1>
+          <XbaseLogo size="sm" />
           <button
             onClick={onClose}
             className="p-2 rounded-lg hover:bg-white/10 transition-colors text-gray-400 hover:text-white"
