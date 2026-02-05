@@ -172,16 +172,17 @@ export function MyDayCard({
   return (
     <div className="bg-[#1A1A1A] text-white rounded-xl p-4 md:p-6 card-floating">
       {/* Header */}
-      <div className="flex items-center justify-between mb-4 md:mb-6">
-        <div className="flex-1 min-w-0">
-          <h3 className="text-lg md:text-2xl font-bold text-white mb-1" style={{ letterSpacing: '-0.02em' }}>
+      <div className="flex items-center justify-between gap-3 mb-4 md:mb-6">
+        <div className="flex items-center gap-3 flex-1 min-w-0">
+          <h3 className="text-lg md:text-2xl font-bold text-white whitespace-nowrap flex-shrink-0" style={{ letterSpacing: '-0.02em' }}>
             МІЙ ДЕНЬ
           </h3>
+          
           {/* Date Navigation */}
-          <div className="flex items-center gap-2 md:gap-3 mt-2 flex-wrap">
+          <div className="flex items-center gap-1 md:gap-2 overflow-x-auto no-scrollbar mask-linear-fade">
             <button
               onClick={handlePreviousDay}
-              className="touch-target min-h-[40px] min-w-[40px] p-2 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center active:scale-95"
+              className="touch-target p-1.5 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center active:scale-95 flex-shrink-0"
               aria-label="Попередній день"
             >
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -191,17 +192,17 @@ export function MyDayCard({
             
             <button
               onClick={() => setShowDatePicker(true)}
-              className="px-2 md:px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-xs md:text-sm text-white flex items-center gap-1 md:gap-2 flex-1 min-w-0"
+              className="px-2 md:px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-xs md:text-sm text-white flex items-center gap-1 md:gap-2 whitespace-nowrap"
             >
               <svg className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <span className="capitalize truncate">{dateDisplay}</span>
+              <span className="capitalize">{dateDisplay}</span>
             </button>
             
             <button
               onClick={handleNextDay}
-              className="touch-target min-h-[40px] min-w-[40px] p-2 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center active:scale-95"
+              className="touch-target p-1.5 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center active:scale-95 flex-shrink-0"
               aria-label="Наступний день"
             >
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -212,13 +213,14 @@ export function MyDayCard({
             {!isToday && (
               <button
                 onClick={handleToday}
-                className="px-2 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-white"
+                className="px-2 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-white whitespace-nowrap flex-shrink-0"
               >
                 Сьогодні
               </button>
             )}
           </div>
         </div>
+
         <div className="flex items-center gap-1 md:gap-2 flex-shrink-0 relative" ref={menuRef}>
           {/* Share icon - Hidden on mobile */}
           {shareFeedback && (
