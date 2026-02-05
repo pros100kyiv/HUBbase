@@ -121,7 +121,7 @@ export function CreateAppointmentForm({
                 value={formData.masterId}
                 onChange={(e) => setFormData({ ...formData, masterId: e.target.value })}
                 required
-                className="w-full px-3 py-2 border border-gray-300 dark:border-gray-700 rounded-candy-sm bg-white dark:bg-gray-800 text-foreground"
+                className="w-full px-3 py-2.5 sm:py-2 min-h-[48px] sm:min-h-0 border border-gray-300 dark:border-gray-700 rounded-candy-sm bg-white dark:bg-gray-800 text-foreground"
               >
                 <option value="">Оберіть спеціаліста</option>
                 {masters.map((master) => (
@@ -235,18 +235,18 @@ export function CreateAppointmentForm({
             </div>
 
             {/* Actions */}
-            <div className="flex gap-2 pt-2">
+            <div className="flex flex-col sm:flex-row gap-2 pt-2">
               <Button
                 type="submit"
                 disabled={isSubmitting || !formData.masterId || !formData.clientName || !formData.clientPhone || formData.serviceIds.length === 0}
-                className="btn-primary flex-1"
+                className="btn-primary flex-1 min-h-[48px] touch-target"
               >
                 {isSubmitting ? 'Створення...' : 'Створити запис'}
               </Button>
               <Button
                 type="button"
                 onClick={onCancel}
-                className="btn-secondary"
+                className="btn-secondary min-h-[48px] touch-target"
               >
                 Скасувати
               </Button>

@@ -93,33 +93,33 @@ export function TimeStep({ businessId }: TimeStepProps) {
   const totalDuration = state.selectedServices.reduce((sum, s) => sum + s.duration, 0)
 
   return (
-    <div className="min-h-screen py-6 px-3 md:px-6">
+    <div className="min-h-screen py-4 sm:py-6 px-3 md:px-6 pb-[env(safe-area-inset-bottom)]">
       <div className="max-w-4xl mx-auto">
-        <h2 className="text-xl md:text-2xl font-bold mb-4 text-center text-white" style={{ letterSpacing: '-0.02em' }}>
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 text-center text-white" style={{ letterSpacing: '-0.02em' }}>
           Оберіть час
         </h2>
 
-        <div className="mb-4">
+        <div className="mb-3 sm:mb-4">
           <h3 className="text-sm font-semibold text-white mb-2">Оберіть дату:</h3>
           {!calendarReady || !currentMonth || !monthStart || !monthEnd ? (
-            <div className="rounded-xl p-6 card-floating text-center text-gray-400 text-sm">Завантаження календаря...</div>
+            <div className="rounded-xl p-4 sm:p-6 card-floating text-center text-gray-400 text-sm">Завантаження календаря...</div>
           ) : (
             <>
-              <div className="rounded-xl p-3 mb-2 card-floating">
-                <div className="flex items-center justify-between">
-                  <button type="button" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="px-2 py-1.5 border border-white/20 bg-white/10 text-white rounded-lg text-xs font-medium hover:bg-white/20 transition-colors" title="Попередній місяць">←</button>
-                  <h4 className="text-sm font-semibold text-white">{format(currentMonth, 'MMMM yyyy', { locale: uk })}</h4>
-                  <button type="button" onClick={() => { if (clientToday) { setCurrentMonth(clientToday); setDate(clientToday) } }} className="px-2.5 py-1.5 bg-white text-black rounded-lg text-xs font-semibold hover:bg-gray-100 transition-colors" style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }} title="Сьогодні">Сьогодні</button>
-                  <button type="button" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="px-2 py-1.5 border border-white/20 bg-white/10 text-white rounded-lg text-xs font-medium hover:bg-white/20 transition-colors" title="Наступний місяць">→</button>
+              <div className="rounded-xl p-2.5 sm:p-3 mb-2 card-floating">
+                <div className="flex items-center justify-between gap-1">
+                  <button type="button" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="touch-target min-h-[40px] min-w-[40px] px-2 py-2 border border-white/20 bg-white/10 text-white rounded-lg text-xs font-medium hover:bg-white/20 transition-colors flex items-center justify-center" title="Попередній місяць">←</button>
+                  <h4 className="text-xs sm:text-sm font-semibold text-white truncate flex-1 text-center px-1">{format(currentMonth, 'MMMM yyyy', { locale: uk })}</h4>
+                  <button type="button" onClick={() => { if (clientToday) { setCurrentMonth(clientToday); setDate(clientToday) } }} className="touch-target min-h-[40px] px-2 sm:px-2.5 py-2 bg-white text-black rounded-lg text-xs font-semibold hover:bg-gray-100 transition-colors flex-shrink-0" style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }} title="Сьогодні">Сьогодні</button>
+                  <button type="button" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="touch-target min-h-[40px] min-w-[40px] px-2 py-2 border border-white/20 bg-white/10 text-white rounded-lg text-xs font-medium hover:bg-white/20 transition-colors flex items-center justify-center" title="Наступний місяць">→</button>
                 </div>
               </div>
-              <div className="rounded-xl p-2 card-floating max-w-xs mx-auto">
+              <div className="rounded-xl p-2 card-floating w-full max-w-[320px] sm:max-w-xs mx-auto">
                 <div className="grid grid-cols-7 gap-0.5 mb-1.5">
                   {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
                     <div key={day} className="text-center text-[10px] font-semibold text-gray-400">{day}</div>
                   ))}
                 </div>
-                <div className="grid grid-cols-7 gap-0.5">
+                <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
                   {calendarDays.map((day) => {
                     const isDayInMonth = day >= monthStart! && day <= monthEnd!
                     const isPastDate = clientToday ? isPast(day) && !isSameDay(day, clientToday) : false
@@ -132,7 +132,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
                         onClick={() => { if (!isPastDate && isDayInMonth) setDate(new Date(day.getTime())) }}
                         disabled={isPastDate || !isDayInMonth}
                         className={cn(
-                          'aspect-square max-w-[32px] max-h-[32px] w-full flex items-center justify-center rounded-md text-[10px] font-medium transition-colors',
+                          'aspect-square min-h-[36px] sm:min-h-[32px] w-full flex items-center justify-center rounded-md text-[10px] sm:text-[10px] font-medium transition-colors active:scale-95',
                           isSelected && 'bg-white text-black shadow-md ring-2 ring-white/50',
                           isTodayDate && isDayInMonth && !isSelected && 'ring-1 ring-white/30 bg-white/20 text-white',
                           (isPastDate || !isDayInMonth) && 'text-white/20 cursor-not-allowed bg-white/5',
@@ -150,15 +150,15 @@ export function TimeStep({ businessId }: TimeStepProps) {
         </div>
 
         {state.selectedDate && (
-          <div className="mb-4">
-            <div className="flex items-center justify-between mb-2">
+          <div className="mb-3 sm:mb-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
               <h3 className="text-sm font-semibold text-white">Оберіть час:</h3>
-              <div className="flex items-center gap-3 text-xs text-gray-400">
-                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-green-500" />Доступно</span>
-                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-white/10 border border-white/20" />Зайнято</span>
+              <div className="flex items-center gap-3 text-xs text-gray-400 flex-wrap">
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-green-500 flex-shrink-0" />Доступно</span>
+                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-white/10 border border-white/20 flex-shrink-0" />Зайнято</span>
               </div>
             </div>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-2">
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5 sm:gap-2">
               {allTimeSlots.map((time) => {
                 const available = isSlotAvailable(time)
                 const isSelected = state.selectedTime === time
@@ -169,7 +169,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
                     onClick={() => handleTimeSelect(time)}
                     disabled={!available}
                     className={cn(
-                      'px-3 py-2.5 rounded-lg transition-colors text-xs font-medium',
+                      'min-h-[44px] sm:min-h-0 px-2 sm:px-3 py-2.5 sm:py-2.5 rounded-lg transition-colors text-xs font-medium active:scale-[0.98]',
                       isSelected && 'bg-white text-black shadow-md ring-2 ring-white/50',
                       available && !isSelected && 'bg-white/10 border border-white/10 text-white hover:bg-white/20',
                       !available && 'bg-white/5 border border-white/10 text-gray-500 cursor-not-allowed opacity-60'
@@ -196,13 +196,13 @@ export function TimeStep({ businessId }: TimeStepProps) {
           </div>
         )}
 
-        <div className="flex gap-3">
-          <button type="button" onClick={() => setStep(2)} className="flex-1 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors">Назад</button>
+        <div className="flex gap-2 sm:gap-3">
+          <button type="button" onClick={() => setStep(2)} className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors active:scale-[0.98]">Назад</button>
           <button
             type="button"
             onClick={() => setStep(4)}
             disabled={!state.selectedDate || !state.selectedTime}
-            className="flex-1 py-2.5 rounded-lg bg-white text-black text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg bg-white text-black text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
           >
             Далі

@@ -69,13 +69,13 @@ export function MasterStep({ businessId }: MasterStepProps) {
   }
 
   return (
-    <div className="min-h-screen py-6 px-3 md:px-6">
+    <div className="min-h-screen py-4 sm:py-6 px-3 md:px-6 pb-[env(safe-area-inset-bottom)]">
       <div className="max-w-4xl mx-auto">
-        <h2 className="text-xl md:text-2xl font-bold mb-4 text-center text-white" style={{ letterSpacing: '-0.02em' }}>
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 text-center text-white" style={{ letterSpacing: '-0.02em' }}>
           Оберіть майстра
         </h2>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-4">
           {masters.map((master) => {
             const available = isAvailableToday(master.id)
             const gender = getGenderFromName(master.name)
@@ -87,15 +87,15 @@ export function MasterStep({ businessId }: MasterStepProps) {
                 onClick={() => setMaster(master)}
                 onKeyDown={(e) => e.key === 'Enter' && setMaster(master)}
                 className={cn(
-                  'rounded-xl p-4 card-floating cursor-pointer transition-all hover:bg-white/[0.08]',
+                  'rounded-xl p-3 sm:p-4 card-floating cursor-pointer transition-all hover:bg-white/[0.08] active:scale-[0.99] min-h-[44px] touch-target',
                   state.selectedMaster?.id === master.id && 'ring-2 ring-white/50 bg-white/[0.12]'
                 )}
               >
                 <div className="flex flex-col items-center text-center">
-                  <div className="relative mb-3">
+                  <div className="relative mb-2 sm:mb-3">
                     <div
                       className={cn(
-                        'w-20 h-20 md:w-24 md:h-24 rounded-full border-2 flex items-center justify-center bg-white/10 overflow-hidden',
+                        'w-16 h-16 sm:w-20 sm:h-20 md:w-24 md:h-24 rounded-full border-2 flex items-center justify-center bg-white/10 overflow-hidden flex-shrink-0',
                         available ? 'border-white/30' : 'border-white/10'
                       )}
                     >

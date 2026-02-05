@@ -396,6 +396,17 @@ export async function PATCH(
       }
     }
 
+    // Оновлюємо назву бізнесу в Реєстрі телефонів (якщо змінилась)
+    if (name !== undefined && currentBusiness && name !== currentBusiness.name) {
+      try {
+        const { updateBusinessNameInDirectory } = await import('@/lib/services/management-center')
+        await updateBusinessNameInDirectory(businessId, business.name)
+      } catch (nameError: any) {
+        console.error('Error updating business name in directory:', nameError)
+        // Не викидаємо помилку, щоб не зламати оновлення бізнесу
+      }
+    }
+
     return NextResponse.json({ business })
   } catch (error: any) {
     console.error('Unexpected error updating business:', error)

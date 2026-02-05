@@ -570,7 +570,7 @@ export default function AppointmentsPage() {
                           }
                         }}
                         className={cn(
-                          'relative p-1.5 rounded-md border transition-colors min-h-[36px] flex flex-col items-center justify-start',
+                          'relative p-1 sm:p-1.5 rounded-md border transition-colors min-h-[40px] sm:min-h-[36px] flex flex-col items-center justify-start active:scale-[0.98]',
                           !isDayInCurrentMonth && 'opacity-30',
                           isSelected
                             ? 'border-white bg-white/20 text-white shadow-md'

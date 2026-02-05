@@ -6,7 +6,7 @@ export default function Home() {
   const router = useRouter()
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden py-12 px-4">
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden py-12 px-4 safe-bottom safe-top">
       {/* Blurred Background with Barber/Salon Tools */}
       <div className="absolute inset-0 z-0">
         <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1920')] bg-cover bg-center" />
@@ -50,13 +50,13 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-3 mb-6 justify-center">
             <button
               onClick={() => router.push('/register')}
-              className="w-full sm:w-auto bg-gradient-to-r from-candy-blue to-candy-purple text-white font-bold py-3 px-8 rounded-candy-sm hover:from-candy-blue/90 hover:to-candy-purple/90 transition-all shadow-soft-lg"
+              className="w-full sm:w-auto touch-target min-h-[48px] bg-gradient-to-r from-candy-blue to-candy-purple text-white font-bold py-3 px-8 rounded-candy-sm hover:from-candy-blue/90 hover:to-candy-purple/90 transition-all shadow-soft-lg active:scale-[0.98]"
             >
               РЕЄСТРАЦІЯ БІЗНЕСУ
             </button>
             <button
               onClick={() => router.push('/login')}
-              className="w-full sm:w-auto bg-gray-700 dark:bg-gray-800 border-2 border-gray-600 dark:border-gray-500 text-white px-8 py-3 font-bold hover:bg-gray-600 dark:hover:bg-gray-700 transition-all rounded-candy-sm"
+              className="w-full sm:w-auto touch-target min-h-[48px] bg-gray-700 dark:bg-gray-800 border-2 border-gray-600 dark:border-gray-500 text-white px-8 py-3 font-bold hover:bg-gray-600 dark:hover:bg-gray-700 transition-all rounded-candy-sm active:scale-[0.98]"
             >
               ВХІД ДЛЯ БІЗНЕСУ
             </button>

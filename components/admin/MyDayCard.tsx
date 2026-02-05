@@ -117,7 +117,7 @@ export function MyDayCard({
           <div className="flex items-center gap-2 md:gap-3 mt-2 flex-wrap">
             <button
               onClick={handlePreviousDay}
-              className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+              className="touch-target min-h-[40px] min-w-[40px] p-2 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center active:scale-95"
               aria-label="Попередній день"
             >
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -137,7 +137,7 @@ export function MyDayCard({
             
             <button
               onClick={handleNextDay}
-              className="p-1.5 hover:bg-white/10 rounded-lg transition-colors"
+              className="touch-target min-h-[40px] min-w-[40px] p-2 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center active:scale-95"
               aria-label="Наступний день"
             >
               <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">

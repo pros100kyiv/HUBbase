@@ -85,13 +85,13 @@ export function FinalStep({ businessId }: FinalStepProps) {
   const totalPrice = state.selectedServices.reduce((sum, s) => sum + s.price, 0)
 
   return (
-    <div className="min-h-screen py-6 px-3 md:px-6">
+    <div className="min-h-screen py-4 sm:py-6 px-3 md:px-6 pb-[env(safe-area-inset-bottom)]">
       <div className="max-w-2xl mx-auto">
-        <h2 className="text-xl md:text-2xl font-bold mb-4 text-center text-white" style={{ letterSpacing: '-0.02em' }}>
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 text-center text-white" style={{ letterSpacing: '-0.02em' }}>
           Контактні дані
         </h2>
 
-        <div className="rounded-xl p-4 mb-4 card-floating">
+        <div className="rounded-xl p-3 sm:p-4 mb-4 card-floating">
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1.5 text-gray-300">Ім'я *</label>
@@ -100,7 +100,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
                 onChange={(e) => setClientName(e.target.value)}
                 placeholder="Ваше ім'я"
                 className={cn(
-                  'w-full px-4 py-2.5 rounded-lg border text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30',
+                  'w-full px-4 py-3 sm:py-2.5 rounded-lg border text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 min-h-[48px] sm:min-h-0',
                   errors.name ? 'border-red-500 bg-red-500/10' : 'border-white/20 bg-white/10 focus:bg-white/15'
                 )}
               />
@@ -112,8 +112,9 @@ export function FinalStep({ businessId }: FinalStepProps) {
                 value={state.clientPhone}
                 onChange={(e) => setClientPhone(e.target.value)}
                 placeholder="+380XXXXXXXXX"
+                type="tel"
                 className={cn(
-                  'w-full px-4 py-2.5 rounded-lg border text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30',
+                  'w-full px-4 py-3 sm:py-2.5 rounded-lg border text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 min-h-[48px] sm:min-h-0',
                   errors.phone ? 'border-red-500 bg-red-500/10' : 'border-white/20 bg-white/10 focus:bg-white/15'
                 )}
               />
@@ -132,13 +133,13 @@ export function FinalStep({ businessId }: FinalStepProps) {
           </div>
         </div>
 
-        <div className="flex gap-3">
-          <button type="button" onClick={() => setStep(3)} className="flex-1 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors">Назад</button>
+        <div className="flex gap-2 sm:gap-3">
+          <button type="button" onClick={() => setStep(3)} className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors active:scale-[0.98]">Назад</button>
           <button
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="flex-1 py-2.5 rounded-lg bg-white text-black text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg bg-white text-black text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
           >
             {isSubmitting ? 'Відправка...' : 'Підтвердити запис'}
