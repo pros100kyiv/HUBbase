@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { format } from 'date-fns'
+import { format, isValid } from 'date-fns'
 import { toast } from '@/components/ui/toast'
 import { XIcon } from '@/components/icons'
 import { ErrorToast } from '@/components/ui/error-toast'
@@ -36,6 +36,8 @@ export function EditAppointmentForm({
   onCancel,
 }: EditAppointmentFormProps) {
   const formRef = useRef<HTMLDivElement>(null)
+  const startTimeDate = new Date(appointment.startTime)
+  const safeStartTimeDate = isValid(startTimeDate) ? startTimeDate : new Date()
   const [formData, setFormData] = useState({
     masterId: appointment.masterId,
     clientName: appointment.clientName,
@@ -51,8 +53,8 @@ export function EditAppointmentForm({
       }
       return []
     })(),
-    date: format(new Date(appointment.startTime), 'yyyy-MM-dd'),
-    startTime: format(new Date(appointment.startTime), 'HH:mm'),
+    date: format(safeStartTimeDate, 'yyyy-MM-dd'),
+    startTime: format(safeStartTimeDate, 'HH:mm'),
     notes: appointment.notes || '',
     customService: '',
     customPrice: 0,

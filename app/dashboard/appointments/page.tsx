@@ -37,6 +37,11 @@ export default function AppointmentsPage() {
   const [clientToday, setClientToday] = useState<Date | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
+  const safeFormat = (date: Date | null, pattern: string, options?: any) => {
+    if (!date) return ''
+    return isValid(date) ? format(date, pattern, options) : ''
+  }
+
   // Initialize calendar dates only on client to avoid hydration mismatch
   useEffect(() => {
     const today = new Date()
@@ -389,17 +394,26 @@ export default function AppointmentsPage() {
   const calendarDays = calendarStart && calendarEnd ? eachDayOfInterval({ start: calendarStart, end: calendarEnd }) : []
 
   const getAppointmentsForDay = (day: Date) => {
-    return filteredAppointments.filter((apt) => isSameDay(new Date(apt.startTime), day))
+    if (!isValid(day)) return []
+    return filteredAppointments.filter((apt) => {
+      const start = new Date(apt.startTime)
+      if (!isValid(start)) return false
+      return isSameDay(start, day)
+    })
   }
 
   const getAppointmentsByHour = (date: Date) => {
-    const dayAppointments = filteredAppointments.filter((apt) => 
-      isSameDay(new Date(apt.startTime), date)
-    )
+    if (!isValid(date)) return {}
+    const dayAppointments = filteredAppointments.filter((apt) => {
+      const start = new Date(apt.startTime)
+      if (!isValid(start)) return false
+      return isSameDay(start, date)
+    })
     
     const byHour: Record<number, Appointment[]> = {}
     dayAppointments.forEach((apt) => {
-      const hour = new Date(apt.startTime).getHours()
+      const start = new Date(apt.startTime)
+      const hour = start.getHours()
       if (!byHour[hour]) {
         byHour[hour] = []
       }
@@ -509,7 +523,7 @@ export default function AppointmentsPage() {
               <>
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
                   <h2 className="text-lg md:text-xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
-                    {format(currentMonth, 'LLLL yyyy', { locale: uk })}
+                    {safeFormat(currentMonth, 'LLLL yyyy', { locale: uk }) || '—'}
                   </h2>
                   <div className="flex gap-2">
                     <button
@@ -573,19 +587,21 @@ export default function AppointmentsPage() {
                       {day}
                     </div>
                   ))}
-                  {calendarDays.map((day) => {
+                  {calendarDays.map((day, idx) => {
                     const dayAppointments = getAppointmentsForDay(day)
                     const isToday = clientToday ? isSameDay(day, clientToday) : false
                     const isSelected = selectedDate && isSameDay(day, selectedDate)
                     const isDayInCurrentMonth = currentMonth !== null && day.getMonth() === currentMonth.getMonth()
+                    const dayKey = Number.isFinite(day.getTime()) ? day.toISOString() : `invalid-day-${idx}`
 
                     return (
                       <button
-                        key={day.toISOString()}
+                        key={dayKey}
                         onClick={() => {
-                          if (isDayInCurrentMonth) {
-                            setSelectedDate(new Date(day.getTime()))
-                          }
+                          if (!isDayInCurrentMonth) return
+                          const next = new Date(day.getTime())
+                          if (!isValid(next)) return
+                          setSelectedDate(next)
                         }}
                         className={cn(
                           'relative p-2 rounded-lg border transition-all min-h-[48px] flex flex-col items-center justify-start active:scale-[0.98]',
@@ -619,7 +635,7 @@ export default function AppointmentsPage() {
               <div className="flex flex-col gap-3 mb-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
-                    {format(selectedDate, 'd MMMM yyyy', { locale: uk })}
+                    {safeFormat(selectedDate, 'd MMMM yyyy', { locale: uk }) || 'Некоректна дата'}
                   </h3>
                   <button
                     onClick={() => setSelectedDate(null)}

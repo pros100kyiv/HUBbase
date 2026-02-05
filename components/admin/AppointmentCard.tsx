@@ -1,6 +1,6 @@
 'use client'
 
-import { format, differenceInMinutes } from 'date-fns'
+import { format, differenceInMinutes, isValid } from 'date-fns'
 
 const getStatusLabel = (status: string) => {
   switch (status) {
@@ -43,8 +43,10 @@ export function AppointmentCard({
   slotTime,
   getStatusColor,
 }: AppointmentCardProps) {
-  const startTime = new Date(appointment.startTime)
-  const endTime = new Date(appointment.endTime)
+  const startTimeRaw = new Date(appointment.startTime)
+  const endTimeRaw = new Date(appointment.endTime)
+  const startTime = isValid(startTimeRaw) ? startTimeRaw : new Date()
+  const endTime = isValid(endTimeRaw) ? endTimeRaw : startTime
   const duration = differenceInMinutes(endTime, startTime)
   const rowSpan = Math.max(1, Math.ceil(duration / 15))
 

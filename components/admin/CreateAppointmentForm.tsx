@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { format } from 'date-fns'
+import { format, isValid } from 'date-fns'
 import { toast } from '@/components/ui/toast'
 
 interface CreateAppointmentFormProps {
@@ -25,12 +25,13 @@ export function CreateAppointmentForm({
   onCancel,
 }: CreateAppointmentFormProps) {
   const formRef = useRef<HTMLDivElement>(null)
+  const initialDate = selectedDate && isValid(selectedDate) ? selectedDate : new Date()
   const [formData, setFormData] = useState({
     masterId: masters[0]?.id || '',
     clientName: '',
     clientPhone: '',
     serviceIds: [] as string[],
-    date: selectedDate ? format(selectedDate, 'yyyy-MM-dd') : format(new Date(), 'yyyy-MM-dd'),
+    date: format(initialDate, 'yyyy-MM-dd'),
     startTime: '09:00',
     customService: '',
     customPrice: 0,
