@@ -482,7 +482,7 @@ export default function AppointmentsPage() {
               </div>
             )}
           </div>
-          {/* Month Navigation & Calendar */}
+          {/* Month Navigation & Calendar — картка календаря */}
           <div className="rounded-xl p-4 md:p-6 card-floating">
             {!calendarReady || !currentMonth ? (
               <div className="flex items-center justify-center py-12 text-gray-400">
@@ -531,27 +531,28 @@ export default function AppointmentsPage() {
                     </button>
                   </div>
                 </div>
-                <div className="flex gap-1.5 sm:gap-2 mb-3 sm:mb-4 flex-wrap">
+
+                {/* Компактні фільтри над календарем (дубль у блоці дати) */}
+                <div className="flex gap-1.5 mb-3 flex-wrap">
                   {['all', 'Pending', 'Confirmed', 'Done', 'Cancelled'].map((status) => (
                     <button
                       key={status}
                       onClick={() => setFilterStatus(status)}
                       className={cn(
-                        'touch-target min-h-[40px] px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap active:scale-[0.98]',
-                        filterStatus === status
-                          ? 'bg-white text-black'
-                          : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white border border-white/10'
+                        'px-2 py-1 rounded-md text-[11px] font-medium transition-colors whitespace-nowrap active:scale-[0.98]',
+                        filterStatus === status ? 'bg-white text-black' : 'bg-white/10 text-gray-400 hover:bg-white/15 hover:text-white border border-white/10'
                       )}
-                      style={filterStatus === status ? { boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' } : {}}
+                      style={filterStatus === status ? { boxShadow: '0 1px 2px rgba(0,0,0,0.2)' } : {}}
                     >
                       {status === 'all' ? 'Всі' : status === 'Pending' ? 'Очікує' : status === 'Confirmed' ? 'Підтверджено' : status === 'Done' ? 'Виконано' : 'Скасовано'}
                     </button>
                   ))}
                 </div>
 
-                <div className="grid grid-cols-7 gap-1 sm:gap-1.5 max-w-md mx-auto w-full">
+                {/* Календар — збільшений */}
+                <div className="grid grid-cols-7 gap-2 max-w-lg mx-auto w-full">
                   {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
-                    <div key={day} className="text-center text-xs font-semibold text-gray-400 py-1">
+                    <div key={day} className="text-center text-xs font-semibold text-gray-400 py-1.5">
                       {day}
                     </div>
                   ))}
@@ -570,24 +571,22 @@ export default function AppointmentsPage() {
                           }
                         }}
                         className={cn(
-                          'relative p-1 sm:p-1.5 rounded-md border transition-colors min-h-[40px] sm:min-h-[36px] flex flex-col items-center justify-start active:scale-[0.98]',
+                          'relative p-2 rounded-lg border transition-all min-h-[48px] flex flex-col items-center justify-start active:scale-[0.98]',
                           !isDayInCurrentMonth && 'opacity-30',
                           isSelected
-                            ? 'border-white bg-white/20 text-white shadow-md'
-                            : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10 text-white',
-                          isToday && !isSelected && 'ring-1 ring-white/30',
-                          isDayInCurrentMonth && 'cursor-pointer active:scale-[0.98]'
+                            ? 'border-white bg-white/25 text-white shadow-lg shadow-black/20'
+                            : 'border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/10 text-white',
+                          isToday && !isSelected && 'ring-1 ring-white/40 ring-offset-2 ring-offset-[#2A2A2A]',
+                          isDayInCurrentMonth && 'cursor-pointer'
                         )}
                       >
-                        <div className={cn('text-xs font-semibold mb-0.5', isToday ? 'text-white' : 'text-white')}>
+                        <span className="text-sm font-semibold">
                           {format(day, 'd')}
-                        </div>
+                        </span>
                         {dayAppointments.length > 0 && (
-                          <div className="w-full mt-auto">
-                            <div className="text-[10px] font-semibold text-white text-center bg-white/20 rounded-full py-0.5 leading-tight">
-                              {dayAppointments.length}
-                            </div>
-                          </div>
+                          <span className="mt-1 text-[10px] font-semibold text-white bg-white/25 rounded-full px-1.5 py-0.5 min-w-[18px]">
+                            {dayAppointments.length}
+                          </span>
                         )}
                       </button>
                     )
@@ -597,19 +596,39 @@ export default function AppointmentsPage() {
             )}
           </div>
 
-          {/* Selected Date Details — базовий стиль */}
+          {/* Selected Date Details — дата + компактні фільтри */}
           {selectedDate && (
             <div className="rounded-xl p-4 md:p-6 bg-[#1A1A1A] border border-white/10 text-white">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
-                  {format(selectedDate, 'd MMMM yyyy', { locale: uk })}
-                </h3>
-                <button
-                  onClick={() => setSelectedDate(null)}
-                  className="px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
-                >
-                  Закрити
-                </button>
+              <div className="flex flex-col gap-3 mb-4">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <h3 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
+                    {format(selectedDate, 'd MMMM yyyy', { locale: uk })}
+                  </h3>
+                  <button
+                    onClick={() => setSelectedDate(null)}
+                    className="px-3 py-1.5 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-xs font-medium transition-colors"
+                  >
+                    Закрити
+                  </button>
+                </div>
+                {/* Фільтри статусів — компактні пігулки */}
+                <div className="flex flex-wrap gap-1.5">
+                  {['all', 'Pending', 'Confirmed', 'Done', 'Cancelled'].map((status) => (
+                    <button
+                      key={status}
+                      onClick={() => setFilterStatus(status)}
+                      className={cn(
+                        'px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors whitespace-nowrap active:scale-[0.98]',
+                        filterStatus === status
+                          ? 'bg-white text-black'
+                          : 'bg-white/10 text-gray-400 hover:bg-white/15 hover:text-white border border-white/10'
+                      )}
+                      style={filterStatus === status ? { boxShadow: '0 1px 2px rgba(0,0,0,0.2)' } : {}}
+                    >
+                      {status === 'all' ? 'Всі' : status === 'Pending' ? 'Очікує' : status === 'Confirmed' ? 'Підтверджено' : status === 'Done' ? 'Виконано' : 'Скасовано'}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               {(() => {
