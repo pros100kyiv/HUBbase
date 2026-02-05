@@ -265,7 +265,7 @@ export default function MainPage() {
           )}
 
           {/* Month Progress Card */}
-          <MonthProgressCard progress={30} />
+          <MonthProgressCard stats={stats} loading={loading && !stats} />
         </div>
       </div>
     </div>
