@@ -226,7 +226,8 @@ export default function SettingsPage() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const tabParam = params.get('tab')
-      if (tabParam && ['info', 'masters', 'services'].includes(tabParam)) {
+      const allowedTabs: Tab[] = ['info', 'masters', 'services', 'businessCard', 'telegram', 'integrations']
+      if (tabParam && allowedTabs.includes(tabParam as Tab)) {
         setActiveTab(tabParam as Tab)
       }
     }
@@ -490,7 +491,7 @@ export default function SettingsPage() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-gray-500">Завантаження...</p>
+        <p className="text-gray-400">Завантаження...</p>
       </div>
     )
   }
@@ -498,9 +499,15 @@ export default function SettingsPage() {
   if (!business) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-500 mb-4">Бізнес не знайдено</p>
-          <Button onClick={() => router.push('/login')}>Увійти</Button>
+        <div className="text-center rounded-xl p-8 card-floating max-w-sm">
+          <p className="text-gray-300 mb-4">Бізнес не знайдено</p>
+          <Button
+            onClick={() => router.push('/login')}
+            className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors"
+            style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+          >
+            Увійти
+          </Button>
         </div>
       </div>
     )
@@ -510,31 +517,31 @@ export default function SettingsPage() {
     <div className="min-h-screen bg-background">
       <Confetti trigger={showConfetti} />
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Header + Tabs - dashboard base */}
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
             <div>
-              <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-2">
+              <h1 className="text-xl md:text-2xl font-bold text-white mb-1" style={{ letterSpacing: '-0.02em' }}>
                 Налаштування
               </h1>
-              <p className="text-base text-gray-600 dark:text-gray-400">
+              <p className="text-sm text-gray-400">
                 Управління бізнесом та налаштування
               </p>
             </div>
           </div>
 
-          {/* Tabs */}
-          <div className="flex gap-2 flex-wrap">
-            {(['info', 'masters', 'services', 'businessCard', 'telegram', 'integrations'] as Tab[]).map((tab) => {
-              return (
+          {/* Tabs - card-floating dark theme */}
+          <div className="rounded-xl p-3 card-floating">
+            <div className="flex gap-2 flex-wrap">
+              {(['info', 'masters', 'services', 'businessCard', 'telegram', 'integrations'] as Tab[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={cn(
-                    'px-6 py-3 rounded-candy-sm font-bold text-sm transition-all active:scale-95 whitespace-nowrap',
+                    'px-4 py-2 rounded-lg text-sm font-medium transition-all active:scale-[0.98] whitespace-nowrap',
                     activeTab === tab
-                      ? 'bg-gradient-to-r from-candy-purple to-candy-blue text-white shadow-soft-xl'
-                      : 'bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-200 dark:border-gray-700 hover:bg-gray-50 dark:hover:bg-gray-700'
+                      ? 'bg-white/20 text-white border border-white/30'
+                      : 'bg-white/10 text-gray-300 border border-white/20 hover:bg-white/15 hover:text-white'
                   )}
                 >
                   {tab === 'info' && 'Інформація'}
@@ -544,8 +551,8 @@ export default function SettingsPage() {
                   {tab === 'telegram' && 'Telegram'}
                   {tab === 'integrations' && 'Інтеграції'}
                 </button>
-              )
-            })}
+              ))}
+            </div>
           </div>
         </div>
 
@@ -553,58 +560,63 @@ export default function SettingsPage() {
         <div className="space-y-6">
           {/* Інформація */}
           {activeTab === 'info' && (
-            <div className="card-candy p-6">
-              <h2 className="text-xl font-black text-gray-900 dark:text-white mb-6">Основна інформація</h2>
+            <div className="rounded-xl p-4 md:p-6 card-floating">
+              <h2 className="text-lg font-bold text-white mb-6" style={{ letterSpacing: '-0.02em' }}>Основна інформація</h2>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Назва бізнесу</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Назва бізнесу</label>
                   <Input
                     value={formData.name || ''}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Email</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Email</label>
                   <Input
                     type="email"
                     value={formData.email || ''}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Телефон</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Телефон</label>
                   <Input
                     value={formData.phone || ''}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="+380XXXXXXXXX"
+                    className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Адреса</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Адреса</label>
                   <Input
                     value={formData.address || ''}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Опис</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Опис</label>
                   <Input
                     value={formData.description || ''}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     placeholder="Короткий опис вашого бізнесу"
+                    className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Категорія бізнесу</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Категорія бізнесу</label>
                   <select
                     value={formData.niche || 'OTHER'}
                     onChange={(e) => setFormData({ ...formData, niche: e.target.value, customNiche: e.target.value !== 'OTHER' ? '' : formData.customNiche })}
-                    className="w-full px-4 py-2 rounded-lg bg-white dark:bg-gray-900 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-candy-blue"
+                    className="w-full px-4 py-2 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                   >
                     <option value="SALON">Салон краси</option>
                     <option value="BARBERSHOP">Барбершоп</option>
@@ -623,31 +635,33 @@ export default function SettingsPage() {
 
                 {formData.niche === 'OTHER' && (
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Вкажіть вашу категорію</label>
+                    <label className="block text-sm font-medium mb-2 text-gray-300">Вкажіть вашу категорію</label>
                     <Input
                       value={formData.customNiche || ''}
                       onChange={(e) => setFormData({ ...formData, customNiche: e.target.value })}
                       placeholder="Наприклад: Автосервіс, Стоматологія..."
+                      className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                     />
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-900 dark:text-white">Ідентифікатор бізнесу</label>
-                  <div className="px-4 py-2 rounded-lg bg-gray-100 dark:bg-gray-900 border border-gray-300 dark:border-gray-600">
-                    <p className="text-lg font-black text-candy-blue dark:text-blue-400">
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Ідентифікатор бізнесу</label>
+                  <div className="px-4 py-2 rounded-lg bg-white/10 border border-white/20">
+                    <p className="text-lg font-bold text-blue-400">
                       {formData.businessIdentifier || 'Не встановлено'}
                     </p>
                   </div>
-                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                  <p className="text-xs text-gray-400 mt-1">
                     Унікальний ідентифікатор вашого бізнесу (не можна змінити)
                   </p>
                 </div>
 
-                <Button 
-                  onClick={handleSaveBusiness} 
-                  disabled={isSaving} 
-                  className="w-full px-6 py-3 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
+                <Button
+                  onClick={handleSaveBusiness}
+                  disabled={isSaving}
+                  className="w-full px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 transition-all active:scale-[0.98]"
+                  style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                 >
                   {isSaving ? 'Збереження...' : 'Зберегти'}
                 </Button>
@@ -659,14 +673,15 @@ export default function SettingsPage() {
           {activeTab === 'masters' && (
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h2 className="text-xl font-black text-gray-900 dark:text-white">Спеціалісти</h2>
+                <h2 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.02em' }}>Спеціалісти</h2>
                 <Button
                   onClick={() => {
                     setShowMasterForm(true)
                     setEditingMaster(null)
                     setMasterForm({ name: '', bio: '', rating: '0', photo: '' })
                   }}
-                  className="px-6 py-3 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
+                  className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                  style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                 >
                   + Додати спеціаліста
                 </Button>
@@ -674,8 +689,8 @@ export default function SettingsPage() {
 
               {showMasterForm && (
                 <div ref={masterFormRef}>
-                <div className="card-candy p-6">
-                  <h3 className="text-lg font-black text-gray-900 dark:text-white mb-4">
+                <div className="rounded-xl p-4 md:p-6 card-floating">
+                  <h3 className="text-lg font-bold text-white mb-4" style={{ letterSpacing: '-0.02em' }}>
                     {editingMaster ? 'Редагувати спеціаліста' : 'Новий спеціаліст'}
                   </h3>
                   <div className="space-y-4">
@@ -683,10 +698,10 @@ export default function SettingsPage() {
                       placeholder="Ім'я спеціаліста"
                       value={masterForm.name}
                       onChange={(e) => setMasterForm({ ...masterForm, name: e.target.value })}
-                      className="text-xs py-1.5 h-auto"
+                      className="text-sm py-2 h-auto border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                     />
                     <div>
-                      <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
+                      <label className="block text-xs font-medium mb-1 text-gray-400">
                         Фото (URL або завантажити)
                       </label>
                       <div className="flex gap-2">
@@ -695,7 +710,7 @@ export default function SettingsPage() {
                           placeholder="https://example.com/photo.jpg"
                           value={masterForm.photo}
                           onChange={(e) => setMasterForm({ ...masterForm, photo: e.target.value })}
-                          className="text-xs py-1.5 h-auto flex-1"
+                          className="text-sm py-2 h-auto flex-1 border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                         />
                         <input
                           type="file"
@@ -718,9 +733,9 @@ export default function SettingsPage() {
                           variant="outline"
                           size="sm"
                           onClick={() => document.getElementById('master-photo-upload')?.click()}
-                          className="text-xs py-1.5 h-auto"
+                          className="py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg"
                         >
-                          <ImageIcon className="w-3 h-3" />
+                          <ImageIcon className="w-4 h-4" />
                         </Button>
                       </div>
                       {masterForm.photo && (
@@ -728,7 +743,7 @@ export default function SettingsPage() {
                           <img
                             src={masterForm.photo}
                             alt="Preview"
-                            className="w-16 h-16 object-cover rounded-candy-xs border border-gray-200 dark:border-gray-700"
+                            className="w-16 h-16 object-cover rounded-lg border border-white/20"
                             onError={(e) => {
                               (e.target as HTMLImageElement).style.display = 'none'
                             }}
@@ -740,7 +755,7 @@ export default function SettingsPage() {
                       placeholder="Біографія"
                       value={masterForm.bio}
                       onChange={(e) => setMasterForm({ ...masterForm, bio: e.target.value })}
-                      className="text-xs py-1.5 h-auto"
+                      className="text-sm py-2 h-auto border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                     />
                     <Input
                       type="number"
@@ -750,12 +765,13 @@ export default function SettingsPage() {
                       min="0"
                       max="5"
                       step="0.1"
-                      className="text-xs py-1.5 h-auto"
+                      className="text-sm py-2 h-auto border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                     />
                     <div className="flex gap-3 pt-2">
-                      <Button 
-                        onClick={handleSaveMaster} 
-                        className="flex-1 px-6 py-3 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95" 
+                      <Button
+                        onClick={handleSaveMaster}
+                        className="flex-1 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 transition-all active:scale-[0.98]"
+                        style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                         disabled={isSaving}
                       >
                         {isSaving ? 'Збереження...' : 'Зберегти'}
@@ -766,7 +782,7 @@ export default function SettingsPage() {
                           setShowMasterForm(false)
                           setEditingMaster(null)
                         }}
-                        className="px-6 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-sm font-bold"
+                        className="px-6 py-3 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg font-medium transition-all active:scale-[0.98]"
                       >
                         Скасувати
                       </Button>
@@ -779,16 +795,16 @@ export default function SettingsPage() {
               <div className="space-y-4">
                 {masters.map((master) => (
                   <div key={master.id} className="space-y-4">
-                    <div className="card-candy p-6">
+                    <div className="rounded-xl p-4 md:p-6 card-floating">
                         <div className="flex justify-between items-start mb-1.5">
                           <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-black text-foreground dark:text-white mb-0.5 truncate">
+                            <h3 className="text-sm font-bold text-white mb-0.5 truncate">
                               {master.name}
                             </h3>
                             {master.bio && (
-                              <p className="text-xs text-gray-600 dark:text-gray-400 truncate">{master.bio}</p>
+                              <p className="text-xs text-gray-400 truncate">{master.bio}</p>
                             )}
-                            <p className="text-[10px] text-gray-500 dark:text-gray-500 mt-1">
+                            <p className="text-[10px] text-gray-500 mt-1">
                               Рейтинг: {master.rating}/5
                             </p>
                           </div>
@@ -796,14 +812,14 @@ export default function SettingsPage() {
                         <div className="flex gap-3">
                           <Button
                             onClick={() => startEditMaster(master)}
-                            className="flex-1 px-4 py-2 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
+                            className="flex-1 px-4 py-2 bg-white/20 text-white border border-white/30 font-medium rounded-lg hover:bg-white/25 transition-all active:scale-[0.98]"
                           >
                             Редагувати
                           </Button>
                           <Button
                             variant="outline"
                             onClick={() => handleDeleteMaster(master.id)}
-                            className="px-4 py-2 border border-red-300 dark:border-red-700 bg-white dark:bg-gray-800 text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 transition-all active:scale-95 rounded-candy-sm font-bold"
+                            className="px-4 py-2 border border-red-400/50 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg font-medium transition-all active:scale-[0.98]"
                           >
                             Видалити
                           </Button>
@@ -831,14 +847,15 @@ export default function SettingsPage() {
           {activeTab === 'services' && (
             <div className="space-y-6">
               <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h2 className="text-xl font-black text-gray-900 dark:text-white">Послуги</h2>
+                <h2 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.02em' }}>Послуги</h2>
                 <Button
                   onClick={() => {
                     setShowServiceForm(true)
                     setEditingService(null)
                     setServiceForm({ name: '', price: '', duration: '', category: '', subcategory: '' })
                   }}
-                  className="px-6 py-3 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
+                  className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                  style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                 >
                   + Додати послугу
                 </Button>
@@ -846,8 +863,8 @@ export default function SettingsPage() {
 
               {showServiceForm && (
                 <div ref={serviceFormRef}>
-                <div className="card-candy p-6">
-                  <h3 className="text-lg font-black text-gray-900 dark:text-white mb-4">
+                <div className="rounded-xl p-4 md:p-6 card-floating">
+                  <h3 className="text-lg font-bold text-white mb-4" style={{ letterSpacing: '-0.02em' }}>
                     {editingService ? 'Редагувати послугу' : 'Нова послуга'}
                   </h3>
                   <div className="space-y-4">
@@ -855,6 +872,7 @@ export default function SettingsPage() {
                       placeholder="Назва послуги"
                       value={serviceForm.name}
                       onChange={(e) => setServiceForm({ ...serviceForm, name: e.target.value })}
+                      className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                     />
                     <div className="grid grid-cols-2 gap-4">
                       <Input
@@ -862,23 +880,26 @@ export default function SettingsPage() {
                         placeholder="Ціна (₴)"
                         value={serviceForm.price}
                         onChange={(e) => setServiceForm({ ...serviceForm, price: e.target.value })}
+                        className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                       />
                       <Input
                         type="number"
                         placeholder="Тривалість (хв)"
                         value={serviceForm.duration}
                         onChange={(e) => setServiceForm({ ...serviceForm, duration: e.target.value })}
+                        className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                       />
                     </div>
                     <div className="space-y-2">
                       <div>
-                        <label className="block text-sm font-medium mb-1.5 text-gray-900 dark:text-white">
+                        <label className="block text-sm font-medium mb-1.5 text-gray-300">
                           Категорія (папка)
                         </label>
                         <Input
                           placeholder="Наприклад: Стрижка, Манікюр"
                           value={serviceForm.category}
                           onChange={(e) => setServiceForm({ ...serviceForm, category: e.target.value })}
+                          className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                         />
                         {services.length > 0 && (
                           <select
@@ -887,7 +908,7 @@ export default function SettingsPage() {
                                 setServiceForm({ ...serviceForm, category: e.target.value })
                               }
                             }}
-                            className="mt-1.5 w-full px-3 py-2 rounded-candy border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white"
+                            className="mt-1.5 w-full px-3 py-2 rounded-lg border border-white/20 bg-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                           >
                             <option value="">Або виберіть існуючу категорію</option>
                             {Array.from(new Set(services.map(s => {
@@ -901,13 +922,14 @@ export default function SettingsPage() {
                       </div>
                       {serviceForm.category && (
                         <div>
-                          <label className="block text-sm font-medium mb-1.5 text-gray-900 dark:text-white">
+                          <label className="block text-sm font-medium mb-1.5 text-gray-300">
                             Підкатегорія (підпапка) - опціонально
                           </label>
                           <Input
                             placeholder="Наприклад: Чоловіча, Жіноча, Дитяча"
                             value={serviceForm.subcategory}
                             onChange={(e) => setServiceForm({ ...serviceForm, subcategory: e.target.value })}
+                            className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                           />
                           {services.length > 0 && serviceForm.category && (
                             <select
@@ -916,7 +938,7 @@ export default function SettingsPage() {
                                   setServiceForm({ ...serviceForm, subcategory: e.target.value })
                                 }
                               }}
-                              className="mt-1.5 w-full px-3 py-2 rounded-candy border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-sm text-gray-900 dark:text-white"
+                              className="mt-1.5 w-full px-3 py-2 rounded-lg border border-white/20 bg-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                             >
                               <option value="">Або виберіть існуючу підкатегорію</option>
                               {Array.from(new Set(services
@@ -941,9 +963,10 @@ export default function SettingsPage() {
                       )}
                     </div>
                     <div className="flex gap-3 pt-2">
-                      <Button 
-                        onClick={handleSaveService} 
-                        className="flex-1 px-6 py-3 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
+                      <Button
+                        onClick={handleSaveService}
+                        className="flex-1 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 transition-all active:scale-[0.98]"
+                        style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                       >
                         Зберегти
                       </Button>
@@ -953,7 +976,7 @@ export default function SettingsPage() {
                           setShowServiceForm(false)
                           setEditingService(null)
                         }}
-                        className="px-6 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-sm font-bold"
+                        className="px-6 py-3 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg font-medium transition-all active:scale-[0.98]"
                       >
                         Скасувати
                       </Button>
@@ -1033,21 +1056,21 @@ export default function SettingsPage() {
                       )
                       
                       return (
-                        <div key={category} className="card-candy overflow-hidden">
+                        <div key={category} className="rounded-xl overflow-hidden card-floating">
                           {/* Category Header - Clickable */}
                           <button
                             onClick={() => toggleCategory(category)}
                             className={cn(
-                              'w-full p-4 border-b-2 flex items-center justify-between hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors',
+                              'w-full p-4 border-b-2 flex items-center justify-between hover:bg-white/5 transition-colors',
                               categoryColor.border
                             )}
                           >
                             <div className="flex items-center gap-2 flex-1">
                               <div className={cn('w-1 h-6 rounded-full', categoryColor.bg)} />
-                              <h2 className="text-base md:text-lg font-black text-foreground dark:text-white text-left">
+                              <h2 className="text-base md:text-lg font-bold text-white text-left" style={{ letterSpacing: '-0.02em' }}>
                                 {category}
                               </h2>
-                              <span className="text-xs text-gray-500 dark:text-gray-400 font-medium">
+                              <span className="text-xs text-gray-400 font-medium">
                                 ({totalServicesInCategory})
                               </span>
                             </div>
@@ -1060,12 +1083,12 @@ export default function SettingsPage() {
 
                           {/* Services List - Collapsible */}
                           {isExpanded && (
-                            <div className="divide-y divide-gray-100 dark:divide-gray-700">
+                            <div className="divide-y divide-white/10">
                               {Object.entries(subcategories).map(([subKey, subGroup]) => (
                                 <div key={subKey}>
                                   {subGroup.subcategory && (
-                                    <div className="px-3 py-2 bg-gray-50 dark:bg-gray-800/30 border-b border-gray-100 dark:border-gray-700">
-                                      <h3 className="text-xs font-bold text-gray-600 dark:text-gray-400 uppercase">
+                                    <div className="px-3 py-2 bg-white/5 border-b border-white/10">
+                                      <h3 className="text-xs font-bold text-gray-400 uppercase">
                                         {subGroup.subcategory}
                                       </h3>
                                     </div>
@@ -1073,19 +1096,19 @@ export default function SettingsPage() {
                                   {subGroup.services.map((service) => (
                                     <div
                                       key={service.id}
-                                      className="p-3 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors"
+                                      className="p-3 hover:bg-white/5 transition-colors"
                                     >
                                       <div className="flex items-start justify-between gap-4">
                                         <div className="flex-1 min-w-0">
-                                          <h3 className="text-sm md:text-base font-black text-foreground dark:text-white mb-1">
+                                          <h3 className="text-sm md:text-base font-bold text-white mb-1">
                                             {service.name}
                                           </h3>
                                           {service.description && (
-                                            <p className="text-xs text-gray-600 dark:text-gray-400 mb-2">
+                                            <p className="text-xs text-gray-400 mb-2">
                                               {service.description}
                                             </p>
                                           )}
-                                          <div className="flex items-center gap-3 text-xs text-gray-500 dark:text-gray-400">
+                                          <div className="flex items-center gap-3 text-xs text-gray-500">
                                             <div className="flex items-center gap-1">
                                               <ClockIcon className="w-3 h-3" />
                                               <span className="font-medium">{formatDuration(service.duration)}</span>
@@ -1093,7 +1116,7 @@ export default function SettingsPage() {
                                           </div>
                                         </div>
                                         <div className="text-right flex-shrink-0 mr-2">
-                                          <div className={cn('text-lg md:text-xl font-black mb-1', categoryColor.text)}>
+                                          <div className={cn('text-lg md:text-xl font-bold mb-1', categoryColor.text)}>
                                             {formatCurrency(service.price)}
                                           </div>
                                         </div>
@@ -1102,7 +1125,7 @@ export default function SettingsPage() {
                                             size="sm"
                                             variant="outline"
                                             onClick={() => startEditService(service)}
-                                            className="text-xs px-2 py-1 h-auto"
+                                            className="text-xs px-2 py-1 h-auto border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg"
                                           >
                                             Редагувати
                                           </Button>
@@ -1110,7 +1133,7 @@ export default function SettingsPage() {
                                             size="sm"
                                             variant="outline"
                                             onClick={() => handleDeleteService(service.id)}
-                                            className="text-xs px-2 py-1 h-auto text-red-500 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20"
+                                            className="text-xs px-2 py-1 h-auto border border-red-400/50 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg"
                                           >
                                             Видалити
                                           </Button>
@@ -1133,7 +1156,7 @@ export default function SettingsPage() {
 
           {/* Візитівка */}
           {activeTab === 'businessCard' && business && (
-            <div ref={businessCardRef} className="card-candy p-6">
+            <div ref={businessCardRef} className="rounded-xl p-4 md:p-6 card-floating">
             <BusinessCardEditor
               business={business}
               onSave={async (data) => {
@@ -1169,7 +1192,7 @@ export default function SettingsPage() {
 
           {/* Telegram Tab */}
           {activeTab === 'telegram' && business && (
-            <div className="card-candy p-6">
+            <div className="rounded-xl p-4 md:p-6 card-floating">
               <TelegramSettings
                 business={business}
                 onUpdate={(updated) => {
@@ -1184,6 +1207,7 @@ export default function SettingsPage() {
 
           {/* Integrations Tab */}
           {activeTab === 'integrations' && business && (
+            <div className="rounded-xl p-4 md:p-6 card-floating">
             <IntegrationsSettings
               business={business}
               onUpdate={async (data) => {
@@ -1206,6 +1230,7 @@ export default function SettingsPage() {
                   }
               }}
             />
+            </div>
           )}
 
         </div>

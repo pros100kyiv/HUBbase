@@ -83,18 +83,18 @@ export function Navbar() {
   if (pathname?.startsWith('/dashboard')) {
     return (
       <>
-        <nav className="fixed top-0 left-0 md:left-64 right-0 z-50 border-b" style={{ backgroundColor: 'rgba(20, 20, 20, 0.85)', backdropFilter: 'blur(25px)', WebkitBackdropFilter: 'blur(25px)', borderColor: 'rgba(255, 255, 255, 0.1)' }}>
-          <div className="px-3 md:px-6">
-            <div className="flex justify-between items-center h-14 md:h-16">
+        <nav className="fixed top-0 left-0 md:left-64 right-0 z-50 border-b safe-top" style={{ backgroundColor: 'rgba(20, 20, 20, 0.85)', backdropFilter: 'blur(25px)', WebkitBackdropFilter: 'blur(25px)', borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+          <div className="px-2 sm:px-3 md:px-6">
+            <div className="flex justify-between items-center h-14 md:h-16 gap-2">
               {/* Left side - Menu button (mobile) and Hi User */}
-              <div className="flex items-center gap-3 md:gap-4 flex-1 min-w-0">
+              <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
                 <button
                   onClick={() => {
                     const newState = !mobileMenuOpen
                     setMobileMenuOpen(newState)
                     setMobileMenuState(newState)
                   }}
-                  className="md:hidden p-2 rounded-lg hover:bg-white/10 transition-colors flex-shrink-0"
+                  className="md:hidden touch-target p-2.5 rounded-lg hover:bg-white/10 transition-colors flex-shrink-0 flex items-center justify-center"
                   aria-label="Відкрити меню"
                 >
                   <MenuIcon className="w-5 h-5 text-white" />
@@ -104,7 +104,7 @@ export function Navbar() {
               </div>
 
               {/* Right side - Actions */}
-              <div className="flex items-center gap-2 md:gap-3">
+              <div className="flex items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
                 {/* Записати Button - Hidden on mobile (shown near Dashboard title) */}
                 <button 
                   onClick={() => { startNavigation(); router.push('/dashboard/appointments?create=true') }}
@@ -118,7 +118,7 @@ export function Navbar() {
                 {business?.slug && (
                   <button
                     onClick={() => window.open(`/qr/${business.slug}`, '_blank')}
-                    className="p-2 rounded-lg hover:bg-white/10 transition-colors border border-white/10"
+                    className="touch-target p-2.5 rounded-lg hover:bg-white/10 transition-colors border border-white/10 flex items-center justify-center"
                     title="QR код для бронювання"
                     aria-label="QR код для бронювання"
                   >
@@ -128,9 +128,9 @@ export function Navbar() {
                 {/* Search Button */}
                 <button 
                   onClick={() => setSearchOpen(true)}
-                  className="p-2 md:px-3 md:py-2 rounded-lg hover:bg-white/10 transition-colors flex items-center gap-2 border border-white/10"
+                  className="touch-target p-2.5 md:px-3 md:py-2 rounded-lg hover:bg-white/10 transition-colors flex items-center justify-center gap-2 border border-white/10"
                 >
-                  <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg className="w-4 h-4 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
                   </svg>
                   <span className="text-sm text-gray-300 hidden md:block">Пошук</span>
@@ -148,7 +148,7 @@ export function Navbar() {
                 {/* Notifications Icon */}
                 <button
                   onClick={() => setShowNotifications(true)}
-                  className="p-2 rounded-lg hover:bg-white/10 transition-colors relative"
+                  className="touch-target p-2.5 rounded-lg hover:bg-white/10 transition-colors relative flex items-center justify-center"
                   title="Сповіщення"
                   aria-label="Сповіщення"
                 >

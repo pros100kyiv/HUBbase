@@ -273,6 +273,25 @@ export async function addClientPhoneToDirectory(
 }
 
 /**
+ * Оновлює назву бізнесу в Реєстрі телефонів (усі записи категорії BUSINESS для цього бізнесу)
+ */
+export async function updateBusinessNameInDirectory(businessId: string, newName: string) {
+  try {
+    await prisma.phoneDirectory.updateMany({
+      where: {
+        businessId,
+        category: 'BUSINESS',
+      },
+      data: {
+        businessName: newName,
+      },
+    })
+  } catch (error) {
+    console.error('Error updating business name in directory:', error)
+  }
+}
+
+/**
  * Оновлює номер телефону бізнесу в Реєстрі
  */
 export async function updateBusinessPhoneInDirectory(

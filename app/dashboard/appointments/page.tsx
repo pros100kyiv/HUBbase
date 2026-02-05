@@ -422,49 +422,51 @@ export default function AppointmentsPage() {
             </button>
           </div>
 
-          {/* Search and Filters - card same as Dashboard blocks */}
-          <div className="rounded-xl p-4 md:p-6 card-floating">
-            <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
-              <div className="flex-1 relative">
-                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Пошук по клієнту, телефону, послузі..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
-                />
+          {/* Search and Filters - stacked on mobile, row on desktop */}
+          <div className="rounded-xl p-3 sm:p-4 md:p-6 card-floating">
+            <div className="flex flex-col gap-2 md:gap-3">
+              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
+                <div className="flex-1 relative min-w-0">
+                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                  <input
+                    type="text"
+                    placeholder="Пошук..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2.5 sm:py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15 min-h-[44px] sm:min-h-0"
+                  />
+                </div>
+                <select
+                  value={filterMaster}
+                  onChange={(e) => setFilterMaster(e.target.value)}
+                  className="px-3 py-2.5 sm:py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30 min-h-[44px] sm:min-h-0"
+                >
+                  <option value="all">Всі спеціалісти</option>
+                  {masters.map((master) => (
+                    <option key={master.id} value={master.id}>{master.name}</option>
+                  ))}
+                </select>
               </div>
-              <select
-                value={filterMaster}
-                onChange={(e) => setFilterMaster(e.target.value)}
-                className="px-3 py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
-              >
-                <option value="all">Всі спеціалісти</option>
-                {masters.map((master) => (
-                  <option key={master.id} value={master.id}>{master.name}</option>
-                ))}
-              </select>
-              <div className="flex gap-2 flex-shrink-0">
+              <div className="flex flex-wrap gap-2 flex-shrink-0">
                 <button
                   onClick={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
-                  className="px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
+                  className="touch-target min-h-[44px] px-3 py-2.5 sm:py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors active:scale-[0.98]"
                 >
                   {viewMode === 'calendar' ? 'Список' : 'Календар'}
                 </button>
                 <button
                   onClick={handleExportCSV}
-                  className="px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
+                  className="touch-target min-h-[44px] px-3 py-2.5 sm:py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 active:scale-[0.98]"
                 >
-                  <DownloadIcon className="w-4 h-4" />
-                  Експорт
+                  <DownloadIcon className="w-4 h-4 flex-shrink-0" />
+                  <span className="whitespace-nowrap">Експорт</span>
                 </button>
                 <button
                   onClick={() => setShowQuickClientCard(true)}
-                  className="px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
+                  className="touch-target min-h-[44px] px-3 py-2.5 sm:py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 active:scale-[0.98]"
                 >
-                  <UserIcon className="w-4 h-4" />
-                  Клієнт
+                  <UserIcon className="w-4 h-4 flex-shrink-0" />
+                  <span className="whitespace-nowrap">Клієнт</span>
                 </button>
               </div>
             </div>
@@ -529,13 +531,13 @@ export default function AppointmentsPage() {
                     </button>
                   </div>
                 </div>
-                <div className="flex gap-2 mb-4 flex-wrap">
+                <div className="flex gap-1.5 sm:gap-2 mb-3 sm:mb-4 flex-wrap">
                   {['all', 'Pending', 'Confirmed', 'Done', 'Cancelled'].map((status) => (
                     <button
                       key={status}
                       onClick={() => setFilterStatus(status)}
                       className={cn(
-                        'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
+                        'touch-target min-h-[40px] px-2.5 sm:px-3 py-2 sm:py-1.5 rounded-lg text-xs sm:text-sm font-medium transition-colors whitespace-nowrap active:scale-[0.98]',
                         filterStatus === status
                           ? 'bg-white text-black'
                           : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white border border-white/10'
@@ -547,7 +549,7 @@ export default function AppointmentsPage() {
                   ))}
                 </div>
 
-                <div className="grid grid-cols-7 gap-1.5 max-w-md">
+                <div className="grid grid-cols-7 gap-1 sm:gap-1.5 max-w-md mx-auto w-full">
                   {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
                     <div key={day} className="text-center text-xs font-semibold text-gray-400 py-1">
                       {day}

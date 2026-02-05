@@ -128,8 +128,8 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
           </button>
         </div>
 
-        {/* Navigation — ті самі стилі, що в Sidebar */}
-        <nav className="p-4 space-y-1 overflow-y-auto h-[calc(100vh-88px)]">
+        {/* Navigation — touch-friendly, compact on mobile */}
+        <nav className="p-3 sm:p-4 space-y-0.5 overflow-y-auto h-[calc(100vh-88px)] pb-[env(safe-area-inset-bottom,0)]">
           {navItems.map((item) => {
             const isActive = pathname === item.path || (item.path === '/dashboard/main' && pathname === '/dashboard/main')
             return (
@@ -137,10 +137,10 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
                 key={item.id}
                 onClick={() => handleNavClick(item)}
                 className={cn(
-                  'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-all duration-200 relative group',
+                  'w-full flex items-center gap-3 px-4 py-3 min-h-[44px] rounded-lg text-left transition-all duration-200 relative group touch-target',
                   isActive
                     ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                    : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                    : 'text-gray-300 hover:bg-white/10 hover:text-white active:bg-white/15'
                 )}
                 style={isActive ? { boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' } : {}}
               >
