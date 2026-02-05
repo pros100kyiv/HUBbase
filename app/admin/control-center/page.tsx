@@ -105,6 +105,25 @@ export default function ControlCenterPage() {
     }
   }, [page, search, statusFilter, isAuthorized])
 
+  // Оновлення даних у реальному часі: інтервал + при поверненні на вкладку
+  useEffect(() => {
+    if (!isAuthorized) return
+
+    const REFRESH_INTERVAL_MS = 15_000 // 15 секунд
+
+    const intervalId = setInterval(loadData, REFRESH_INTERVAL_MS)
+
+    const onVisibilityChange = () => {
+      if (document.visibilityState === 'visible') loadData()
+    }
+    document.addEventListener('visibilitychange', onVisibilityChange)
+
+    return () => {
+      clearInterval(intervalId)
+      document.removeEventListener('visibilitychange', onVisibilityChange)
+    }
+  }, [isAuthorized, page, search, statusFilter])
+
   const loadData = async () => {
     setLoading(true)
     try {
@@ -230,6 +249,7 @@ export default function ControlCenterPage() {
             totalPages={totalPages}
             onBusinessClick={handleBusinessClick}
             formatDate={formatDate}
+            onDataChanged={loadData}
           />
         )}
 
@@ -357,7 +377,7 @@ function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
 }
 
 // Businesses Tab Component
-function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, setStatusFilter, page, setPage, totalPages, onBusinessClick, formatDate }: any) {
+function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, setStatusFilter, page, setPage, totalPages, onBusinessClick, formatDate, onDataChanged }: any) {
   const [selectedBusinesses, setSelectedBusinesses] = useState<string[]>([])
   const [bulkAction, setBulkAction] = useState<string>('')
   const [blockModalOpen, setBlockModalOpen] = useState(false)
@@ -406,7 +426,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
       }
       setSelectedBusinesses([])
       setBulkAction('')
-      window.location.reload()
+      onDataChanged?.()
     } catch (error) {
       console.error('Error performing bulk action:', error)
       alert('Помилка при виконанні дії')
@@ -438,7 +458,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
         setBlockModalOpen(false)
         setSelectedBusiness(null)
         setBlockReason('')
-        window.location.reload()
+        onDataChanged?.()
       } else {
         const data = await response.json()
         alert(data.error || 'Помилка при блокуванні')
@@ -467,7 +487,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
       })
 
       if (response.ok) {
-        window.location.reload()
+        onDataChanged?.()
       } else {
         const data = await response.json()
         alert(data.error || 'Помилка при розблоковуванні')
@@ -523,7 +543,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
         setDeleteModalOpen(false)
         setSelectedBusiness(null)
         setDeleteConfirm('')
-        window.location.reload()
+        onDataChanged?.()
       } else {
         const data = await response.json()
         alert(data.error || 'Помилка при видаленні')
@@ -942,6 +962,8 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
   )
 }
 
+const TAB_REFRESH_INTERVAL_MS = 15_000
+
 // Phones Tab Component
 function PhonesTab() {
   const [phones, setPhones] = useState<any[]>([])
@@ -951,6 +973,16 @@ function PhonesTab() {
 
   useEffect(() => {
     loadPhones()
+  }, [category, search])
+
+  useEffect(() => {
+    const intervalId = setInterval(loadPhones, TAB_REFRESH_INTERVAL_MS)
+    const onVisibility = () => { if (document.visibilityState === 'visible') loadPhones() }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => {
+      clearInterval(intervalId)
+      document.removeEventListener('visibilitychange', onVisibility)
+    }
   }, [category, search])
 
   const loadPhones = async () => {

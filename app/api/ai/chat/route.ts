@@ -36,6 +36,15 @@ export async function POST(request: Request) {
       take: 10
     })
     
+    const parseJson = <T>(raw: string | null | undefined, fallback: T): T => {
+      if (raw == null || String(raw).trim() === '') return fallback
+      try {
+        return JSON.parse(raw) as T
+      } catch {
+        return fallback
+      }
+    }
+
     const context = {
       businessName: business.name,
       businessDescription: business.description || undefined,
@@ -48,13 +57,14 @@ export async function POST(request: Request) {
         name: m.name,
         bio: m.bio || undefined
       })),
-      workingHours: business.workingHours ? JSON.parse(business.workingHours) : undefined,
+      workingHours: parseJson(business.workingHours, undefined),
       location: business.location || undefined
     }
-    
+
+    const aiSettings = parseJson<{ model?: string }>(business.aiSettings, {})
     const aiService = new AIChatService(
       business.aiApiKey,
-      business.aiSettings ? JSON.parse(business.aiSettings).model || 'gemini-pro' : 'gemini-pro'
+      aiSettings.model || 'gemini-pro'
     )
     
     const history = chatHistory.map(msg => ({
@@ -63,30 +73,32 @@ export async function POST(request: Request) {
     }))
     
     const response = await aiService.getResponse(message, context, history)
-    
-    await prisma.aIChatMessage.create({
-      data: {
-        businessId,
-        sessionId: sessionId || 'default',
-        role: 'user',
-        message,
-        metadata: JSON.stringify({ timestamp: new Date().toISOString() })
-      }
-    })
-    
-    await prisma.aIChatMessage.create({
-      data: {
-        businessId,
-        sessionId: sessionId || 'default',
-        role: 'assistant',
-        message: response.message,
-        metadata: JSON.stringify({
-          tokens: response.tokens,
-          timestamp: new Date().toISOString()
-        })
-      }
-    })
-    
+
+    const sid = sessionId || 'default'
+    await prisma.$transaction([
+      prisma.aIChatMessage.create({
+        data: {
+          businessId,
+          sessionId: sid,
+          role: 'user',
+          message,
+          metadata: JSON.stringify({ timestamp: new Date().toISOString() })
+        }
+      }),
+      prisma.aIChatMessage.create({
+        data: {
+          businessId,
+          sessionId: sid,
+          role: 'assistant',
+          message: response.message,
+          metadata: JSON.stringify({
+            tokens: response.tokens,
+            timestamp: new Date().toISOString()
+          })
+        }
+      })
+    ])
+
     return NextResponse.json({
       success: true,
       message: response.message,

@@ -1,10 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { CalendarIcon, CheckIcon, XIcon, MoneyIcon, UsersIcon, ChartIcon, LightBulbIcon, TargetIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
+
+const REFRESH_INTERVAL_MS = 45_000 // оновлення кожні 45 сек
 
 interface Service {
   id: string
@@ -17,6 +19,15 @@ interface Master {
   name: string
 }
 
+async function fetchJson<T>(url: string): Promise<{ ok: boolean; data: T | null; error?: string }> {
+  const res = await fetch(url)
+  const data = await res.json().catch(() => null)
+  if (!res.ok) {
+    return { ok: false, data: null, error: (data as { error?: string })?.error || res.statusText }
+  }
+  return { ok: true, data: data as T }
+}
+
 export default function AnalyticsPage() {
   const router = useRouter()
   const [business, setBusiness] = useState<any>(null)
@@ -26,7 +37,43 @@ export default function AnalyticsPage() {
   const [masters, setMasters] = useState<Master[]>([])
   const [period, setPeriod] = useState<'day' | 'week' | 'month'>('month')
   const [loading, setLoading] = useState(true)
+  const [refreshing, setRefreshing] = useState(false)
+  const [lastUpdated, setLastUpdated] = useState<Date | null>(null)
+  const [apiError, setApiError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'overview' | 'revenue' | 'clients' | 'services' | 'masters'>('overview')
+
+  const loadData = useCallback(async (isSilent = false) => {
+    if (!business?.id) return
+    if (!isSilent) setRefreshing(true)
+    setApiError(null)
+
+    const base = `/api`
+    const [statsRes, advancedRes, servicesRes, mastersRes] = await Promise.all([
+      fetchJson<any>(`${base}/statistics?businessId=${business.id}&period=${period}`),
+      fetchJson<any>(`${base}/analytics/advanced?businessId=${business.id}&period=${period}`),
+      fetchJson<Service[]>(`${base}/services?businessId=${business.id}`),
+      fetchJson<Master[]>(`${base}/masters?businessId=${business.id}`),
+    ])
+
+    const errors: string[] = []
+    if (!statsRes.ok) errors.push(statsRes.error || 'Статистика')
+    if (!advancedRes.ok) errors.push(advancedRes.error || 'Аналітика')
+    if (!servicesRes.ok) errors.push(servicesRes.error || 'Послуги')
+    if (!mastersRes.ok) errors.push(mastersRes.error || 'Спеціалісти')
+
+    if (errors.length > 0) {
+      setApiError(errors.join(', '))
+      if (!isSilent) setLoading(false)
+    } else {
+      if (statsRes.data != null) setStats(statsRes.data)
+      if (advancedRes.data != null) setAdvancedStats(advancedRes.data)
+      setServices(Array.isArray(servicesRes.data) ? servicesRes.data : [])
+      setMasters(Array.isArray(mastersRes.data) ? mastersRes.data : [])
+      setLastUpdated(new Date())
+    }
+    setLoading(false)
+    setRefreshing(false)
+  }, [business?.id, period])
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -44,25 +91,24 @@ export default function AnalyticsPage() {
 
   useEffect(() => {
     if (!business) return
+    loadData()
+  }, [business, period, loadData])
 
-    Promise.all([
-      fetch(`/api/statistics?businessId=${business.id}&period=${period}`).then((res) => res.json()),
-      fetch(`/api/analytics/advanced?businessId=${business.id}&period=${period}`).then((res) => res.json()),
-      fetch(`/api/services?businessId=${business.id}`).then((res) => res.json()),
-      fetch(`/api/masters?businessId=${business.id}`).then((res) => res.json()),
-    ])
-      .then(([statsData, advancedData, servicesData, mastersData]) => {
-        setStats(statsData)
-        setAdvancedStats(advancedData)
-        setServices(Array.isArray(servicesData) ? servicesData : [])
-        setMasters(Array.isArray(mastersData) ? mastersData : [])
-        setLoading(false)
-      })
-      .catch((error) => {
-        console.error('Error loading analytics:', error)
-        setLoading(false)
-      })
-  }, [business, period])
+  // Оновлення в реальному часі: інтервал
+  useEffect(() => {
+    if (!business?.id) return
+    const interval = setInterval(() => loadData(true), REFRESH_INTERVAL_MS)
+    return () => clearInterval(interval)
+  }, [business?.id, period, loadData])
+
+  // Оновлення при поверненні на вкладку
+  useEffect(() => {
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible' && business?.id) loadData(true)
+    }
+    document.addEventListener('visibilitychange', onVisibility)
+    return () => document.removeEventListener('visibilitychange', onVisibility)
+  }, [business?.id, loadData])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('uk-UA', {
@@ -85,11 +131,27 @@ export default function AnalyticsPage() {
       <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
         <div className="lg:col-span-3 space-y-3 md:space-y-6">
           {/* Header - same as Dashboard */}
-          <div className="flex items-center justify-between gap-3">
-            <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
-              Аналітика
-            </h1>
-            <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <div>
+              <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
+                Аналітика
+              </h1>
+              {lastUpdated && (
+                <p className="text-xs text-gray-400 mt-1">
+                  Оновлено о {format(lastUpdated, 'HH:mm')}
+                  {refreshing && ' • оновлення…'}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center gap-2 flex-wrap">
+              <button
+                type="button"
+                onClick={() => loadData()}
+                disabled={refreshing}
+                className="px-3 py-2 rounded-lg text-sm font-medium border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 transition-colors"
+              >
+                {refreshing ? 'Оновлення…' : 'Оновити'}
+              </button>
               {(['day', 'week', 'month'] as const).map((p) => (
                 <button
                   key={p}
@@ -105,6 +167,12 @@ export default function AnalyticsPage() {
               ))}
             </div>
           </div>
+
+          {apiError && (
+            <div className="rounded-xl p-3 bg-red-500/20 border border-red-400/30 text-red-200 text-sm">
+              Помилка завантаження: {apiError}. Спробуйте натиснути «Оновити».
+            </div>
+          )}
 
           {/* Tabs */}
           <div className="rounded-xl p-4 md:p-6 card-floating">
@@ -242,6 +310,36 @@ export default function AnalyticsPage() {
                         </div>
                       )}
                     </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Clients Tab */}
+          {activeTab === 'clients' && advancedStats && (
+            <div className="space-y-3 md:space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                <div className="rounded-xl p-4 md:p-6 card-floating">
+                  <h3 className="text-base font-semibold text-white mb-3 flex items-center gap-2"><UsersIcon className="w-5 h-5 text-purple-400" /> Клієнти</h3>
+                  <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                    <div className="text-xs text-gray-400 mb-1">Всього клієнтів</div>
+                    <div className="text-2xl font-bold text-white">{advancedStats.totalClients ?? 0}</div>
+                  </div>
+                  <div className="p-3 bg-white/5 rounded-lg border border-white/10 mt-2">
+                    <div className="text-xs text-gray-400 mb-1">Активні (за останні 90 днів)</div>
+                    <div className="text-2xl font-bold text-blue-400">{advancedStats.activeClients ?? 0}</div>
+                  </div>
+                </div>
+                <div className="rounded-xl p-4 md:p-6 card-floating">
+                  <h3 className="text-base font-semibold text-white mb-3 flex items-center gap-2"><TargetIcon className="w-5 h-5 text-blue-400" /> Утримання та LTV</h3>
+                  <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                    <div className="text-xs text-gray-400 mb-1">Retention Rate</div>
+                    <div className="text-2xl font-bold text-green-400">{Math.round(advancedStats.retentionRate ?? 0)}%</div>
+                  </div>
+                  <div className="p-3 bg-white/5 rounded-lg border border-white/10 mt-2">
+                    <div className="text-xs text-gray-400 mb-1">Середній LTV</div>
+                    <div className="text-2xl font-bold text-purple-400">{formatCurrency(advancedStats.avgLTV ?? 0)}</div>
                   </div>
                 </div>
               </div>

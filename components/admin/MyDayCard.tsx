@@ -1,6 +1,6 @@
 'use client'
 
-import React, { useEffect } from 'react'
+import React from 'react'
 import { format, addDays, subDays, isSameDay, startOfDay } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { useRouter } from 'next/navigation'
@@ -138,7 +138,7 @@ export function MyDayCard({
     }
   }
 
-  useEffect(() => {
+  React.useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setShowMenu(false)
