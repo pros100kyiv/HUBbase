@@ -89,6 +89,67 @@ export function MyDayCard({
     router.push(`/dashboard/appointments?edit=${id}`)
   }
 
+  const getDaySummaryText = () => {
+    const dateLabel = isToday ? 'Сьогодні' : format(selectedDate, 'd MMMM yyyy', { locale: uk })
+    let text = `Мій день — ${dateLabel}\nЗаписів: ${totalAppointments} (підтверджено: ${confirmedAppointments}, очікує: ${pendingAppointments}, виконано: ${completedAppointments})`
+    if (totalRevenue > 0) text += `\nДохід: ${totalRevenue} грн`
+    if (appointments.length > 0) {
+      text += '\n\nЗаписи:\n'
+      appointments.forEach((apt) => {
+        const start = format(new Date(apt.startTime), 'HH:mm')
+        const end = format(new Date(apt.endTime), 'HH:mm')
+        text += `• ${apt.clientName} ${start}–${end} — ${apt.status}\n`
+      })
+    }
+    return text
+  }
+
+  const handleShare = async () => {
+    const text = getDaySummaryText()
+    const title = `Мій день — ${format(selectedDate, 'd MMMM yyyy', { locale: uk })}`
+    try {
+      if (typeof navigator !== 'undefined' && navigator.share) {
+        await navigator.share({
+          title,
+          text,
+        })
+        setShareFeedback('share')
+      } else {
+        await navigator.clipboard.writeText(text)
+        setShareFeedback('copy')
+      }
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        await navigator.clipboard.writeText(text).catch(() => {})
+        setShareFeedback('copy')
+      }
+    }
+    setTimeout(() => setShareFeedback(null), 2000)
+  }
+
+  const handleCopyDay = async () => {
+    try {
+      await navigator.clipboard.writeText(getDaySummaryText())
+      setShareFeedback('copy')
+      setShowMenu(false)
+      setTimeout(() => setShareFeedback(null), 2000)
+    } catch {
+      setShowMenu(false)
+    }
+  }
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setShowMenu(false)
+      }
+    }
+    if (showMenu) {
+      document.addEventListener('click', handleClickOutside)
+      return () => document.removeEventListener('click', handleClickOutside)
+    }
+  }, [showMenu])
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Confirmed':
@@ -158,9 +219,20 @@ export function MyDayCard({
             )}
           </div>
         </div>
-        <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
+        <div className="flex items-center gap-1 md:gap-2 flex-shrink-0 relative" ref={menuRef}>
           {/* Share icon - Hidden on mobile */}
-          <button className="hidden md:flex p-2 hover:bg-white/10 rounded-lg transition-colors">
+          {shareFeedback && (
+            <span className="absolute -top-8 right-0 px-2 py-1 bg-white/90 text-black text-xs rounded whitespace-nowrap z-10">
+              {shareFeedback === 'share' ? 'Поділено' : 'Скопійовано'}
+            </span>
+          )}
+          <button
+            type="button"
+            onClick={handleShare}
+            className="hidden md:flex p-2 hover:bg-white/10 rounded-lg transition-colors"
+            aria-label="Поділитися днем"
+            title="Поділитися днем"
+          >
             <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <circle cx="9" cy="9" r="3" strokeWidth={2} />
               <circle cx="15" cy="15" r="3" strokeWidth={2} />
@@ -168,11 +240,34 @@ export function MyDayCard({
             </svg>
           </button>
           {/* Three dots menu */}
-          <button className="p-2 hover:bg-white/10 rounded-lg transition-colors">
+          <button
+            type="button"
+            onClick={(e) => { e.stopPropagation(); setShowMenu((v) => !v) }}
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
+            aria-label="Меню"
+            aria-expanded={showMenu}
+          >
             <svg className="w-4 h-4 md:w-5 md:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
             </svg>
           </button>
+          {showMenu && (
+            <div
+              className="absolute right-0 top-full mt-1 py-1 min-w-[180px] bg-[#2A2A2A] border border-white/10 rounded-lg shadow-xl z-50"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={handleCopyDay}
+                className="w-full px-3 py-2 text-left text-sm text-white hover:bg-white/10 flex items-center gap-2"
+              >
+                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h2m0 0h2a2 2 0 012 2v2m0 0h2a2 2 0 012-2h2m0 0a2 2 0 012 2v10a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2m0 0V6a2 2 0 012-2h2" />
+                </svg>
+                Скопіювати день
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
