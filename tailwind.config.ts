@@ -65,6 +65,8 @@ const config = {
       letterSpacing: {
         'title': '0.15em',
         'wide': '0.05em',
+        'dashboard-title': '-0.02em',
+        'dashboard-card': '-0.01em',
       },
       borderRadius: {
         'candy': '16px',
@@ -89,6 +91,8 @@ const config = {
         'neon-purple': '0 0 20px rgba(175, 82, 222, 0.3), 0 4px 16px rgba(175, 82, 222, 0.2)',
         'neon-cyan': '0 0 20px rgba(90, 200, 250, 0.3), 0 4px 16px rgba(90, 200, 250, 0.2)',
         'neon-blue': '0 0 20px rgba(0, 122, 255, 0.3), 0 4px 16px rgba(0, 122, 255, 0.2)',
+        /* Dashboard base (STYLE_BASE.md) */
+        'dashboard-button': '0 2px 4px 0 rgba(0, 0, 0, 0.3)',
       },
       keyframes: {
         "accordion-down": {

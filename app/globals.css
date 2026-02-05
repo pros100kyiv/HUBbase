@@ -129,6 +129,47 @@
   }
 }
 
+/* ========== Dashboard base (docs/STYLE_BASE.md) ========== */
+@layer components {
+  .dashboard-container {
+    @apply max-w-7xl mx-auto;
+  }
+  .dashboard-grid {
+    @apply grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6;
+  }
+  .dashboard-main {
+    @apply lg:col-span-3 space-y-3 md:space-y-6;
+  }
+  .dashboard-sidebar {
+    @apply lg:col-span-1 space-y-3 md:space-y-6;
+  }
+  .dashboard-page-title {
+    @apply text-xl md:text-2xl font-bold text-white tracking-dashboard-title;
+  }
+  .dashboard-btn-primary {
+    @apply px-4 py-2 text-sm font-semibold rounded-lg bg-white text-black hover:bg-gray-100 active:scale-[0.98] transition-transform;
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.3);
+  }
+  .dashboard-btn-secondary {
+    @apply px-4 py-2 text-sm font-medium rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors;
+  }
+  .dashboard-card {
+    @apply rounded-xl p-4 md:p-6;
+    background-color: #2A2A2A;
+    color: #FFFFFF;
+    box-shadow:
+      0 10px 25px -5px rgba(0, 0, 0, 0.6),
+      0 8px 10px -6px rgba(0, 0, 0, 0.5),
+      0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+  .dashboard-card-title {
+    @apply text-base md:text-lg font-semibold text-white tracking-dashboard-card;
+  }
+  .dashboard-card-title-lg {
+    @apply text-lg font-bold text-white tracking-dashboard-title;
+  }
+}
+
 @layer utilities {
   /* Modern Card Styles - Dark theme with white cards */
   .card-modern {

@@ -2,38 +2,63 @@
 
 **Dashboard — єдина база для стилю та макету всього проєкту.**
 
-Усі сторінки дашборду (Записи, Клієнти, Спеціалісти, Аналітика, Налаштування тощо) **обов’язково** наслідують макет і стиль головної сторінки Dashboard (`/dashboard/main`). Новий функціонал і редизайн сторінок робляться **тільки** з оглядкою на Dashboard.
+Усі сторінки дашборду (Записи, Клієнти, Спеціалісти, Аналітика, Налаштування тощо) **обов'язково** наслідують макет і стиль головної сторінки Dashboard (`/dashboard/main`). Новий функціонал і редизайн сторінок робляться **тільки** з оглядкою на Dashboard.
 
 ---
 
-## Правила
+## Де зберігається база
+
+| Що | Файл |
+|----|------|
+| **Класи макету та кнопок** | `app/globals.css` — секція `@layer components` (dashboard-container, dashboard-grid, dashboard-btn-primary тощо) |
+| **Токени (тіні, letter-spacing)** | `tailwind.config.ts` — `boxShadow.dashboard-button`, `letterSpacing.dashboard-title` / `dashboard-card` |
+| **Картки (напівпрозора темна)** | `app/globals.css` — клас `.card-floating` у `@layer base` |
+
+**Використовуй класи з бази замість дублювання утиліт у компонентах.**
+
+---
+
+## Правила та класи
 
 ### 1. Сітка
-- Контейнер: `max-w-7xl mx-auto`
-- Сітка: `grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6`
-- Основний контент: `lg:col-span-3`
-- Правий сайдбар: `lg:col-span-1`
-- Вертикальні відступи між блоками: `space-y-3 md:space-y-6`
+
+Використовуй класи з `globals.css`:
+
+| Призначення | Клас | Еквівалент утиліт |
+|-------------|------|-------------------|
+| Контейнер сторінки | `dashboard-container` | `max-w-7xl mx-auto` |
+| Сітка (контент + сайдбар) | `dashboard-grid` | `grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6` |
+| Основний контент | `dashboard-main` | `lg:col-span-3 space-y-3 md:space-y-6` |
+| Правий сайдбар | `dashboard-sidebar` | `lg:col-span-1 space-y-3 md:space-y-6` |
 
 ### 2. Заголовок сторінки
-- Один рядок: `text-xl md:text-2xl font-bold text-white` з `letterSpacing: '-0.02em'`
-- Справа — головна кнопка дії (наприклад «Записати»): білий фон, чорний текст, `rounded-lg`, тінь `0 2px 4px 0 rgba(0, 0, 0, 0.3)`, `px-4 py-2`, `text-sm font-semibold`, `active:scale-[0.98]`
 
-### 3. Картки
-- Клас: `rounded-xl p-4 md:p-6 card-floating`
-- Заголовки всередині карток: `text-base md:text-lg font-semibold` або `text-lg font-bold`, `letterSpacing: '-0.02em'` / `-0.01em`
+- **Клас:** `dashboard-page-title`  
+- Зміст: один рядок, справа — головна кнопка дії (наприклад «Записати»).
 
-### 4. Кнопки
-- **Головна дія:** `bg-white text-black`, тінь як вище, `font-semibold`, `hover:bg-gray-100`, `active:scale-[0.98]`
-- **Другорядні:** `border border-white/20 bg-white/10 text-white`, `hover:bg-white/20`, `rounded-lg`, `text-sm font-medium`
+### 3. Кнопки
+
+| Тип | Клас | Опис |
+|-----|------|------|
+| Головна дія | `dashboard-btn-primary` | Білий фон, чорний текст, тінь `shadow-dashboard-button`, `rounded-lg`, `px-4 py-2`, `text-sm font-semibold`, `hover:bg-gray-100`, `active:scale-[0.98]` |
+| Другорядні | `dashboard-btn-secondary` | `border border-white/20 bg-white/10 text-white`, `hover:bg-white/20`, `rounded-lg`, `text-sm font-medium` |
+
+### 4. Картки
+
+- **Клас картки:** `dashboard-card` (або `card-floating` + `rounded-xl p-4 md:p-6`).
+- **Заголовки всередині карток:**
+  - `dashboard-card-title` — `text-base md:text-lg font-semibold`, letter-spacing `-0.01em`
+  - `dashboard-card-title-lg` — `text-lg font-bold`, letter-spacing `-0.02em`
 
 ### 5. Теми та кольори
-- Темний фон сторінки (глобально), картки — напівпрозорі темні (`card-floating`), текст білий/сірий.
+
+- Темний фон сторінки (глобально в `body`), картки — напівпрозорі темні (`card-floating` / `dashboard-card`), текст білий/сірий.
 - Акценти статусів: orange (очікує), green (підтверджено), blue (виконано), purple (дохід) — без зміни загальної палітри.
 
 ### 6. Мобільна версія
+
 - На мобільних головна кнопка може стояти поруч із заголовком (як «Записати» на Dashboard).
-- Сітка зводиться до однієї колонки, сайдбар — під основний контент.
+- Сітка зводиться до однієї колонки, сайдбар — під основний контент (забезпечується `dashboard-grid` та `dashboard-main` / `dashboard-sidebar`).
 
 ---
 
@@ -44,6 +69,6 @@
 | Головна Dashboard | `app/dashboard/main/page.tsx` |
 | Макет (navbar, sidebar, контент) | `app/dashboard/layout.tsx` |
 | Стиль карток | `components/admin/MyDayCard.tsx`, `TasksInProcessCard.tsx`, `WeeklyProcessCard.tsx` |
-| Глобальні стилі | `app/globals.css`, `tailwind.config.ts` |
+| Глобальні стилі та база | `app/globals.css`, `tailwind.config.ts` |
 
-Перед зміною стилю сторінки або додаванням нової — перевіряй відповідність цій базі (Dashboard).
+Перед зміною стилю сторінки або додаванням нової — перевіряй відповідність цій базі (Dashboard) і використовуй класи з `globals.css`.
