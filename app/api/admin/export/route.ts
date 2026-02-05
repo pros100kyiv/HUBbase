@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyAdminToken } from '@/lib/middleware/admin-auth'
+import { jsonSafe } from '@/lib/utils/json'
 
 export async function GET(request: Request) {
   // Перевірка доступу
@@ -49,7 +50,7 @@ export async function GET(request: Request) {
         },
       })
     } else if (format === 'json') {
-      return NextResponse.json(data, {
+      return NextResponse.json(jsonSafe(data), {
         headers: {
           'Content-Disposition': `attachment; filename="export-${type}.json"`,
         },

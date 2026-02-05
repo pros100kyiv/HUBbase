@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyAdminToken } from '@/lib/middleware/admin-auth'
+import { jsonSafe } from '@/lib/utils/json'
 
 export async function GET(request: Request) {
   // Перевірка доступу
@@ -68,7 +69,7 @@ export async function GET(request: Request) {
       }),
     }
 
-    return NextResponse.json({
+    return NextResponse.json(jsonSafe({
       clients,
       pagination: {
         page,
@@ -77,7 +78,7 @@ export async function GET(request: Request) {
         totalPages: Math.ceil(total / limit),
       },
       stats,
-    })
+    }))
   } catch (error: any) {
     console.error('Error fetching clients:', error)
     return NextResponse.json({ error: 'Помилка отримання клієнтів' }, { status: 500 })

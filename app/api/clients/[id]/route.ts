@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { jsonSafe } from '@/lib/utils/json'
 
 export async function GET(
   request: Request,
@@ -10,6 +11,10 @@ export async function GET(
     const { id } = resolvedParams
     const { searchParams } = new URL(request.url)
     const businessId = searchParams.get('businessId')
+
+    if (!businessId) {
+      return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
+    }
 
     const client = await prisma.client.findUnique({
       where: { id },
@@ -25,11 +30,11 @@ export async function GET(
     }
 
     // Перевірка businessId для ізоляції даних
-    if (businessId && client.businessId !== businessId) {
+    if (client.businessId !== businessId) {
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
-    return NextResponse.json(client)
+    return NextResponse.json(jsonSafe(client))
   } catch (error) {
     console.error('Error fetching client:', error)
     return NextResponse.json({ error: 'Failed to fetch client' }, { status: 500 })
@@ -44,28 +49,63 @@ export async function PATCH(
     const resolvedParams = await Promise.resolve(params)
     const { id } = resolvedParams
     const body = await request.json()
-    const { name, phone, email, notes, businessId } = body
+    const { name, phone, email, notes, tags, metadata, businessId } = body
 
     // КРИТИЧНО: Перевірка businessId для ізоляції даних
-    if (businessId) {
-      const client = await prisma.client.findUnique({
-        where: { id },
-        select: { businessId: true },
-      })
+    if (!businessId) {
+      return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
+    }
 
-      if (!client) {
-        return NextResponse.json({ error: 'Client not found' }, { status: 404 })
-      }
+    const existingClient = await prisma.client.findUnique({
+      where: { id },
+      select: { businessId: true },
+    })
 
-      if (client.businessId !== businessId) {
-        return NextResponse.json({ error: 'Access denied' }, { status: 403 })
-      }
+    if (!existingClient) {
+      return NextResponse.json({ error: 'Client not found' }, { status: 404 })
+    }
+
+    if (existingClient.businessId !== businessId) {
+      return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
     const updateData: any = {}
     if (name !== undefined) updateData.name = name.trim()
     if (email !== undefined) updateData.email = email?.trim() || null
     if (notes !== undefined) updateData.notes = notes?.trim() || null
+    if (tags !== undefined) {
+      if (Array.isArray(tags)) {
+        const cleaned = tags
+          .filter((t: unknown): t is string => typeof t === 'string')
+          .map((t) => t.trim())
+          .filter(Boolean)
+        updateData.tags = cleaned.length > 0 ? JSON.stringify(cleaned) : null
+      } else if (typeof tags === 'string') {
+        const raw = tags.trim()
+        if (!raw) updateData.tags = null
+        else if (raw.startsWith('[')) updateData.tags = raw
+        else {
+          const cleaned = raw
+            .split(',')
+            .map((t) => t.trim())
+            .filter(Boolean)
+          updateData.tags = cleaned.length > 0 ? JSON.stringify(cleaned) : null
+        }
+      } else {
+        updateData.tags = null
+      }
+    }
+    if (metadata !== undefined) {
+      if (metadata === null) updateData.metadata = null
+      else if (typeof metadata === 'string') updateData.metadata = metadata.trim() || null
+      else {
+        try {
+          updateData.metadata = JSON.stringify(metadata)
+        } catch {
+          updateData.metadata = null
+        }
+      }
+    }
 
     if (phone !== undefined) {
       // Нормалізуємо телефон
@@ -100,7 +140,7 @@ export async function PATCH(
       }
     }
 
-    return NextResponse.json(client)
+    return NextResponse.json(jsonSafe(client))
   } catch (error: any) {
     console.error('Error updating client:', error)
     

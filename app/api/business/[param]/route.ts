@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { BusinessNiche } from '@prisma/client'
 import { findBusinessByIdentifier } from '@/lib/utils/business-identifier'
+import { jsonSafe } from '@/lib/utils/json'
 
 // Перевіряє чи параметр є UUID (ID) чи slug
 // CUID має формат: c[0-9a-z]{24} або схожий
@@ -110,7 +111,7 @@ export async function GET(
       return NextResponse.json({ error: 'Business not found' }, { status: 404 })
     }
 
-    return NextResponse.json({ business })
+    return NextResponse.json(jsonSafe({ business }))
   } catch (error) {
     console.error('Error fetching business:', error)
     return NextResponse.json({ error: 'Failed to fetch business' }, { status: 500 })
@@ -407,7 +408,7 @@ export async function PATCH(
       }
     }
 
-    return NextResponse.json({ business })
+    return NextResponse.json(jsonSafe({ business }))
   } catch (error: any) {
     console.error('Unexpected error updating business:', error)
     console.error('Error details:', {

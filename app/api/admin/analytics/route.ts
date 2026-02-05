@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyAdminToken } from '@/lib/middleware/admin-auth'
+import { jsonSafe } from '@/lib/utils/json'
 
 export async function GET(request: Request) {
   // Перевірка доступу
@@ -78,7 +79,7 @@ export async function GET(request: Request) {
       startDate
     )
 
-    return NextResponse.json({
+    return NextResponse.json(jsonSafe({
       overview: {
         totalBusinesses,
         activeBusinesses,
@@ -91,7 +92,7 @@ export async function GET(request: Request) {
       },
       byNiche,
       topBusinesses,
-    })
+    }))
   } catch (error: any) {
     console.error('Error fetching analytics:', error)
     return NextResponse.json({ error: 'Помилка отримання аналітики' }, { status: 500 })

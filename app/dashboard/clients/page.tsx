@@ -15,6 +15,8 @@ interface Client {
   name: string
   email?: string | null
   notes?: string | null
+  tags?: string | null
+  metadata?: string | null
   totalAppointments: number
   totalSpent: number
   firstAppointmentDate?: string | null
@@ -43,6 +45,9 @@ export default function ClientsPage() {
   const [loading, setLoading] = useState(true)
   const [expandedClient, setExpandedClient] = useState<string | null>(null)
   const [clientDetails, setClientDetails] = useState<Record<string, ClientDetails>>({})
+  const [historySortOrder, setHistorySortOrder] = useState<'desc' | 'asc'>('desc')
+  const [historySearchQuery, setHistorySearchQuery] = useState('')
+  const [historyStatus, setHistoryStatus] = useState<string>('all') // all, Pending, Confirmed, Done, Cancelled
   const [filterSegment, setFilterSegment] = useState<string>('all') // all, vip, active, inactive
   const [sortBy, setSortBy] = useState<string>('name') // name, visits, spent, lastVisit
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
@@ -95,6 +100,10 @@ export default function ClientsPage() {
           const clientAppointments = (appointmentsData || []).filter(
             (apt: any) => apt.clientPhone === client.phone
           )
+          const appointmentsDesc = [...clientAppointments].sort(
+            (a: any, b: any) =>
+              new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+          )
           
           // Розраховуємо totalSpent з виконаних записів
           let totalSpent = 0
@@ -125,13 +134,13 @@ export default function ClientsPage() {
           return {
             ...client,
             totalAppointments: clientAppointments.length,
-            totalSpent: totalSpent || client.totalSpent || 0,
-            appointments: clientAppointments,
-            firstAppointmentDate: clientAppointments.length > 0
-              ? clientAppointments[clientAppointments.length - 1]?.startTime
+            totalSpent,
+            appointments: appointmentsDesc,
+            firstAppointmentDate: appointmentsDesc.length > 0
+              ? appointmentsDesc[appointmentsDesc.length - 1]?.startTime
               : null,
-            lastAppointmentDate: clientAppointments.length > 0
-              ? clientAppointments[0]?.startTime
+            lastAppointmentDate: appointmentsDesc.length > 0
+              ? appointmentsDesc[0]?.startTime
               : null,
           }
         })
@@ -281,11 +290,62 @@ export default function ClientsPage() {
     }
   }
 
+  const normalizeStatusKey = (status: string) => {
+    switch (status) {
+      case 'Pending':
+      case 'Очікує':
+        return 'Pending'
+      case 'Confirmed':
+      case 'Підтверджено':
+        return 'Confirmed'
+      case 'Done':
+      case 'Виконано':
+        return 'Done'
+      case 'Cancelled':
+      case 'Скасовано':
+        return 'Cancelled'
+      default:
+        return status
+    }
+  }
+
+  const parseClientTags = (tags?: string | null): string[] => {
+    if (!tags) return []
+    const raw = tags.trim()
+    if (!raw) return []
+    try {
+      if (raw.startsWith('[')) {
+        const parsed = JSON.parse(raw)
+        return Array.isArray(parsed)
+          ? parsed.map((t) => String(t).trim()).filter(Boolean)
+          : []
+      }
+    } catch {
+      // ignore
+    }
+    return raw.split(',').map((t) => t.trim()).filter(Boolean)
+  }
+
+  const formatClientMetadata = (metadata?: string | null): string | null => {
+    if (!metadata) return null
+    const raw = metadata.trim()
+    if (!raw) return null
+    try {
+      const parsed = JSON.parse(raw)
+      return JSON.stringify(parsed, null, 2)
+    } catch {
+      return raw
+    }
+  }
+
   const handleClientClick = (client: Client) => {
     if (expandedClient === client.id) {
       setExpandedClient(null)
     } else {
       setExpandedClient(client.id)
+      setHistorySortOrder('desc')
+      setHistorySearchQuery('')
+      setHistoryStatus('all')
       if (!clientDetails[client.id]) {
         const details = calculateClientDetails(client)
         setClientDetails((prev) => ({ ...prev, [client.id]: details }))
@@ -338,6 +398,10 @@ export default function ClientsPage() {
             const clientAppointments = appointments.filter(
               (apt: any) => apt.clientPhone === client.phone
             )
+            const appointmentsDesc = [...clientAppointments].sort(
+              (a: any, b: any) =>
+                new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+            )
             
             let totalSpent = 0
             clientAppointments.forEach((apt: any) => {
@@ -367,12 +431,12 @@ export default function ClientsPage() {
               ...client,
               totalAppointments: clientAppointments.length,
               totalSpent,
-              appointments: clientAppointments,
-              firstAppointmentDate: clientAppointments.length > 0
-                ? clientAppointments[clientAppointments.length - 1]?.startTime
+              appointments: appointmentsDesc,
+              firstAppointmentDate: appointmentsDesc.length > 0
+                ? appointmentsDesc[appointmentsDesc.length - 1]?.startTime
                 : null,
-              lastAppointmentDate: clientAppointments.length > 0
-                ? clientAppointments[0]?.startTime
+              lastAppointmentDate: appointmentsDesc.length > 0
+                ? appointmentsDesc[0]?.startTime
                 : null,
             }
           })
@@ -824,6 +888,29 @@ export default function ClientsPage() {
                           </div>
                         )}
 
+                        {parseClientTags(client.tags).length > 0 && (
+                          <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                            <div className="text-[10px] text-gray-400 font-medium mb-1">Теги</div>
+                            <div className="flex flex-wrap gap-1.5">
+                              {parseClientTags(client.tags).map((tag, idx) => (
+                                <span
+                                  key={`${tag}-${idx}`}
+                                  className="px-2 py-1 text-[10px] font-semibold rounded-full bg-white/10 text-white border border-white/10"
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        {formatClientMetadata(client.metadata) && (
+                          <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                            <div className="text-[10px] text-gray-400 font-medium mb-1">Додаткова інформація</div>
+                            <pre className="text-[11px] text-white/90 whitespace-pre-wrap break-words leading-relaxed">{formatClientMetadata(client.metadata)}</pre>
+                          </div>
+                        )}
+
                         <div>
                           <div className="flex items-center justify-between mb-2">
                             <h4 className="text-sm font-semibold text-white">Історія візитів ({client.appointments.length})</h4>
@@ -835,45 +922,164 @@ export default function ClientsPage() {
                               + Новий візит
                             </button>
                           </div>
+                          <div className="flex flex-col sm:flex-row gap-2 mb-2">
+                            <div className="flex-1 relative">
+                              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                              <input
+                                type="text"
+                                value={historySearchQuery}
+                                onChange={(e) => setHistorySearchQuery(e.target.value)}
+                                placeholder="Пошук в історії (послуга, майстер, нотатки...)"
+                                className="w-full pl-9 pr-3 py-2 text-xs border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+                              />
+                            </div>
+                            <select
+                              value={historyStatus}
+                              onChange={(e) => setHistoryStatus(e.target.value)}
+                              className="px-3 py-2 text-xs border border-white/20 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+                            >
+                              <option value="all">Всі</option>
+                              <option value="Pending">Очікує</option>
+                              <option value="Confirmed">Підтверджено</option>
+                              <option value="Done">Виконано</option>
+                              <option value="Cancelled">Скасовано</option>
+                            </select>
+                            <button
+                              onClick={() => setHistorySortOrder(historySortOrder === 'desc' ? 'asc' : 'desc')}
+                              className="px-3 py-2 text-xs border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg font-medium transition-colors"
+                              title="Сортування за датою"
+                            >
+                              {historySortOrder === 'desc' ? 'Нові' : 'Старі'}
+                            </button>
+                          </div>
+
                           <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                            {client.appointments
-                              .sort((a: any, b: any) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
-                              .map((appointment: any) => {
+                            {(() => {
+                              const q = historySearchQuery.trim().toLowerCase()
+                              const filtered = (client.appointments || [])
+                                .filter((apt: any) => {
+                                  if (historyStatus === 'all') return true
+                                  return normalizeStatusKey(apt.status) === historyStatus
+                                })
+                                .filter((apt: any) => {
+                                  if (!q) return true
+                                  const masterName =
+                                    masters.find((m) => m.id === apt.masterId)?.name || ''
+                                  const servicesList = getAppointmentServices(apt)
+                                  const servicesText = servicesList
+                                    .map((serviceId) => {
+                                      const service = services.find(
+                                        (s) => s.id === serviceId || s.name === serviceId
+                                      )
+                                      return service?.name || serviceId
+                                    })
+                                    .join(' ')
+                                  const dateText = (() => {
+                                    try {
+                                      const d = new Date(apt.startTime)
+                                      return Number.isFinite(d.getTime())
+                                        ? format(d, 'dd.MM.yyyy HH:mm')
+                                        : ''
+                                    } catch {
+                                      return ''
+                                    }
+                                  })()
+                                  const hay = [
+                                    apt.clientName,
+                                    apt.clientPhone,
+                                    apt.notes || '',
+                                    masterName,
+                                    servicesText,
+                                    getStatusLabel(apt.status),
+                                    dateText,
+                                  ]
+                                    .join(' ')
+                                    .toLowerCase()
+                                  return hay.includes(q)
+                                })
+                                .sort((a: any, b: any) => {
+                                  const aT = new Date(a.startTime).getTime()
+                                  const bT = new Date(b.startTime).getTime()
+                                  return historySortOrder === 'desc' ? bT - aT : aT - bT
+                                })
+
+                              if (filtered.length === 0) {
+                                return (
+                                  <div className="text-center py-4 text-xs text-gray-400">
+                                    Немає записів за цими фільтрами
+                                  </div>
+                                )
+                              }
+
+                              return filtered.map((appointment: any) => {
                                 const start = new Date(appointment.startTime)
                                 const end = new Date(appointment.endTime)
                                 const servicesList = getAppointmentServices(appointment)
                                 const total = getAppointmentTotal(appointment)
-                                const master = masters.find(m => m.id === appointment.masterId)
+                                const master = masters.find((m) => m.id === appointment.masterId)
+
                                 return (
-                                  <div key={appointment.id} className="p-3 rounded-lg border border-white/10 bg-white/5 hover:bg-white/[0.07] transition-colors">
+                                  <div
+                                    key={appointment.id}
+                                    className="p-3 rounded-lg border border-white/10 bg-white/5 hover:bg-white/[0.07] transition-colors"
+                                  >
                                     <div className="flex items-start justify-between gap-2 mb-1.5">
                                       <div className="flex-1 min-w-0">
                                         <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                          <span className="text-xs font-semibold text-white">{format(start, 'dd.MM.yyyy')}</span>
-                                          <span className="text-xs text-gray-400">{format(start, 'HH:mm')} - {format(end, 'HH:mm')}</span>
-                                          <span className={cn('px-1.5 py-0.5 rounded-full text-[10px] font-medium border', getStatusColor(appointment.status))}>{getStatusLabel(appointment.status)}</span>
+                                          <span className="text-xs font-semibold text-white">
+                                            {format(start, 'dd.MM.yyyy')}
+                                          </span>
+                                          <span className="text-xs text-gray-400">
+                                            {format(start, 'HH:mm')} - {format(end, 'HH:mm')}
+                                          </span>
+                                          <span
+                                            className={cn(
+                                              'px-1.5 py-0.5 rounded-full text-[10px] font-medium border',
+                                              getStatusColor(appointment.status)
+                                            )}
+                                          >
+                                            {getStatusLabel(appointment.status)}
+                                          </span>
                                         </div>
-                                        {master && <div className="text-[10px] text-gray-400 mb-1">Спеціаліст: {master.name}</div>}
+                                        {master && (
+                                          <div className="text-[10px] text-gray-400 mb-1">
+                                            Спеціаліст: {master.name}
+                                          </div>
+                                        )}
                                         {servicesList.length > 0 && (
                                           <div className="flex flex-wrap gap-1 mb-1">
                                             {servicesList.map((serviceId, idx) => {
-                                              const service = services.find(s => s.id === serviceId || s.name === serviceId)
+                                              const service = services.find(
+                                                (s) => s.id === serviceId || s.name === serviceId
+                                              )
                                               return (
-                                                <span key={idx} className="px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-white/10 text-pink-400 border border-white/10">
-                                                  {service?.name || serviceId} {service ? `(${service.price} грн)` : ''}
+                                                <span
+                                                  key={idx}
+                                                  className="px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-white/10 text-pink-400 border border-white/10"
+                                                >
+                                                  {service?.name || serviceId}{' '}
+                                                  {service ? `(${service.price} грн)` : ''}
                                                 </span>
                                               )
                                             })}
                                           </div>
                                         )}
-                                        {appointment.notes && <div className="text-[10px] text-gray-500 italic mt-1">{appointment.notes}</div>}
+                                        {appointment.notes && (
+                                          <div className="text-[10px] text-gray-500 italic mt-1">
+                                            {appointment.notes}
+                                          </div>
+                                        )}
                                       </div>
-                                      {total > 0 && <div className="text-sm font-semibold text-purple-400 flex-shrink-0">{Math.round(total)} грн</div>}
+                                      {total > 0 && (
+                                        <div className="text-sm font-semibold text-purple-400 flex-shrink-0">
+                                          {Math.round(total)} грн
+                                        </div>
+                                      )}
                                     </div>
                                   </div>
                                 )
-                              })}
-                            {client.appointments.length === 0 && <div className="text-center py-4 text-xs text-gray-400">Немає історії візитів</div>}
+                              })
+                            })()}
                           </div>
                         </div>
                         {details.servicesUsed.length > 0 && (

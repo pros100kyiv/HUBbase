@@ -18,6 +18,8 @@ interface QuickClientCardProps {
     phone: string
     email?: string | null
     notes?: string | null
+    tags?: string | null
+    metadata?: string | null
   } | null
 }
 
@@ -34,6 +36,8 @@ export function QuickClientCard({
     phone: editingClient?.phone || initialPhone,
     email: editingClient?.email || '',
     notes: editingClient?.notes || '',
+    tags: editingClient?.tags || '',
+    metadata: editingClient?.metadata || '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showErrorToast, setShowErrorToast] = useState(false)
@@ -89,10 +93,13 @@ export function QuickClientCard({
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
+            businessId,
             name: formData.name.trim(),
             phone: normalizedPhone,
             email: formData.email.trim() || null,
             notes: formData.notes.trim() || null,
+            tags: formData.tags.trim() || null,
+            metadata: formData.metadata.trim() || null,
           }),
         })
 
@@ -117,9 +124,12 @@ export function QuickClientCard({
               method: 'PATCH',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
+                businessId,
                 name: formData.name.trim(),
                 email: formData.email.trim() || null,
                 notes: formData.notes.trim() || null,
+                tags: formData.tags.trim() || null,
+                metadata: formData.metadata.trim() || null,
               }),
             })
             
@@ -140,6 +150,8 @@ export function QuickClientCard({
               phone: normalizedPhone,
               email: formData.email.trim() || null,
               notes: formData.notes.trim() || null,
+              tags: formData.tags.trim() || null,
+              metadata: formData.metadata.trim() || null,
             }),
           })
 
@@ -259,6 +271,37 @@ export function QuickClientCard({
               value={formData.notes}
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Додаткові примітки про клієнта..."
+              rows={3}
+              className="w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15 resize-none"
+            />
+          </div>
+
+          {/* Теги */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-300">
+              Теги (опціонально)
+            </label>
+            <input
+              type="text"
+              value={formData.tags}
+              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+              placeholder="Наприклад: VIP, Instagram, Постійний"
+              className="w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+            />
+            <p className="text-xs text-gray-400 mt-1">
+              Вводьте через кому. Буде збережено як список тегів.
+            </p>
+          </div>
+
+          {/* Додаткова інформація */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-300">
+              Додаткова інформація (опціонально)
+            </label>
+            <textarea
+              value={formData.metadata}
+              onChange={(e) => setFormData({ ...formData, metadata: e.target.value })}
+              placeholder="Будь-які деталі про клієнта (наприклад: алергії, побажання, джерело, тощо)"
               rows={3}
               className="w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15 resize-none"
             />

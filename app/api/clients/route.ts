@@ -1,5 +1,42 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { jsonSafe } from '@/lib/utils/json'
+
+function normalizeTags(tags: unknown): string | null {
+  if (tags === null || tags === undefined) return null
+  if (Array.isArray(tags)) {
+    const cleaned = tags
+      .filter((t): t is string => typeof t === 'string')
+      .map((t) => t.trim())
+      .filter(Boolean)
+    return cleaned.length > 0 ? JSON.stringify(cleaned) : null
+  }
+  if (typeof tags === 'string') {
+    const raw = tags.trim()
+    if (!raw) return null
+    // If it's already JSON, keep it
+    if (raw.startsWith('[')) return raw
+    const cleaned = raw
+      .split(',')
+      .map((t) => t.trim())
+      .filter(Boolean)
+    return cleaned.length > 0 ? JSON.stringify(cleaned) : null
+  }
+  return null
+}
+
+function normalizeMetadata(metadata: unknown): string | null {
+  if (metadata === null || metadata === undefined) return null
+  if (typeof metadata === 'string') {
+    const raw = metadata.trim()
+    return raw ? raw : null
+  }
+  try {
+    return JSON.stringify(metadata)
+  } catch {
+    return null
+  }
+}
 
 export async function GET(request: Request) {
   try {
@@ -27,7 +64,7 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'desc' },
     })
 
-    return NextResponse.json(clients)
+    return NextResponse.json(jsonSafe(clients))
   } catch (error) {
     console.error('Error fetching clients:', error)
     return NextResponse.json({ error: 'Failed to fetch clients' }, { status: 500 })
@@ -38,7 +75,7 @@ export async function POST(request: Request) {
   let body: any = null
   try {
     body = await request.json()
-    const { businessId, name, phone, email, notes } = body
+    const { businessId, name, phone, email, notes, tags, metadata } = body
 
     if (!businessId || !name || !phone) {
       return NextResponse.json(
@@ -73,10 +110,12 @@ export async function POST(request: Request) {
           name: name.trim(),
           email: email?.trim() || null,
           notes: notes?.trim() || null,
+          ...(tags !== undefined ? { tags: normalizeTags(tags) } : {}),
+          ...(metadata !== undefined ? { metadata: normalizeMetadata(metadata) } : {}),
         },
       })
 
-      return NextResponse.json(updated, { status: 200 })
+      return NextResponse.json(jsonSafe(updated), { status: 200 })
     }
 
     // Створюємо нового клієнта
@@ -87,6 +126,8 @@ export async function POST(request: Request) {
         phone: normalizedPhone,
         email: email?.trim() || null,
         notes: notes?.trim() || null,
+        tags: normalizeTags(tags),
+        metadata: normalizeMetadata(metadata),
       },
     })
 
@@ -104,7 +145,7 @@ export async function POST(request: Request) {
       // Не викидаємо помилку, щоб не зламати створення клієнта
     }
 
-    return NextResponse.json(client, { status: 201 })
+    return NextResponse.json(jsonSafe(client), { status: 201 })
   } catch (error: any) {
     console.error('Error creating client:', error)
     

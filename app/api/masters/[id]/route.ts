@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { verifyBusinessOwnership } from '@/lib/middleware/business-isolation'
+import { jsonSafe } from '@/lib/utils/json'
 
 export async function PATCH(
   request: Request,
@@ -38,7 +39,7 @@ export async function PATCH(
       },
     })
 
-    return NextResponse.json(master)
+    return NextResponse.json(jsonSafe(master))
   } catch (error) {
     console.error('Error updating master:', error)
     return NextResponse.json({ error: 'Failed to update master' }, { status: 500 })

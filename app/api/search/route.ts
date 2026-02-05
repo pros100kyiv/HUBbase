@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { jsonSafe } from '@/lib/utils/json'
 
 export async function GET(request: Request) {
   try {
@@ -93,12 +94,12 @@ export async function GET(request: Request) {
       },
     })
 
-    return NextResponse.json({
+    return NextResponse.json(jsonSafe({
       appointments,
       clients,
       services,
       masters,
-    })
+    }))
   } catch (error) {
     console.error('Error searching:', error)
     return NextResponse.json({ error: 'Failed to search' }, { status: 500 })
