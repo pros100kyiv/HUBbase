@@ -46,6 +46,7 @@ export function MyDayCard({
   const [isExpanded, setIsExpanded] = useState(false)
   const [showMenu, setShowMenu] = useState(false)
   const [shareFeedback, setShareFeedback] = useState<'share' | 'copy' | null>(null)
+  const [selectedStatus, setSelectedStatus] = useState<'pending' | 'confirmed' | 'done' | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
 
   const selectedDate = externalSelectedDate || internalSelectedDate
@@ -169,6 +170,29 @@ export function MyDayCard({
     }
   }
 
+  const getFilteredAppointments = (type: 'pending' | 'confirmed' | 'done') => {
+    return appointments.filter(apt => {
+      const status = apt.status
+      switch (type) {
+        case 'pending':
+          return status === 'Pending' || status === 'Очікує'
+        case 'confirmed':
+          return status === 'Confirmed' || status === 'Підтверджено'
+        case 'done':
+          return status === 'Done' || status === 'Виконано'
+        return false
+      }
+    })
+  }
+
+  const getStatusTitle = (type: 'pending' | 'confirmed' | 'done') => {
+    switch (type) {
+      case 'pending': return 'Очікують підтвердження'
+      case 'confirmed': return 'Підтверджені записи'
+      case 'done': return 'Виконані записи'
+    }
+  }
+
   return (
     <div className="bg-[#1A1A1A] text-white rounded-xl p-4 md:p-6 card-floating">
       {/* Header */}
@@ -279,18 +303,27 @@ export function MyDayCard({
           <div className="text-xl md:text-2xl font-bold text-white mb-0.5 md:mb-1">{totalAppointments}</div>
           <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Всього записів</div>
         </div>
-        <div className="bg-white/5 border border-white/10 rounded-lg p-3 md:p-4">
+        <button 
+          onClick={() => setSelectedStatus('confirmed')}
+          className="bg-white/5 border border-white/10 rounded-lg p-3 md:p-4 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
+        >
           <div className="text-xl md:text-2xl font-bold text-green-400 mb-0.5 md:mb-1">{confirmedAppointments}</div>
           <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Підтверджено</div>
-        </div>
-        <div className="bg-white/5 border border-white/10 rounded-lg p-3 md:p-4">
+        </button>
+        <button 
+          onClick={() => setSelectedStatus('pending')}
+          className="bg-white/5 border border-white/10 rounded-lg p-3 md:p-4 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
+        >
           <div className="text-xl md:text-2xl font-bold text-orange-400 mb-0.5 md:mb-1">{pendingAppointments}</div>
           <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Очікує</div>
-        </div>
-        <div className="bg-white/5 border border-white/10 rounded-lg p-3 md:p-4">
+        </button>
+        <button 
+          onClick={() => setSelectedStatus('done')}
+          className="bg-white/5 border border-white/10 rounded-lg p-3 md:p-4 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
+        >
           <div className="text-xl md:text-2xl font-bold text-blue-400 mb-0.5 md:mb-1">{completedAppointments}</div>
           <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Виконано</div>
-        </div>
+        </button>
       </div>
 
       {/* Appointments List */}
@@ -403,6 +436,114 @@ export function MyDayCard({
             <span className="text-lg font-bold text-white">{totalRevenue} грн</span>
           </div>
         </div>
+      )}
+
+      {/* Status Details Modal */}
+      {selectedStatus && (
+        <ModalPortal>
+          <div 
+            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4"
+            style={{ 
+              WebkitOverflowScrolling: 'touch',
+              overscrollBehavior: 'contain',
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0
+            }}
+          >
+            <div 
+              className="fixed inset-0 bg-black/70 backdrop-blur-sm" 
+              onClick={() => setSelectedStatus(null)}
+              style={{ 
+                position: 'fixed',
+                top: 0,
+                left: 0,
+                right: 0,
+                bottom: 0
+              }}
+            />
+            <div 
+              className="relative w-[95%] sm:w-full max-w-lg bg-[#2A2A2A] rounded-xl flex flex-col border border-white/10 shadow-2xl max-h-[85vh] animate-in fade-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
+                <h3 className="text-lg font-semibold text-white">{getStatusTitle(selectedStatus)}</h3>
+                <button
+                  onClick={() => setSelectedStatus(null)}
+                  className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="p-4 overflow-y-auto">
+                <div className="space-y-2">
+                  {getFilteredAppointments(selectedStatus).length > 0 ? (
+                    getFilteredAppointments(selectedStatus).map((apt) => {
+                      const startTime = new Date(apt.startTime)
+                      const endTime = new Date(apt.endTime)
+                      
+                      return (
+                        <button
+                          key={apt.id}
+                          onClick={() => {
+                            setSelectedStatus(null)
+                            handleAppointmentClick(apt.id)
+                          }}
+                          className="w-full text-left bg-white/5 border border-white/10 rounded-lg p-3 hover:bg-white/10 transition-colors active:scale-[0.98]"
+                        >
+                          <div className="flex items-start justify-between mb-1 gap-2">
+                            <div className="flex-1 min-w-0">
+                              <h5 className="text-sm font-semibold text-white mb-1 truncate">
+                                {apt.clientName}
+                              </h5>
+                              {apt.masterName && (
+                                <p className="text-xs text-gray-400 mb-1 truncate">{apt.masterName}</p>
+                              )}
+                              <div className="flex items-center gap-2 text-xs text-gray-300">
+                                <div className="flex items-center gap-1">
+                                  <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                  </svg>
+                                  {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
+                                </div>
+                              </div>
+                            </div>
+                            <div className={`px-2 py-1 rounded text-xs font-medium border flex-shrink-0 ${getStatusColor(apt.status)}`}>
+                              {apt.status}
+                            </div>
+                          </div>
+                          {apt.services && (
+                            <div className="text-xs text-gray-400 mt-2 line-clamp-1">
+                              {(() => {
+                                try {
+                                  const services = JSON.parse(apt.services)
+                                  return Array.isArray(services) 
+                                    ? services.map((s: any) => s.name || s).join(', ')
+                                    : apt.services
+                                } catch {
+                                  return apt.services
+                                }
+                              })()}
+                            </div>
+                          )}
+                        </button>
+                      )
+                    })
+                  ) : (
+                    <div className="text-center py-8 text-gray-400 text-sm">
+                      Немає записів у цій категорії
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
       )}
 
       {/* Date Picker Modal */}
