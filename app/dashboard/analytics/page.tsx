@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { CalendarIcon, CheckIcon, XIcon, MoneyIcon, UsersIcon, ChartIcon, LightBulbIcon, TargetIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
+import { MonthProgressCard } from '@/components/admin/MonthProgressCard'
 
 const REFRESH_INTERVAL_MS = 45_000 // оновлення кожні 45 сек
 
@@ -519,6 +520,7 @@ export default function AnalyticsPage() {
         </div>
 
         <div className="lg:col-span-1 space-y-3 md:space-y-6">
+          <MonthProgressCard stats={stats} loading={!stats} />
           <div className="rounded-xl p-4 md:p-6 card-floating">
             <h3 className="text-base font-semibold text-white mb-3 md:mb-4 flex items-center gap-2" style={{ letterSpacing: '-0.01em' }}>
               <LightBulbIcon className="w-5 h-5 text-purple-400" /> Інсайти

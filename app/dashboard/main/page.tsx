@@ -5,11 +5,7 @@ import { useRouter } from 'next/navigation'
 import { format, startOfDay } from 'date-fns'
 import { MyDayCard } from '@/components/admin/MyDayCard'
 import { WeeklyProcessCard } from '@/components/admin/WeeklyProcessCard'
-import { MonthProgressCard } from '@/components/admin/MonthProgressCard'
 import { NotesCard } from '@/components/admin/NotesCard'
-import { TasksInProcessCard } from '@/components/admin/TasksInProcessCard'
-import { AddTaskCard } from '@/components/admin/AddTaskCard'
-import { LastProjectsCard } from '@/components/admin/LastProjectsCard'
 import { SocialMessagesCard } from '@/components/admin/SocialMessagesCard'
 
 interface Appointment {
@@ -27,7 +23,6 @@ interface Appointment {
 export default function MainPage() {
   const router = useRouter()
   const [business, setBusiness] = useState<any>(null)
-  const [stats, setStats] = useState<any>(null)
   const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()))
   const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([])
   const [masters, setMasters] = useState<any[]>([])
@@ -46,20 +41,6 @@ export default function MainPage() {
       router.push('/login')
     }
   }, [router])
-
-  useEffect(() => {
-    if (!business) return
-
-    // Load statistics
-    fetch(`/api/statistics?businessId=${business.id}&period=month`)
-      .then((res) => res.json())
-      .then((data) => {
-        setStats(data)
-      })
-      .catch((error) => {
-        console.error('Error loading statistics:', error)
-      })
-  }, [business])
 
   useEffect(() => {
     if (!business) return
@@ -107,10 +88,6 @@ export default function MainPage() {
       })
   }, [business, selectedDate, masters])
 
-  const handleAddTask = () => {
-    router.push('/dashboard/appointments')
-  }
-
   if (!business || loading) {
     return (
       <div className="max-w-7xl mx-auto">
@@ -128,38 +105,11 @@ export default function MainPage() {
     )
   }
 
-  // Найближчі записи для картки (до 4 записів, сортовані по часу)
-  const tasks = [...todayAppointments]
-    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-    .slice(0, 4)
-    .map((apt) => {
-      const startTime = new Date(apt.startTime)
-      const timeStr = format(startTime, 'HH:mm')
-      const isToday = format(startTime, 'yyyy-MM-dd') === format(new Date(), 'yyyy-MM-dd')
-      const timeLabel = isToday ? timeStr : `${format(startTime, 'd MMM')}, ${timeStr}`
-      return {
-        id: apt.id,
-        clientName: apt.clientName,
-        masterName: apt.masterName,
-        time: timeLabel,
-        status: apt.status,
-      }
-    })
-
   // Calculate today's statistics
   const todayTotal = todayAppointments.length
   const todayCompleted = todayAppointments.filter(apt => apt.status === 'Done' || apt.status === 'Виконано').length
   const todayPending = todayAppointments.filter(apt => apt.status === 'Pending' || apt.status === 'Очікує').length
   const todayConfirmed = todayAppointments.filter(apt => apt.status === 'Confirmed' || apt.status === 'Підтверджено').length
-
-  // Convert appointments to projects format
-  const projects = todayAppointments.slice(0, 3).map((apt, index) => ({
-    id: apt.id,
-    title: apt.masterName || `Запис ${index + 1}`,
-    progress: apt.status === 'Done' ? 100 : apt.status === 'Confirmed' ? 50 : 25,
-    status: apt.status === 'Done' ? 'Completed' as const : 'In Progress' as const,
-    description: apt.services ? `Послуги: ${apt.services}` : undefined,
-  }))
 
   return (
     <div className="max-w-7xl mx-auto">
@@ -192,20 +142,6 @@ export default function MainPage() {
             selectedDate={selectedDate}
             onDateChange={setSelectedDate}
           />
-
-          {/* Tasks Section */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
-            <TasksInProcessCard 
-              tasks={tasks}
-              onAddNote={(id) => console.log('Add note:', id)}
-              onEdit={(id) => router.push(`/dashboard/appointments?edit=${id}`)}
-              onDelete={(id) => console.log('Delete:', id)}
-            />
-            <AddTaskCard onClick={handleAddTask} />
-          </div>
-
-          {/* Last Projects */}
-          <LastProjectsCard projects={projects} />
         </div>
 
         {/* Right Column - Sidebar (1 column) */}
@@ -222,9 +158,6 @@ export default function MainPage() {
           {business?.id && (
             <NotesCard businessId={business.id} />
           )}
-
-          {/* Month Progress Card */}
-          <MonthProgressCard stats={stats} loading={!stats} />
         </div>
       </div>
     </div>
