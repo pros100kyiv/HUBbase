@@ -85,6 +85,14 @@ export async function GET(request: Request) {
       count: appointments.filter(a => a.masterId === m.id && a.status !== 'Cancelled').length
     }))
 
+    // Оновлюємо дату останнього входу в Центрі управління (як heartbeat)
+    try {
+      const { updateLastLogin } = await import('@/lib/services/management-center')
+      await updateLastLogin(businessId)
+    } catch (e) {
+      // ignore update errors to not block statistics
+    }
+
     return NextResponse.json({
       period,
       totalAppointments,
