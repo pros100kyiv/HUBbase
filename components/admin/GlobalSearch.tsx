@@ -98,7 +98,7 @@ export function GlobalSearch({ businessId, isOpen, onClose }: GlobalSearchProps)
   }
 
   const handleServiceClick = (id: string) => {
-    router.push(`/dashboard/services?edit=${id}`)
+    router.push(`/dashboard/settings?tab=services`)
     onClose()
   }
 

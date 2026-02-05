@@ -1,16 +1,6 @@
 import { Telegraf, Context, Markup } from 'telegraf'
 import { prisma } from './prisma'
 
-// Функція форматування валюти
-function formatCurrency(amount: number): string {
-  return new Intl.NumberFormat('uk-UA', {
-    style: 'currency',
-    currency: 'UAH',
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(amount / 100)
-}
-
 interface TelegramBotConfig {
   token: string
   businessId: string
@@ -48,18 +38,17 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     })
   }
 
-  // Перевірка прав доступу
+  // Перевірка прав доступу (бот використовує тільки create_broadcast для нагадувань)
   const hasPermission = (role: string, permission: string): boolean => {
     const permissions: Record<string, string[]> = {
-      DEVELOPER: ['*'], // Всі права
-      OWNER: ['view_stats', 'view_revenue', 'view_alerts', 'manage_users', 'manage_settings', 'create_broadcast', 'send_broadcast'],
-      ADMIN: ['view_stats', 'view_revenue', 'view_alerts', 'manage_users', 'create_broadcast', 'send_broadcast'],
-      MANAGER: ['view_stats', 'view_revenue', 'view_alerts', 'create_broadcast'],
-      EMPLOYEE: ['view_stats'],
-      CLIENT: ['receive_broadcast'], // Тільки отримувати розсилки
+      DEVELOPER: ['*'],
+      OWNER: ['create_broadcast'],
+      ADMIN: ['create_broadcast'],
+      MANAGER: ['create_broadcast'],
+      EMPLOYEE: [],
+      CLIENT: ['receive_broadcast'],
       VIEWER: [],
     }
-
     const rolePermissions = permissions[role] || []
     return rolePermissions.includes('*') || rolePermissions.includes(permission)
   }
@@ -376,25 +365,21 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
 function getAvailableCommands(role: string): string[] {
   const permissions: Record<string, string[]> = {
     DEVELOPER: ['*'],
-    OWNER: ['view_stats', 'view_revenue', 'view_alerts', 'manage_users', 'manage_settings', 'create_broadcast', 'send_broadcast'],
-    ADMIN: ['view_stats', 'view_revenue', 'view_alerts', 'manage_users', 'create_broadcast', 'send_broadcast'],
-    MANAGER: ['view_stats', 'view_revenue', 'view_alerts', 'create_broadcast'],
-    EMPLOYEE: ['view_stats'],
+    OWNER: ['create_broadcast'],
+    ADMIN: ['create_broadcast'],
+    MANAGER: ['create_broadcast'],
+    EMPLOYEE: [],
     CLIENT: ['receive_broadcast'],
     VIEWER: [],
   }
-
   const rolePermissions = permissions[role] || []
   const hasPermission = (perm: string) => rolePermissions.includes('*') || rolePermissions.includes(perm)
 
   const commands: string[] = ['/start - Початок роботи / активація']
-
   if (hasPermission('create_broadcast')) {
     commands.push('⏰ Створення нагадувань - /reminder <текст>')
   }
-
   commands.push('ℹ️ Ви отримуватимете сповіщення про нові записи автоматично')
-
   return commands
 }
 

@@ -10,6 +10,7 @@ import { setMobileMenuState } from '@/app/dashboard/layout'
 import { AccountInfo } from '@/components/layout/AccountInfo'
 import { GlobalSearch } from '@/components/admin/GlobalSearch'
 import { AccountProfileButton } from '@/components/layout/AccountProfileButton'
+import { NotificationsPanel } from '@/components/admin/NotificationsPanel'
 
 // Оновлюємо бізнес при зміні localStorage
 if (typeof window !== 'undefined') {
@@ -68,6 +69,7 @@ export function Navbar() {
 
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
 
   // Close mobile menu when pathname changes
   useEffect(() => {
@@ -144,7 +146,12 @@ export function Navbar() {
                 )}
                 
                 {/* Notifications Icon */}
-                <button className="p-2 rounded-lg hover:bg-white/10 transition-colors relative">
+                <button
+                  onClick={() => setShowNotifications(true)}
+                  className="p-2 rounded-lg hover:bg-white/10 transition-colors relative"
+                  title="Сповіщення"
+                  aria-label="Сповіщення"
+                >
                   <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                   </svg>
@@ -152,6 +159,14 @@ export function Navbar() {
                     <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
                   )}
                 </button>
+                {business?.id && (
+                  <NotificationsPanel
+                    businessId={business.id}
+                    isOpen={showNotifications}
+                    onClose={() => setShowNotifications(false)}
+                    onUpdate={() => {}}
+                  />
+                )}
                 
                 {/* Profile Icon with Dropdown */}
                 {business && <AccountProfileButton business={business} router={router} />}
