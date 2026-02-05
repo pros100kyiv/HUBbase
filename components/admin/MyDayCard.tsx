@@ -18,7 +18,7 @@ interface Appointment {
   notes?: string | null
 }
 
-interface MyDayCardProps {
+export interface MyDayCardProps {
   businessId?: string
   appointments: Appointment[]
   totalAppointments: number
