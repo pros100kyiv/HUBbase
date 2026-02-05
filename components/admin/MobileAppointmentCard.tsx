@@ -94,7 +94,7 @@ export function MobileAppointmentCard({
   }
 
   return (
-    <div className={cn("rounded-lg p-3 overflow-hidden transition-all card-floating", getStatusBorderColor(appointment.status))}>
+    <div className={cn("rounded-lg p-3 overflow-hidden transition-all bg-[#1A1A1A] border border-white/10", getStatusBorderColor(appointment.status))}>
       {/* Header with time and status */}
       <div className="flex items-center justify-between gap-1.5">
         <div className="flex items-center gap-1.5 flex-1 min-w-0">

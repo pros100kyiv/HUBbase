@@ -172,9 +172,6 @@ export default function ControlCenterPage() {
     }
   }
 
-  const handleBusinessClick = (businessId: string) => {
-    router.push(`/admin/control-center/business/${businessId}`)
-  }
 
   const formatDate = (date: Date | null) => {
     if (!date) return 'Ніколи'
@@ -275,7 +272,6 @@ export default function ControlCenterPage() {
             page={page}
             setPage={setPage}
             totalPages={totalPages}
-            onBusinessClick={handleBusinessClick}
             formatDate={formatDate}
             onDataChanged={loadData}
           />
@@ -494,7 +490,7 @@ function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
 }
 
 // Businesses Tab Component
-function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, setStatusFilter, page, setPage, totalPages, onBusinessClick, formatDate, onDataChanged }: any) {
+function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, setStatusFilter, page, setPage, totalPages, formatDate, onDataChanged }: any) {
   const [selectedBusinesses, setSelectedBusinesses] = useState<string[]>([])
   const [bulkAction, setBulkAction] = useState<string>('')
   const [blockModalOpen, setBlockModalOpen] = useState(false)
@@ -508,6 +504,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
   const [deleteConfirm, setDeleteConfirm] = useState('')
   const [isDeleting, setIsDeleting] = useState(false)
   const [searchBy, setSearchBy] = useState<'all' | 'id' | 'name' | 'email'>('all')
+  const [detailModalBusiness, setDetailModalBusiness] = useState<Business | null>(null)
 
   const handleBulkAction = async () => {
     if (!bulkAction || selectedBusinesses.length === 0) return
@@ -875,7 +872,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                       )}
                     </td>
                     <td className="py-3 px-4">
-                      <div className="font-medium text-white cursor-pointer" onClick={() => onBusinessClick(business.businessId)}>
+                      <div className="font-medium text-white cursor-pointer" onClick={() => setDetailModalBusiness(business)}>
                         {business.name}
                       </div>
                     </td>
@@ -934,7 +931,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                     <td className="py-3 px-4">
                       <div className="flex items-center gap-2 flex-wrap">
                         <button 
-                          onClick={() => onBusinessClick(business.businessId)}
+                          onClick={() => setDetailModalBusiness(business)}
                           className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-sm"
                         >
                           Деталі
@@ -1054,6 +1051,12 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
               <p className="text-sm text-gray-300 mb-2">
                 ID: <span className="font-mono font-semibold text-blue-400">{selectedBusiness.businessIdentifier}</span>
               </p>
+              <p className="text-sm text-gray-300 mb-2">
+                Сторінка: {(() => {
+                  const { isOnline, label } = getOnlineStatus(selectedBusiness.lastSeenAt)
+                  return <span className={isOnline ? 'text-green-400' : 'text-gray-400'}>{label}</span>
+                })()}
+              </p>
               <p className="text-sm text-gray-300">
                 Email: <span className="font-semibold text-white">{selectedBusiness.email}</span>
               </p>
@@ -1092,6 +1095,37 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
               >
                 {isBlocking ? 'Блокування...' : 'Заблокувати'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal деталей бізнесу */}
+      {detailModalBusiness && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70" onClick={() => setDetailModalBusiness(null)}>
+          <div className="w-full max-w-lg rounded-xl card-floating p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <div className="flex justify-between items-start mb-4">
+              <h3 className="text-xl font-bold text-white">{detailModalBusiness.name}</h3>
+              <button onClick={() => setDetailModalBusiness(null)} className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white">
+                <XIcon className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-3 text-sm">
+              <div className="flex justify-between"><span className="text-gray-400">ID:</span><span className="font-mono text-blue-400">{detailModalBusiness.businessIdentifier || '-'}</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">Email:</span><span className="text-white">{detailModalBusiness.email}</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">Телефон:</span><span className="text-white">{detailModalBusiness.phone || '-'}</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">Статус:</span><span className={detailModalBusiness.isActive ? 'text-green-400' : 'text-red-400'}>{detailModalBusiness.isActive ? 'Активний' : 'Неактивний'}</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">Реєстрація:</span><span className="text-white">{detailModalBusiness.registrationType === 'telegram' ? 'Telegram' : detailModalBusiness.registrationType === 'google' ? 'Google' : 'Стандартна'}</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">Дата реєстрації:</span><span className="text-white">{formatDate(detailModalBusiness.registeredAt)}</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">Останній вхід:</span><span className="text-white">{formatDate(detailModalBusiness.lastLoginAt)}</span></div>
+            </div>
+            <div className="mt-4 flex gap-2">
+              {detailModalBusiness.isActive ? (
+                <button onClick={() => { setDetailModalBusiness(null); handleBlockClick(detailModalBusiness) }} className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30">Заблокувати</button>
+              ) : (
+                <button onClick={async () => { await handleUnblock(detailModalBusiness); setDetailModalBusiness(null); onDataChanged?.(); }} className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30">Розблокувати</button>
+              )}
+              <button onClick={() => { navigator.clipboard.writeText(detailModalBusiness.businessIdentifier || ''); }} className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20">Копіювати ID</button>
             </div>
           </div>
         </div>

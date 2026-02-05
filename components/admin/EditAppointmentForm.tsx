@@ -158,8 +158,8 @@ export function EditAppointmentForm({
   }
 
   return (
-    <div ref={formRef} className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 overflow-y-auto">
-      <div className="relative w-full sm:max-w-2xl card-floating border-t sm:border border-white/10 rounded-t-xl sm:rounded-xl p-4 sm:p-6 sm:my-auto max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-y-auto">
+    <div ref={formRef} className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
+      <div className="relative w-full sm:max-w-2xl bg-[#1A1A1A] border border-white/10 rounded-t-xl sm:rounded-xl p-4 sm:p-6 sm:my-auto max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-y-auto text-white shadow-xl">
         {/* Close button */}
         <button
           onClick={onCancel}
