@@ -1,6 +1,6 @@
 'use client'
 
-import React from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { format, addDays, subDays, isSameDay, startOfDay } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { useRouter } from 'next/navigation'
@@ -41,12 +41,12 @@ export function MyDayCard({
   onDateChange,
 }: MyDayCardProps) {
   const router = useRouter()
-  const [internalSelectedDate, setInternalSelectedDate] = React.useState(() => startOfDay(new Date()))
-  const [showDatePicker, setShowDatePicker] = React.useState(false)
-  const [isExpanded, setIsExpanded] = React.useState(false)
-  const [showMenu, setShowMenu] = React.useState(false)
-  const [shareFeedback, setShareFeedback] = React.useState<'share' | 'copy' | null>(null)
-  const menuRef = React.useRef<HTMLDivElement>(null)
+  const [internalSelectedDate, setInternalSelectedDate] = useState(() => startOfDay(new Date()))
+  const [showDatePicker, setShowDatePicker] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(false)
+  const [showMenu, setShowMenu] = useState(false)
+  const [shareFeedback, setShareFeedback] = useState<'share' | 'copy' | null>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   const selectedDate = externalSelectedDate || internalSelectedDate
   const isToday = isSameDay(selectedDate, new Date())
@@ -138,7 +138,7 @@ export function MyDayCard({
     }
   }
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setShowMenu(false)
