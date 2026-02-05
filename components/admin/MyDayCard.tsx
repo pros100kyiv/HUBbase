@@ -5,7 +5,6 @@ import { format, addDays, subDays, isSameDay, startOfDay } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { useRouter } from 'next/navigation'
 import { ModalPortal } from '@/components/ui/modal-portal'
-import { CheckIcon, XIcon, ClockIcon } from '@/components/icons'
 
 interface Appointment {
   id: string
@@ -28,7 +27,6 @@ interface MyDayCardProps {
   onBookAppointment?: () => void
   selectedDate?: Date
   onDateChange?: (date: Date) => void
-  onStatusChange?: (id: string, status: string) => void
 }
 
 export function MyDayCard({
@@ -41,7 +39,6 @@ export function MyDayCard({
   onBookAppointment,
   selectedDate: externalSelectedDate,
   onDateChange,
-  onStatusChange,
 }: MyDayCardProps) {
   const router = useRouter()
   const [internalSelectedDate, setInternalSelectedDate] = useState(() => startOfDay(new Date()))
@@ -322,15 +319,13 @@ export function MyDayCard({
               const endTime = new Date(apt.endTime)
               
               return (
-                <div
+                <button
                   key={apt.id}
-                  className="w-full bg-white/5 border border-white/10 rounded-lg p-3 md:p-4 hover:bg-white/10 transition-colors"
+                  onClick={() => handleAppointmentClick(apt.id)}
+                  className="w-full text-left bg-white/5 border border-white/10 rounded-lg p-3 md:p-4 hover:bg-white/10 transition-colors active:scale-[0.98]"
                 >
                   <div className="flex items-start justify-between mb-1 md:mb-2 gap-2">
-                    <button
-                      onClick={() => handleAppointmentClick(apt.id)}
-                      className="flex-1 min-w-0 text-left"
-                    >
+                    <div className="flex-1 min-w-0">
                       <h5 className="text-xs md:text-sm font-semibold text-white mb-0.5 md:mb-1 truncate" style={{ letterSpacing: '-0.01em' }}>
                         {apt.clientName}
                       </h5>
@@ -353,95 +348,9 @@ export function MyDayCard({
                           </div>
                         )}
                       </div>
-                    </button>
-                    <div className="flex flex-col items-end gap-1 flex-shrink-0">
-                      <div className={`px-1.5 md:px-2 py-0.5 md:py-1 rounded text-[9px] md:text-xs font-medium border ${getStatusColor(apt.status)}`}>
-                        {apt.status === 'Pending' ? 'Очікує' : apt.status === 'Confirmed' ? 'Підтверджено' : apt.status === 'Done' ? 'Виконано' : apt.status === 'Cancelled' ? 'Скасовано' : apt.status}
-                      </div>
-                      {onStatusChange && (
-                        <div className="flex gap-1 flex-wrap justify-end">
-                          {apt.status === 'Pending' && (
-                            <>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); onStatusChange(apt.id, 'Confirmed') }}
-                                className="px-1.5 py-0.5 rounded text-[8px] md:text-[9px] bg-green-500/20 border border-green-500/50 text-green-400 hover:bg-green-500/30 transition-all active:scale-95 flex items-center gap-0.5"
-                                title="Підтвердити"
-                              >
-                                <CheckIcon className="w-2.5 h-2.5" />
-                                <span className="hidden sm:inline">Підтв.</span>
-                              </button>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); onStatusChange(apt.id, 'Done') }}
-                                className="px-1.5 py-0.5 rounded text-[8px] md:text-[9px] bg-blue-500/20 border border-blue-500/50 text-blue-400 hover:bg-blue-500/30 transition-all active:scale-95 flex items-center gap-0.5"
-                                title="Виконано"
-                              >
-                                <CheckIcon className="w-2.5 h-2.5" />
-                                <span className="hidden sm:inline">Вик.</span>
-                              </button>
-                            </>
-                          )}
-                          {apt.status === 'Confirmed' && (
-                            <>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); onStatusChange(apt.id, 'Done') }}
-                                className="px-1.5 py-0.5 rounded text-[8px] md:text-[9px] bg-blue-500/20 border border-blue-500/50 text-blue-400 hover:bg-blue-500/30 transition-all active:scale-95 flex items-center gap-0.5"
-                                title="Виконано"
-                              >
-                                <CheckIcon className="w-2.5 h-2.5" />
-                                <span className="hidden sm:inline">Вик.</span>
-                              </button>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); onStatusChange(apt.id, 'Pending') }}
-                                className="px-1.5 py-0.5 rounded text-[8px] md:text-[9px] bg-orange-500/20 border border-orange-500/50 text-orange-400 hover:bg-orange-500/30 transition-all active:scale-95 flex items-center gap-0.5"
-                                title="Очікує"
-                              >
-                                <ClockIcon className="w-2.5 h-2.5" />
-                                <span className="hidden sm:inline">Очік.</span>
-                              </button>
-                            </>
-                          )}
-                          {apt.status === 'Done' && (
-                            <>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); onStatusChange(apt.id, 'Confirmed') }}
-                                className="px-1.5 py-0.5 rounded text-[8px] md:text-[9px] bg-green-500/20 border border-green-500/50 text-green-400 hover:bg-green-500/30 transition-all active:scale-95 flex items-center gap-0.5"
-                                title="Підтвердити"
-                              >
-                                <CheckIcon className="w-2.5 h-2.5" />
-                                <span className="hidden sm:inline">Підтв.</span>
-                              </button>
-                              <button
-                                onClick={(e) => { e.stopPropagation(); onStatusChange(apt.id, 'Pending') }}
-                                className="px-1.5 py-0.5 rounded text-[8px] md:text-[9px] bg-orange-500/20 border border-orange-500/50 text-orange-400 hover:bg-orange-500/30 transition-all active:scale-95 flex items-center gap-0.5"
-                                title="Очікує"
-                              >
-                                <ClockIcon className="w-2.5 h-2.5" />
-                                <span className="hidden sm:inline">Очік.</span>
-                              </button>
-                            </>
-                          )}
-                          {apt.status === 'Cancelled' && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); onStatusChange(apt.id, 'Pending') }}
-                              className="px-1.5 py-0.5 rounded text-[8px] md:text-[9px] bg-orange-500/20 border border-orange-500/50 text-orange-400 hover:bg-orange-500/30 transition-all active:scale-95 flex items-center gap-0.5"
-                              title="Відновити"
-                            >
-                              <CheckIcon className="w-2.5 h-2.5" />
-                              <span className="hidden sm:inline">Відн.</span>
-                            </button>
-                          )}
-                          {apt.status !== 'Cancelled' && (
-                            <button
-                              onClick={(e) => { e.stopPropagation(); onStatusChange(apt.id, 'Cancelled') }}
-                              className="px-1.5 py-0.5 rounded text-[8px] md:text-[9px] bg-red-500/20 border border-red-500/50 text-red-400 hover:bg-red-500/30 transition-all active:scale-95 flex items-center gap-0.5"
-                              title="Скасувати"
-                            >
-                              <XIcon className="w-2.5 h-2.5" />
-                              <span className="hidden sm:inline">Скас.</span>
-                            </button>
-                          )}
-                        </div>
-                      )}
+                    </div>
+                    <div className={`px-1.5 md:px-2 py-0.5 md:py-1 rounded text-[9px] md:text-xs font-medium border flex-shrink-0 ${getStatusColor(apt.status)}`}>
+                      {apt.status}
                     </div>
                   </div>
                   {apt.services && (
@@ -458,7 +367,7 @@ export function MyDayCard({
                       })()}
                     </div>
                   )}
-                </div>
+                </button>
               )
             })}
           </div>

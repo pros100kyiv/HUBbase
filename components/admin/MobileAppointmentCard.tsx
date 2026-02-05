@@ -133,7 +133,7 @@ export function MobileAppointmentCard({
           </span>
           {onStatusChange && (
             <div className="flex flex-col gap-1">
-              {/* Кнопки зміни статусу - повний функціонал */}
+              {/* Кнопки зміни статусу - покращений інтерфейс */}
               {appointment.status === 'Pending' && (
                 <>
                   <button
@@ -147,61 +147,21 @@ export function MobileAppointmentCard({
                   <button
                     onClick={() => onStatusChange(appointment.id, 'Done')}
                     className="px-2 py-1 rounded-lg bg-blue-50 border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center gap-1 text-[10px] font-bold whitespace-nowrap"
-                    title="Виконано"
+                    title="В роботі"
                   >
                     <CheckIcon className="w-3 h-3" />
-                    Виконано
+                    В роботі
                   </button>
                 </>
               )}
               {appointment.status === 'Confirmed' && (
-                <>
-                  <button
-                    onClick={() => onStatusChange(appointment.id, 'Done')}
-                    className="px-2 py-1 rounded-lg bg-blue-50 border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center gap-1 text-[10px] font-bold whitespace-nowrap"
-                    title="Виконано"
-                  >
-                    <CheckIcon className="w-3 h-3" />
-                    Виконано
-                  </button>
-                  <button
-                    onClick={() => onStatusChange(appointment.id, 'Pending')}
-                    className="px-2 py-1 rounded-lg bg-orange-50 border border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center gap-1 text-[10px] font-bold whitespace-nowrap"
-                    title="Повернути до очікування"
-                  >
-                    <ClockIcon className="w-3 h-3" />
-                    Очікує
-                  </button>
-                </>
-              )}
-              {appointment.status === 'Done' && (
-                <>
-                  <button
-                    onClick={() => onStatusChange(appointment.id, 'Confirmed')}
-                    className="px-2 py-1 rounded-lg bg-green-50 border border-green-500 text-green-500 hover:bg-green-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center gap-1 text-[10px] font-bold whitespace-nowrap"
-                    title="Повернути до підтвердження"
-                  >
-                    <CheckIcon className="w-3 h-3" />
-                    Підтвердити
-                  </button>
-                  <button
-                    onClick={() => onStatusChange(appointment.id, 'Pending')}
-                    className="px-2 py-1 rounded-lg bg-orange-50 border border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center gap-1 text-[10px] font-bold whitespace-nowrap"
-                    title="Повернути до очікування"
-                  >
-                    <ClockIcon className="w-3 h-3" />
-                    Очікує
-                  </button>
-                </>
-              )}
-              {appointment.status === 'Cancelled' && (
                 <button
-                  onClick={() => onStatusChange(appointment.id, 'Pending')}
-                  className="px-2 py-1 rounded-lg bg-orange-50 border border-orange-500 text-orange-500 hover:bg-orange-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center gap-1 text-[10px] font-bold whitespace-nowrap"
-                  title="Відновити запис"
+                  onClick={() => onStatusChange(appointment.id, 'Done')}
+                  className="px-2 py-1 rounded-lg bg-blue-50 border border-blue-500 text-blue-500 hover:bg-blue-500 hover:text-white transition-all duration-200 active:scale-95 flex items-center justify-center gap-1 text-[10px] font-bold whitespace-nowrap"
+                  title="Виконано"
                 >
                   <CheckIcon className="w-3 h-3" />
-                  Відновити
+                  Виконано
                 </button>
               )}
               {appointment.status !== 'Cancelled' && (

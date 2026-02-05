@@ -11,16 +11,11 @@ import { TasksInProcessCard } from '@/components/admin/TasksInProcessCard'
 import { AddTaskCard } from '@/components/admin/AddTaskCard'
 import { LastProjectsCard } from '@/components/admin/LastProjectsCard'
 import { SocialMessagesCard } from '@/components/admin/SocialMessagesCard'
-import { toast } from '@/components/ui/toast'
 
 interface Appointment {
   id: string
   masterId: string
   masterName?: string
-  master?: {
-    id: string
-    name: string
-  }
   clientName: string
   clientPhone: string
   startTime: string
@@ -35,8 +30,8 @@ export default function MainPage() {
   const [stats, setStats] = useState<any>(null)
   const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()))
   const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([])
+  const [masters, setMasters] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [deferSidebar, setDeferSidebar] = useState(false)
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -69,6 +64,22 @@ export default function MainPage() {
   useEffect(() => {
     if (!business) return
 
+    // Load masters once per business (avoid refetching on every date change)
+    fetch(`/api/masters?businessId=${business.id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch masters')
+        return res.json()
+      })
+      .then((data) => setMasters(Array.isArray(data) ? data : []))
+      .catch((error) => {
+        console.error('Error loading masters:', error)
+        setMasters([])
+      })
+  }, [business])
+
+  useEffect(() => {
+    if (!business) return
+
     // Load appointments for selected date
     setLoading(true)
     const dateStr = format(selectedDate, 'yyyy-MM-dd')
@@ -82,8 +93,8 @@ export default function MainPage() {
         const appointmentsArray = Array.isArray(data) ? data : []
 
         const withMasters = appointmentsArray.map((apt: Appointment) => {
-          const masterName = apt.master?.name || apt.masterName || 'Невідомий спеціаліст'
-          return { ...apt, masterName }
+          const master = masters.find((m: any) => m.id === apt.masterId)
+          return { ...apt, masterName: master?.name || apt.masterName || 'Невідомий спеціаліст' }
         })
 
         setTodayAppointments(withMasters)
@@ -94,52 +105,13 @@ export default function MainPage() {
         setTodayAppointments([])
         setLoading(false)
       })
-  }, [business, selectedDate])
-
-  // Defer heavy sidebar widgets to improve perceived load time
-  useEffect(() => {
-    const t = setTimeout(() => setDeferSidebar(true), 250)
-    return () => clearTimeout(t)
-  }, [])
+  }, [business, selectedDate, masters])
 
   const handleAddTask = () => {
     router.push('/dashboard/appointments')
   }
 
-  const handleStatusChange = async (id: string, status: string) => {
-    if (!business) return
-    
-    try {
-      const response = await fetch(`/api/appointments/${id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, businessId: business.id }),
-      })
-
-      if (response.ok) {
-        setTodayAppointments((prev) =>
-          prev.map((apt) => (apt.id === id ? { ...apt, status } : apt))
-        )
-        toast({ title: 'Статус оновлено', type: 'success' })
-      } else {
-        const error = await response.json()
-        toast({
-          title: 'Помилка',
-          description: error.error || 'Не вдалося оновити статус',
-          type: 'error',
-        })
-      }
-    } catch (error) {
-      console.error('Error updating status:', error)
-      toast({
-        title: 'Помилка',
-        description: 'Не вдалося оновити статус',
-        type: 'error',
-      })
-    }
-  }
-
-  if (!business) {
+  if (!business || loading) {
     return (
       <div className="max-w-7xl mx-auto">
         <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-4" />
@@ -210,21 +182,16 @@ export default function MainPage() {
           </div>
 
           {/* My Day Card */}
-          {loading ? (
-            <div className="h-64 rounded-xl bg-white/5 border border-white/10 animate-pulse" />
-          ) : (
-            <MyDayCard
-              appointments={todayAppointments}
-              totalAppointments={todayTotal}
-              completedAppointments={todayCompleted}
-              pendingAppointments={todayPending}
-              confirmedAppointments={todayConfirmed}
-              onBookAppointment={() => router.push('/dashboard/appointments?create=true')}
-              selectedDate={selectedDate}
-              onDateChange={setSelectedDate}
-              onStatusChange={handleStatusChange}
-            />
-          )}
+          <MyDayCard
+            appointments={todayAppointments}
+            totalAppointments={todayTotal}
+            completedAppointments={todayCompleted}
+            pendingAppointments={todayPending}
+            confirmedAppointments={todayConfirmed}
+            onBookAppointment={() => router.push('/dashboard/appointments?create=true')}
+            selectedDate={selectedDate}
+            onDateChange={setSelectedDate}
+          />
 
           {/* Tasks Section */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-6">
@@ -244,28 +211,20 @@ export default function MainPage() {
         {/* Right Column - Sidebar (1 column) */}
         <div className="lg:col-span-1 space-y-3 md:space-y-6">
           {/* Social Messages */}
-          {deferSidebar && business?.id ? (
+          {business?.id && (
             <SocialMessagesCard businessId={business.id} />
-          ) : (
-            <div className="h-48 rounded-xl bg-white/5 border border-white/10 animate-pulse" />
           )}
 
           {/* Calendar Card */}
-          {deferSidebar ? (
-            <WeeklyProcessCard businessId={business?.id} />
-          ) : (
-            <div className="h-64 rounded-xl bg-white/5 border border-white/10 animate-pulse" />
-          )}
+          <WeeklyProcessCard businessId={business?.id} />
 
           {/* Notes Card */}
-          {deferSidebar && business?.id ? (
+          {business?.id && (
             <NotesCard businessId={business.id} />
-          ) : (
-            <div className="h-48 rounded-xl bg-white/5 border border-white/10 animate-pulse" />
           )}
 
           {/* Month Progress Card */}
-          <MonthProgressCard stats={stats} loading={loading && !stats} />
+          <MonthProgressCard progress={30} />
         </div>
       </div>
     </div>
