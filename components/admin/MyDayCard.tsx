@@ -29,6 +29,7 @@ interface MyDayCardProps {
   onBookAppointment?: () => void
   selectedDate?: Date
   onDateChange?: (date: Date) => void
+  onRefresh?: () => void
 }
 
 export function MyDayCard({
@@ -42,6 +43,7 @@ export function MyDayCard({
   onBookAppointment,
   selectedDate: externalSelectedDate,
   onDateChange,
+  onRefresh,
 }: MyDayCardProps) {
   const router = useRouter()
   const [internalSelectedDate, setInternalSelectedDate] = useState(() => startOfDay(new Date()))
