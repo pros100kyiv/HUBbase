@@ -160,23 +160,23 @@ export function QuickMasterCard({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 overflow-y-auto">
-      <div className="relative w-full sm:max-w-md bg-white dark:bg-gray-800 border-t sm:border border-gray-200 dark:border-gray-700 rounded-t-xl sm:rounded-candy-lg shadow-soft-xl p-4 sm:p-6 sm:my-auto max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-y-auto">
+      <div className="relative w-full sm:max-w-md card-floating border-t sm:border border-white/10 rounded-t-xl sm:rounded-xl p-4 sm:p-6 sm:my-auto max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-y-auto">
         {/* Close Button */}
         {onCancel && (
           <button
             onClick={onCancel}
-            className="absolute top-4 right-4 p-2 rounded-candy-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="absolute top-4 right-4 p-2 rounded-lg hover:bg-white/10 transition-colors"
           >
-            <XIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <XIcon className="w-5 h-5 text-gray-400" />
           </button>
         )}
 
         {/* Header */}
         <div className="mb-4 sm:mb-6">
-          <h2 className="text-lg sm:text-2xl md:text-3xl font-black text-candy-blue dark:text-blue-400 mb-1 sm:mb-2">
+          <h2 className="text-lg sm:text-2xl font-bold text-white mb-1 sm:mb-2" style={{ letterSpacing: '-0.02em' }}>
             {editingMaster ? 'Редагувати спеціаліста' : 'Додати спеціаліста'}
           </h2>
-          <p className="text-[10px] sm:text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-[10px] sm:text-sm text-gray-400">
             {editingMaster ? 'Оновіть інформацію про спеціаліста' : 'Заповніть основну інформацію про спеціаліста'}
           </p>
         </div>
@@ -184,11 +184,11 @@ export function QuickMasterCard({
         <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
           {/* Photo Upload */}
           <div>
-            <label className="block text-xs sm:text-sm font-medium mb-1.5 sm:mb-2 text-gray-700 dark:text-gray-300">
+            <label className="block text-xs sm:text-sm font-medium mb-1.5 sm:mb-2 text-gray-400">
               Фото спеціаліста
             </label>
             <div className="flex items-center gap-2 sm:gap-4">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-gradient-to-br from-candy-purple/20 to-candy-blue/20 flex items-center justify-center overflow-hidden border-2 border-gray-200 dark:border-gray-700 flex-shrink-0">
+              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-full bg-white/10 border border-white/20 flex items-center justify-center overflow-hidden flex-shrink-0">
                 {photoPreview ? (
                   <img
                     src={photoPreview}
@@ -209,7 +209,7 @@ export function QuickMasterCard({
                 />
                 <label
                   htmlFor="photo-upload"
-                  className="block px-2 sm:px-4 py-1.5 sm:py-2 bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-candy-xs cursor-pointer hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors text-[10px] sm:text-sm font-bold touch-manipulation text-center"
+                  className="block px-2 sm:px-4 py-1.5 sm:py-2 border border-white/20 bg-white/10 text-white rounded-lg cursor-pointer hover:bg-white/20 transition-colors text-[10px] sm:text-sm font-medium touch-manipulation text-center"
                 >
                   Завантажити фото
                 </label>
@@ -220,7 +220,7 @@ export function QuickMasterCard({
                       setFormData((prev) => ({ ...prev, photo: '' }))
                       setPhotoPreview(null)
                     }}
-                    className="mt-1 w-full px-2 py-1 text-[10px] sm:text-xs text-red-500 hover:text-red-700 touch-manipulation"
+                    className="mt-1 w-full px-2 py-1 text-[10px] sm:text-xs text-red-400 hover:text-red-300 touch-manipulation"
                   >
                     Видалити
                   </button>
@@ -231,7 +231,7 @@ export function QuickMasterCard({
 
           {/* Name */}
           <div>
-            <label htmlFor="name" className="block text-xs sm:text-sm font-medium mb-1.5 sm:mb-2 text-gray-700 dark:text-gray-300">
+            <label htmlFor="name" className="block text-xs sm:text-sm font-medium mb-1.5 sm:mb-2 text-gray-400">
               Ім'я спеціаліста *
             </label>
             <div className="relative">
@@ -243,14 +243,14 @@ export function QuickMasterCard({
                 onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                 placeholder="Наприклад: Олександр"
                 required
-                className="w-full pl-8 sm:pl-10 pr-2 sm:pr-3 py-1.5 sm:py-2 rounded-candy-sm bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-candy-blue text-sm"
+                className="w-full pl-8 sm:pl-10 pr-2 sm:pr-3 py-1.5 sm:py-2 rounded-lg bg-white/5 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 text-sm"
               />
             </div>
           </div>
 
           {/* Bio */}
           <div>
-            <label htmlFor="bio" className="block text-xs sm:text-sm font-medium mb-1.5 sm:mb-2 text-gray-700 dark:text-gray-300">
+            <label htmlFor="bio" className="block text-xs sm:text-sm font-medium mb-1.5 sm:mb-2 text-gray-400">
               Опис / Біографія
             </label>
             <textarea
@@ -259,13 +259,13 @@ export function QuickMasterCard({
               onChange={(e) => setFormData((prev) => ({ ...prev, bio: e.target.value }))}
               placeholder="Короткий опис спеціаліста, досвід роботи..."
               rows={3}
-              className="w-full px-2 sm:px-3 py-1.5 sm:py-2 rounded-candy-sm bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-candy-blue resize-none text-sm"
+              className="w-full px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-white/5 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 resize-none text-sm"
             />
           </div>
 
           {/* Rating */}
           <div>
-            <label htmlFor="rating" className="block text-xs sm:text-sm font-medium mb-1.5 sm:mb-2 text-gray-700 dark:text-gray-300">
+            <label htmlFor="rating" className="block text-xs sm:text-sm font-medium mb-1.5 sm:mb-2 text-gray-400">
               Рейтинг (0-5)
             </label>
             <div className="flex items-center gap-2">
@@ -277,7 +277,7 @@ export function QuickMasterCard({
                 step="0.1"
                 value={formData.rating}
                 onChange={(e) => setFormData((prev) => ({ ...prev, rating: parseFloat(e.target.value) || 0 }))}
-                className="w-16 sm:w-20 px-2 sm:px-3 py-1.5 sm:py-2 rounded-candy-sm bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-700 focus:outline-none focus:ring-2 focus:ring-candy-blue text-sm"
+                className="w-16 sm:w-20 px-2 sm:px-3 py-1.5 sm:py-2 rounded-lg bg-white/5 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 text-sm"
               />
               <div className="flex gap-0.5 sm:gap-1">
                 {[1, 2, 3, 4, 5].map((star) => (
@@ -307,9 +307,9 @@ export function QuickMasterCard({
                 id="isActive"
                 checked={formData.isActive}
                 onChange={(e) => setFormData((prev) => ({ ...prev, isActive: e.target.checked }))}
-                className="w-4 h-4 sm:w-5 sm:h-5 rounded border-gray-300 dark:border-gray-700 text-candy-blue focus:ring-candy-blue touch-manipulation"
+                className="w-4 h-4 sm:w-5 sm:h-5 rounded border-white/20 bg-white/5 text-white focus:ring-white/30 touch-manipulation"
               />
-              <label htmlFor="isActive" className="text-xs sm:text-sm font-medium text-gray-700 dark:text-gray-300">
+              <label htmlFor="isActive" className="text-xs sm:text-sm font-medium text-gray-400">
                 Активний спеціаліст
               </label>
             </div>
@@ -319,7 +319,8 @@ export function QuickMasterCard({
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full py-2.5 sm:py-3 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-black rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base touch-manipulation"
+            className="w-full py-2.5 sm:py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-1.5 sm:gap-2 text-sm sm:text-base touch-manipulation"
+            style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
           >
             {isSubmitting ? (
               <>
