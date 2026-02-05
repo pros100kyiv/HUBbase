@@ -30,6 +30,7 @@ export default function MainPage() {
   const [stats, setStats] = useState<any>(null)
   const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()))
   const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([])
+  const [masters, setMasters] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -63,38 +64,48 @@ export default function MainPage() {
   useEffect(() => {
     if (!business) return
 
+    // Load masters once per business (avoid refetching on every date change)
+    fetch(`/api/masters?businessId=${business.id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch masters')
+        return res.json()
+      })
+      .then((data) => setMasters(Array.isArray(data) ? data : []))
+      .catch((error) => {
+        console.error('Error loading masters:', error)
+        setMasters([])
+      })
+  }, [business])
+
+  useEffect(() => {
+    if (!business) return
+
     // Load appointments for selected date
+    setLoading(true)
     const dateStr = format(selectedDate, 'yyyy-MM-dd')
-    
-    Promise.all([
-      fetch(`/api/masters?businessId=${business.id}`)
-        .then((res) => {
-          if (!res.ok) throw new Error('Failed to fetch masters')
-          return res.json()
-        }),
-      fetch(`/api/appointments?date=${dateStr}&businessId=${business.id}`)
-        .then((res) => {
-          if (!res.ok) throw new Error('Failed to fetch appointments')
-          return res.json()
-        })
-    ])
-      .then(([masters, data]) => {
-        const mastersArray = Array.isArray(masters) ? masters : []
+
+    fetch(`/api/appointments?date=${dateStr}&businessId=${business.id}`)
+      .then((res) => {
+        if (!res.ok) throw new Error('Failed to fetch appointments')
+        return res.json()
+      })
+      .then((data) => {
         const appointmentsArray = Array.isArray(data) ? data : []
-        
+
         const withMasters = appointmentsArray.map((apt: Appointment) => {
-          const master = mastersArray.find((m: any) => m.id === apt.masterId)
-          return { ...apt, masterName: master?.name || 'Невідомий спеціаліст' }
+          const master = masters.find((m: any) => m.id === apt.masterId)
+          return { ...apt, masterName: master?.name || apt.masterName || 'Невідомий спеціаліст' }
         })
+
         setTodayAppointments(withMasters)
         setLoading(false)
       })
       .catch((error) => {
-        console.error('Error loading data:', error)
+        console.error('Error loading appointments:', error)
         setTodayAppointments([])
         setLoading(false)
       })
-  }, [business, selectedDate])
+  }, [business, selectedDate, masters])
 
   const handleAddTask = () => {
     router.push('/dashboard/appointments')

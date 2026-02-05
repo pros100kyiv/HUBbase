@@ -111,7 +111,7 @@ export default function AppointmentsPage() {
     const end = endOfMonth(currentMonth)
     const startStr = format(start, 'yyyy-MM-dd')
     const endStr = format(end, 'yyyy-MM-dd')
-    
+
     fetch(`/api/appointments?businessId=${business.id}&startDate=${startStr}&endDate=${endStr}`)
       .then((res) => {
         if (!res.ok) throw new Error(`Failed to fetch appointments: ${res.status}`)
@@ -128,7 +128,22 @@ export default function AppointmentsPage() {
         console.error('Error loading appointments:', error)
         setAppointments([])
       })
-  }, [business, currentMonth, masters])
+    // Intentionally NOT depending on `masters` to avoid refetch loops.
+    // Master names will be patched in a separate effect below.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [business, currentMonth])
+
+  // Patch masterName when masters list arrives/changes (without refetching appointments)
+  useEffect(() => {
+    if (masters.length === 0) return
+    setAppointments((prev) =>
+      prev.map((apt) => {
+        const master = masters.find((m: any) => m.id === apt.masterId)
+        const nextName = master?.name || apt.master?.name || apt.masterName || 'Невідомий спеціаліст'
+        return apt.masterName === nextName ? apt : { ...apt, masterName: nextName }
+      })
+    )
+  }, [masters])
 
   const handleAppointmentCreated = () => {
     setShowCreateForm(false)
