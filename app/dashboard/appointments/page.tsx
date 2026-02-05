@@ -599,9 +599,9 @@ export default function AppointmentsPage() {
             )}
           </div>
 
-          {/* Selected Date Details */}
+          {/* Selected Date Details — базовий стиль */}
           {selectedDate && (
-            <div className="rounded-xl p-4 md:p-6 card-floating">
+            <div className="rounded-xl p-4 md:p-6 bg-[#1A1A1A] border border-white/10 text-white">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
                   {format(selectedDate, 'd MMMM yyyy', { locale: uk })}
