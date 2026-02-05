@@ -1,6 +1,36 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+function normalizeUaPhone(phone: string): string {
+  // Нормалізуємо телефон клієнта до формату +380XXXXXXXXX
+  let normalizedPhone = String(phone || '')
+    .replace(/\s/g, '')
+    .replace(/[()-]/g, '')
+    .trim()
+
+  if (normalizedPhone.startsWith('0')) {
+    normalizedPhone = `+380${normalizedPhone.slice(1)}`
+  } else if (normalizedPhone.startsWith('380')) {
+    normalizedPhone = `+${normalizedPhone}`
+  } else if (!normalizedPhone.startsWith('+380')) {
+    normalizedPhone = `+380${normalizedPhone}`
+  }
+
+  return normalizedPhone
+}
+
+function normalizeServicesToJsonArrayString(services: unknown): string | null {
+  // В БД зберігаємо JSON-рядок масиву ID послуг: '["id1","id2"]'
+  // Приймаємо як масив, так і рядок JSON.
+  try {
+    const parsed = typeof services === 'string' ? JSON.parse(services) : services
+    if (!Array.isArray(parsed) || parsed.length === 0) return null
+    return JSON.stringify(parsed)
+  } catch {
+    return null
+  }
+}
+
 function checkConflict(
   businessId: string,
   masterId: string,
@@ -54,67 +84,58 @@ export async function POST(request: Request) {
       )
     }
 
-    // Нормалізуємо телефон клієнта
-    let normalizedPhone = clientPhone.replace(/\s/g, '').replace(/[()-]/g, '')
-    if (normalizedPhone.startsWith('0')) {
-      normalizedPhone = `+380${normalizedPhone.slice(1)}`
-    } else if (normalizedPhone.startsWith('380')) {
-      normalizedPhone = `+${normalizedPhone}`
-    } else if (!normalizedPhone.startsWith('+380')) {
-      normalizedPhone = `+380${normalizedPhone}`
+    const normalizedPhone = normalizeUaPhone(clientPhone)
+    const normalizedClientName = String(clientName || '').trim()
+    const normalizedClientEmail =
+      typeof clientEmail === 'string' && clientEmail.trim() ? clientEmail.trim() : null
+
+    const servicesJson = normalizeServicesToJsonArrayString(services)
+    if (!servicesJson) {
+      return NextResponse.json(
+        { error: 'Invalid services format. Expected non-empty array of service IDs.' },
+        { status: 400 }
+      )
     }
 
-    // Автоматично створюємо або оновлюємо клієнта
-    let clientId: string | null = null
-    try {
-      const existingClient = await prisma.client.findFirst({
+    // КРИТИЧНО: гарантуємо, що клієнт з’явиться у вкладці "Клієнти"
+    // Робимо upsert по @@unique([businessId, phone]) — без race condition та без дублікатів.
+    const { client, appointment } = await prisma.$transaction(async (tx) => {
+      const ensuredClient = await tx.client.upsert({
         where: {
+          businessId_phone: {
+            businessId,
+            phone: normalizedPhone,
+          },
+        },
+        create: {
           businessId,
+          name: normalizedClientName,
           phone: normalizedPhone,
+          email: normalizedClientEmail,
+        },
+        update: {
+          name: normalizedClientName,
+          ...(normalizedClientEmail !== null ? { email: normalizedClientEmail } : {}),
         },
       })
 
-      if (existingClient) {
-        // Оновлюємо існуючого клієнта
-        await prisma.client.update({
-          where: { id: existingClient.id },
-          data: {
-            name: clientName.trim(),
-            email: clientEmail?.trim() || null,
-          },
-        })
-        clientId = existingClient.id
-      } else {
-        // Створюємо нового клієнта
-        const newClient = await prisma.client.create({
-          data: {
-            businessId,
-            name: clientName.trim(),
-            phone: normalizedPhone,
-            email: clientEmail?.trim() || null,
-          },
-        })
-        clientId = newClient.id
-      }
-    } catch (clientError) {
-      console.error('Error creating/updating client:', clientError)
-      // Продовжуємо створення запису навіть якщо не вдалося створити клієнта
-    }
+      const createdAppointment = await tx.appointment.create({
+        data: {
+          businessId,
+          masterId,
+          clientId: ensuredClient.id,
+          clientName: normalizedClientName,
+          clientPhone: normalizedPhone,
+          clientEmail: normalizedClientEmail,
+          startTime: start,
+          endTime: end,
+          services: servicesJson,
+          notes: typeof notes === 'string' && notes.trim() ? notes.trim() : null,
+          status: 'Pending',
+        },
+      })
 
-    const appointment = await prisma.appointment.create({
-      data: {
-        businessId,
-        masterId,
-        clientId: clientId || undefined,
-        clientName: clientName.trim(),
-        clientPhone: normalizedPhone,
-        clientEmail: clientEmail?.trim() || null,
-        startTime: start,
-        endTime: end,
-        services: JSON.stringify(services),
-        notes: notes?.trim() || null,
-        status: 'Pending',
-      },
+      return { client: ensuredClient, appointment: createdAppointment }
     })
 
     // Автоматично додаємо номер телефону клієнта в Реєстр телефонів
@@ -123,8 +144,8 @@ export async function POST(request: Request) {
       await addClientPhoneToDirectory(
         normalizedPhone,
         businessId,
-        clientId || undefined,
-        clientName.trim()
+        client.id,
+        normalizedClientName
       )
     } catch (error) {
       console.error('Error adding client phone to directory:', error)
