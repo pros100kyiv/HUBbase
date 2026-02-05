@@ -5,6 +5,7 @@ import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { XIcon, CheckIcon, ClockIcon } from '@/components/icons'
 import { ModalPortal } from '@/components/ui/modal-portal'
+import { toast } from '@/components/ui/toast'
 
 interface Appointment {
   id: string
@@ -189,14 +190,19 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
       const response = await fetch(`/api/appointments/${appointmentId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: 'Confirmed' }),
+        body: JSON.stringify({ businessId, status: 'Confirmed' }),
       })
       if (response.ok) {
+        toast({ title: 'Запис підтверджено', type: 'success' })
         await loadPendingAppointments()
         onUpdate()
+      } else {
+        const err = await response.json().catch(() => ({}))
+        toast({ title: 'Помилка', description: err.error || 'Не вдалося підтвердити', type: 'error' })
       }
     } catch (error) {
       console.error('Error confirming appointment:', error)
+      toast({ title: 'Помилка', description: 'Не вдалося підтвердити запис', type: 'error' })
     } finally {
       setProcessing(null)
     }
@@ -209,16 +215,22 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
+          businessId,
           startTime: newStartTime,
           endTime: newEndTime,
         }),
       })
       if (response.ok) {
+        toast({ title: 'Запис перенесено', type: 'success' })
         await loadPendingAppointments()
         onUpdate()
+      } else {
+        const err = await response.json().catch(() => ({}))
+        toast({ title: 'Помилка', description: err.error || 'Не вдалося перенести (можливо час зайнятий)', type: 'error' })
       }
     } catch (error) {
       console.error('Error rescheduling appointment:', error)
+      toast({ title: 'Помилка', description: 'Не вдалося перенести запис', type: 'error' })
     } finally {
       setProcessing(null)
     }
