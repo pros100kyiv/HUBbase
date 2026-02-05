@@ -4,7 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
-import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon } from '@/components/icons'
+import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, ShareIcon } from '@/components/icons'
 import { NotificationsPanel } from './NotificationsPanel'
 
 interface NavItem {
@@ -65,6 +65,7 @@ export function Sidebar({ className }: SidebarProps) {
     { id: 'appointments', label: 'Записи', icon: <CalendarIcon />, path: '/dashboard/appointments' },
     { id: 'clients', label: 'Клієнти', icon: <UsersIcon />, path: '/dashboard/clients' },
     { id: 'masters', label: 'Спеціалісти', icon: <UserIcon />, path: '/dashboard/masters' },
+    { id: 'social', label: 'Соцмережі', icon: <ShareIcon />, path: '/dashboard/social' },
     { id: 'analytics', label: 'Аналітика', icon: <ChartIcon />, path: '/dashboard/analytics' },
   ]
 
