@@ -30,6 +30,7 @@ export default function MainPage() {
   const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()))
   const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
+  const [refreshKey, setRefreshKey] = useState(0)
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -51,7 +52,7 @@ export default function MainPage() {
     // Load appointments for selected date
     setLoading(true)
     const dateStr = format(selectedDate, 'yyyy-MM-dd')
-
+    
     fetch(`/api/appointments?date=${dateStr}&businessId=${business.id}`)
       .then((res) => {
         if (!res.ok) throw new Error('Failed to fetch appointments')
@@ -73,7 +74,11 @@ export default function MainPage() {
         setTodayAppointments([])
         setLoading(false)
       })
-  }, [business, selectedDate])
+  }, [business, selectedDate, refreshKey])
+
+  const handleRefresh = () => {
+    setRefreshKey(prev => prev + 1)
+  }
 
   if (!business) {
     return (
@@ -132,6 +137,7 @@ export default function MainPage() {
               onBookAppointment={() => router.push('/dashboard/appointments?create=true')}
               selectedDate={selectedDate}
               onDateChange={setSelectedDate}
+              onRefresh={handleRefresh}
             />
           )}
         </div>
