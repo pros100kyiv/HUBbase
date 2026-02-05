@@ -490,7 +490,7 @@ export default function SettingsPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-[60vh] flex items-center justify-center">
         <p className="text-gray-400">Завантаження...</p>
       </div>
     )
@@ -498,7 +498,7 @@ export default function SettingsPage() {
 
   if (!business) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-[60vh] flex items-center justify-center">
         <div className="text-center rounded-xl p-8 card-floating max-w-sm">
           <p className="text-gray-300 mb-4">Бізнес не знайдено</p>
           <Button
@@ -514,7 +514,7 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       <Confetti trigger={showConfetti} />
       <div className="max-w-7xl mx-auto">
         {/* Header + Tabs - dashboard base */}
