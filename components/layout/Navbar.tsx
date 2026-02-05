@@ -12,13 +12,6 @@ import { GlobalSearch } from '@/components/admin/GlobalSearch'
 import { AccountProfileButton } from '@/components/layout/AccountProfileButton'
 import { NotificationsPanel } from '@/components/admin/NotificationsPanel'
 
-// Оновлюємо бізнес при зміні localStorage
-if (typeof window !== 'undefined') {
-  window.addEventListener('storage', () => {
-    window.location.reload()
-  })
-}
-
 export function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
@@ -45,18 +38,33 @@ export function Navbar() {
   useEffect(() => {
     const loadBusiness = () => {
       const businessData = localStorage.getItem('business')
-      if (businessData) {
-        try {
-          setBusiness(JSON.parse(businessData))
-        } catch {}
+      if (!businessData) {
+        setBusiness(null)
+        return
+      }
+      try {
+        const next = JSON.parse(businessData)
+        // Avoid rerender loops: only update when actually changed
+        setBusiness((prev: any) => {
+          const prevId = prev?.id
+          const nextId = next?.id
+          const prevSlug = prev?.slug
+          const nextSlug = next?.slug
+          return prevId === nextId && prevSlug === nextSlug ? prev : next
+        })
+      } catch {
+        setBusiness(null)
       }
     }
     
     loadBusiness()
-    
-    // Оновлюємо при зміні pathname (наприклад після логіну)
-    const interval = setInterval(loadBusiness, 1000)
-    return () => clearInterval(interval)
+
+    // Update when localStorage changes in another tab/window
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === 'business') loadBusiness()
+    }
+    window.addEventListener('storage', onStorage)
+    return () => window.removeEventListener('storage', onStorage)
   }, [pathname])
 
   const { startNavigation } = useNavigationProgress()
