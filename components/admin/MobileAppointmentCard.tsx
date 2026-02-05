@@ -1,6 +1,6 @@
 'use client'
 
-import { format } from 'date-fns'
+import { format, isValid } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { ClockIcon, CheckIcon, XIcon, UserIcon, SettingsIcon } from '@/components/icons'
@@ -28,8 +28,11 @@ export function MobileAppointmentCard({
   onStatusChange,
   onEdit,
 }: MobileAppointmentCardProps) {
-  const startTime = new Date(appointment.startTime)
-  const endTime = new Date(appointment.endTime)
+  const startTimeDate = new Date(appointment.startTime)
+  const endTimeDate = new Date(appointment.endTime)
+  
+  const startTime = isValid(startTimeDate) ? startTimeDate : new Date()
+  const endTime = isValid(endTimeDate) ? endTimeDate : new Date()
 
   const getStatusColor = (status: string) => {
     switch (status) {

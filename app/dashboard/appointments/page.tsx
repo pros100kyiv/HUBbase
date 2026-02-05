@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, eachDayOfInterval } from 'date-fns'
+import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, eachDayOfInterval, isValid } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
 import { CreateAppointmentForm } from '@/components/admin/CreateAppointmentForm'
@@ -34,6 +34,7 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [calendarReady, setCalendarReady] = useState(false)
   const [currentMonth, setCurrentMonth] = useState<Date | null>(null)
+  const [clientToday, setClientToday] = useState<Date | null>(null)
   const [selectedDate, setSelectedDate] = useState<Date | null>(null)
 
   // Initialize calendar dates only on client to avoid hydration mismatch
@@ -41,6 +42,7 @@ export default function AppointmentsPage() {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     setCurrentMonth(today)
+    setClientToday(today)
     setCalendarReady(true)
   }, [])
   const [filterStatus, setFilterStatus] = useState<string>('all')
@@ -558,7 +560,7 @@ export default function AppointmentsPage() {
                   ))}
                   {calendarDays.map((day) => {
                     const dayAppointments = getAppointmentsForDay(day)
-                    const isToday = isSameDay(day, new Date())
+                    const isToday = clientToday ? isSameDay(day, clientToday) : false
                     const isSelected = selectedDate && isSameDay(day, selectedDate)
                     const isDayInCurrentMonth = currentMonth !== null && day.getMonth() === currentMonth.getMonth()
 
@@ -580,7 +582,7 @@ export default function AppointmentsPage() {
                           isDayInCurrentMonth && 'cursor-pointer'
                         )}
                       >
-                        <span className="text-sm font-semibold">
+                        <span className={cn("text-sm font-semibold", isToday ? "text-white font-bold" : "")}>
                           {format(day, 'd')}
                         </span>
                         {dayAppointments.length > 0 && (
