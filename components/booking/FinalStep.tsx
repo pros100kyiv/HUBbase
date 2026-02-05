@@ -2,11 +2,9 @@
 
 import { useState } from 'react'
 import { useBooking } from '@/contexts/BookingContext'
-import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
-import { Card, CardContent } from '@/components/ui/card'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
+import { cn } from '@/lib/utils'
 
 interface FinalStepProps {
   businessId?: string
@@ -87,80 +85,64 @@ export function FinalStep({ businessId }: FinalStepProps) {
   const totalPrice = state.selectedServices.reduce((sum, s) => sum + s.price, 0)
 
   return (
-    <div className="min-h-screen bg-gray-900 dark:bg-gray-950 py-6 px-3">
+    <div className="min-h-screen py-6 px-3 md:px-6">
       <div className="max-w-2xl mx-auto">
-        <h2 className="text-2xl md:text-3xl font-black mb-4 text-center text-white">
-          КОНТАКТНІ ДАНІ
+        <h2 className="text-xl md:text-2xl font-bold mb-4 text-center text-white" style={{ letterSpacing: '-0.02em' }}>
+          Контактні дані
         </h2>
 
-        <div className="bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-candy-sm p-3 mb-3">
-          <div className="space-y-3">
+        <div className="rounded-xl p-4 mb-4 card-floating">
+          <div className="space-y-4">
             <div>
-              <label className="block text-sm font-bold mb-1.5 text-white">Ім'я *</label>
-              <Input
+              <label className="block text-sm font-medium mb-1.5 text-gray-300">Ім'я *</label>
+              <input
                 value={state.clientName}
                 onChange={(e) => setClientName(e.target.value)}
                 placeholder="Ваше ім'я"
-                className={`text-sm bg-white/10 dark:bg-white/5 border-white/20 text-white placeholder:text-white/50 ${errors.name ? 'border-red-500' : ''}`}
+                className={cn(
+                  'w-full px-4 py-2.5 rounded-lg border text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30',
+                  errors.name ? 'border-red-500 bg-red-500/10' : 'border-white/20 bg-white/10 focus:bg-white/15'
+                )}
               />
-              {errors.name && (
-                <p className="text-red-500 text-xs mt-1">{errors.name}</p>
-              )}
+              {errors.name && <p className="text-red-400 text-xs mt-1">{errors.name}</p>}
             </div>
-
             <div>
-              <label className="block text-sm font-bold mb-1.5 text-white">Телефон *</label>
-              <Input
+              <label className="block text-sm font-medium mb-1.5 text-gray-300">Телефон *</label>
+              <input
                 value={state.clientPhone}
                 onChange={(e) => setClientPhone(e.target.value)}
                 placeholder="+380XXXXXXXXX"
-                className={`text-sm bg-white/10 dark:bg-white/5 border-white/20 text-white placeholder:text-white/50 ${errors.phone ? 'border-red-500' : ''}`}
+                className={cn(
+                  'w-full px-4 py-2.5 rounded-lg border text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30',
+                  errors.phone ? 'border-red-500 bg-red-500/10' : 'border-white/20 bg-white/10 focus:bg-white/15'
+                )}
               />
-              {errors.phone && (
-                <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
-              )}
+              {errors.phone && <p className="text-red-400 text-xs mt-1">{errors.phone}</p>}
             </div>
           </div>
         </div>
 
-        {/* Summary */}
-        <div className="bg-white/10 dark:bg-white/5 border border-white/20 dark:border-white/10 rounded-candy-sm p-3 mb-4">
-          <h3 className="text-base font-black mb-3 text-white">Деталі запису:</h3>
-          <div className="space-y-1.5 text-xs">
-            <div className="flex justify-between">
-              <span className="text-white/70">Майстер:</span>
-              <span className="font-bold text-white">{state.selectedMaster?.name}</span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/70">Дата та час:</span>
-              <span className="font-bold text-white">
-                {state.selectedDate &&
-                  format(state.selectedDate, 'd MMMM yyyy', { locale: uk })}
-                , {state.selectedTime}
-              </span>
-            </div>
-            <div className="flex justify-between">
-              <span className="text-white/70">Послуги:</span>
-              <span className="font-bold text-white text-right max-w-[60%]">{state.selectedServices.map(s => s.name).join(', ')}</span>
-            </div>
-            <div className="flex justify-between pt-2 border-t border-white/20">
-              <span className="font-bold text-white">Всього:</span>
-              <span className="text-lg font-black text-white">{totalPrice} ₴</span>
-            </div>
+        <div className="rounded-xl p-4 mb-4 card-floating">
+          <h3 className="text-base font-semibold mb-3 text-white">Деталі запису:</h3>
+          <div className="space-y-1.5 text-sm">
+            <div className="flex justify-between"><span className="text-gray-400">Майстер:</span><span className="font-medium text-white">{state.selectedMaster?.name}</span></div>
+            <div className="flex justify-between"><span className="text-gray-400">Дата та час:</span><span className="font-medium text-white">{state.selectedDate && format(state.selectedDate, 'd MMMM yyyy', { locale: uk })}, {state.selectedTime}</span></div>
+            <div className="flex justify-between"><span className="text-gray-400">Послуги:</span><span className="font-medium text-white text-right max-w-[60%]">{state.selectedServices.map(s => s.name).join(', ')}</span></div>
+            <div className="flex justify-between pt-2 border-t border-white/10"><span className="font-semibold text-white">Всього:</span><span className="text-lg font-bold text-white">{totalPrice} ₴</span></div>
           </div>
         </div>
 
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={() => setStep(3)} className="btn-secondary flex-1">
-            Назад
-          </Button>
-          <Button
+        <div className="flex gap-3">
+          <button type="button" onClick={() => setStep(3)} className="flex-1 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors">Назад</button>
+          <button
+            type="button"
             onClick={handleSubmit}
             disabled={isSubmitting}
-            className="btn-primary flex-1"
+            className="flex-1 py-2.5 rounded-lg bg-white text-black text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
           >
             {isSubmitting ? 'Відправка...' : 'Підтвердити запис'}
-          </Button>
+          </button>
         </div>
       </div>
     </div>

@@ -19,6 +19,9 @@ pnpm-debug.log*
 .vscode
 .idea
 
+# Vercel
+.vercel
+
 # OS
 .DS_Store
 Thumbs.db

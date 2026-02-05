@@ -282,3 +282,9 @@ export const ArrowUpIcon = ({ className = "w-5 h-5" }: { className?: string }) =
   </svg>
 )
 
+export const QRIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h2.586a1 1 0 01.707.293l6.414 6.414a1 1 0 01.293.707V17a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M3 9v6a2 2 0 002 2h2v-2H5V9H3z M17 3h2a2 2 0 012 2v2h-2V5h-2V3z M9 3H7v2h2V3z M9 17h2v-2H9v2z M17 13h2v-2h-2v2z M17 17h2v-2h-2v2z M13 17h2v-2h-2v2z" />
+  </svg>
+)
+

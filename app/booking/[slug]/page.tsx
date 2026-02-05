@@ -76,22 +76,22 @@ export default function BookingPage() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-body">Завантаження...</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-400">Завантаження...</p>
       </div>
     )
   }
 
   if (!business) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-body">Бізнес не знайдено</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-400">Бізнес не знайдено</p>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen">
       {steps[state.step]}
     </div>
   )

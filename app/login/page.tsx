@@ -105,21 +105,13 @@ function LoginForm() {
 
   return (
     <div className="relative min-h-screen flex items-center justify-center overflow-hidden py-12 px-4">
-      {/* Blurred Background with Barber/Salon Tools */}
-      <div className="absolute inset-0 z-0">
-        <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1920')] bg-cover bg-center" />
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-md" />
-      </div>
-
-      {/* Dark Gray Form with Rounded Corners */}
-      <div className="relative z-10 w-full max-w-md bg-gray-800 dark:bg-gray-900 border border-gray-700 rounded-candy-lg backdrop-blur-sm shadow-soft-xl p-8">
-        {/* Blue Title */}
-        <h2 className="text-3xl md:text-4xl font-black mb-6 text-candy-blue dark:text-blue-400 text-center uppercase">
-          ВХІД ДЛЯ БІЗНЕСУ
+      {/* Form card - base style (card-floating) */}
+      <div className="relative z-10 w-full max-w-md rounded-xl p-6 md:p-8 card-floating">
+        <h2 className="text-xl md:text-2xl font-bold mb-6 text-white text-center" style={{ letterSpacing: '-0.02em' }}>
+          Вхід для бізнесу
         </h2>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
-          {/* Email Field */}
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-300">Email *</label>
             <input
@@ -128,23 +120,20 @@ function LoginForm() {
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="your@email.com"
               required
-              className={`w-full px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 border ${
-                errors.email ? 'border-red-500' : 'border-gray-600'
-              } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+              className={`w-full px-4 py-2.5 rounded-lg border text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 ${
+                errors.email ? 'border-red-500 bg-red-500/10' : 'border-white/20 bg-white/10 focus:bg-white/15'
+              }`}
             />
-            {errors.email && (
-              <p className="text-red-400 text-xs mt-1">{errors.email}</p>
-            )}
+            {errors.email && <p className="text-red-400 text-xs mt-1">{errors.email}</p>}
           </div>
 
-          {/* Password Field */}
           <div>
             <div className="flex items-center justify-between mb-2">
               <label className="block text-sm font-medium text-gray-300">Пароль *</label>
               <button
                 type="button"
                 onClick={() => router.push('/forgot-password')}
-                className="text-xs text-candy-blue hover:text-candy-purple hover:underline"
+                className="text-xs text-gray-300 hover:text-white transition-colors"
               >
                 Забули пароль?
               </button>
@@ -155,48 +144,39 @@ function LoginForm() {
               onChange={(e) => setFormData({ ...formData, password: e.target.value })}
               placeholder="Ваш пароль"
               required
-              className={`w-full px-4 py-3 rounded-lg bg-gray-700 text-white placeholder-gray-400 border ${
-                errors.password ? 'border-red-500' : 'border-gray-600'
-              } focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent`}
+              className={`w-full px-4 py-2.5 rounded-lg border text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 ${
+                errors.password ? 'border-red-500 bg-red-500/10' : 'border-white/20 bg-white/10 focus:bg-white/15'
+              }`}
             />
-            {errors.password && (
-              <p className="text-red-400 text-xs mt-1">{errors.password}</p>
-            )}
+            {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password}</p>}
           </div>
 
           {errors.submit && (
-            <div className="bg-red-500/20 border border-red-500 rounded-lg p-3">
+            <div className="bg-red-500/20 border border-red-500/50 rounded-lg p-3">
               <p className="text-red-400 text-sm">{errors.submit}</p>
             </div>
           )}
 
-          {/* Blue Gradient Button */}
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full py-3 rounded-candy-sm bg-gradient-to-r from-candy-blue to-candy-purple text-white font-bold text-lg shadow-soft-lg hover:from-candy-blue/90 hover:to-candy-purple/90 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full py-3 rounded-lg bg-white text-black font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
           >
             {isLoading ? 'Вхід...' : 'Увійти'}
           </button>
 
-          {/* Divider with "або" */}
-          <div className="relative my-6">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-600"></div>
-            </div>
-            <div className="relative flex justify-center text-sm">
-              <span className="px-3 bg-gray-800 dark:bg-gray-900 text-gray-400">або</span>
-            </div>
+          <div className="relative my-5">
+            <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10" /></div>
+            <div className="relative flex justify-center text-sm"><span className="px-3 bg-transparent text-gray-400">або</span></div>
           </div>
 
-          {/* Google Login Button - White with Colored Logo */}
           <button
             type="button"
             disabled={isLoading}
-            onClick={() => {
-              window.location.href = '/api/auth/google'
-            }}
-            className="w-full py-3 rounded-lg bg-white text-gray-700 font-medium flex items-center justify-center gap-3 hover:bg-gray-50 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md"
+            onClick={() => { window.location.href = '/api/auth/google' }}
+            className="w-full py-3 rounded-lg bg-white text-black font-medium flex items-center justify-center gap-3 hover:bg-gray-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
           >
             <svg className="w-5 h-5" viewBox="0 0 24 24">
               <path
@@ -225,14 +205,9 @@ function LoginForm() {
             isRegister={false}
           />
 
-          {/* Registration Link */}
           <div className="text-center text-sm text-gray-400 pt-2">
             Немає акаунту?{' '}
-            <button
-              type="button"
-              onClick={() => router.push('/register')}
-              className="text-candy-blue hover:text-candy-purple hover:underline font-medium"
-            >
+            <button type="button" onClick={() => router.push('/register')} className="text-gray-300 hover:text-white font-medium transition-colors">
               Зареєструватися
             </button>
           </div>
@@ -256,14 +231,8 @@ export default function LoginPage() {
   return (
     <Suspense fallback={
       <div className="relative min-h-screen flex items-center justify-center overflow-hidden py-12 px-4">
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1621605815971-fbc98d665033?w=1920')] bg-cover bg-center" />
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-md" />
-        </div>
-        <div className="relative z-10 w-full max-w-md bg-gray-800 dark:bg-gray-900 border border-gray-700 rounded-candy-lg backdrop-blur-sm shadow-soft-xl p-8">
-          <h2 className="text-3xl md:text-4xl font-black mb-6 text-candy-blue dark:text-blue-400 text-center uppercase">
-            ВХІД ДЛЯ БІЗНЕСУ
-          </h2>
+        <div className="relative z-10 w-full max-w-md rounded-xl p-8 card-floating">
+          <h2 className="text-xl md:text-2xl font-bold mb-6 text-white text-center" style={{ letterSpacing: '-0.02em' }}>Вхід для бізнесу</h2>
           <div className="text-center text-gray-400">Завантаження...</div>
         </div>
       </div>

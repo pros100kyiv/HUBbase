@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { useEffect, useState } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
-import { SunIcon, MoonIcon, MenuIcon } from '@/components/icons'
+import { SunIcon, MoonIcon, MenuIcon, QRIcon } from '@/components/icons'
 import { setMobileMenuState } from '@/app/dashboard/layout'
 import { AccountInfo } from '@/components/layout/AccountInfo'
 import { GlobalSearch } from '@/components/admin/GlobalSearch'
@@ -112,6 +112,17 @@ export function Navbar() {
                   Записати
                 </button>
                 
+                {/* QR Code - open QR page for booking */}
+                {business?.slug && (
+                  <button
+                    onClick={() => window.open(`/qr/${business.slug}`, '_blank')}
+                    className="p-2 rounded-lg hover:bg-white/10 transition-colors border border-white/10"
+                    title="QR код для бронювання"
+                    aria-label="QR код для бронювання"
+                  >
+                    <QRIcon className="w-5 h-5 text-white" />
+                  </button>
+                )}
                 {/* Search Button */}
                 <button 
                   onClick={() => setSearchOpen(true)}
