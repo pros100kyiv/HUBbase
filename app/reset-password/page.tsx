@@ -161,7 +161,7 @@ function ResetPasswordForm() {
         </Button>
 
         <div className="text-center text-sm text-gray-400 pt-2">
-          <button type="button" onClick={() => router.push('/login')} className="text-gray-300 hover:text-white font-medium transition-colors">
+          <button type="button" onClick={() => router.push('/login')} className="text-gray-300 hover:text-white font-medium transition-colors active:opacity-70">
             Повернутися до входу
           </button>
         </div>

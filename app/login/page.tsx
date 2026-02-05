@@ -129,12 +129,12 @@ function LoginForm() {
           <div className="flex items-center justify-between mb-2">
             <label className="block text-sm font-medium text-gray-300">Пароль *</label>
             <button
-              type="button"
-              onClick={() => router.push('/forgot-password')}
-              className="text-xs text-gray-300 hover:text-white transition-colors"
-            >
-              Забули пароль?
-            </button>
+                type="button"
+                onClick={() => router.push('/forgot-password')}
+                className="text-xs text-gray-300 hover:text-white transition-colors active:opacity-70"
+              >
+                Забули пароль?
+              </button>
           </div>
           <Input
             type="password"
@@ -185,7 +185,7 @@ function LoginForm() {
 
         <div className="text-center text-sm text-gray-400 pt-2">
           Немає акаунту?{' '}
-          <button type="button" onClick={() => router.push('/register')} className="text-gray-300 hover:text-white font-medium transition-colors">
+          <button type="button" onClick={() => router.push('/register')} className="text-gray-300 hover:text-white font-medium transition-colors active:opacity-70">
             Зареєструватися
           </button>
         </div>

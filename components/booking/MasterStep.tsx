@@ -127,7 +127,7 @@ export function MasterStep({ businessId }: MasterStepProps) {
         </div>
 
         <div className="flex gap-3">
-          <button type="button" onClick={() => setStep(1)} className="flex-1 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors">
+          <button type="button" onClick={() => setStep(1)} className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors active:scale-[0.98]">
             Назад
           </button>
           <button

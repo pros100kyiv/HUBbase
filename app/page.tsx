@@ -71,19 +71,19 @@ export default function Home() {
           <div className="flex flex-wrap gap-2 justify-center">
             <button
               onClick={() => router.push('/test-flow')}
-              className="bg-gray-700 dark:bg-gray-800 border border-gray-600 dark:border-gray-500 text-gray-300 dark:text-gray-300 px-4 py-2 text-xs font-medium hover:bg-gray-600 dark:hover:bg-gray-700 transition-all rounded-candy-xs"
+              className="bg-gray-700 dark:bg-gray-800 border border-gray-600 dark:border-gray-500 text-gray-300 dark:text-gray-300 px-4 py-2 text-xs font-medium hover:bg-gray-600 dark:hover:bg-gray-700 transition-all rounded-candy-xs active:scale-[0.98]"
             >
               🧪 Тестовий потік
             </button>
             <button
               onClick={() => router.push('/booking/045-barbershop')}
-              className="bg-gray-700 dark:bg-gray-800 border border-gray-600 dark:border-gray-500 text-gray-300 dark:text-gray-300 px-4 py-2 text-xs font-medium hover:bg-gray-600 dark:hover:bg-gray-700 transition-all rounded-candy-xs"
+              className="bg-gray-700 dark:bg-gray-800 border border-gray-600 dark:border-gray-500 text-gray-300 dark:text-gray-300 px-4 py-2 text-xs font-medium hover:bg-gray-600 dark:hover:bg-gray-700 transition-all rounded-candy-xs active:scale-[0.98]"
             >
               📅 Приклад бронювання
             </button>
             <button
               onClick={() => router.push('/qr/045-barbershop')}
-              className="bg-gray-700 dark:bg-gray-800 border border-gray-600 dark:border-gray-500 text-gray-300 dark:text-gray-300 px-4 py-2 text-xs font-medium hover:bg-gray-600 dark:hover:bg-gray-700 transition-all rounded-candy-xs"
+              className="bg-gray-700 dark:bg-gray-800 border border-gray-600 dark:border-gray-500 text-gray-300 dark:text-gray-300 px-4 py-2 text-xs font-medium hover:bg-gray-600 dark:hover:bg-gray-700 transition-all rounded-candy-xs active:scale-[0.98]"
             >
               📱 Приклад QR
             </button>
