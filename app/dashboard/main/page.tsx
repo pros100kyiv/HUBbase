@@ -11,6 +11,7 @@ import { TasksInProcessCard } from '@/components/admin/TasksInProcessCard'
 import { AddTaskCard } from '@/components/admin/AddTaskCard'
 import { LastProjectsCard } from '@/components/admin/LastProjectsCard'
 import { SocialMessagesCard } from '@/components/admin/SocialMessagesCard'
+import { toast } from '@/components/ui/toast'
 
 interface Appointment {
   id: string
@@ -111,6 +112,39 @@ export default function MainPage() {
     router.push('/dashboard/appointments')
   }
 
+  const handleStatusChange = async (id: string, status: string) => {
+    if (!business) return
+    
+    try {
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status, businessId: business.id }),
+      })
+
+      if (response.ok) {
+        setTodayAppointments((prev) =>
+          prev.map((apt) => (apt.id === id ? { ...apt, status } : apt))
+        )
+        toast({ title: 'Статус оновлено', type: 'success' })
+      } else {
+        const error = await response.json()
+        toast({
+          title: 'Помилка',
+          description: error.error || 'Не вдалося оновити статус',
+          type: 'error',
+        })
+      }
+    } catch (error) {
+      console.error('Error updating status:', error)
+      toast({
+        title: 'Помилка',
+        description: 'Не вдалося оновити статус',
+        type: 'error',
+      })
+    }
+  }
+
   if (!business || loading) {
     return (
       <div className="max-w-7xl mx-auto">
@@ -191,6 +225,7 @@ export default function MainPage() {
             onBookAppointment={() => router.push('/dashboard/appointments?create=true')}
             selectedDate={selectedDate}
             onDateChange={setSelectedDate}
+            onStatusChange={handleStatusChange}
           />
 
           {/* Tasks Section */}
