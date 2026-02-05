@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
@@ -251,18 +251,18 @@ export default function ClientsPage() {
     switch (status) {
       case 'Pending':
       case 'Очікує':
-        return 'bg-candy-orange/10 text-candy-orange border-candy-orange'
+        return 'bg-orange-500/20 text-orange-400 border-orange-500/50'
       case 'Confirmed':
       case 'Підтверджено':
-        return 'bg-candy-mint/10 text-candy-mint border-candy-mint'
+        return 'bg-green-500/20 text-green-400 border-green-500/50'
       case 'Done':
       case 'Виконано':
-        return 'bg-candy-blue/10 text-candy-blue border-candy-blue'
+        return 'bg-blue-500/20 text-blue-400 border-blue-500/50'
       case 'Cancelled':
       case 'Скасовано':
-        return 'bg-red-50 text-red-500 border-red-500 dark:bg-red-900/20 dark:text-red-400'
+        return 'bg-red-500/20 text-red-400 border-red-500/50'
       default:
-        return 'bg-gray-50 text-gray-500 border-gray-400'
+        return 'bg-white/10 text-gray-400 border-white/20'
     }
   }
 
@@ -520,211 +520,165 @@ export default function ClientsPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-3">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
-          <div>
-            <h1 className="text-lg md:text-xl font-black text-gray-900 dark:text-white mb-1">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
+        {/* Left Column - Main Content (3 columns) - same as Dashboard */}
+        <div className="lg:col-span-3 space-y-3 md:space-y-6">
+          {/* Header - same style as Dashboard */}
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
               Клієнти
             </h1>
-            <p className="text-xs md:text-sm text-gray-600 dark:text-gray-400">
-              Управління базою клієнтів та їх історією
-            </p>
-          </div>
-          <div className="flex gap-1.5 flex-wrap">
             <button
               onClick={() => {
                 setEditingClient(null)
                 setShowQuickClientCard(true)
               }}
-              className="px-3 py-1.5 bg-gradient-to-r from-candy-blue to-candy-purple text-white font-black rounded-candy-xs text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5"
+              className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] flex-shrink-0"
+              style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
             >
-              <UserIcon className="w-4 h-4" />
               Додати клієнта
             </button>
-            <button
-              onClick={() => setViewMode(viewMode === 'cards' ? 'table' : 'cards')}
-              className="px-2.5 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-xs text-xs font-bold"
-            >
-              {viewMode === 'cards' ? '📊 Таблиця' : '📋 Картки'}
-            </button>
-            <button
-              onClick={handleExportCSV}
-              className="px-2.5 py-1.5 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-xs text-xs font-bold flex items-center gap-1"
-            >
-              <DownloadIcon className="w-3 h-3" />
-              Експорт
-            </button>
-          </div>
-        </div>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-6 gap-2 mb-2">
-          <div className="card-candy p-2 text-center">
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Всього</div>
-            <div className="text-sm font-black text-gray-900 dark:text-white">{stats.total}</div>
-          </div>
-          <div className="card-candy p-2 text-center">
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">VIP</div>
-            <div className="text-sm font-black text-candy-purple">{stats.vip}</div>
-          </div>
-          <div className="card-candy p-2 text-center">
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Активні</div>
-            <div className="text-sm font-black text-candy-mint">{stats.active}</div>
-          </div>
-          <div className="card-candy p-2 text-center">
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Неактивні</div>
-            <div className="text-sm font-black text-candy-orange">{stats.inactive}</div>
-          </div>
-          <div className="card-candy p-2 text-center">
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Дохід</div>
-            <div className="text-sm font-black text-candy-blue">{Math.round(stats.totalRevenue)} грн</div>
-          </div>
-          <div className="card-candy p-2 text-center">
-            <div className="text-xs text-gray-600 dark:text-gray-400 mb-0.5">Середній чек</div>
-            <div className="text-sm font-black text-candy-pink">{Math.round(stats.avgRevenue)} грн</div>
-          </div>
-        </div>
-
-        {/* Search and Filters */}
-        <div className="card-candy p-2 mb-2">
-          <div className="flex flex-col sm:flex-row gap-2">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <SearchIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Пошук за ім'ям, телефоном або email..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
-              />
-            </div>
-            
-            {/* Segment Filter */}
-            <select
-              value={filterSegment}
-              onChange={(e) => setFilterSegment(e.target.value)}
-              className="px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
-            >
-              <option value="all">Всі клієнти</option>
-              <option value="vip">VIP клієнти</option>
-              <option value="active">Активні</option>
-              <option value="inactive">Неактивні</option>
-            </select>
-
-            {/* Sort By */}
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
-            >
-              <option value="name">За ім'ям</option>
-              <option value="visits">За візитами</option>
-              <option value="spent">За витратами</option>
-              <option value="lastVisit">За датою візиту</option>
-            </select>
-
-            {/* Sort Order */}
-            <button
-              onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-              className="px-2.5 py-1.5 text-xs border border-gray-300 dark:border-gray-700 rounded-candy-xs bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
-            >
-              {sortOrder === 'asc' ? '↑' : '↓'}
-            </button>
           </div>
 
-          {/* Bulk Actions */}
-          {selectedClients.size > 0 && (
-            <div className="mt-2 pt-2 border-t border-gray-200 dark:border-gray-700 flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-gray-600 dark:text-gray-400">
-                Вибрано: {selectedClients.size}
-              </span>
-              <div className="flex gap-1.5">
+          {/* Search and Filters - card same as Dashboard */}
+          <div className="rounded-xl p-4 md:p-6 card-floating">
+            <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
+              <div className="flex-1 relative">
+                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Пошук за ім'ям, телефоном або email..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+                />
+              </div>
+              <select
+                value={filterSegment}
+                onChange={(e) => setFilterSegment(e.target.value)}
+                className="px-3 py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+              >
+                <option value="all">Всі клієнти</option>
+                <option value="vip">VIP</option>
+                <option value="active">Активні</option>
+                <option value="inactive">Неактивні</option>
+              </select>
+              <select
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+                className="px-3 py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+              >
+                <option value="name">За ім'ям</option>
+                <option value="visits">За візитами</option>
+                <option value="spent">За витратами</option>
+                <option value="lastVisit">За датою візиту</option>
+              </select>
+              <button
+                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                className="px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
+              >
+                {sortOrder === 'asc' ? '↑' : '↓'}
+              </button>
+              <div className="flex gap-2 flex-shrink-0">
                 <button
-                  onClick={() => {
-                    const selectedClient = clients.find(c => selectedClients.has(c.id))
-                    if (selectedClient) {
-                      window.open(`tel:${selectedClient.phone}`)
-                    }
-                  }}
-                  className="px-2 py-1 text-[10px] bg-candy-blue text-white rounded-candy-xs font-bold hover:opacity-80 transition-all"
+                  onClick={() => setViewMode(viewMode === 'cards' ? 'table' : 'cards')}
+                  className="px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
                 >
-                  📞 Дзвінок
+                  {viewMode === 'cards' ? 'Таблиця' : 'Картки'}
                 </button>
                 <button
-                  onClick={() => {
-                    const selectedClient = clients.find(c => selectedClients.has(c.id))
-                    if (selectedClient) {
-                      router.push(`/dashboard/appointments?clientPhone=${selectedClient.phone}`)
-                    }
-                  }}
-                  className="px-2 py-1 text-[10px] bg-candy-mint text-white rounded-candy-xs font-bold hover:opacity-80 transition-all"
+                  onClick={handleExportCSV}
+                  className="px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
                 >
-                  📅 Запис
-                </button>
-                <button
-                  onClick={() => setSelectedClients(new Set())}
-                  className="px-2 py-1 text-[10px] border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white rounded-candy-xs font-bold hover:bg-gray-50 dark:hover:bg-gray-700 transition-all"
-                >
-                  Скасувати вибір
+                  <DownloadIcon className="w-4 h-4" />
+                  Експорт
                 </button>
               </div>
             </div>
-          )}
-        </div>
-      </div>
-
-      {/* Clients List */}
-      {filteredClients.length === 0 ? (
-        <div className="card-candy p-6 text-center">
-          <div className="mb-4 flex justify-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-candy-purple/20 to-candy-blue/20 rounded-full flex items-center justify-center">
-              <UsersIcon className="w-10 h-10 text-candy-purple" />
-            </div>
+            {selectedClients.size > 0 && (
+              <div className="mt-3 pt-3 border-t border-white/10 flex items-center gap-2 flex-wrap">
+                <span className="text-sm text-gray-300">Вибрано: {selectedClients.size}</span>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      const c = clients.find(x => selectedClients.has(x.id))
+                      if (c) window.open(`tel:${c.phone}`)
+                    }}
+                    className="px-2.5 py-1.5 text-xs bg-blue-500/90 text-white rounded-lg font-medium hover:opacity-90 transition-all"
+                  >
+                    Дзвінок
+                  </button>
+                  <button
+                    onClick={() => {
+                      const c = clients.find(x => selectedClients.has(x.id))
+                      if (c) router.push(`/dashboard/appointments?clientPhone=${c.phone}`)
+                    }}
+                    className="px-2.5 py-1.5 text-xs bg-green-500/90 text-white rounded-lg font-medium hover:opacity-90 transition-all"
+                  >
+                    Запис
+                  </button>
+                  <button
+                    onClick={() => setSelectedClients(new Set())}
+                    className="px-2.5 py-1.5 text-xs border border-white/20 bg-white/10 text-white rounded-lg font-medium hover:bg-white/20 transition-all"
+                  >
+                    Скасувати вибір
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
-          <h3 className="text-base font-black text-gray-900 dark:text-white mb-1.5">
-            {searchQuery ? "Клієнтів не знайдено" : "Немає клієнтів"}
-          </h3>
-          <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-            {searchQuery ? "Спробуйте інший пошуковий запит" : "Додайте першого клієнта або створіть запис"}
-          </p>
-          {!searchQuery && (
-            <button
-              onClick={() => {
-                setEditingClient(null)
-                setShowQuickClientCard(true)
-              }}
-              className="px-3 py-1.5 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-xs text-xs shadow-soft-lg hover:shadow-soft-xl transition-all active:scale-95"
-            >
-              Додати клієнта
-            </button>
-          )}
-        </div>
-      ) : (
-        <div className="space-y-3">
-          {viewMode === 'table' && (
-            <div className="card-candy p-2 overflow-x-auto">
-              <table className="w-full text-xs">
+
+          {/* Clients List */}
+          {filteredClients.length === 0 ? (
+            <div className="rounded-xl p-8 md:p-12 text-center card-floating">
+              <div className="mb-6 flex justify-center">
+                <div className="w-24 h-24 md:w-32 md:h-32 bg-white/10 rounded-full flex items-center justify-center">
+                  <UsersIcon className="w-12 h-12 md:w-16 md:h-16 text-gray-400" />
+                </div>
+              </div>
+              <h3 className="text-lg md:text-xl font-bold text-white mb-2" style={{ letterSpacing: '-0.02em' }}>
+                {searchQuery ? 'Клієнтів не знайдено' : 'Немає клієнтів'}
+              </h3>
+              <p className="text-sm text-gray-300 mb-6">
+                {searchQuery ? 'Спробуйте інший пошуковий запит' : 'Додайте першого клієнта або створіть запис'}
+              </p>
+              {!searchQuery && (
+                <button
+                  onClick={() => {
+                    setEditingClient(null)
+                    setShowQuickClientCard(true)
+                  }}
+                  className="px-4 py-2 md:px-6 md:py-3 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                  style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+                >
+                  Додати клієнта
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-3 md:space-y-6">
+              {viewMode === 'table' && (
+                <div className="rounded-xl p-4 md:p-6 card-floating overflow-x-auto">
+              <table className="w-full text-sm">
                 <thead>
-                  <tr className="border-b border-gray-200 dark:border-gray-700">
-                    <th className="text-left p-2">
+                  <tr className="border-b border-white/10">
+                    <th className="text-left p-3">
                       <button
                         onClick={toggleSelectAll}
-                        className="w-4 h-4 rounded border-2 border-gray-300 dark:border-gray-600 flex items-center justify-center"
+                        className="w-4 h-4 rounded border-2 border-white/30 flex items-center justify-center hover:border-white/50 transition-colors"
                       >
                         {selectedClients.size === filteredClients.length && filteredClients.length > 0 && (
-                          <CheckIcon className="w-3 h-3 text-candy-purple" />
+                          <CheckIcon className="w-3 h-3 text-white" />
                         )}
                       </button>
                     </th>
-                    <th className="text-left p-2 font-black">Ім'я</th>
-                    <th className="text-left p-2 font-black">Телефон</th>
-                    <th className="text-left p-2 font-black">Email</th>
-                    <th className="text-center p-2 font-black">Візити</th>
-                    <th className="text-right p-2 font-black">Зароблено</th>
-                    <th className="text-left p-2 font-black">Останній візит</th>
-                    <th className="text-center p-2 font-black">Дії</th>
+                    <th className="text-left p-3 font-semibold text-white">Ім'я</th>
+                    <th className="text-left p-3 font-semibold text-white">Телефон</th>
+                    <th className="text-left p-3 font-semibold text-white">Email</th>
+                    <th className="text-center p-3 font-semibold text-white">Візити</th>
+                    <th className="text-right p-3 font-semibold text-white">Зароблено</th>
+                    <th className="text-left p-3 font-semibold text-white">Останній візит</th>
+                    <th className="text-center p-3 font-semibold text-white">Дії</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -734,67 +688,37 @@ export default function ClientsPage() {
                       <tr
                         key={client.id}
                         className={cn(
-                          "border-b border-gray-100 dark:border-gray-800 hover:bg-gray-50 dark:hover:bg-gray-700/50",
-                          isSelected && "bg-gradient-to-r from-candy-purple/10 to-candy-blue/10"
+                          'border-b border-white/10 hover:bg-white/5 transition-colors',
+                          isSelected && 'bg-white/10'
                         )}
                       >
-                        <td className="p-2">
+                        <td className="p-3">
                           <button
                             onClick={() => toggleSelectClient(client.id)}
                             className={cn(
-                              "w-4 h-4 rounded border-2 flex items-center justify-center transition-all",
-                              isSelected
-                                ? "bg-candy-purple border-candy-purple"
-                                : "border-gray-300 dark:border-gray-600"
+                              'w-4 h-4 rounded border-2 flex items-center justify-center transition-all',
+                              isSelected ? 'bg-white border-white' : 'border-white/30 hover:border-white/50'
                             )}
                           >
-                            {isSelected && <CheckIcon className="w-3 h-3 text-white" />}
+                            {isSelected && <CheckIcon className="w-3 h-3 text-black" />}
                           </button>
                         </td>
-                        <td className="p-2 font-bold">{client.name}</td>
-                        <td className="p-2">{client.phone}</td>
-                        <td className="p-2 text-gray-600 dark:text-gray-400">{client.email || '-'}</td>
-                        <td className="p-2 text-center">{client.totalAppointments}</td>
-                        <td className="p-2 text-right font-black text-candy-purple">
-                          {Math.round(client.totalSpent)} грн
-                        </td>
-                        <td className="p-2">
-                          {client.lastAppointmentDate 
+                        <td className="p-3 font-medium text-white">{client.name}</td>
+                        <td className="p-3 text-gray-300">{client.phone}</td>
+                        <td className="p-3 text-gray-400">{client.email || '-'}</td>
+                        <td className="p-3 text-center text-white">{client.totalAppointments}</td>
+                        <td className="p-3 text-right font-semibold text-purple-400">{Math.round(client.totalSpent)} грн</td>
+                        <td className="p-3 text-gray-300">
+                          {client.lastAppointmentDate
                             ? format(new Date(client.lastAppointmentDate), 'dd.MM.yyyy')
                             : 'Немає'}
                         </td>
-                        <td className="p-2">
+                        <td className="p-3">
                           <div className="flex gap-1 justify-center">
-                            <button
-                              onClick={() => window.open(`tel:${client.phone}`)}
-                              className="p-1 text-candy-blue hover:bg-candy-blue/10 rounded-candy-xs transition-all"
-                              title="Дзвінок"
-                            >
-                              <PhoneIcon className="w-3 h-3" />
-                            </button>
-                            <button
-                              onClick={() => {
-                                router.push(`/dashboard/appointments?clientPhone=${client.phone}`)
-                              }}
-                              className="p-1 text-candy-mint hover:bg-candy-mint/10 rounded-candy-xs transition-all"
-                              title="Створити запис"
-                            >
-                              <CalendarIcon className="w-3 h-3" />
-                            </button>
-                            <button
-                              onClick={() => handleEditClient(client)}
-                              className="p-1 text-candy-purple hover:bg-candy-purple/10 rounded-candy-xs transition-all"
-                              title="Редагувати"
-                            >
-                              <SettingsIcon className="w-3 h-3" />
-                            </button>
-                            <button
-                              onClick={() => handleDeleteClient(client.id)}
-                              className="p-1 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-candy-xs transition-all"
-                              title="Видалити"
-                            >
-                              <XIcon className="w-3 h-3" />
-                            </button>
+                            <button onClick={() => window.open(`tel:${client.phone}`)} className="p-1.5 text-blue-400 hover:bg-white/10 rounded-lg transition-colors" title="Дзвінок"><PhoneIcon className="w-4 h-4" /></button>
+                            <button onClick={() => router.push(`/dashboard/appointments?clientPhone=${client.phone}`)} className="p-1.5 text-green-400 hover:bg-white/10 rounded-lg transition-colors" title="Запис"><CalendarIcon className="w-4 h-4" /></button>
+                            <button onClick={() => handleEditClient(client)} className="p-1.5 text-gray-300 hover:bg-white/10 rounded-lg transition-colors" title="Редагувати"><SettingsIcon className="w-4 h-4" /></button>
+                            <button onClick={() => handleDeleteClient(client.id)} className="p-1.5 text-red-400 hover:bg-white/10 rounded-lg transition-colors" title="Видалити"><XIcon className="w-4 h-4" /></button>
                           </div>
                         </td>
                       </tr>
@@ -814,96 +738,52 @@ export default function ClientsPage() {
               <div
                 key={client.id}
                 className={cn(
-                  "card-candy overflow-hidden transition-all",
-                  isExpanded && "shadow-soft-2xl",
-                  isSelected && "ring-2 ring-candy-purple"
+                  'rounded-xl overflow-hidden transition-all card-floating',
+                  isExpanded && 'shadow-lg',
+                  isSelected && 'ring-2 ring-white/50'
                 )}
               >
-                <div className="w-full p-3">
+                <div className="w-full p-4 md:p-5">
                   <div className="flex items-center justify-between gap-4">
                     <div className="flex items-center gap-3 flex-1 min-w-0">
                       <button
                         onClick={() => toggleSelectClient(client.id)}
                         className={cn(
-                          "w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all",
-                          isSelected
-                            ? "bg-candy-purple border-candy-purple"
-                            : "border-gray-300 dark:border-gray-600"
+                          'w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-all',
+                          isSelected ? 'bg-white border-white' : 'border-white/30 hover:border-white/50'
                         )}
                       >
-                        {isSelected && <CheckIcon className="w-3 h-3 text-white" />}
+                        {isSelected && <CheckIcon className="w-3 h-3 text-black" />}
                       </button>
-                      <div className="w-10 h-10 rounded-full bg-gradient-to-r from-candy-purple to-candy-blue flex items-center justify-center text-white font-black text-sm flex-shrink-0">
+                      <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
                         {client.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="text-sm font-black text-gray-900 dark:text-white truncate mb-0.5">
+                        <h3 className="text-sm font-semibold text-white truncate mb-0.5">
                           {client.name}
                         </h3>
-                        <p className="text-xs text-gray-600 dark:text-gray-400 truncate">
-                          {client.phone}
-                        </p>
+                        <p className="text-xs text-gray-300 truncate">{client.phone}</p>
                         {client.email && (
-                          <p className="text-[10px] text-gray-500 dark:text-gray-500 truncate">
-                            {client.email}
-                          </p>
+                          <p className="text-[10px] text-gray-400 truncate">{client.email}</p>
                         )}
                       </div>
                     </div>
-
                     <div className="flex items-center gap-3 flex-shrink-0">
                       <div className="text-center">
-                        <div className="text-sm font-black text-candy-purple">
-                          {client.totalAppointments}
-                        </div>
-                        <div className="text-[10px] text-gray-500 dark:text-gray-400">Візитів</div>
+                        <div className="text-sm font-semibold text-purple-400">{client.totalAppointments}</div>
+                        <div className="text-[10px] text-gray-400">Візитів</div>
                       </div>
                       <div className="text-center">
-                        <div className="text-sm font-black text-candy-blue">
-                          {Math.round(client.totalSpent)} грн
-                        </div>
-                        <div className="text-[10px] text-gray-500 dark:text-gray-400">Зароблено</div>
+                        <div className="text-sm font-semibold text-blue-400">{Math.round(client.totalSpent)} грн</div>
+                        <div className="text-[10px] text-gray-400">Зароблено</div>
                       </div>
                       <div className="flex gap-1">
-                        <button
-                          onClick={() => window.open(`tel:${client.phone}`)}
-                          className="p-1.5 text-candy-blue hover:bg-candy-blue/10 rounded-candy-xs transition-all"
-                          title="Дзвінок"
-                        >
-                          <PhoneIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            router.push(`/dashboard/appointments?clientPhone=${client.phone}`)
-                          }}
-                          className="p-1.5 text-candy-mint hover:bg-candy-mint/10 rounded-candy-xs transition-all"
-                          title="Створити запис"
-                        >
-                          <CalendarIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleEditClient(client)}
-                          className="p-1.5 text-candy-purple hover:bg-candy-purple/10 rounded-candy-xs transition-all"
-                          title="Редагувати"
-                        >
-                          <SettingsIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleDeleteClient(client.id)}
-                          className="p-1.5 text-red-500 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-candy-xs transition-all"
-                          title="Видалити"
-                        >
-                          <XIcon className="w-4 h-4" />
-                        </button>
-                        <button
-                          onClick={() => handleClientClick(client)}
-                          className="p-1.5 text-gray-500 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-candy-xs transition-all"
-                        >
-                          {isExpanded ? (
-                            <ChevronUpIcon className="w-4 h-4" />
-                          ) : (
-                            <ChevronDownIcon className="w-4 h-4" />
-                          )}
+                        <button onClick={() => window.open(`tel:${client.phone}`)} className="p-1.5 text-blue-400 hover:bg-white/10 rounded-lg transition-colors" title="Дзвінок"><PhoneIcon className="w-4 h-4" /></button>
+                        <button onClick={() => router.push(`/dashboard/appointments?clientPhone=${client.phone}`)} className="p-1.5 text-green-400 hover:bg-white/10 rounded-lg transition-colors" title="Запис"><CalendarIcon className="w-4 h-4" /></button>
+                        <button onClick={() => handleEditClient(client)} className="p-1.5 text-gray-300 hover:bg-white/10 rounded-lg transition-colors" title="Редагувати"><SettingsIcon className="w-4 h-4" /></button>
+                        <button onClick={() => handleDeleteClient(client.id)} className="p-1.5 text-red-400 hover:bg-white/10 rounded-lg transition-colors" title="Видалити"><XIcon className="w-4 h-4" /></button>
+                        <button onClick={() => handleClientClick(client)} className="p-1.5 text-gray-400 hover:bg-white/10 rounded-lg transition-colors">
+                          {isExpanded ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
                         </button>
                       </div>
                     </div>
@@ -911,68 +791,50 @@ export default function ClientsPage() {
                 </div>
 
                 {isExpanded && (
-                  <div className="px-3 pb-3 pt-0 border-t border-gray-200 dark:border-gray-700">
+                  <div className="px-4 pb-4 pt-0 border-t border-white/10">
                     {details ? (
-                      <div className="mt-2 space-y-3">
-                        {/* Quick Stats */}
+                      <div className="mt-3 space-y-3">
                         <div className="grid grid-cols-3 gap-2">
-                          <div className="p-2 bg-gradient-to-br from-candy-purple/10 to-candy-purple/5 rounded-candy-xs border border-candy-purple/20">
-                            <div className="text-[10px] text-gray-600 dark:text-gray-400 font-bold mb-0.5">Зароблено</div>
-                            <div className="text-sm font-black text-candy-purple">
-                              {new Intl.NumberFormat('uk-UA', {
-                                style: 'currency',
-                                currency: 'UAH',
-                                minimumFractionDigits: 0,
-                              }).format(details.totalSpent)}
+                          <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                            <div className="text-[10px] text-gray-400 font-medium mb-0.5">Зароблено</div>
+                            <div className="text-sm font-semibold text-purple-400">
+                              {new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH', minimumFractionDigits: 0 }).format(details.totalSpent)}
                             </div>
                           </div>
-
-                          <div className="p-2 bg-gradient-to-br from-candy-blue/10 to-candy-blue/5 rounded-candy-xs border border-candy-blue/20">
-                            <div className="text-[10px] text-gray-600 dark:text-gray-400 font-bold mb-0.5">Останній візит</div>
-                            <div className="text-xs font-black text-candy-blue">
-                              {format(new Date(details.lastVisit), 'dd.MM.yyyy')}
-                            </div>
+                          <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                            <div className="text-[10px] text-gray-400 font-medium mb-0.5">Останній візит</div>
+                            <div className="text-xs font-semibold text-blue-400">{format(new Date(details.lastVisit), 'dd.MM.yyyy')}</div>
                           </div>
-
                           {details.nextAppointment ? (
-                            <div className="p-2 bg-gradient-to-br from-candy-mint/10 to-candy-mint/5 rounded-candy-xs border border-candy-mint/20">
-                              <div className="text-[10px] text-gray-600 dark:text-gray-400 font-bold mb-0.5">Наступний</div>
-                              <div className="text-xs font-black text-candy-mint">
-                                {format(new Date(details.nextAppointment), 'dd.MM.yyyy')}
-                              </div>
+                            <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                              <div className="text-[10px] text-gray-400 font-medium mb-0.5">Наступний</div>
+                              <div className="text-xs font-semibold text-green-400">{format(new Date(details.nextAppointment), 'dd.MM.yyyy')}</div>
                             </div>
                           ) : (
-                            <div className="p-2 bg-gradient-to-br from-candy-orange/10 to-candy-orange/5 rounded-candy-xs border border-candy-orange/20">
-                              <div className="text-[10px] text-gray-600 dark:text-gray-400 font-bold mb-0.5">Наступний</div>
-                              <div className="text-xs font-black text-candy-orange">Немає</div>
+                            <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                              <div className="text-[10px] text-gray-400 font-medium mb-0.5">Наступний</div>
+                              <div className="text-xs font-semibold text-orange-400">Немає</div>
                             </div>
                           )}
                         </div>
-
-                        {/* Client Notes */}
                         {client.notes && (
-                          <div className="p-2 bg-gray-50 dark:bg-gray-800 rounded-candy-xs border border-gray-200 dark:border-gray-700">
-                            <div className="text-[10px] text-gray-600 dark:text-gray-400 font-bold mb-1">Примітки</div>
-                            <div className="text-xs text-gray-900 dark:text-white">{client.notes}</div>
+                          <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                            <div className="text-[10px] text-gray-400 font-medium mb-1">Примітки</div>
+                            <div className="text-xs text-white">{client.notes}</div>
                           </div>
                         )}
 
-                        {/* Appointment History */}
                         <div>
                           <div className="flex items-center justify-between mb-2">
-                            <h4 className="text-xs font-black text-gray-900 dark:text-white">
-                              Історія візитів ({client.appointments.length})
-                            </h4>
+                            <h4 className="text-sm font-semibold text-white">Історія візитів ({client.appointments.length})</h4>
                             <button
-                              onClick={() => {
-                                router.push(`/dashboard/appointments?clientPhone=${client.phone}`)
-                              }}
-                              className="px-2 py-1 text-[10px] bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-xs shadow-soft-lg hover:shadow-soft-xl transition-all"
+                              onClick={() => router.push(`/dashboard/appointments?clientPhone=${client.phone}`)}
+                              className="px-2.5 py-1.5 text-xs bg-white text-black rounded-lg font-medium hover:bg-gray-100 transition-colors"
+                              style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                             >
                               + Новий візит
                             </button>
                           </div>
-                          
                           <div className="space-y-2 max-h-[400px] overflow-y-auto">
                             {client.appointments
                               .sort((a: any, b: any) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
@@ -982,87 +844,44 @@ export default function ClientsPage() {
                                 const servicesList = getAppointmentServices(appointment)
                                 const total = getAppointmentTotal(appointment)
                                 const master = masters.find(m => m.id === appointment.masterId)
-                                
                                 return (
-                                  <div
-                                    key={appointment.id}
-                                    className="p-2 rounded-candy-xs border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 hover:border-gray-300 dark:hover:border-gray-600 transition-all"
-                                  >
+                                  <div key={appointment.id} className="p-3 rounded-lg border border-white/10 bg-white/5 hover:bg-white/[0.07] transition-colors">
                                     <div className="flex items-start justify-between gap-2 mb-1.5">
                                       <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-1">
-                                          <div className="text-xs font-black text-gray-900 dark:text-white">
-                                            {format(start, 'dd.MM.yyyy')}
-                                          </div>
-                                          <div className="text-xs text-gray-500 dark:text-gray-400">
-                                            {format(start, 'HH:mm')} - {format(end, 'HH:mm')}
-                                          </div>
-                                          <span className={cn("px-1.5 py-0.5 rounded-full text-[10px] font-bold border", getStatusColor(appointment.status))}>
-                                            {getStatusLabel(appointment.status)}
-                                          </span>
+                                        <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                          <span className="text-xs font-semibold text-white">{format(start, 'dd.MM.yyyy')}</span>
+                                          <span className="text-xs text-gray-400">{format(start, 'HH:mm')} - {format(end, 'HH:mm')}</span>
+                                          <span className={cn('px-1.5 py-0.5 rounded-full text-[10px] font-medium border', getStatusColor(appointment.status))}>{getStatusLabel(appointment.status)}</span>
                                         </div>
-                                        
-                                        {master && (
-                                          <div className="text-[10px] text-gray-600 dark:text-gray-400 mb-1">
-                                            Спеціаліст: {master.name}
-                                          </div>
-                                        )}
-                                        
+                                        {master && <div className="text-[10px] text-gray-400 mb-1">Спеціаліст: {master.name}</div>}
                                         {servicesList.length > 0 && (
                                           <div className="flex flex-wrap gap-1 mb-1">
                                             {servicesList.map((serviceId, idx) => {
                                               const service = services.find(s => s.id === serviceId || s.name === serviceId)
                                               return (
-                                                <span
-                                                  key={idx}
-                                                  className="px-1.5 py-0.5 text-[10px] font-bold rounded-full bg-candy-pink/10 text-candy-pink border border-candy-pink/30"
-                                                >
+                                                <span key={idx} className="px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-white/10 text-pink-400 border border-white/10">
                                                   {service?.name || serviceId} {service ? `(${service.price} грн)` : ''}
                                                 </span>
                                               )
                                             })}
                                           </div>
                                         )}
-                                        
-                                        {appointment.notes && (
-                                          <div className="text-[10px] text-gray-500 dark:text-gray-500 italic mt-1">
-                                            {appointment.notes}
-                                          </div>
-                                        )}
+                                        {appointment.notes && <div className="text-[10px] text-gray-500 italic mt-1">{appointment.notes}</div>}
                                       </div>
-                                      
-                                      <div className="text-right flex-shrink-0">
-                                        {total > 0 && (
-                                          <div className="text-sm font-black text-candy-purple mb-0.5">
-                                            {Math.round(total)} грн
-                                          </div>
-                                        )}
-                                      </div>
+                                      {total > 0 && <div className="text-sm font-semibold text-purple-400 flex-shrink-0">{Math.round(total)} грн</div>}
                                     </div>
                                   </div>
                                 )
                               })}
-                            
-                            {client.appointments.length === 0 && (
-                              <div className="text-center py-4 text-xs text-gray-500 dark:text-gray-400">
-                                Немає історії візитів
-                              </div>
-                            )}
+                            {client.appointments.length === 0 && <div className="text-center py-4 text-xs text-gray-400">Немає історії візитів</div>}
                           </div>
                         </div>
-
-                        {/* Services Summary */}
                         {details.servicesUsed.length > 0 && (
-                          <div className="p-2 bg-gradient-to-br from-candy-pink/10 to-candy-pink/5 rounded-candy-xs border border-candy-pink/20">
-                            <div className="text-xs text-gray-600 dark:text-gray-400 font-bold mb-1.5">Популярні послуги</div>
+                          <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                            <div className="text-xs text-gray-400 font-medium mb-1.5">Популярні послуги</div>
                             <div className="flex flex-wrap gap-1.5">
                               {details.servicesUsed.map((service, idx) => (
-                                <span
-                                  key={idx}
-                                  className="px-2 py-1 text-xs font-bold rounded-full bg-white dark:bg-gray-800 text-candy-pink border border-candy-pink/30"
-                                >
-                                  {service.name} ({service.count})
-                                </span>
+                                <span key={idx} className="px-2 py-1 text-xs font-medium rounded-full bg-white/10 text-pink-400 border border-white/10">{service.name} ({service.count})</span>
                               ))}
                             </div>
                           </div>
@@ -1070,7 +889,7 @@ export default function ClientsPage() {
                       </div>
                     ) : (
                       <div className="py-4 text-center">
-                        <p className="text-xs text-gray-500 dark:text-gray-400">Завантаження деталей...</p>
+                        <p className="text-xs text-gray-400">Завантаження деталей...</p>
                       </div>
                     )}
                   </div>
@@ -1078,8 +897,31 @@ export default function ClientsPage() {
               </div>
             )
           })}
+            </div>
+          )}
         </div>
-      )}
+
+        <div className="lg:col-span-1 space-y-3 md:space-y-6">
+          <div className="rounded-xl p-4 md:p-6 card-floating">
+            <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>Статистика</h3>
+            <div className="space-y-2 md:space-y-3">
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10"><span className="text-sm text-gray-300">Всього</span><span className="text-sm font-semibold text-white">{stats.total}</span></div>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10"><span className="text-sm text-gray-300">VIP</span><span className="text-sm font-semibold text-purple-400">{stats.vip}</span></div>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10"><span className="text-sm text-gray-300">Активні</span><span className="text-sm font-semibold text-green-400">{stats.active}</span></div>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10"><span className="text-sm text-gray-300">Неактивні</span><span className="text-sm font-semibold text-orange-400">{stats.inactive}</span></div>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10"><span className="text-sm text-gray-300">Дохід</span><span className="text-sm font-semibold text-blue-400">{Math.round(stats.totalRevenue)} грн</span></div>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10"><span className="text-sm text-gray-300">Середній чек</span><span className="text-sm font-semibold text-pink-400">{Math.round(stats.avgRevenue)} грн</span></div>
+            </div>
+          </div>
+          <div className="rounded-xl p-4 md:p-6 card-floating">
+            <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>Швидкі дії</h3>
+            <div className="space-y-2">
+              <button onClick={() => { setEditingClient(null); setShowQuickClientCard(true) }} className="w-full px-3 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] text-left" style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}>+ Додати клієнта</button>
+              <button onClick={() => router.push('/dashboard/appointments')} className="w-full px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors text-left">Записи</button>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {/* Quick Client Card Modal */}
       {showQuickClientCard && business && (
