@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { XIcon, CheckIcon, ClockIcon } from '@/components/icons'
-import { cn } from '@/lib/utils'
+import { ModalPortal } from '@/components/ui/modal-portal'
 
 interface Appointment {
   id: string
@@ -227,8 +227,9 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[100] bg-black/70 flex items-end sm:items-center justify-center p-0 sm:p-4 overflow-y-auto">
-      <div className="w-full sm:max-w-2xl sm:my-auto max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col rounded-t-xl sm:rounded-xl card-floating border-0 shadow-xl">
+    <ModalPortal>
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 overflow-y-auto bg-black/70 backdrop-blur-sm">
+        <div className="w-full max-w-2xl max-h-[calc(100vh-2rem)] overflow-hidden flex flex-col rounded-xl card-floating border border-white/10 shadow-2xl">
         {/* Header - base style */}
         <div className="flex items-center justify-between p-4 border-b border-white/10">
           <h2 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
@@ -267,8 +268,9 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
             </div>
           )}
         </div>
+        </div>
       </div>
-    </div>
+    </ModalPortal>
   )
 }
 
