@@ -550,7 +550,7 @@ export default function AppointmentsPage() {
                 </div>
 
                 {/* Календар — збільшений */}
-                <div className="grid grid-cols-7 gap-2 max-w-lg mx-auto w-full">
+                <div className="grid grid-cols-7 gap-2 w-full">
                   {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
                     <div key={day} className="text-center text-xs font-semibold text-gray-400 py-1.5">
                       {day}
