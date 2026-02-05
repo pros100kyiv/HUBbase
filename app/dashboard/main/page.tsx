@@ -12,6 +12,10 @@ interface Appointment {
   id: string
   masterId: string
   masterName?: string
+  master?: {
+    id: string
+    name: string
+  }
   clientName: string
   clientPhone: string
   startTime: string
@@ -25,7 +29,6 @@ export default function MainPage() {
   const [business, setBusiness] = useState<any>(null)
   const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()))
   const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([])
-  const [masters, setMasters] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -45,22 +48,6 @@ export default function MainPage() {
   useEffect(() => {
     if (!business) return
 
-    // Load masters once per business (avoid refetching on every date change)
-    fetch(`/api/masters?businessId=${business.id}`)
-      .then((res) => {
-        if (!res.ok) throw new Error('Failed to fetch masters')
-        return res.json()
-      })
-      .then((data) => setMasters(Array.isArray(data) ? data : []))
-      .catch((error) => {
-        console.error('Error loading masters:', error)
-        setMasters([])
-      })
-  }, [business])
-
-  useEffect(() => {
-    if (!business) return
-
     // Load appointments for selected date
     setLoading(true)
     const dateStr = format(selectedDate, 'yyyy-MM-dd')
@@ -74,8 +61,8 @@ export default function MainPage() {
         const appointmentsArray = Array.isArray(data) ? data : []
 
         const withMasters = appointmentsArray.map((apt: Appointment) => {
-          const master = masters.find((m: any) => m.id === apt.masterId)
-          return { ...apt, masterName: master?.name || apt.masterName || 'Невідомий спеціаліст' }
+          const masterName = apt.master?.name || apt.masterName || 'Невідомий спеціаліст'
+          return { ...apt, masterName }
         })
 
         setTodayAppointments(withMasters)
@@ -86,9 +73,9 @@ export default function MainPage() {
         setTodayAppointments([])
         setLoading(false)
       })
-  }, [business, selectedDate, masters])
+  }, [business, selectedDate])
 
-  if (!business || loading) {
+  if (!business) {
     return (
       <div className="max-w-7xl mx-auto">
         <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-4" />
@@ -132,17 +119,21 @@ export default function MainPage() {
           </div>
 
           {/* My Day Card */}
-          <MyDayCard
-            businessId={business?.id}
-            appointments={todayAppointments}
-            totalAppointments={todayTotal}
-            completedAppointments={todayCompleted}
-            pendingAppointments={todayPending}
-            confirmedAppointments={todayConfirmed}
-            onBookAppointment={() => router.push('/dashboard/appointments?create=true')}
-            selectedDate={selectedDate}
-            onDateChange={setSelectedDate}
-          />
+          {loading ? (
+            <div className="h-64 rounded-xl bg-white/5 border border-white/10 animate-pulse" />
+          ) : (
+            <MyDayCard
+              businessId={business?.id}
+              appointments={todayAppointments}
+              totalAppointments={todayTotal}
+              completedAppointments={todayCompleted}
+              pendingAppointments={todayPending}
+              confirmedAppointments={todayConfirmed}
+              onBookAppointment={() => router.push('/dashboard/appointments?create=true')}
+              selectedDate={selectedDate}
+              onDateChange={setSelectedDate}
+            />
+          )}
         </div>
 
         {/* Right Column - Sidebar (1 column) */}
