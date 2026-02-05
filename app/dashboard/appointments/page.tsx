@@ -402,159 +402,97 @@ export default function AppointmentsPage() {
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-3">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
-          <div>
-            <h1 className="text-lg md:text-xl font-black text-white mb-1" style={{ letterSpacing: '-0.01em' }}>
-              Записи та Візити
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
+        {/* Left Column - Main Content (3 columns) - same as Dashboard */}
+        <div className="lg:col-span-3 space-y-3 md:space-y-6">
+          {/* Header - same style as Dashboard */}
+          <div className="flex items-center justify-between gap-3">
+            <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
+              Записи
             </h1>
-            <p className="text-xs md:text-sm text-gray-300">
-              Управління записами та розкладом
-            </p>
-          </div>
-          <div className="flex gap-1.5 flex-wrap">
-            <button
-              onClick={() => setShowQuickClientCard(true)}
-              className="px-3 py-1.5 bg-white text-black font-black rounded-lg text-xs hover:bg-gray-100 transition-all active:scale-95 whitespace-nowrap flex items-center gap-1.5"
-              style={{ boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.1)' }}
-            >
-              <UserIcon className="w-4 h-4" />
-              ЗАПИС
-            </button>
-            <button
-              onClick={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
-              className="px-2.5 py-1.5 border border-gray-700 bg-[#1A1A1A] text-white hover:bg-gray-800 transition-all active:scale-95 rounded-lg text-xs font-bold"
-            >
-              {viewMode === 'calendar' ? '📋 Список' : '📅 Календар'}
-            </button>
-            <button
-              onClick={handleExportCSV}
-              className="px-2.5 py-1.5 border border-gray-700 bg-[#1A1A1A] text-white hover:bg-gray-800 transition-all active:scale-95 rounded-lg text-xs font-bold flex items-center gap-1"
-            >
-              <DownloadIcon className="w-3 h-3" />
-              Експорт
-            </button>
             <button
               onClick={() => {
                 setShowCreateForm(true)
-                if (!selectedDate) {
-                  setSelectedDate(new Date())
-                }
+                if (!selectedDate) setSelectedDate(new Date())
               }}
-              className="px-3 py-1.5 bg-white text-black font-bold rounded-lg text-xs hover:bg-gray-100 transition-all active:scale-95 whitespace-nowrap"
-              style={{ boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.1)' }}
+              className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] flex-shrink-0"
+              style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
             >
-              + Додати запис
+              Записати
             </button>
           </div>
-        </div>
 
-        {/* Search and Filters */}
-        <div className="rounded-xl p-4 mb-2 card-floating">
-          <div className="flex flex-col sm:flex-row gap-2">
-            {/* Search */}
-            <div className="flex-1 relative">
-              <SearchIcon className="absolute left-2 top-1/2 transform -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Пошук по клієнту, телефону, послузі..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1.5 text-xs border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/15"
-              />
-            </div>
-            
-            {/* Master Filter */}
-            <select
-              value={filterMaster}
-              onChange={(e) => setFilterMaster(e.target.value)}
-              className="px-2.5 py-1.5 text-xs border border-white/20 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white/15"
-            >
-              <option value="all">Всі спеціалісти</option>
-              {masters.map((master) => (
-                <option key={master.id} value={master.id}>{master.name}</option>
-              ))}
-            </select>
-          </div>
-
-          {/* Bulk Actions */}
-          {selectedAppointments.size > 0 && (
-            <div className="mt-2 pt-2 border-t border-gray-200 flex items-center gap-2 flex-wrap">
-              <span className="text-xs text-gray-600">
-                Вибрано: {selectedAppointments.size}
-              </span>
-              <div className="flex gap-1.5">
+          {/* Search and Filters - card same as Dashboard blocks */}
+          <div className="rounded-xl p-4 md:p-6 card-floating">
+            <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
+              <div className="flex-1 relative">
+                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="Пошук по клієнту, телефону, послузі..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-9 pr-3 py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+                />
+              </div>
+              <select
+                value={filterMaster}
+                onChange={(e) => setFilterMaster(e.target.value)}
+                className="px-3 py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+              >
+                <option value="all">Всі спеціалісти</option>
+                {masters.map((master) => (
+                  <option key={master.id} value={master.id}>{master.name}</option>
+                ))}
+              </select>
+              <div className="flex gap-2 flex-shrink-0">
                 <button
-                  onClick={() => handleBulkStatusChange('Confirmed')}
-                  className="px-2 py-1 text-[10px] bg-green-500 text-white rounded-lg font-bold hover:opacity-80 transition-all"
+                  onClick={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
+                  className="px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
                 >
-                  Підтвердити
+                  {viewMode === 'calendar' ? 'Список' : 'Календар'}
                 </button>
                 <button
-                  onClick={() => handleBulkStatusChange('Done')}
-                  className="px-2 py-1 text-[10px] bg-blue-500 text-white rounded-lg font-bold hover:opacity-80 transition-all"
+                  onClick={handleExportCSV}
+                  className="px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
                 >
-                  Виконано
+                  <DownloadIcon className="w-4 h-4" />
+                  Експорт
                 </button>
                 <button
-                  onClick={() => handleBulkStatusChange('Cancelled')}
-                  className="px-2 py-1 text-[10px] bg-red-500 text-white rounded-lg font-bold hover:opacity-80 transition-all"
+                  onClick={() => setShowQuickClientCard(true)}
+                  className="px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
                 >
-                  Скасувати
-                </button>
-                <button
-                  onClick={() => setSelectedAppointments(new Set())}
-                  className="px-2 py-1 text-[10px] border border-white/20 bg-white/10 text-white rounded-lg font-bold hover:bg-white/20 transition-all"
-                >
-                  Скасувати вибір
+                  <UserIcon className="w-4 h-4" />
+                  Клієнт
                 </button>
               </div>
             </div>
-          )}
-        </div>
-
-        {/* Quick Stats */}
-        <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-2">
-          <div className="rounded-xl p-3 text-center card-floating">
-            <div className="text-xs text-gray-300 mb-0.5">Всього</div>
-            <div className="text-sm font-black text-white">{stats.total}</div>
+            {selectedAppointments.size > 0 && (
+              <div className="mt-3 pt-3 border-t border-white/10 flex items-center gap-2 flex-wrap">
+                <span className="text-sm text-gray-300">Вибрано: {selectedAppointments.size}</span>
+                <div className="flex gap-2">
+                  <button onClick={() => handleBulkStatusChange('Confirmed')} className="px-2.5 py-1.5 text-xs bg-green-500/90 text-white rounded-lg font-medium hover:opacity-90 transition-all">Підтвердити</button>
+                  <button onClick={() => handleBulkStatusChange('Done')} className="px-2.5 py-1.5 text-xs bg-blue-500/90 text-white rounded-lg font-medium hover:opacity-90 transition-all">Виконано</button>
+                  <button onClick={() => handleBulkStatusChange('Cancelled')} className="px-2.5 py-1.5 text-xs bg-red-500/90 text-white rounded-lg font-medium hover:opacity-90 transition-all">Скасувати</button>
+                  <button onClick={() => setSelectedAppointments(new Set())} className="px-2.5 py-1.5 text-xs border border-white/20 bg-white/10 text-white rounded-lg font-medium hover:bg-white/20 transition-all">Скасувати вибір</button>
+                </div>
+              </div>
+            )}
           </div>
-          <div className="rounded-xl p-3 text-center card-floating">
-            <div className="text-xs text-gray-300 mb-0.5">Очікує</div>
-            <div className="text-sm font-black text-orange-400">{stats.pending}</div>
-          </div>
-          <div className="rounded-xl p-3 text-center card-floating">
-            <div className="text-xs text-gray-300 mb-0.5">Підтверджено</div>
-            <div className="text-sm font-black text-green-400">{stats.confirmed}</div>
-          </div>
-          <div className="rounded-xl p-3 text-center card-floating">
-            <div className="text-xs text-gray-300 mb-0.5">Виконано</div>
-            <div className="text-sm font-black text-blue-400">{stats.done}</div>
-          </div>
-          <div className="rounded-xl p-3 text-center card-floating">
-            <div className="text-xs text-gray-300 mb-0.5">Дохід</div>
-            <div className="text-sm font-black text-purple-400">{stats.revenue} грн</div>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-3">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-3">
-          {/* Month Navigation & Calendar - only after client mount to avoid hydration mismatch */}
-          <div className="rounded-xl p-4 card-floating">
+          {/* Month Navigation & Calendar */}
+          <div className="rounded-xl p-4 md:p-6 card-floating">
             {!calendarReady || !currentMonth ? (
               <div className="flex items-center justify-center py-12 text-gray-400">
                 <span className="text-sm">Завантаження календаря...</span>
               </div>
             ) : (
               <>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 mb-2">
-                  <h2 className="text-base font-black text-white">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+                  <h2 className="text-lg md:text-xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
                     {format(currentMonth, 'LLLL yyyy', { locale: uk })}
                   </h2>
-                  <div className="flex gap-1.5">
+                  <div className="flex gap-2">
                     <button
                       onClick={() => {
                         const prev = new Date(currentMonth)
@@ -562,7 +500,7 @@ export default function AppointmentsPage() {
                         setCurrentMonth(prev)
                         setSelectedDate(null)
                       }}
-                      className="p-1 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-all active:scale-95"
+                      className="p-2 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors"
                     >
                       <ChevronLeftIcon className="w-4 h-4" />
                     </button>
@@ -573,7 +511,7 @@ export default function AppointmentsPage() {
                         setCurrentMonth(today)
                         setSelectedDate(today)
                       }}
-                      className="px-2.5 py-1 bg-white text-black font-bold rounded-lg text-xs hover:bg-gray-100 transition-all active:scale-95"
+                      className="px-3 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
                       style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                     >
                       Сьогодні
@@ -585,36 +523,33 @@ export default function AppointmentsPage() {
                         setCurrentMonth(next)
                         setSelectedDate(null)
                       }}
-                      className="p-1 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-all active:scale-95"
+                      className="p-2 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors"
                     >
                       <ChevronRightIcon className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
-
-                {/* Status Filters */}
-                <div className="flex gap-1.5 mb-2 flex-wrap">
+                <div className="flex gap-2 mb-4 flex-wrap">
                   {['all', 'Pending', 'Confirmed', 'Done', 'Cancelled'].map((status) => (
                     <button
                       key={status}
                       onClick={() => setFilterStatus(status)}
                       className={cn(
-                        'px-2.5 py-1 rounded-lg text-xs font-bold transition-all active:scale-95 whitespace-nowrap',
+                        'px-3 py-1.5 rounded-lg text-sm font-medium transition-colors whitespace-nowrap',
                         filterStatus === status
-                          ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                          ? 'bg-white text-black'
                           : 'bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white border border-white/10'
                       )}
-                      style={filterStatus === status ? { boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' } : {}}
+                      style={filterStatus === status ? { boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' } : {}}
                     >
                       {status === 'all' ? 'Всі' : status === 'Pending' ? 'Очікує' : status === 'Confirmed' ? 'Підтверджено' : status === 'Done' ? 'Виконано' : 'Скасовано'}
                     </button>
                   ))}
                 </div>
 
-                {/* Calendar Grid */}
-                <div className="grid grid-cols-7 gap-1">
+                <div className="grid grid-cols-7 gap-2">
                   {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
-                    <div key={day} className="text-center text-xs font-bold text-gray-400 py-1">
+                    <div key={day} className="text-center text-sm font-semibold text-gray-400 py-2">
                       {day}
                     </div>
                   ))}
@@ -634,24 +569,24 @@ export default function AppointmentsPage() {
                           }
                         }}
                         className={cn(
-                          'relative p-1 rounded-lg border transition-all min-h-[40px] flex flex-col items-center justify-start',
+                          'relative p-2 rounded-lg border transition-colors min-h-[44px] flex flex-col items-center justify-start',
                           !isDayInCurrentMonth && 'opacity-30',
                           isSelected
-                            ? 'border-blue-500 bg-blue-500/20 shadow-md'
-                            : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10',
-                          isToday && !isSelected && 'ring-1 ring-blue-500/50',
-                          isDayInCurrentMonth && 'cursor-pointer active:scale-95'
+                            ? 'border-white bg-white/20 text-white shadow-md'
+                            : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10 text-white',
+                          isToday && !isSelected && 'ring-1 ring-white/30',
+                          isDayInCurrentMonth && 'cursor-pointer active:scale-[0.98]'
                         )}
                       >
                         <div className={cn(
-                          'text-xs font-black mb-0.5',
-                          isToday ? 'text-blue-400' : 'text-white'
+                          'text-sm font-semibold mb-0.5',
+                          isToday ? 'text-white' : 'text-white'
                         )}>
                           {format(day, 'd')}
                         </div>
                         {dayAppointments.length > 0 && (
                           <div className="w-full mt-auto">
-                            <div className="text-[10px] font-black text-blue-400 text-center bg-blue-500/20 rounded-full py-0.5">
+                            <div className="text-xs font-semibold text-white text-center bg-white/20 rounded-full py-0.5">
                               {dayAppointments.length}
                             </div>
                           </div>
@@ -666,16 +601,16 @@ export default function AppointmentsPage() {
 
           {/* Selected Date Details */}
           {selectedDate && (
-            <div className="rounded-xl p-4 card-floating">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="text-base font-black text-white">
+            <div className="rounded-xl p-4 md:p-6 card-floating">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
                   {format(selectedDate, 'd MMMM yyyy', { locale: uk })}
                 </h3>
                 <button
                   onClick={() => setSelectedDate(null)}
-                  className="px-2.5 py-1 border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-all active:scale-95 rounded-lg text-xs font-bold"
+                  className="px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
                 >
-                  ✕ Закрити
+                  Закрити
                 </button>
               </div>
 
@@ -685,9 +620,9 @@ export default function AppointmentsPage() {
 
                 if (hours.length === 0) {
                   return (
-                    <div className="text-center py-6">
-                      <div className="mb-2 flex justify-center">
-                        <CalendarIcon className="w-10 h-10 text-gray-300" />
+                    <div className="text-center py-8">
+                      <div className="mb-3 flex justify-center">
+                        <CalendarIcon className="w-12 h-12 text-gray-400" />
                       </div>
                       <p className="text-gray-300 text-sm font-medium mb-1">
                         Немає записів на цей день
@@ -700,10 +635,10 @@ export default function AppointmentsPage() {
                 }
 
                 return (
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {hours.map((hour) => (
-                      <div key={hour} className="border-l-2 border-blue-500 pl-2">
-                        <div className="text-sm font-black text-blue-500 mb-1.5">
+                      <div key={hour} className="border-l-2 border-white/30 pl-3">
+                        <div className="text-sm font-semibold text-gray-300 mb-2">
                           {String(hour).padStart(2, '0')}:00
                         </div>
                         <div className="space-y-2">
@@ -728,8 +663,8 @@ export default function AppointmentsPage() {
 
           {/* List View */}
           {viewMode === 'list' && !showCreateForm && (
-            <div className="rounded-xl p-4 card-floating">
-              <h3 className="text-base font-black text-white mb-3">
+            <div className="rounded-xl p-4 md:p-6 card-floating">
+              <h3 className="text-lg font-bold text-white mb-4" style={{ letterSpacing: '-0.02em' }}>
                 Всі записи ({filteredAppointments.length})
               </h3>
               {filteredAppointments.length === 0 ? (
@@ -748,10 +683,10 @@ export default function AppointmentsPage() {
                       setShowCreateForm(true)
                       setSelectedDate(new Date())
                     }}
-                    className="px-4 py-2 bg-white text-black font-bold rounded-lg hover:bg-gray-100 transition-all active:scale-95"
+                    className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
                     style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                   >
-                    Створити новий запис
+                    Створити запис
                   </button>
                 </div>
               ) : (
@@ -772,16 +707,16 @@ export default function AppointmentsPage() {
           )}
 
           {viewMode === 'calendar' && !selectedDate && !showCreateForm && (
-            <div className="rounded-xl p-12 text-center card-floating">
+            <div className="rounded-xl p-8 md:p-12 text-center card-floating">
               <div className="mb-6 flex justify-center">
-                <div className="w-32 h-32 bg-blue-50 rounded-full flex items-center justify-center">
-                  <CalendarIcon className="w-16 h-16 text-blue-500" />
+                <div className="w-24 h-24 md:w-32 md:h-32 bg-white/10 rounded-full flex items-center justify-center">
+                  <CalendarIcon className="w-12 h-12 md:w-16 md:h-16 text-gray-400" />
                 </div>
               </div>
-              <h3 className="text-xl font-black text-white mb-2">
+              <h3 className="text-lg md:text-xl font-bold text-white mb-2" style={{ letterSpacing: '-0.02em' }}>
                 Оберіть дату в календарі
               </h3>
-              <p className="text-gray-300 mb-6">
+              <p className="text-gray-300 text-sm mb-6">
                 Щоб переглянути записи на конкретну дату
               </p>
               <button
@@ -789,17 +724,17 @@ export default function AppointmentsPage() {
                   setShowCreateForm(true)
                   setSelectedDate(new Date())
                 }}
-                className="px-6 py-3 bg-white text-black font-bold rounded-lg hover:bg-gray-100 transition-all active:scale-95"
+                className="px-4 py-2 md:px-6 md:py-3 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
                 style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
               >
-                Створити новий запис
+                Створити запис
               </button>
             </div>
           )}
 
           {/* Create Appointment Form */}
           {showCreateForm && (
-            <div className="rounded-xl p-4 card-floating">
+            <div className="rounded-xl p-4 md:p-6 card-floating">
               <CreateAppointmentForm
                 businessId={business.id}
                 masters={masters}
@@ -812,54 +747,57 @@ export default function AppointmentsPage() {
           )}
         </div>
 
-        {/* Right Sidebar */}
-        <div className="space-y-3">
-          {/* Quick Stats */}
-          <div className="rounded-xl p-4 card-floating">
-            <h3 className="text-sm font-black text-white mb-2">
-              Статистика місяця
+        {/* Right Column - Sidebar (1 column) - same as Dashboard */}
+        <div className="lg:col-span-1 space-y-3 md:space-y-6">
+          {/* Quick Stats - same card style as Dashboard sidebar */}
+          <div className="rounded-xl p-4 md:p-6 card-floating">
+            <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>
+              Статистика
             </h3>
-            <div className="space-y-2">
-              <div className="flex items-center justify-between p-2 bg-white/5 rounded-lg border border-white/10">
-                <span className="text-xs text-gray-300">Всього записів</span>
-                <span className="text-sm font-black text-purple-400">{appointments.length}</span>
+            <div className="space-y-2 md:space-y-3">
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
+                <span className="text-sm text-gray-300">Всього</span>
+                <span className="text-sm font-semibold text-white">{stats.total}</span>
               </div>
-              <div className="flex items-center justify-between p-2 bg-white/5 rounded-lg border border-white/10">
-                <span className="text-xs text-gray-300">Підтверджено</span>
-                <span className="text-sm font-black text-green-400">
-                  {appointments.filter(a => a.status === 'Confirmed').length}
-                </span>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
+                <span className="text-sm text-gray-300">Очікує</span>
+                <span className="text-sm font-semibold text-orange-400">{stats.pending}</span>
               </div>
-              <div className="flex items-center justify-between p-2 bg-white/5 rounded-lg border border-white/10">
-                <span className="text-xs text-gray-300">Виконано</span>
-                <span className="text-sm font-black text-blue-400">
-                  {appointments.filter(a => a.status === 'Done').length}
-                </span>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
+                <span className="text-sm text-gray-300">Підтверджено</span>
+                <span className="text-sm font-semibold text-green-400">{stats.confirmed}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
+                <span className="text-sm text-gray-300">Виконано</span>
+                <span className="text-sm font-semibold text-blue-400">{stats.done}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
+                <span className="text-sm text-gray-300">Дохід</span>
+                <span className="text-sm font-semibold text-purple-400">{stats.revenue} грн</span>
               </div>
             </div>
           </div>
 
-          {/* Quick Actions */}
-          <div className="rounded-xl p-4 card-floating">
-            <h3 className="text-sm font-black text-white mb-2">
+          <div className="rounded-xl p-4 md:p-6 card-floating">
+            <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>
               Швидкі дії
             </h3>
-            <div className="space-y-1.5">
+            <div className="space-y-2">
               <button
                 onClick={() => {
                   setShowCreateForm(true)
                   setSelectedDate(new Date())
                 }}
-                className="w-full px-2.5 py-1.5 bg-white text-black font-bold rounded-lg text-xs hover:bg-gray-100 transition-all active:scale-95 text-left"
+                className="w-full px-3 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] text-left"
                 style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
               >
-                + Створити запис на сьогодні
+                + Запис на сьогодні
               </button>
               <button
                 onClick={() => router.push('/dashboard/clients')}
-                className="w-full px-2.5 py-1.5 border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-all active:scale-95 rounded-lg text-xs font-bold text-left"
+                className="w-full px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors text-left"
               >
-                Переглянути клієнтів
+                Клієнти
               </button>
             </div>
           </div>
