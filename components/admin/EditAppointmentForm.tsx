@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { format } from 'date-fns'
@@ -160,21 +159,21 @@ export function EditAppointmentForm({
 
   return (
     <div ref={formRef} className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 overflow-y-auto">
-      <div className="relative w-full sm:max-w-2xl bg-white dark:bg-gray-800 border-t sm:border border-gray-200 dark:border-gray-700 rounded-t-xl sm:rounded-candy-lg shadow-soft-xl p-4 sm:p-6 sm:my-auto max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-y-auto">
+      <div className="relative w-full sm:max-w-2xl card-floating border-t sm:border border-white/10 rounded-t-xl sm:rounded-xl p-4 sm:p-6 sm:my-auto max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-y-auto">
         {/* Close button */}
         <button
           onClick={onCancel}
-          className="absolute top-4 right-4 p-2 rounded-candy-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="absolute top-4 right-4 p-2 rounded-lg hover:bg-white/10 transition-colors"
         >
-          <XIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <XIcon className="w-5 h-5 text-gray-400" />
         </button>
 
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-2xl md:text-3xl font-black text-candy-blue dark:text-blue-400 mb-2">
+          <h2 className="text-lg md:text-2xl font-bold text-white mb-2" style={{ letterSpacing: '-0.02em' }}>
             Редагувати запис
           </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-400">
             Оновіть інформацію про запис
           </p>
         </div>
@@ -182,14 +181,14 @@ export function EditAppointmentForm({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Master Selection */}
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+            <label className="block text-sm font-medium mb-2 text-gray-300">
               Спеціаліст *
             </label>
             <select
               value={formData.masterId}
               onChange={(e) => setFormData({ ...formData, masterId: e.target.value })}
               required
-              className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-candy-blue"
+              className="w-full px-4 py-3 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
             >
               <option value="">Оберіть спеціаліста</option>
               {masters.map((master) => (
@@ -202,7 +201,7 @@ export function EditAppointmentForm({
 
           {/* Client Name */}
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+            <label className="block text-sm font-medium mb-2 text-gray-300">
               Ім'я клієнта *
             </label>
             <Input
@@ -210,12 +209,13 @@ export function EditAppointmentForm({
               onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
               placeholder="Введіть ім'я клієнта"
               required
+              className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
             />
           </div>
 
           {/* Client Phone */}
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+            <label className="block text-sm font-medium mb-2 text-gray-300">
               Телефон клієнта *
             </label>
             <Input
@@ -224,19 +224,20 @@ export function EditAppointmentForm({
               onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
               placeholder="+380XXXXXXXXX"
               required
+              className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
             />
           </div>
 
           {/* Services */}
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+            <label className="block text-sm font-medium mb-2 text-gray-300">
               Послуги *
             </label>
-            <div className="space-y-2 max-h-48 overflow-y-auto border border-gray-200 dark:border-gray-700 rounded-lg p-2">
+            <div className="space-y-2 max-h-48 overflow-y-auto border border-white/20 rounded-lg p-2 bg-white/5">
               {services.map((service) => (
                 <label
                   key={service.id}
-                  className="flex items-center gap-2 p-2 border border-gray-200 dark:border-gray-700 rounded-candy-sm cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+                  className="flex items-center gap-2 p-2 border border-white/10 rounded-lg cursor-pointer hover:bg-white/10 transition-colors"
                 >
                   <input
                     type="checkbox"
@@ -244,7 +245,7 @@ export function EditAppointmentForm({
                     onChange={() => handleServiceToggle(service.id)}
                     className="rounded"
                   />
-                  <span className="flex-1 text-sm text-gray-900 dark:text-white">
+                  <span className="flex-1 text-sm text-white">
                     {service.name} - {service.price} грн ({service.duration} хв)
                   </span>
                 </label>
@@ -254,7 +255,7 @@ export function EditAppointmentForm({
 
           {/* Custom Service */}
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+            <label className="block text-sm font-medium mb-2 text-gray-300">
               Додаткова послуга (опціонально)
             </label>
             <div className="flex gap-2">
@@ -262,7 +263,7 @@ export function EditAppointmentForm({
                 value={formData.customService}
                 onChange={(e) => setFormData({ ...formData, customService: e.target.value })}
                 placeholder="Назва послуги"
-                className="flex-1"
+                className="flex-1 border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
               />
               <Input
                 type="number"
@@ -270,14 +271,14 @@ export function EditAppointmentForm({
                 onChange={(e) => setFormData({ ...formData, customPrice: Number(e.target.value) })}
                 placeholder="Ціна"
                 min="0"
-                className="w-24"
+                className="w-24 border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
               />
             </div>
           </div>
 
           {/* Date */}
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+            <label className="block text-sm font-medium mb-2 text-gray-300">
               Дата *
             </label>
             <Input
@@ -285,12 +286,13 @@ export function EditAppointmentForm({
               value={formData.date}
               onChange={(e) => setFormData({ ...formData, date: e.target.value })}
               required
+              className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
             />
           </div>
 
           {/* Start Time */}
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+            <label className="block text-sm font-medium mb-2 text-gray-300">
               Час початку *
             </label>
             <Input
@@ -298,12 +300,13 @@ export function EditAppointmentForm({
               value={formData.startTime}
               onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
               required
+              className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
             />
           </div>
 
           {/* Notes */}
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+            <label className="block text-sm font-medium mb-2 text-gray-300">
               Примітки
             </label>
             <textarea
@@ -311,35 +314,36 @@ export function EditAppointmentForm({
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Додаткові примітки..."
               rows={3}
-              className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-candy-blue resize-none"
+              className="w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15 resize-none"
             />
           </div>
 
           {/* Actions */}
           <div className="flex gap-3 pt-2">
-            <Button
+            <button
               type="button"
               onClick={handleDelete}
               disabled={isSubmitting}
-              className="px-4 py-3 bg-red-500 text-white font-bold rounded-candy-sm hover:bg-red-600 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-3 border border-red-400/50 bg-red-500/10 text-red-400 font-medium rounded-lg hover:bg-red-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Видалити
-            </Button>
-            <Button
+            </button>
+            <button
               type="button"
               onClick={onCancel}
               disabled={isSubmitting}
-              className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white font-bold rounded-candy-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-3 border border-white/20 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Скасувати
-            </Button>
-            <Button
+            </button>
+            <button
               type="submit"
               disabled={isSubmitting || !formData.masterId || !formData.clientName || !formData.clientPhone || formData.serviceIds.length === 0}
-              className="flex-1 px-4 py-3 bg-gradient-to-r from-candy-blue to-candy-purple text-white font-bold rounded-candy-sm shadow-soft-lg hover:shadow-soft-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 px-4 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+              style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
             >
               {isSubmitting ? 'Збереження...' : 'Зберегти зміни'}
-            </Button>
+            </button>
           </div>
         </form>
 

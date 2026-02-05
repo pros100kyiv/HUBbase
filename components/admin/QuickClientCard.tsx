@@ -175,23 +175,23 @@ export function QuickClientCard({
 
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 overflow-y-auto">
-      <div className="relative w-full sm:max-w-md bg-white dark:bg-gray-800 border-t sm:border border-gray-200 dark:border-gray-700 rounded-t-xl sm:rounded-candy-lg shadow-soft-xl p-4 sm:p-6 sm:my-auto max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-y-auto">
+      <div className="relative w-full sm:max-w-md card-floating border-t sm:border border-white/10 rounded-t-xl sm:rounded-xl p-4 sm:p-6 sm:my-auto max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-y-auto">
         {/* Close button */}
         {onCancel && (
           <button
             onClick={onCancel}
-            className="absolute top-4 right-4 p-2 rounded-candy-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+            className="absolute top-4 right-4 p-2 rounded-lg hover:bg-white/10 transition-colors"
           >
-            <XIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+            <XIcon className="w-5 h-5 text-gray-400" />
           </button>
         )}
 
         {/* Header */}
         <div className="mb-6">
-          <h2 className="text-2xl md:text-3xl font-black text-candy-blue dark:text-blue-400 mb-2">
+          <h2 className="text-lg md:text-2xl font-bold text-white mb-2" style={{ letterSpacing: '-0.02em' }}>
             {editingClient ? 'Редагувати клієнта' : 'Швидке створення клієнта'}
           </h2>
-          <p className="text-sm text-gray-600 dark:text-gray-400">
+          <p className="text-sm text-gray-400">
             {editingClient ? 'Оновіть інформацію про клієнта' : 'Заповніть основну інформацію про клієнта'}
           </p>
         </div>
@@ -199,7 +199,7 @@ export function QuickClientCard({
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Ім'я */}
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+            <label className="block text-sm font-medium mb-2 text-gray-300">
               Ім'я клієнта *
             </label>
             <div className="relative">
@@ -210,14 +210,14 @@ export function QuickClientCard({
                 onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                 placeholder="Наприклад: Іван Петренко"
                 required
-                className="w-full pl-10 pr-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-candy-blue"
+                className="w-full pl-10 pr-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
               />
             </div>
           </div>
 
           {/* Телефон */}
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+            <label className="block text-sm font-medium mb-2 text-gray-300">
               Номер телефону *
             </label>
             <div className="relative">
@@ -228,17 +228,17 @@ export function QuickClientCard({
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 placeholder="+380XXXXXXXXX"
                 required
-                className="w-full pl-10 pr-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-candy-blue"
+                className="w-full pl-10 pr-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
               />
             </div>
-            <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            <p className="text-xs text-gray-400 mt-1">
               Формат: +380XXXXXXXXX
             </p>
           </div>
 
           {/* Email */}
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+            <label className="block text-sm font-medium mb-2 text-gray-300">
               Email (опціонально)
             </label>
             <input
@@ -246,13 +246,13 @@ export function QuickClientCard({
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="client@example.com"
-              className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-candy-blue"
+              className="w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
             />
           </div>
 
           {/* Примітки */}
           <div>
-            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+            <label className="block text-sm font-medium mb-2 text-gray-300">
               Примітки (опціонально)
             </label>
             <textarea
@@ -260,7 +260,7 @@ export function QuickClientCard({
               onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               placeholder="Додаткові примітки про клієнта..."
               rows={3}
-              className="w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white placeholder-gray-400 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-candy-blue resize-none"
+              className="w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15 resize-none"
             />
           </div>
 
@@ -270,7 +270,7 @@ export function QuickClientCard({
               <button
                 type="button"
                 onClick={onCancel}
-                className="flex-1 px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white font-bold rounded-candy-sm hover:bg-gray-50 dark:hover:bg-gray-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                className="flex-1 px-4 py-3 border border-white/20 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 Скасувати
               </button>
@@ -278,7 +278,8 @@ export function QuickClientCard({
             <button
               type="submit"
               disabled={isSubmitting}
-              className="flex-1 px-4 py-3 bg-gradient-to-r from-candy-blue to-candy-purple text-white font-bold rounded-candy-sm shadow-soft-lg hover:shadow-soft-xl transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              className="flex-1 px-4 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
             >
               {isSubmitting ? (
                 <>
