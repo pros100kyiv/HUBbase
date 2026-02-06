@@ -387,7 +387,7 @@ export default function ClientsPage() {
     setShowQuickClientCard(true)
   }
 
-  const handleClientCreated = () => {
+  const handleClientCreated = (createdClient?: any) => {
     setShowQuickClientCard(false)
     setEditingClient(null)
     // Перезавантажуємо дані
@@ -442,6 +442,14 @@ export default function ClientsPage() {
             }
           })
           setClients(clientsWithStats)
+
+          // Після створення нового клієнта — автоматично показуємо його у списку
+          if (createdClient?.name) {
+            setSearchQuery(createdClient.name)
+          }
+        })
+        .catch((error) => {
+          console.error('Error refreshing clients:', error)
         })
     }
   }
@@ -1166,7 +1174,7 @@ export default function ClientsPage() {
           initialName={editingClient?.name || ''}
           editingClient={editingClient}
           onSuccess={(client) => {
-            handleClientCreated()
+            handleClientCreated(client)
           }}
           onCancel={() => {
             setShowQuickClientCard(false)

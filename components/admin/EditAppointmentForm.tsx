@@ -87,7 +87,9 @@ export function EditAppointmentForm({
       const startDateTime = new Date(`${formData.date}T${formData.startTime}`)
       const selectedServices = services.filter((s) => formData.serviceIds.includes(s.id))
       const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0)
-      const endDateTime = new Date(startDateTime.getTime() + totalDuration * 60000)
+      // Якщо послуги не вибрані — дефолтна тривалість 30 хвилин
+      const effectiveDuration = totalDuration > 0 ? totalDuration : 30
+      const endDateTime = new Date(startDateTime.getTime() + effectiveDuration * 60000)
 
       const appointmentData: any = {
         masterId: formData.masterId,
@@ -233,7 +235,7 @@ export function EditAppointmentForm({
           {/* Services */}
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-300">
-              Послуги *
+              Послуги (опціонально)
             </label>
             <div className="space-y-2 max-h-48 overflow-y-auto border border-white/20 rounded-lg p-2 bg-white/5">
               {services.map((service) => (
@@ -340,7 +342,7 @@ export function EditAppointmentForm({
             </button>
             <button
               type="submit"
-              disabled={isSubmitting || !formData.masterId || !formData.clientName || !formData.clientPhone || formData.serviceIds.length === 0}
+              disabled={isSubmitting || !formData.masterId || !formData.clientName || !formData.clientPhone}
               className="flex-1 px-4 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
             >

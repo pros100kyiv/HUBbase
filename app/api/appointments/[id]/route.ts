@@ -73,14 +73,22 @@ export async function PATCH(
         typeof clientEmail === 'string' && clientEmail.trim() ? clientEmail.trim() : null
     }
     if (services !== undefined) {
-      const servicesJson = normalizeServicesToJsonArrayString(services)
-      if (!servicesJson) {
+      // Послуги можуть бути порожнім масивом
+      try {
+        const parsed = typeof services === 'string' ? JSON.parse(services) : services
+        if (!Array.isArray(parsed)) {
+          return NextResponse.json(
+            { error: 'Invalid services format. Expected array of service IDs.' },
+            { status: 400 }
+          )
+        }
+        updateData.services = JSON.stringify(parsed)
+      } catch {
         return NextResponse.json(
-          { error: 'Invalid services format. Expected non-empty array of service IDs.' },
+          { error: 'Invalid services format. Expected array of service IDs.' },
           { status: 400 }
         )
       }
-      updateData.services = servicesJson
     }
     if (notes !== undefined) updateData.notes = notes?.trim() || null
     if (customPrice !== undefined) updateData.customPrice = customPrice || null

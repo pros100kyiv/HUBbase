@@ -61,7 +61,9 @@ export function CreateAppointmentForm({
       const startDateTime = new Date(`${formData.date}T${formData.startTime}`)
       const selectedServices = services.filter((s) => formData.serviceIds.includes(s.id))
       const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0)
-      const endDateTime = new Date(startDateTime.getTime() + totalDuration * 60000)
+      // Якщо послуги не вибрані — дефолтна тривалість 30 хвилин
+      const effectiveDuration = totalDuration > 0 ? totalDuration : 30
+      const endDateTime = new Date(startDateTime.getTime() + effectiveDuration * 60000)
 
       const appointmentData: any = {
         businessId,
@@ -71,7 +73,7 @@ export function CreateAppointmentForm({
         startTime: startDateTime.toISOString(),
         endTime: endDateTime.toISOString(),
         status: 'Pending',
-        services: JSON.stringify(formData.serviceIds),
+        services: formData.serviceIds.length > 0 ? JSON.stringify(formData.serviceIds) : JSON.stringify([]),
         isFromBooking: false,
       }
 
@@ -163,7 +165,7 @@ export function CreateAppointmentForm({
             {/* Services */}
             <div>
               <label className="block text-sm font-medium mb-2 text-foreground">
-                Послуги *
+                Послуги (опціонально)
               </label>
               <div className="space-y-2 max-h-40 overflow-y-auto">
                 {services.map((service) => (
@@ -239,7 +241,7 @@ export function CreateAppointmentForm({
             <div className="flex flex-col sm:flex-row gap-2 pt-2">
               <Button
                 type="submit"
-                disabled={isSubmitting || !formData.masterId || !formData.clientName || !formData.clientPhone || formData.serviceIds.length === 0}
+                disabled={isSubmitting || !formData.masterId || !formData.clientName || !formData.clientPhone}
                 className="btn-primary flex-1 min-h-[48px] touch-target"
               >
                 {isSubmitting ? 'Створення...' : 'Створити запис'}

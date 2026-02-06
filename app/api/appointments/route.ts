@@ -63,7 +63,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { businessId, masterId, clientName, clientPhone, clientEmail, startTime, endTime, services, notes, customPrice } = body
 
-    if (!businessId || !masterId || !clientName || !clientPhone || !startTime || !endTime || !services) {
+    if (!businessId || !masterId || !clientName || !clientPhone || !startTime || !endTime) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
@@ -89,10 +89,11 @@ export async function POST(request: Request) {
     const normalizedClientEmail =
       typeof clientEmail === 'string' && clientEmail.trim() ? clientEmail.trim() : null
 
-    const servicesJson = normalizeServicesToJsonArrayString(services)
-    if (!servicesJson) {
+    // Послуги опціональні — якщо не вказані, зберігаємо порожній масив
+    const servicesJson = services ? normalizeServicesToJsonArrayString(services) : '[]'
+    if (servicesJson === null) {
       return NextResponse.json(
-        { error: 'Invalid services format. Expected non-empty array of service IDs.' },
+        { error: 'Invalid services format. Expected array of service IDs.' },
         { status: 400 }
       )
     }
