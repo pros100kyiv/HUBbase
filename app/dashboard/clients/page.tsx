@@ -1086,19 +1086,6 @@ export default function ClientsPage() {
                                                 </span>
                                               )
                                             })}
-
-          {searchQuery.trim().length === 0 && filteredClients.length > DEFAULT_VISIBLE_CLIENTS && (
-            <div className="flex justify-center pt-1">
-              <button
-                onClick={() => setShowAllClients((v) => !v)}
-                className="px-4 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
-              >
-                {showAllClients
-                  ? 'Згорнути до 5'
-                  : `Показати ще ${hiddenClientsCount}`}
-              </button>
-            </div>
-          )}
                                           </div>
                                         )}
                                         {appointment.notes && (
@@ -1140,6 +1127,19 @@ export default function ClientsPage() {
               </div>
             )
           })}
+
+          {searchQuery.trim().length === 0 && filteredClients.length > DEFAULT_VISIBLE_CLIENTS && (
+            <div className="flex justify-center pt-2">
+              <button
+                onClick={() => setShowAllClients((v) => !v)}
+                className="px-4 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
+              >
+                {showAllClients
+                  ? 'Згорнути до 5'
+                  : `Показати ще ${hiddenClientsCount}`}
+              </button>
+            </div>
+          )}
             </div>
           )}
         </div>
