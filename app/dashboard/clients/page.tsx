@@ -41,7 +41,7 @@ export default function ClientsPage() {
   const [services, setServices] = useState<any[]>([])
   const [masters, setMasters] = useState<any[]>([])
   const [appointments, setAppointments] = useState<any[]>([])
-  const [searchQuery, setSearchQuery] = useState('')
+  const [searchQuery, setSearchQuery] = useState(() => localStorage.getItem('clientsSearchQuery') || '')
   const [loading, setLoading] = useState(true)
   const [expandedClient, setExpandedClient] = useState<string | null>(null)
   const [clientDetails, setClientDetails] = useState<Record<string, ClientDetails>>({})
@@ -105,7 +105,7 @@ export default function ClientsPage() {
             (a: any, b: any) =>
               new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
           )
-          
+           
           // Розраховуємо totalSpent з виконаних записів
           let totalSpent = 0
           clientAppointments.forEach((apt: any) => {
@@ -156,6 +156,10 @@ export default function ClientsPage() {
 
     loadData()
   }, [business])
+
+  useEffect(() => {
+    localStorage.setItem('clientsSearchQuery', searchQuery);
+  }, [searchQuery]);
 
   const calculateClientDetails = (client: Client): ClientDetails => {
     const serviceMap = new Map<string, { id: string; name: string; count: number }>()
@@ -627,7 +631,7 @@ export default function ClientsPage() {
                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Пошук за ім'ям, телефоном або email..."
+                  placeholder="Пошук за ім'ям, телефоном, email або тегами..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="w-full pl-9 pr-3 py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
@@ -1079,7 +1083,7 @@ export default function ClientsPage() {
                                               )
                                             })}
 
-          {searchQuery.trim().length === 0 && filteredClients.length > DEFAULT_VISIBLE_CLIENTS && (
+          {filteredClients.length > DEFAULT_VISIBLE_CLIENTS && (
             <div className="flex justify-center pt-1">
               <button
                 onClick={() => setShowAllClients((v) => !v)}
