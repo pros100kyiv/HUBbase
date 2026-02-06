@@ -48,7 +48,7 @@ export function MyDayCard({
   const router = useRouter()
   const [internalSelectedDate, setInternalSelectedDate] = useState(() => startOfDay(new Date()))
   const [showDatePicker, setShowDatePicker] = useState(false)
-  const [isExpanded, setIsExpanded] = useState(false)
+  const [isExpanded, setIsExpanded] = useState(true)
   const [showMenu, setShowMenu] = useState(false)
   const [shareFeedback, setShareFeedback] = useState<'share' | 'copy' | null>(null)
   const [selectedStatus, setSelectedStatus] = useState<'pending' | 'confirmed' | 'done' | null>(null)
@@ -56,7 +56,29 @@ export function MyDayCard({
   const [historyPhone, setHistoryPhone] = useState<string | null>(null)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyAppointments, setHistoryAppointments] = useState<Appointment[]>([])
-  const menuRef = useRef<HTMLDivElement>(null)
+  const [touchStart, setTouchStart] = useState<{x: number, y: number} | null>(null)
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStart({ x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY })
+  }
+
+  const handleTouchEnd = (e: React.TouchEvent, onClose: () => void) => {
+    if (!touchStart) return
+    const touchEnd = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY }
+    
+    const deltaX = touchEnd.x - touchStart.x
+    const deltaY = touchEnd.y - touchStart.y
+    
+    // Swipe right (deltaX > 70) or swipe down (deltaY > 70)
+    // Add restriction: horizontal swipe should be more horizontal than vertical, and vice versa
+    if (Math.abs(deltaX) > Math.abs(deltaY)) {
+      if (deltaX > 70) onClose()
+    } else {
+      if (deltaY > 70) onClose()
+    }
+    
+    setTouchStart(null)
+  }
 
   const selectedDate = externalSelectedDate || internalSelectedDate
   const isToday = isSameDay(selectedDate, new Date())
@@ -200,6 +222,16 @@ export function MyDayCard({
     }
   }, [showMenu])
 
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'Done': return 'Виконано'
+      case 'Pending': return 'Очікує'
+      case 'Confirmed': return 'Підтверджено'
+      case 'Cancelled': return 'Скасовано'
+      default: return status
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Confirmed':
@@ -329,7 +361,7 @@ export function MyDayCard({
           {/* Right Side: Status & Action */}
           <div className="flex flex-col items-end gap-2 pl-2">
              <div className={`px-2 py-0.5 rounded text-[10px] md:text-xs font-medium border flex-shrink-0 ${getStatusColor(apt.status)}`}>
-               {apt.status}
+               {getStatusLabel(apt.status)}
              </div>
              
              {!isDone && (
@@ -491,11 +523,12 @@ export function MyDayCard({
             </h4>
             <button
               onClick={() => setIsExpanded(!isExpanded)}
-              className="flex items-center gap-1.5 px-3 py-1.5 md:px-2 md:py-1 text-xs bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-gray-300 hover:text-white transition-all active:scale-[0.95] flex-shrink-0"
+              className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-gray-300 hover:text-white transition-all active:scale-[0.95] flex-shrink-0"
+              aria-label={isExpanded ? 'Згорнути список записів' : 'Розгорнути список записів'}
+              title={isExpanded ? 'Згорнути' : 'Розгорнути'}
             >
-              <span className="hidden sm:inline">{isExpanded ? 'Згорнути' : 'Розгорнути'}</span>
               <svg 
-                className={`w-4 h-4 sm:w-4 sm:h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
+                className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
                 fill="none" 
                 stroke="currentColor" 
                 viewBox="0 0 24 24"
@@ -504,8 +537,14 @@ export function MyDayCard({
               </svg>
             </button>
           </div>
-          <div className={`space-y-2 ${isExpanded ? '' : 'max-h-48 md:max-h-64'} overflow-y-auto transition-all duration-300 pr-1 custom-scrollbar`}>
-            {appointments.map((apt) => (
+          <div
+            className={`space-y-2 transition-all duration-300 pr-1 ${
+              isExpanded ? '' : 'max-h-48 md:max-h-64 overflow-y-auto custom-scrollbar'
+            }`}
+          >
+            {appointments
+              .filter(apt => apt.status !== 'Done' && apt.status !== 'Виконано' && apt.status !== 'Cancelled' && apt.status !== 'Скасовано')
+              .map((apt) => (
               <AppointmentItem 
                 key={apt.id} 
                 apt={apt} 
@@ -574,6 +613,8 @@ export function MyDayCard({
             <div 
               className="relative w-[95%] sm:w-full max-w-lg bg-[#2A2A2A] rounded-xl flex flex-col border border-white/10 shadow-2xl max-h-[85vh] animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={(e) => handleTouchEnd(e, () => setSelectedStatus(null))}
             >
               <div className="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
                 <h3 className="text-lg font-semibold text-white">{getStatusTitle(selectedStatus)}</h3>
@@ -641,6 +682,8 @@ export function MyDayCard({
             <div
               className="relative w-[95%] sm:w-full max-w-lg bg-[#2A2A2A] rounded-xl flex flex-col border border-white/10 shadow-2xl max-h-[85vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={(e) => handleTouchEnd(e, () => setSelectedAppointment(null))}
             >
               <div className="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
                 <div className="min-w-0">
@@ -665,7 +708,7 @@ export function MyDayCard({
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-400">Статус</span>
                   <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(selectedAppointment.status)}`}>
-                    {selectedAppointment.status}
+                    {getStatusLabel(selectedAppointment.status)}
                   </span>
                 </div>
 
@@ -766,6 +809,8 @@ export function MyDayCard({
             <div
               className="relative w-[95%] sm:w-full max-w-xl bg-[#2A2A2A] rounded-xl flex flex-col border border-white/10 shadow-2xl max-h-[85vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
+              onTouchStart={handleTouchStart}
+              onTouchEnd={(e) => handleTouchEnd(e, () => setHistoryPhone(null))}
             >
               <div className="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
                 <div className="min-w-0">
@@ -813,7 +858,7 @@ export function MyDayCard({
                               </div>
                             </div>
                             <div className={`px-2 py-1 rounded text-xs font-medium border flex-shrink-0 ${getStatusColor(apt.status)}`}>
-                              {apt.status}
+                              {getStatusLabel(apt.status)}
                             </div>
                           </div>
                         </button>
