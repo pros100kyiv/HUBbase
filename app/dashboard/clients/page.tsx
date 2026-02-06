@@ -53,7 +53,6 @@ export default function ClientsPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set())
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards')
-  const [showAllClients, setShowAllClients] = useState(false)
   const [showQuickClientCard, setShowQuickClientCard] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
 
@@ -512,13 +511,8 @@ export default function ClientsPage() {
       return sortOrder === 'asc' ? comparison : -comparison
     })
 
-  const DEFAULT_VISIBLE_CLIENTS = 5
-  // UX: при пошуку показуємо всі результати, без "перші 5"
-  const shouldCollapseClients = !showAllClients && searchQuery.trim().length === 0
-  const visibleClients = shouldCollapseClients
-    ? filteredClients.slice(0, DEFAULT_VISIBLE_CLIENTS)
-    : filteredClients
-  const hiddenClientsCount = Math.max(0, filteredClients.length - visibleClients.length)
+  const visibleClients = filteredClients
+  const hiddenClientsCount = 0
   const allVisibleSelected =
     visibleClients.length > 0 && visibleClients.every((c) => selectedClients.has(c.id))
 
@@ -1086,6 +1080,7 @@ export default function ClientsPage() {
                                                 </span>
                                               )
                                             })}
+
                                           </div>
                                         )}
                                         {appointment.notes && (
@@ -1127,19 +1122,6 @@ export default function ClientsPage() {
               </div>
             )
           })}
-
-          {searchQuery.trim().length === 0 && filteredClients.length > DEFAULT_VISIBLE_CLIENTS && (
-            <div className="flex justify-center pt-2">
-              <button
-                onClick={() => setShowAllClients((v) => !v)}
-                className="px-4 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
-              >
-                {showAllClients
-                  ? 'Згорнути до 5'
-                  : `Показати ще ${hiddenClientsCount}`}
-              </button>
-            </div>
-          )}
             </div>
           )}
         </div>
