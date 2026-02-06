@@ -57,6 +57,7 @@ export function MyDayCard({
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyAppointments, setHistoryAppointments] = useState<Appointment[]>([])
   const [touchStart, setTouchStart] = useState<{x: number, y: number} | null>(null)
+  const menuRef = useRef<HTMLDivElement>(null)
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart({ x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY })
