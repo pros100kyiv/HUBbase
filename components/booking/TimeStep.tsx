@@ -79,20 +79,20 @@ export function TimeStep({ businessId }: TimeStepProps) {
       const dateStr = format(state.selectedDate, 'yyyy-MM-dd')
       const url = `/api/availability?masterId=${state.selectedMaster.id}&businessId=${businessId}&date=${dateStr}&durationMinutes=${totalDuration}`
       fetch(url)
-        .then(res => {
-          if (!res.ok) throw new Error('Failed to fetch availability')
-          return res.json()
-        })
+        .then(res => res.json().catch(() => ({ availableSlots: [], scheduleNotConfigured: true })))
         .then(data => {
-          const raw = data.availableSlots || []
+          const raw = Array.isArray(data?.availableSlots) ? data.availableSlots : []
           const now = new Date()
-          const futureOnly = raw.filter((slotStr: string) => new Date(slotStr) > now)
+          const futureOnly = raw.filter((slotStr: string) => {
+            const d = new Date(slotStr)
+            return !isNaN(d.getTime()) && d > now
+          })
           setAvailableSlots(futureOnly)
-          setScheduleNotConfigured(Boolean(data.scheduleNotConfigured))
-          setSlotsReason(data.reason || null)
+          setScheduleNotConfigured(Boolean(data?.scheduleNotConfigured))
+          setSlotsReason(data?.reason ?? null)
           if (futureOnly.length > 0) {
             const nearestSlot = futureOnly[0]
-            const nearestTime = nearestSlot.slice(11, 16)
+            const nearestTime = String(nearestSlot).slice(11, 16)
             const currentKey = state.selectedDate
               ? `${format(state.selectedDate, 'yyyy-MM-dd')}T${state.selectedTime || ''}`
               : ''
