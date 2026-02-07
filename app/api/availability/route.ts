@@ -47,23 +47,6 @@ function getDayWindow(
   return { start: startHour, end: endHour, enabled: true }
 }
 
-/** Перетин двох діапазонів. Якщо бізнес не налаштований — використовуємо тільки графік майстра. */
-function intersectDay(
-  master: { start: number; end: number; enabled: boolean },
-  business: { start: number; end: number; enabled: boolean } | null
-): { start: number; end: number; enabled: boolean } {
-  if (!master.enabled) {
-    return { start: 0, end: 0, enabled: false }
-  }
-  if (!business || !business.enabled) {
-    return master
-  }
-  const start = Math.max(master.start, business.start)
-  const end = Math.min(master.end, business.end)
-  if (start >= end) return { start: master.start, end: master.end, enabled: false }
-  return { start, end, enabled: true }
-}
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -92,16 +75,10 @@ export async function GET(request: Request) {
     const endOfDayDate = new Date(startOfSelectedDay)
     endOfDayDate.setHours(23, 59, 59, 999)
 
-    const [master, business] = await Promise.all([
-      prisma.master.findUnique({
-        where: { id: masterId },
-        select: { workingHours: true, blockedPeriods: true, isActive: true },
-      }),
-      prisma.business.findUnique({
-        where: { id: businessId },
-        select: { workingHours: true },
-      }),
-    ])
+    const master = await prisma.master.findUnique({
+      where: { id: masterId },
+      select: { workingHours: true, blockedPeriods: true, isActive: true },
+    })
 
     if (!master || master.isActive === false) {
       return NextResponse.json({
@@ -121,16 +98,14 @@ export async function GET(request: Request) {
     })
 
     const masterWH = parseWorkingHours(master.workingHours)
-    const businessWH = parseWorkingHours(business?.workingHours ?? null)
 
     const dayOfWeek = getDay(date)
     const dayName = dayNames[dayOfWeek]
 
-    const masterDay = getDayWindow(masterWH, dayName)
-    const businessDay = businessWH ? getDayWindow(businessWH, dayName) : null
-    const finalDay = intersectDay(masterDay, businessDay)
+    // Слоти тільки за графіком майстра; графік бізнесу поки не використовуємо
+    const finalDay = getDayWindow(masterWH, dayName)
 
-    if (!masterDay.enabled) {
+    if (!finalDay.enabled) {
       return NextResponse.json({
         availableSlots: [],
         scheduleNotConfigured: true,
@@ -140,13 +115,12 @@ export async function GET(request: Request) {
 
     const dayStart = finalDay.start
     const dayEnd = finalDay.end
-    const isWorkingDay = finalDay.enabled
 
-    if (!isWorkingDay || dayStart >= dayEnd) {
+    if (dayStart >= dayEnd) {
       return NextResponse.json({
         availableSlots: [],
         scheduleNotConfigured: true,
-        message: 'На цей день немає робочого вікна (графік бізнесу та майстра не перетинаються).',
+        message: 'На цей день немає робочого вікна.',
       })
     }
 
@@ -160,9 +134,9 @@ export async function GET(request: Request) {
     }
 
     // Ключі слотів у форматі YYYY-MM-DDTHH:mm — той самий формат, що й у клієнта (dateStr + 'T' + time).
-    // Генеруємо по даті з запиту та годинах робочого вікна, без прив'язки до "минулого" (минулі фільтрує клієнт).
+    // Генеруємо по даті з запиту та годинах робочого вікна майстра (минулі фільтрує клієнт).
     const slots: string[] = []
-    if (isWorkingDay) {
+    {
       const dateStr = dateNorm
       for (let hour = dayStart; hour < dayEnd; hour++) {
         for (let minute = 0; minute < 60; minute += 30) {
