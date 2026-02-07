@@ -474,17 +474,6 @@ export default function SettingsPage() {
     }
   }
 
-  const startEditMaster = (master: Master) => {
-    setEditingMaster(master)
-    setMasterForm({
-      name: master.name,
-      bio: master.bio || '',
-      rating: master.rating.toString(),
-      photo: master.photo || '',
-    })
-    setShowMasterForm(true)
-  }
-
   const startEditService = (service: Service) => {
     setEditingService(service)
     // Parse category if it contains subcategory format
