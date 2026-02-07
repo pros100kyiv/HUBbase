@@ -55,6 +55,8 @@ export default function ClientsPage() {
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards')
   const [showQuickClientCard, setShowQuickClientCard] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
+  const [showAllClients, setShowAllClients] = useState(false)
+  const INITIAL_VISIBLE_COUNT = 10
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -511,8 +513,10 @@ export default function ClientsPage() {
       return sortOrder === 'asc' ? comparison : -comparison
     })
 
-  const visibleClients = filteredClients
-  const hiddenClientsCount = 0
+  const visibleClients = showAllClients 
+    ? filteredClients 
+    : filteredClients.slice(0, INITIAL_VISIBLE_COUNT)
+  const hiddenClientsCount = filteredClients.length - visibleClients.length
   const allVisibleSelected =
     visibleClients.length > 0 && visibleClients.every((c) => selectedClients.has(c.id))
 
@@ -1122,6 +1126,27 @@ export default function ClientsPage() {
               </div>
             )
           })}
+            
+              {filteredClients.length > INITIAL_VISIBLE_COUNT && (
+                <div className="flex justify-center pt-2">
+                  <button
+                    onClick={() => setShowAllClients(!showAllClients)}
+                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm font-medium border border-white/10"
+                  >
+                    {showAllClients ? (
+                      <>
+                        <ChevronUpIcon className="w-4 h-4" />
+                        Згорнути до {INITIAL_VISIBLE_COUNT}
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDownIcon className="w-4 h-4" />
+                        Показати ще {hiddenClientsCount}
+                      </>
+                    )}
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
