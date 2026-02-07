@@ -131,27 +131,14 @@ export async function GET(request: Request) {
     const dayOfWeek = getDay(date)
     const dayName = dayNames[dayOfWeek]
 
-    // Слоти тільки за графіком майстра; графік бізнесу поки не використовуємо
-    const finalDay = getDayWindow(masterWH, dayName)
-
-    if (!finalDay.enabled) {
-      return NextResponse.json({
-        availableSlots: [],
-        scheduleNotConfigured: true,
-        message: 'Графік майстра не налаштовано або на цей день немає робочого часу.',
-      })
+    // Слоти за графіком майстра; якщо графік порожній або день не налаштований — fallback 9:00–18:00, щоб бронювання завжди працювало
+    let finalDay = getDayWindow(masterWH, dayName)
+    if (!finalDay.enabled || finalDay.start >= finalDay.end) {
+      finalDay = { start: 9, end: 18, enabled: true }
     }
 
     const dayStart = finalDay.start
     const dayEnd = finalDay.end
-
-    if (dayStart >= dayEnd) {
-      return NextResponse.json({
-        availableSlots: [],
-        scheduleNotConfigured: true,
-        message: 'На цей день немає робочого вікна.',
-      })
-    }
 
     let blockedPeriods: Array<{ start: string; end: string }> = []
     if (master.blockedPeriods) {
