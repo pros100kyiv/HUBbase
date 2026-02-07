@@ -208,29 +208,41 @@ export function CreateAppointmentForm({
               </div>
             </div>
 
-            {/* Modal вибору послуг */}
+            {/* Modal вибору послуг — стиль Dashboard (modal-dialog, dark) */}
             {showServiceModal && (
               <ModalPortal>
                 <div
-                  className="modal-overlay sm:!p-4"
+                  className="modal-overlay sm:!p-4 z-[200]"
                   onClick={() => setShowServiceModal(false)}
                 >
                   <div
-                    className="w-[95%] sm:w-full max-w-md modal-content modal-dialog modal-dialog-light flex flex-col"
+                    className="relative w-[95%] sm:w-full max-w-md modal-content modal-dialog flex flex-col animate-in fade-in zoom-in-95 duration-200"
                     onClick={(e) => e.stopPropagation()}
                   >
-                    <div className="p-4 border-b border-gray-200 dark:border-white/10">
-                      <h3 className="text-lg font-semibold text-foreground">Обрати послуги</h3>
+                    <div className="flex items-center justify-between pb-4 border-b border-white/10 flex-shrink-0">
+                      <h3 className="text-lg font-semibold text-white">Обрати послуги</h3>
+                      <button
+                        type="button"
+                        onClick={() => setShowServiceModal(false)}
+                        className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
+                        aria-label="Закрити"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                        </svg>
+                      </button>
+                    </div>
+                    <div className="p-4 border-b border-white/10">
                       <input
                         type="text"
                         value={serviceSearchQuery}
                         onChange={(e) => setServiceSearchQuery(e.target.value)}
                         placeholder="Пошук за назвою..."
-                        className="mt-3 w-full px-3 py-2 border border-gray-300 dark:border-white/20 rounded-lg bg-white dark:bg-white/10 text-foreground placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-primary"
+                        className="w-full px-3 py-2 min-h-[44px] border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/30"
                         autoFocus
                       />
                     </div>
-                    <div className="flex-1 p-2 min-h-0">
+                    <div className="flex-1 overflow-y-auto min-h-0 max-h-[40vh] p-2 space-y-2">
                       {services
                         .filter((s) =>
                           s.name.toLowerCase().includes(serviceSearchQuery.trim().toLowerCase())
@@ -238,18 +250,18 @@ export function CreateAppointmentForm({
                         .map((service) => (
                           <label
                             key={service.id}
-                            className="flex items-center gap-3 p-3 rounded-lg border border-transparent hover:bg-gray-100 dark:hover:bg-white/5 cursor-pointer transition-colors"
+                            className="flex items-center gap-3 p-3 rounded-xl card-glass cursor-pointer transition-all hover:bg-white/[0.08] active:scale-[0.99] min-h-[56px] touch-target"
                           >
                             <input
                               type="checkbox"
                               checked={formData.serviceIds.includes(service.id)}
                               onChange={() => handleServiceToggle(service.id)}
-                              className="rounded border-gray-300 dark:border-white/30 text-primary focus:ring-primary"
+                              className="rounded border-white/30 bg-white/10 text-primary focus:ring-primary"
                             />
-                            <span className="flex-1 text-sm text-foreground">
+                            <span className="flex-1 text-sm font-medium text-white">
                               {service.name}
                             </span>
-                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                            <span className="text-xs text-gray-400">
                               {Math.round(service.price)} грн · {service.duration} хв
                             </span>
                           </label>
@@ -257,16 +269,16 @@ export function CreateAppointmentForm({
                       {services.filter((s) =>
                         s.name.toLowerCase().includes(serviceSearchQuery.trim().toLowerCase())
                       ).length === 0 && (
-                        <p className="p-4 text-center text-sm text-gray-500 dark:text-gray-400">
+                        <p className="p-4 text-center text-sm text-gray-400">
                           {serviceSearchQuery.trim() ? 'Нічого не знайдено' : 'Немає послуг'}
                         </p>
                       )}
                     </div>
-                    <div className="p-4 border-t border-gray-200 dark:border-white/10">
+                    <div className="p-4 border-t border-white/10 flex-shrink-0">
                       <button
                         type="button"
                         onClick={() => setShowServiceModal(false)}
-                        className="w-full dashboard-btn-primary"
+                        className="w-full dashboard-btn-primary min-h-[48px] touch-target"
                       >
                         Готово
                       </button>
