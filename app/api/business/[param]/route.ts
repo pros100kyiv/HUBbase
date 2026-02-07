@@ -49,8 +49,29 @@ const businessSelect = {
   businessIdentifier: true,
   profileCompleted: true,
   avatar: true,
+  telegramBotToken: true,
   telegramChatId: true,
   telegramId: true,
+  telegramNotificationsEnabled: true,
+  aiChatEnabled: true,
+  aiProvider: true,
+  aiApiKey: true,
+  aiSettings: true,
+  smsProvider: true,
+  smsApiKey: true,
+  smsSender: true,
+  emailProvider: true,
+  emailApiKey: true,
+  emailFrom: true,
+  emailFromName: true,
+  paymentProvider: true,
+  paymentApiKey: true,
+  paymentMerchantId: true,
+  paymentEnabled: true,
+  remindersEnabled: true,
+  reminderSmsEnabled: true,
+  reminderEmailEnabled: true,
+  settings: true,
 }
 
 type BusinessSelect = typeof businessSelect
@@ -226,16 +247,17 @@ export async function PATCH(
       remindersEnabled,
       reminderSmsEnabled,
       reminderEmailEnabled,
+      reminderHoursBefore,
       // Block/Unblock
       isActive,
     } = body
 
-    // Отримуємо поточний бізнес для порівняння телефону
+    // Отримуємо поточний бізнес для порівняння телефону та settings (для merge)
     let currentBusiness
     try {
       currentBusiness = await prisma.business.findUnique({
         where: { id: businessId },
-        select: { phone: true, name: true },
+        select: { phone: true, name: true, settings: true },
       })
 
       if (!currentBusiness) {
@@ -304,6 +326,17 @@ export async function PATCH(
         ...(remindersEnabled !== undefined && { remindersEnabled }),
         ...(reminderSmsEnabled !== undefined && { reminderSmsEnabled }),
         ...(reminderEmailEnabled !== undefined && { reminderEmailEnabled }),
+        // reminderHoursBefore зберігається в settings JSON
+        ...(reminderHoursBefore !== undefined && (() => {
+          try {
+            const prev = (currentBusiness as { settings?: string | null })?.settings
+            const parsed = prev ? JSON.parse(prev) : {}
+            parsed.reminderHoursBefore = Number(reminderHoursBefore) || 24
+            return { settings: JSON.stringify(parsed) }
+          } catch {
+            return { settings: JSON.stringify({ reminderHoursBefore: Number(reminderHoursBefore) || 24 }) }
+          }
+        })()),
         // Block/Unblock
         ...(isActive !== undefined && { isActive }),
       },

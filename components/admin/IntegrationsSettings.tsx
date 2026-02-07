@@ -48,7 +48,15 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
   const [remindersEnabled, setRemindersEnabled] = useState(business?.remindersEnabled || false)
   const [reminderSmsEnabled, setReminderSmsEnabled] = useState(business?.reminderSmsEnabled || false)
   const [reminderEmailEnabled, setReminderEmailEnabled] = useState(business?.reminderEmailEnabled || false)
-  const [reminderHoursBefore, setReminderHoursBefore] = useState(24) // За скільки годин нагадувати
+  const [reminderHoursBefore, setReminderHoursBefore] = useState(() => {
+    try {
+      if (business?.settings) {
+        const s = JSON.parse(business.settings)
+        if (typeof s?.reminderHoursBefore === 'number') return s.reminderHoursBefore
+      }
+    } catch {}
+    return 24
+  })
   
   // Оновлюємо стан при зміні business
   useEffect(() => {
@@ -80,6 +88,12 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
       setRemindersEnabled(business.remindersEnabled || false)
       setReminderSmsEnabled(business.reminderSmsEnabled || false)
       setReminderEmailEnabled(business.reminderEmailEnabled || false)
+      try {
+        if (business.settings) {
+          const s = JSON.parse(business.settings)
+          if (typeof s?.reminderHoursBefore === 'number') setReminderHoursBefore(s.reminderHoursBefore)
+        }
+      } catch {}
     }
   }, [business])
   
@@ -105,9 +119,10 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
         paymentProvider,
         paymentApiKey: paymentApiKey || undefined,
         paymentMerchantId: paymentMerchantId || undefined,
-        remindersEnabled,
-        reminderSmsEnabled,
-        reminderEmailEnabled
+      remindersEnabled,
+      reminderSmsEnabled,
+      reminderEmailEnabled,
+      reminderHoursBefore: reminderHoursBefore || 24
       })
     } finally {
       setIsSaving(false)

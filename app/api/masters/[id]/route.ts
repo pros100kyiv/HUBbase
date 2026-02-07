@@ -10,11 +10,16 @@ export async function PATCH(
   try {
     const resolvedParams = await Promise.resolve(params)
     const body = await request.json()
-    const { businessId, name, photo, bio, rating, isActive, workingHours, blockedPeriods } = body
+    let { businessId, name, photo, bio, rating, isActive, workingHours, blockedPeriods } = body
 
-    // КРИТИЧНО: Перевірка businessId для ізоляції даних
+    // Якщо businessId не передано — отримуємо з запису майстра (для викликів з налаштувань)
     if (!businessId) {
-      return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
+      const master = await prisma.master.findUnique({
+        where: { id: resolvedParams.id },
+        select: { businessId: true },
+      })
+      if (!master) return NextResponse.json({ error: 'Master not found' }, { status: 404 })
+      businessId = master.businessId
     }
 
     // Перевіряємо, чи запис належить цьому бізнесу
@@ -53,11 +58,16 @@ export async function DELETE(
   try {
     const resolvedParams = await Promise.resolve(params)
     const { searchParams } = new URL(request.url)
-    const businessId = searchParams.get('businessId')
+    let businessId = searchParams.get('businessId')
 
-    // КРИТИЧНО: Перевірка businessId для ізоляції даних
+    // Якщо businessId не передано — отримуємо з запису майстра
     if (!businessId) {
-      return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
+      const master = await prisma.master.findUnique({
+        where: { id: resolvedParams.id },
+        select: { businessId: true },
+      })
+      if (!master) return NextResponse.json({ error: 'Master not found' }, { status: 404 })
+      businessId = master.businessId
     }
 
     // Перевіряємо, чи запис належить цьому бізнесу

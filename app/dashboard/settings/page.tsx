@@ -9,7 +9,7 @@ import { WorkingHoursEditor } from '@/components/admin/WorkingHoursEditor'
 import { BusinessCardEditor } from '@/components/admin/BusinessCardEditor'
 import { TelegramSettings } from '@/components/admin/TelegramSettings'
 import { IntegrationsSettings } from '@/components/admin/IntegrationsSettings'
-import { ImageIcon, ClockIcon, ChevronDownIcon, ChevronUpIcon } from '@/components/icons'
+import { ImageIcon, ClockIcon, ChevronDownIcon, ChevronUpIcon, UserIcon, UsersIcon } from '@/components/icons'
 import { toast } from '@/components/ui/toast'
 import { Confetti, triggerConfetti } from '@/components/ui/confetti'
 import { cn } from '@/lib/utils'
@@ -17,6 +17,7 @@ import { cn } from '@/lib/utils'
 interface Business {
   id: string
   name: string
+  slug?: string
   email: string
   phone?: string
   address?: string
@@ -35,6 +36,8 @@ interface Business {
   customNiche?: string
   businessIdentifier?: string
   profileCompleted?: boolean
+  telegramBotToken?: string | null
+  settings?: string | null
 }
 
 interface Master {
@@ -68,7 +71,142 @@ const getCategoryColor = (index: number) => {
   return colors[index % colors.length]
 }
 
-type Tab = 'info' | 'masters' | 'services' | 'businessCard' | 'telegram' | 'integrations'
+type Tab = 'info' | 'schedule' | 'masters' | 'services' | 'businessCard' | 'telegram' | 'integrations'
+
+const TAB_LABELS: Record<Tab, string> = {
+  info: 'Інформація',
+  schedule: 'Робочі години',
+  masters: 'Спеціалісти',
+  services: 'Послуги',
+  businessCard: 'Візитівка',
+  telegram: 'Telegram',
+  integrations: 'Інтеграції',
+}
+
+const DAY_NAMES: Record<string, string> = {
+  monday: 'Понеділок',
+  tuesday: 'Вівторок',
+  wednesday: 'Середа',
+  thursday: 'Четвер',
+  friday: 'П\'ятниця',
+  saturday: 'Субота',
+  sunday: 'Неділя',
+}
+
+const DEFAULT_HOURS = {
+  monday: { enabled: true, start: '09:00', end: '18:00' },
+  tuesday: { enabled: true, start: '09:00', end: '18:00' },
+  wednesday: { enabled: true, start: '09:00', end: '18:00' },
+  thursday: { enabled: true, start: '09:00', end: '18:00' },
+  friday: { enabled: true, start: '09:00', end: '18:00' },
+  saturday: { enabled: false, start: '09:00', end: '18:00' },
+  sunday: { enabled: false, start: '09:00', end: '18:00' },
+}
+
+function BusinessWorkingHoursEditor({
+  businessId,
+  currentHours,
+  onSave,
+}: {
+  businessId: string
+  currentHours?: string
+  onSave: (hours: string) => void
+}) {
+  const [hours, setHours] = useState<Record<string, { enabled: boolean; start: string; end: string }>>(DEFAULT_HOURS)
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (currentHours) {
+      try {
+        const parsed = JSON.parse(currentHours)
+        setHours({ ...DEFAULT_HOURS, ...parsed })
+      } catch {}
+    }
+  }, [currentHours])
+
+  const updateDay = (day: string, field: string, value: boolean | string) => {
+    setHours((prev) => ({
+      ...prev,
+      [day]: { ...prev[day], [field]: value },
+    }))
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      const res = await fetch(`/api/business/${businessId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ workingHours: JSON.stringify(hours) }),
+      })
+      if (res.ok) {
+        onSave(JSON.stringify(hours))
+      } else {
+        const err = await res.json().catch(() => ({}))
+        toast({ title: 'Помилка', description: err.error || 'Не вдалося зберегти', type: 'error' })
+      }
+    } catch {
+      toast({ title: 'Помилка', description: 'Не вдалося зберегти графік', type: 'error' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className="rounded-xl p-4 md:p-6 card-glass">
+      <h2 className="text-lg font-bold text-white mb-4" style={{ letterSpacing: '-0.02em' }}>
+        Робочі години бізнесу
+      </h2>
+      <p className="text-sm text-gray-400 mb-6">
+        Загальний графік роботи вашого бізнесу. Клієнти бачитимуть цей графік при бронюванні.
+      </p>
+      <div className="space-y-3">
+        {Object.entries(DAY_NAMES).map(([key, name]) => (
+          <div
+            key={key}
+            className="flex flex-wrap items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10"
+          >
+            <div className="flex items-center gap-2 min-w-[120px]">
+              <input
+                type="checkbox"
+                checked={hours[key]?.enabled ?? true}
+                onChange={(e) => updateDay(key, 'enabled', e.target.checked)}
+                className="w-4 h-4 rounded border-white/30 bg-white/10 text-white focus:ring-white/30"
+              />
+              <label className="text-sm font-medium text-white">{name}</label>
+            </div>
+            {hours[key]?.enabled && (
+              <div className="flex items-center gap-2">
+                <input
+                  type="time"
+                  value={hours[key].start}
+                  onChange={(e) => updateDay(key, 'start', e.target.value)}
+                  className="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:ring-2 focus:ring-white/30"
+                />
+                <span className="text-gray-400">—</span>
+                <input
+                  type="time"
+                  value={hours[key].end}
+                  onChange={(e) => updateDay(key, 'end', e.target.value)}
+                  className="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:ring-2 focus:ring-white/30"
+                />
+              </div>
+            )}
+            {!hours[key]?.enabled && <span className="text-xs text-gray-500">Вихідний</span>}
+          </div>
+        ))}
+      </div>
+      <Button
+        onClick={handleSave}
+        disabled={saving}
+        className="mt-6 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100"
+        style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+      >
+        {saving ? 'Збереження...' : 'Зберегти графік'}
+      </Button>
+    </div>
+  )
+}
 
 export default function SettingsPage() {
   const router = useRouter()
@@ -226,7 +364,7 @@ export default function SettingsPage() {
     if (typeof window !== 'undefined') {
       const params = new URLSearchParams(window.location.search)
       const tabParam = params.get('tab')
-      const allowedTabs: Tab[] = ['info', 'masters', 'services', 'businessCard', 'telegram', 'integrations']
+      const allowedTabs: Tab[] = ['info', 'schedule', 'masters', 'services', 'businessCard', 'telegram', 'integrations']
       if (tabParam && allowedTabs.includes(tabParam as Tab)) {
         setActiveTab(tabParam as Tab)
       }
@@ -513,11 +651,22 @@ export default function SettingsPage() {
     )
   }
 
+  const bookingUrl = typeof window !== 'undefined' && business?.slug
+    ? `${window.location.origin}/booking/${business.slug}`
+    : ''
+
+  const copyBookingLink = () => {
+    if (bookingUrl) {
+      navigator.clipboard.writeText(bookingUrl)
+      toast({ title: 'Посилання скопійовано', type: 'success', duration: 2000 })
+    }
+  }
+
   return (
     <div className="min-h-screen">
       <Confetti trigger={showConfetti} />
       <div className="max-w-7xl mx-auto">
-        {/* Header + Tabs - dashboard base */}
+        {/* Header + Status cards + Tabs */}
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
             <div>
@@ -528,12 +677,133 @@ export default function SettingsPage() {
                 Управління бізнесом та налаштування
               </p>
             </div>
+            {bookingUrl && (
+              <div className="flex items-center gap-2">
+                <code className="px-3 py-2 rounded-lg bg-white/10 text-gray-300 text-xs truncate max-w-[200px] md:max-w-xs" title={bookingUrl}>
+                  {bookingUrl}
+                </code>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={copyBookingLink}
+                  className="shrink-0 border-white/20 bg-white/10 text-white hover:bg-white/20 text-xs"
+                >
+                  Копіювати посилання
+                </Button>
+              </div>
+            )}
+          </div>
+
+          {/* Status cards - швидкий огляд */}
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 mb-4">
+            <button
+              onClick={() => setActiveTab('info')}
+              className={cn(
+                'rounded-xl p-3 text-left transition-all border',
+                activeTab === 'info' ? 'card-glass border-white/30 bg-white/15' : 'card-glass-subtle border-white/10 hover:border-white/20'
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', business?.profileCompleted ? 'bg-green-500/20 text-green-400' : 'bg-amber-500/20 text-amber-400')}>
+                  <UserIcon className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Профіль</p>
+                  <p className="text-sm font-bold text-white">{business?.profileCompleted ? 'Заповнено' : 'Заповніть'}</p>
+                </div>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('masters')}
+              className={cn(
+                'rounded-xl p-3 text-left transition-all border',
+                activeTab === 'masters' ? 'card-glass border-white/30 bg-white/15' : 'card-glass-subtle border-white/10 hover:border-white/20'
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center">
+                  <UsersIcon className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Спеціалісти</p>
+                  <p className="text-sm font-bold text-white">{masters.length}</p>
+                </div>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('services')}
+              className={cn(
+                'rounded-xl p-3 text-left transition-all border',
+                activeTab === 'services' ? 'card-glass border-white/30 bg-white/15' : 'card-glass-subtle border-white/10 hover:border-white/20'
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center">
+                  <ClockIcon className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Послуги</p>
+                  <p className="text-sm font-bold text-white">{services.length}</p>
+                </div>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('telegram')}
+              className={cn(
+                'rounded-xl p-3 text-left transition-all border',
+                activeTab === 'telegram' ? 'card-glass border-white/30 bg-white/15' : 'card-glass-subtle border-white/10 hover:border-white/20'
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', business?.telegramBotToken ? 'bg-sky-500/20 text-sky-400' : 'bg-gray-500/20 text-gray-400')}>
+                  <span className="text-sm">TG</span>
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Telegram</p>
+                  <p className="text-sm font-bold text-white">{business?.telegramBotToken ? 'Підключено' : '—'}</p>
+                </div>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('integrations')}
+              className={cn(
+                'rounded-xl p-3 text-left transition-all border',
+                activeTab === 'integrations' ? 'card-glass border-white/30 bg-white/15' : 'card-glass-subtle border-white/10 hover:border-white/20'
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-indigo-500/20 text-indigo-400 flex items-center justify-center">
+                  <ChartIcon className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Інтеграції</p>
+                  <p className="text-sm font-bold text-white">AI · SMS · Email</p>
+                </div>
+              </div>
+            </button>
+            <button
+              onClick={() => setActiveTab('schedule')}
+              className={cn(
+                'rounded-xl p-3 text-left transition-all border',
+                activeTab === 'schedule' ? 'card-glass border-white/30 bg-white/15' : 'card-glass-subtle border-white/10 hover:border-white/20'
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center">
+                  <ClockIcon className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Графік</p>
+                  <p className="text-sm font-bold text-white">Бізнес</p>
+                </div>
+              </div>
+            </button>
           </div>
 
           {/* Tabs - card-glass dark theme */}
           <div className="rounded-xl p-3 card-glass-subtle">
             <div className="flex gap-2 flex-wrap">
-              {(['info', 'masters', 'services', 'businessCard', 'telegram', 'integrations'] as Tab[]).map((tab) => (
+              {(['info', 'schedule', 'masters', 'services', 'businessCard', 'telegram', 'integrations'] as Tab[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setActiveTab(tab)}
@@ -544,12 +814,7 @@ export default function SettingsPage() {
                       : 'bg-white/10 text-gray-300 border border-white/20 hover:bg-white/15 hover:text-white'
                   )}
                 >
-                  {tab === 'info' && 'Інформація'}
-                  {tab === 'masters' && 'Спеціалісти'}
-                  {tab === 'services' && 'Послуги'}
-                  {tab === 'businessCard' && 'Візитівка'}
-                  {tab === 'telegram' && 'Telegram'}
-                  {tab === 'integrations' && 'Інтеграції'}
+                  {TAB_LABELS[tab]}
                 </button>
               ))}
             </div>
@@ -667,6 +932,19 @@ export default function SettingsPage() {
                 </Button>
               </div>
             </div>
+          )}
+
+          {/* Робочі години бізнесу */}
+          {activeTab === 'schedule' && business && (
+            <BusinessWorkingHoursEditor
+              businessId={business.id}
+              currentHours={business.workingHours || undefined}
+              onSave={(hours) => {
+                setBusiness(prev => prev ? { ...prev, workingHours: hours } : null)
+                setFormData(prev => ({ ...prev, workingHours: hours }))
+                toast({ title: 'Графік збережено', type: 'success', duration: 1500 })
+              }}
+            />
           )}
 
           {/* Майстри */}
@@ -1216,18 +1494,17 @@ export default function SettingsPage() {
                   headers: { 'Content-Type': 'application/json' },
                   body: JSON.stringify(data)
                 })
-                  if (response.ok) {
-                    const updated = await response.json()
-                    setBusiness(updated)
-                    const businessData = localStorage.getItem('business')
-                    if (businessData) {
-                      const parsed = JSON.parse(businessData)
-                      localStorage.setItem('business', JSON.stringify({ ...parsed, ...updated }))
-                    }
-                    toast({ title: 'Налаштування збережено', type: 'success' })
-                  } else {
-                    toast({ title: 'Помилка збереження', type: 'error' })
+                if (response.ok) {
+                  const { business: updatedBusiness } = await response.json()
+                  if (updatedBusiness) {
+                    setBusiness(updatedBusiness)
+                    localStorage.setItem('business', JSON.stringify(updatedBusiness))
                   }
+                  toast({ title: 'Налаштування збережено', type: 'success' })
+                } else {
+                  const err = await response.json().catch(() => ({}))
+                  toast({ title: 'Помилка збереження', description: err.error || undefined, type: 'error' })
+                }
               }}
             />
             </div>
