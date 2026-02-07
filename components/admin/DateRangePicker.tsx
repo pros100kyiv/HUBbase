@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, isSameDay, isSameMonth, addMonths, subMonths } from 'date-fns'
+import { ModalPortal } from '@/components/ui/modal-portal'
 import { uk } from 'date-fns/locale'
 import { XIcon, ChevronLeftIcon, ChevronRightIcon, CalendarIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
@@ -116,11 +117,12 @@ export function DateRangePicker({
   }
 
   return (
-    <div className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4" onClick={onClose}>
-      <div
-        className="relative w-full sm:max-w-sm bg-white dark:bg-gray-800 border-t sm:border border-gray-200 dark:border-gray-700 rounded-t-xl sm:rounded-candy-lg shadow-soft-xl p-3 sm:p-4 sm:my-auto modal-content pb-[max(1rem,env(safe-area-inset-bottom))]"
-        onClick={(e) => e.stopPropagation()}
-      >
+    <ModalPortal>
+      <div className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4" onClick={onClose}>
+        <div
+          className="relative w-full sm:max-w-sm bg-white dark:bg-gray-800 border-t sm:border border-gray-200 dark:border-gray-700 rounded-t-xl sm:rounded-candy-lg shadow-soft-xl p-3 sm:p-4 sm:my-auto modal-content pb-[max(1rem,env(safe-area-inset-bottom))]"
+          onClick={(e) => e.stopPropagation()}
+        >
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -253,8 +255,9 @@ export function DateRangePicker({
             Застосувати
           </button>
         </div>
+        </div>
       </div>
-    </div>
+    </ModalPortal>
   )
 }
 

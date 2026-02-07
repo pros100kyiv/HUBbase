@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { XIcon, UserIcon, PhoneIcon, CheckIcon } from '@/components/icons'
+import { ModalPortal } from '@/components/ui/modal-portal'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui/toast'
 import { ErrorToast } from '@/components/ui/error-toast'
@@ -186,8 +187,9 @@ export function QuickClientCard({
   }
 
   return (
-    <div className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4">
-      <div className="relative w-full sm:max-w-md bg-[#1A1A1A] border border-white/10 rounded-t-xl sm:rounded-xl p-4 sm:p-6 sm:my-auto modal-content text-white shadow-xl pb-[max(1rem,env(safe-area-inset-bottom))]">
+    <ModalPortal>
+      <div className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4">
+        <div className="relative w-full sm:max-w-md bg-[#1A1A1A] border border-white/10 rounded-t-xl sm:rounded-xl p-4 sm:p-6 sm:my-auto modal-content text-white shadow-xl pb-[max(1rem,env(safe-area-inset-bottom))]">
         {/* Close button */}
         {onCancel && (
           <button
@@ -349,8 +351,9 @@ export function QuickClientCard({
             }}
           />
         )}
+        </div>
       </div>
-    </div>
+    </ModalPortal>
   )
 }
 

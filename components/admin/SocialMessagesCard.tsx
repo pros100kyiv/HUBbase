@@ -266,7 +266,7 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
           {/* Reply Modal */}
           {selectedMessage && (
             <ModalPortal>
-              <div className="modal-overlay z-[9999] sm:!p-4">
+              <div className="modal-overlay sm:!p-4">
                 <div
                   className="fixed inset-0 min-h-[100dvh] bg-black/70 backdrop-blur-sm"
                   onClick={() => setSelectedMessage(null)}

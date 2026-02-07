@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { format, formatDistanceToNow } from 'date-fns'
 import { uk } from 'date-fns/locale'
+import { ModalPortal } from '@/components/ui/modal-portal'
 import { 
   BuildingIcon, 
   UsersIcon, 
@@ -1039,9 +1040,10 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
 
       {/* Block Modal */}
       {blockModalOpen && selectedBusiness && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-          <div className="card-floating rounded-lg shadow-xl p-6 w-full max-w-md">
-            <h3 className="text-xl font-bold mb-4 text-white" style={{ letterSpacing: '-0.02em' }}>
+        <ModalPortal>
+          <div className="modal-overlay bg-black/50 sm:!p-4" onClick={() => { setBlockModalOpen(false); setSelectedBusiness(null); setBlockReason('') }}>
+            <div className="relative w-full sm:max-w-md modal-content card-floating rounded-lg shadow-xl p-6" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-xl font-bold mb-4 text-white" style={{ letterSpacing: '-0.02em' }}>
               Заблокувати акаунт
             </h3>
             <div className="mb-4">
@@ -1097,13 +1099,15 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
               </button>
             </div>
           </div>
-        </div>
+          </div>
+        </ModalPortal>
       )}
 
       {/* Modal деталей бізнесу */}
       {detailModalBusiness && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70" onClick={() => setDetailModalBusiness(null)}>
-          <div className="w-full max-w-lg rounded-xl card-floating p-6 border border-white/10" onClick={(e) => e.stopPropagation()}>
+        <ModalPortal>
+          <div className="modal-overlay bg-black/70 sm:!p-4" onClick={() => setDetailModalBusiness(null)}>
+            <div className="w-full sm:max-w-lg modal-content rounded-xl card-floating p-6 border border-white/10 sm:my-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-xl font-bold text-white">{detailModalBusiness.name}</h3>
               <button onClick={() => setDetailModalBusiness(null)} className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white">
@@ -1127,8 +1131,9 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
               )}
               <button onClick={() => { navigator.clipboard.writeText(detailModalBusiness.businessIdentifier || ''); }} className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20">Копіювати ID</button>
             </div>
+            </div>
           </div>
-        </div>
+        </ModalPortal>
       )}
     </div>
   )

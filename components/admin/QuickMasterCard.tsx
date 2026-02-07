@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { XIcon, UserIcon, ImageIcon, CheckIcon, StarIcon } from '@/components/icons'
+import { ModalPortal } from '@/components/ui/modal-portal'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui/toast'
 import { ErrorToast } from '@/components/ui/error-toast'
@@ -159,8 +160,9 @@ export function QuickMasterCard({
   }
 
   return (
-    <div className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4">
-      <div className="relative w-full sm:max-w-md bg-[#1A1A1A] border border-white/10 rounded-t-xl sm:rounded-xl p-4 sm:p-6 sm:my-auto modal-content text-white shadow-xl pb-[max(1rem,env(safe-area-inset-bottom))]">
+    <ModalPortal>
+      <div className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4">
+        <div className="relative w-full sm:max-w-md bg-[#1A1A1A] border border-white/10 rounded-t-xl sm:rounded-xl p-4 sm:p-6 sm:my-auto modal-content text-white shadow-xl pb-[max(1rem,env(safe-area-inset-bottom))]">
         {/* Close Button */}
         {onCancel && (
           <button
@@ -346,8 +348,9 @@ export function QuickMasterCard({
             }}
           />
         )}
+        </div>
       </div>
-    </div>
+    </ModalPortal>
   )
 }
 

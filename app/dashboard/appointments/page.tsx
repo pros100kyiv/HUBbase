@@ -846,7 +846,7 @@ export default function AppointmentsPage() {
       {showCreateForm && business && (
         <ModalPortal>
           <div
-            className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4 z-[100]"
+            className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4"
             onClick={() => setShowCreateForm(false)}
           >
             <div

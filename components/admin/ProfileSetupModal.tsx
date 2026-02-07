@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { XIcon } from '@/components/icons'
+import { ModalPortal } from '@/components/ui/modal-portal'
 import { Button } from '@/components/ui/button'
 import { ErrorToast } from '@/components/ui/error-toast'
 import { cn } from '@/lib/utils'
@@ -232,8 +233,9 @@ export function ProfileSetupModal({ business, onComplete, onClose }: ProfileSetu
   }
 
   return (
-    <div className="modal-overlay bg-black/70 backdrop-blur-sm">
-      <div className="relative w-full sm:max-w-md bg-white dark:bg-gray-800 border-t sm:border border-gray-200 dark:border-gray-700 rounded-t-xl sm:rounded-candy-lg shadow-soft-xl p-4 sm:p-6 md:p-8 sm:my-auto modal-content flex flex-col pb-[max(1rem,env(safe-area-inset-bottom))]">
+    <ModalPortal>
+      <div className="modal-overlay bg-black/70 backdrop-blur-sm">
+        <div className="relative w-full sm:max-w-md bg-white dark:bg-gray-800 border-t sm:border border-gray-200 dark:border-gray-700 rounded-t-xl sm:rounded-candy-lg shadow-soft-xl p-4 sm:p-6 md:p-8 sm:my-auto modal-content flex flex-col pb-[max(1rem,env(safe-area-inset-bottom))]">
         {/* Close button - завжди доступний */}
         <button
           onClick={() => {
@@ -392,8 +394,9 @@ export function ProfileSetupModal({ business, onComplete, onClose }: ProfileSetu
             }} 
           />
         )}
+        </div>
       </div>
-    </div>
+    </ModalPortal>
   )
 }
 

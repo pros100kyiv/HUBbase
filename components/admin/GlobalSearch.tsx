@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
+import { ModalPortal } from '@/components/ui/modal-portal'
 import { uk } from 'date-fns/locale'
 
 interface SearchResult {
@@ -108,15 +109,16 @@ export function GlobalSearch({ businessId, isOpen, onClose }: GlobalSearchProps)
   }
 
   return (
-    <div className="modal-overlay pt-4 sm:pt-20 px-2 sm:px-4 sm:!items-center sm:!pt-4 z-[100]">
-      {/* Backdrop */}
-      <div
-        className="fixed inset-0 bg-black/70 backdrop-blur-sm min-h-[100dvh]"
-        onClick={onClose}
-        aria-hidden
-      />
-      {/* Search Modal */}
-      <div className="relative w-full sm:max-w-2xl bg-[#2A2A2A] rounded-xl shadow-2xl border border-white/10 sm:my-auto modal-content pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+    <ModalPortal>
+      <div className="modal-overlay pt-4 px-2 sm:px-4 sm:!items-center sm:!p-4">
+        {/* Backdrop */}
+        <div
+          className="fixed inset-0 bg-black/70 backdrop-blur-sm min-h-[100dvh]"
+          onClick={onClose}
+          aria-hidden
+        />
+        {/* Search Modal */}
+        <div className="relative w-full sm:max-w-2xl bg-[#2A2A2A] rounded-xl shadow-2xl border border-white/10 sm:my-auto modal-content pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {/* Search Input */}
         <div className="p-4 border-b border-white/10">
           <div className="flex items-center gap-3">
@@ -247,7 +249,8 @@ export function GlobalSearch({ businessId, isOpen, onClose }: GlobalSearchProps)
           )}
         </div>
       </div>
-    </div>
+      </div>
+    </ModalPortal>
   )
 }
 

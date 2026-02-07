@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { XIcon, CalendarIcon, ClockIcon, CheckIcon } from '@/components/icons'
+import { ModalPortal } from '@/components/ui/modal-portal'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui/toast'
 import { ErrorToast } from '@/components/ui/error-toast'
@@ -178,8 +179,9 @@ export function MasterScheduleModal({
   }
 
   return (
-    <div className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4">
-      <div className="relative w-full sm:max-w-lg bg-white dark:bg-gray-800 border-t sm:border border-gray-200 dark:border-gray-700 rounded-t-xl sm:rounded-candy-lg shadow-soft-xl p-3 sm:p-4 sm:my-auto modal-content pb-[max(1rem,env(safe-area-inset-bottom))]">
+    <ModalPortal>
+      <div className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4">
+        <div className="relative w-full sm:max-w-lg bg-white dark:bg-gray-800 border-t sm:border border-gray-200 dark:border-gray-700 rounded-t-xl sm:rounded-candy-lg shadow-soft-xl p-3 sm:p-4 sm:my-auto modal-content pb-[max(1rem,env(safe-area-inset-bottom))]">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -362,6 +364,7 @@ export function MasterScheduleModal({
         )}
       </div>
     </div>
+    </ModalPortal>
   )
 }
 

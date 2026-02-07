@@ -633,7 +633,7 @@ export function MyDayCard({
       {/* Status Details Modal */}
       {selectedStatus && (
         <ModalPortal>
-          <div className="modal-overlay z-[9999] sm:!p-4">
+          <div className="modal-overlay sm:!p-4">
             <div
               className="fixed inset-0 min-h-[100dvh] bg-black/70 backdrop-blur-sm"
               onClick={() => setSelectedStatus(null)}
@@ -685,7 +685,7 @@ export function MyDayCard({
       {/* Appointment Details Modal */}
       {selectedAppointment && (
         <ModalPortal>
-          <div className="modal-overlay z-[9999] sm:!p-4">
+          <div className="modal-overlay sm:!p-4">
             <div
               className="fixed inset-0 min-h-[100dvh] bg-black/70 backdrop-blur-sm"
               onClick={() => setSelectedAppointment(null)}
@@ -804,7 +804,7 @@ export function MyDayCard({
       {/* Client History Modal */}
       {historyPhone && (
         <ModalPortal>
-          <div className="modal-overlay z-[9999] sm:!p-4">
+          <div className="modal-overlay sm:!p-4">
             <div
               className="fixed inset-0 min-h-[100dvh] bg-black/70 backdrop-blur-sm"
               onClick={() => setHistoryPhone(null)}
@@ -879,7 +879,7 @@ export function MyDayCard({
       {/* Date Picker Modal */}
       {showDatePicker && (
         <ModalPortal>
-          <div className="modal-overlay z-[9999] sm:!p-4">
+          <div className="modal-overlay sm:!p-4">
             <div
               className="fixed inset-0 min-h-[100dvh] bg-black/70 backdrop-blur-sm"
               onClick={() => setShowDatePicker(false)}
