@@ -59,8 +59,8 @@ export function FinalStep({ businessId }: FinalStepProps) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          businessId: businessId || state.businessId,
-          masterId: state.selectedMaster!.id,
+          businessId: bid,
+          masterId: state.selectedMaster.id,
           clientName: state.clientName,
           clientPhone: state.clientPhone,
           startTime: startTime.toISOString(),
@@ -84,9 +84,12 @@ export function FinalStep({ businessId }: FinalStepProps) {
       } else {
         let msg = 'Помилка при створенні запису'
         try {
-          const data = await response.json()
-          msg = data.error || msg
-          if (data.details) msg += `\n\n(${data.details})`
+          const text = await response.text()
+          if (text) {
+            const data = JSON.parse(text)
+            msg = data.error || msg
+            if (data.details) msg += `\n\n(${data.details})`
+          }
         } catch {
           // ignore
         }

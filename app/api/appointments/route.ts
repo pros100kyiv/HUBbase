@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 
 function normalizeUaPhone(phone: string): string {
@@ -178,16 +179,33 @@ export async function POST(request: Request) {
     return NextResponse.json(appointment, { status: 201 })
   } catch (error) {
     console.error('Error creating appointment:', error)
-    const message = error instanceof Error ? error.message : 'Unknown error'
-    const isConflict = message.includes('Unique constraint') || message.includes('conflict')
-    const isForeignKey = message.includes('Foreign key') || message.includes('Record to update not found')
     let userMessage = 'Не вдалося створити запис. Спробуйте ще раз.'
-    if (isConflict) userMessage = 'Цей час вже зайнятий або конфлікт даних.'
-    else if (isForeignKey) userMessage = 'Спеціаліст або бізнес не знайдено. Оновіть сторінку та спробуйте знову.'
+    let status = 500
+    const message = error instanceof Error ? error.message : 'Unknown error'
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      if (error.code === 'P2002') {
+        userMessage = 'Цей час вже зайнятий або конфлікт даних.'
+        status = 409
+      } else if (error.code === 'P2003') {
+        userMessage = 'Спеціаліст, бізнес або клієнт не знайдено. Оновіть сторінку та спробуйте знову.'
+        status = 400
+      }
+    } else {
+      const isConflict = message.includes('Unique constraint') || message.includes('conflict')
+      const isForeignKey = message.includes('Foreign key') || message.includes('Record to update not found')
+      if (isConflict) {
+        userMessage = 'Цей час вже зайнятий або конфлікт даних.'
+        status = 409
+      } else if (isForeignKey) {
+        userMessage = 'Спеціаліст або бізнес не знайдено. Оновіть сторінку та спробуйте знову.'
+      }
+    }
+
     return NextResponse.json({
       error: userMessage,
       details: process.env.NODE_ENV === 'development' ? message : undefined,
-    }, { status: 500 })
+    }, { status })
   }
 }
 
