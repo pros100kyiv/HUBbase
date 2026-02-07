@@ -4,13 +4,10 @@ import { useEffect, useState, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { WorkingHoursEditor } from '@/components/admin/WorkingHoursEditor'
 import { BusinessCardEditor } from '@/components/admin/BusinessCardEditor'
 import { TelegramSettings } from '@/components/admin/TelegramSettings'
 import { IntegrationsSettings } from '@/components/admin/IntegrationsSettings'
 import {
-  ImageIcon,
   ClockIcon,
   ChevronDownIcon,
   ChevronUpIcon,
@@ -226,32 +223,11 @@ export default function SettingsPage() {
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
   const [showConfetti, setShowConfetti] = useState(false)
-  const [showMasterForm, setShowMasterForm] = useState(false)
   const [showServiceForm, setShowServiceForm] = useState(false)
-  const [editingMaster, setEditingMaster] = useState<Master | null>(null)
   const [editingService, setEditingService] = useState<Service | null>(null)
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
-  const [telegramBotToken, setTelegramBotToken] = useState('')
-  const [telegramChatId, setTelegramChatId] = useState('')
-  const [telegramNotificationsEnabled, setTelegramNotificationsEnabled] = useState(false)
-  const [telegramUsers, setTelegramUsers] = useState<any[]>([])
-  const [telegramBroadcasts, setTelegramBroadcasts] = useState<any[]>([])
-  const [showPasswordForm, setShowPasswordForm] = useState(false)
-  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null)
-  const [passwordForm, setPasswordForm] = useState({ role: 'CLIENT', firstName: '', lastName: '' })
-  const [showBroadcastForm, setShowBroadcastForm] = useState(false)
-  const [broadcastForm, setBroadcastForm] = useState({ title: '', message: '', targetRole: '' })
-  const masterFormRef = useRef<HTMLDivElement>(null)
   const serviceFormRef = useRef<HTMLDivElement>(null)
   const businessCardRef = useRef<HTMLDivElement>(null)
-
-  // Master form
-  const [masterForm, setMasterForm] = useState({
-    name: '',
-    bio: '',
-    rating: '0',
-    photo: '',
-  })
 
   // Service form
   const [serviceForm, setServiceForm] = useState({
@@ -261,15 +237,6 @@ export default function SettingsPage() {
     category: '',
     subcategory: '',
   })
-
-  // Автоматична прокрутка до форми спеціаліста
-  useEffect(() => {
-    if (showMasterForm && masterFormRef.current) {
-      setTimeout(() => {
-        masterFormRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-      }, 100)
-    }
-  }, [showMasterForm])
 
   // Автоматична прокрутка до форми послуги
   useEffect(() => {
@@ -329,19 +296,7 @@ export default function SettingsPage() {
           }
           setBusiness(updatedBusiness)
           setFormData(updatedBusiness)
-          setTelegramBotToken(updatedBusiness.telegramBotToken || '')
-          setTelegramChatId(updatedBusiness.telegramChatId || '')
-          setTelegramNotificationsEnabled(updatedBusiness.telegramNotificationsEnabled || false)
-          // Оновлюємо localStorage з актуальними даними
           localStorage.setItem('business', JSON.stringify(updatedBusiness))
-          
-          // Завантажуємо користувачів Telegram
-          if (updatedBusiness.id) {
-            fetch(`/api/telegram/users?businessId=${updatedBusiness.id}`)
-              .then(res => res.json())
-              .then(data => setTelegramUsers(Array.isArray(data) ? data : []))
-              .catch(() => setTelegramUsers([]))
-          }
         }
         if (mastersData) {
           setMasters(mastersData)
@@ -367,17 +322,23 @@ export default function SettingsPage() {
     }
   }, [loadData])
 
-  // Check URL params for tab
+  // Синхронізація вкладки з URL (?tab=...)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      const tabParam = params.get('tab')
-      const allowedTabs: Tab[] = ['info', 'schedule', 'masters', 'services', 'businessCard', 'telegram', 'integrations']
-      if (tabParam && allowedTabs.includes(tabParam as Tab)) {
-        setActiveTab(tabParam as Tab)
-      }
+    if (typeof window === 'undefined') return
+    const params = new URLSearchParams(window.location.search)
+    const tabParam = params.get('tab')
+    const allowedTabs: Tab[] = ['info', 'schedule', 'masters', 'services', 'businessCard', 'telegram', 'integrations']
+    if (tabParam && allowedTabs.includes(tabParam as Tab)) {
+      setActiveTab(tabParam as Tab)
     }
   }, [])
+
+  const setTab = (tab: Tab) => {
+    setActiveTab(tab)
+    const path = '/dashboard/settings'
+    const search = `?tab=${tab}`
+    router.replace(path + search, { scroll: false })
+  }
 
   const handleSaveBusiness = async () => {
     if (!business) {
@@ -447,75 +408,6 @@ export default function SettingsPage() {
     }
   }
 
-  const handleSaveMaster = async () => {
-    if (!business) return
-
-    // Validation
-    if (!masterForm.name.trim()) {
-      toast({ title: 'Помилка', description: 'Будь ласка, введіть ім\'я спеціаліста', type: 'error' })
-      return
-    }
-
-    try {
-      setIsSaving(true)
-      const url = editingMaster
-        ? `/api/masters/${editingMaster.id}`
-        : '/api/masters'
-      const method = editingMaster ? 'PATCH' : 'POST'
-
-      // Normalize rating: replace comma with dot for decimal numbers
-      const normalizedRating = masterForm.rating.toString().replace(',', '.')
-      const ratingValue = parseFloat(normalizedRating) || 0
-
-      const requestBody = {
-        ...(editingMaster ? {} : { businessId: business.id }),
-        name: masterForm.name.trim(),
-        bio: masterForm.bio?.trim() || null,
-        photo: masterForm.photo?.trim() || null,
-        rating: ratingValue,
-      }
-
-      console.log('Sending master data:', requestBody)
-
-      const response = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(requestBody),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({ error: 'Unknown error' }))
-        console.error('Server error response:', errorData)
-        const errorMessage = errorData.details?.message || errorData.error || `HTTP ${response.status}`
-        throw new Error(errorMessage)
-      }
-
-      const data = await response.json()
-      console.log('Master saved:', data)
-
-      await loadData()
-      setShowMasterForm(false)
-      setEditingMaster(null)
-      setMasterForm({ name: '', bio: '', rating: '0', photo: '' })
-      toast({ 
-        title: 'Успішно!', 
-        description: editingMaster ? 'Спеціаліста оновлено' : 'Спеціаліста додано', 
-        type: 'success' 
-      })
-      setShowConfetti(true)
-      setTimeout(() => setShowConfetti(false), 2000)
-    } catch (error) {
-      console.error('Error saving master:', error)
-      toast({ 
-        title: 'Помилка', 
-        description: error instanceof Error ? error.message : 'Невідома помилка', 
-        type: 'error' 
-      })
-    } finally {
-      setIsSaving(false)
-    }
-  }
-
   const handleSaveService = async () => {
     if (!business) return
 
@@ -560,25 +452,6 @@ export default function SettingsPage() {
       }
     } catch (error) {
       toast({ title: 'Помилка', description: 'Помилка при збереженні послуги', type: 'error' })
-    }
-  }
-
-  const handleDeleteMaster = async (id: string) => {
-    if (!window.confirm('Видалити цього спеціаліста?')) return
-
-    try {
-      const response = await fetch(`/api/masters/${id}`, {
-        method: 'DELETE',
-      })
-
-      if (response.ok) {
-        await loadData()
-        toast({ title: 'Успішно!', description: 'Спеціаліста видалено', type: 'success' })
-      } else {
-        toast({ title: 'Помилка', description: 'Не вдалося видалити спеціаліста', type: 'error' })
-      }
-    } catch (error) {
-      toast({ title: 'Помилка', description: 'Помилка при видаленні', type: 'error' })
     }
   }
 
@@ -705,7 +578,7 @@ export default function SettingsPage() {
           {/* Status cards - швидкий огляд */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 mb-4">
             <button
-              onClick={() => setActiveTab('info')}
+              onClick={() => setTab('info')}
               className={cn(
                 'rounded-xl p-3 text-left transition-all border',
                 activeTab === 'info' ? 'card-glass border-white/30 bg-white/15' : 'card-glass-subtle border-white/10 hover:border-white/20'
@@ -722,7 +595,7 @@ export default function SettingsPage() {
               </div>
             </button>
             <button
-              onClick={() => setActiveTab('masters')}
+              onClick={() => setTab('masters')}
               className={cn(
                 'rounded-xl p-3 text-left transition-all border',
                 activeTab === 'masters' ? 'card-glass border-white/30 bg-white/15' : 'card-glass-subtle border-white/10 hover:border-white/20'
@@ -756,7 +629,7 @@ export default function SettingsPage() {
               </div>
             </button>
             <button
-              onClick={() => setActiveTab('telegram')}
+              onClick={() => setTab('telegram')}
               className={cn(
                 'rounded-xl p-3 text-left transition-all border',
                 activeTab === 'telegram' ? 'card-glass border-white/30 bg-white/15' : 'card-glass-subtle border-white/10 hover:border-white/20'
@@ -790,7 +663,7 @@ export default function SettingsPage() {
               </div>
             </button>
             <button
-              onClick={() => setActiveTab('schedule')}
+              onClick={() => setTab('schedule')}
               className={cn(
                 'rounded-xl p-3 text-left transition-all border',
                 activeTab === 'schedule' ? 'card-glass border-white/30 bg-white/15' : 'card-glass-subtle border-white/10 hover:border-white/20'
@@ -814,7 +687,7 @@ export default function SettingsPage() {
               {(['info', 'schedule', 'masters', 'services', 'businessCard', 'telegram', 'integrations'] as Tab[]).map((tab) => (
                 <button
                   key={tab}
-                  onClick={() => setActiveTab(tab)}
+                  onClick={() => setTab(tab)}
                   className={cn(
                     'px-4 py-2 rounded-lg text-sm font-medium transition-all active:scale-[0.98] whitespace-nowrap',
                     activeTab === tab
@@ -1329,9 +1202,7 @@ export default function SettingsPage() {
                 business={business}
                 onUpdate={(updated) => {
                   setBusiness(updated)
-                  setTelegramBotToken(updated.telegramBotToken || '')
-                  setTelegramChatId(updated.telegramChatId || '')
-                  setTelegramNotificationsEnabled(updated.telegramNotificationsEnabled || false)
+                  localStorage.setItem('business', JSON.stringify(updated))
                 }}
               />
             </div>
