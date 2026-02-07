@@ -134,6 +134,10 @@ export async function GET(request: Request) {
       })
     }
 
+    const dayStart = finalDay.start
+    const dayEnd = finalDay.end
+    const isWorkingDay = finalDay.enabled
+
     if (dayStart >= dayEnd) {
       return NextResponse.json({
         availableSlots: [],
@@ -141,10 +145,6 @@ export async function GET(request: Request) {
         message: 'На цей день немає робочого вікна.',
       })
     }
-
-    let dayStart = finalDay.start
-    let dayEnd = finalDay.end
-    const isWorkingDay = finalDay.enabled
 
     let blockedPeriods: Array<{ start: string; end: string }> = []
     if (master.blockedPeriods) {
