@@ -621,31 +621,31 @@ export default function AppointmentsPage() {
             )}
           </div>
 
-          {/* Розгорнутий блок обраної дати — стиль проєкту (dashboard-card) */}
+          {/* Розгорнутий блок обраної дати — компактно, без видимого скролбару */}
           {selectedDate && (() => {
             const dayAppointments = getAppointmentsForDay(selectedDate)
             const sorted = [...dayAppointments].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
             return (
               <div className="dashboard-card">
-                <div className="flex flex-col gap-3 mb-4">
+                <div className="flex flex-col gap-2 mb-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
-                    <h3 className="dashboard-card-title-lg">
+                    <h3 className="dashboard-card-title-lg text-base md:text-lg">
                       {safeFormat(selectedDate, 'd MMMM yyyy', { locale: uk }) || 'Некоректна дата'}
                     </h3>
                     <button
                       onClick={() => setSelectedDate(null)}
-                      className="dashboard-btn-secondary px-3 py-1.5 text-xs"
+                      className="dashboard-btn-secondary px-2.5 py-1.5 text-xs"
                     >
                       Закрити
                     </button>
                   </div>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="flex flex-wrap gap-1">
                     {['all', 'Pending', 'Confirmed', 'Done', 'Cancelled'].map((status) => (
                       <button
                         key={status}
                         onClick={() => setFilterStatus(status)}
                         className={cn(
-                          'px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors whitespace-nowrap active:scale-[0.98]',
+                          'px-2 py-0.5 rounded text-[10px] font-medium transition-colors whitespace-nowrap active:scale-[0.98]',
                           filterStatus === status
                             ? 'bg-white text-black'
                             : 'bg-white/10 text-gray-400 hover:bg-white/15 hover:text-white border border-white/10'
@@ -659,30 +659,32 @@ export default function AppointmentsPage() {
                 </div>
 
                 {sorted.length === 0 ? (
-                  <div className="text-center py-10">
-                    <div className="mb-4 flex justify-center">
-                      <CalendarIcon className="w-14 h-14 text-gray-400" />
+                  <div className="text-center py-6">
+                    <div className="mb-3 flex justify-center">
+                      <CalendarIcon className="w-12 h-12 text-gray-400" />
                     </div>
                     <p className="text-gray-300 text-sm font-medium mb-1">Немає записів на цей день</p>
-                    <p className="text-xs text-gray-400 mb-4">Створіть новий запис, щоб почати</p>
+                    <p className="text-xs text-gray-400 mb-3">Створіть новий запис, щоб почати</p>
                     <button
                       onClick={() => setShowCreateForm(true)}
-                      className="dashboard-btn-primary"
+                      className="dashboard-btn-primary text-sm px-3 py-2"
                     >
                       Створити запис
                     </button>
                   </div>
                 ) : (
-                  <div className="space-y-2 md:space-y-3">
-                    {sorted.map((appointment) => (
-                      <MobileAppointmentCard
-                        key={appointment.id}
-                        appointment={appointment}
-                        services={services}
-                        onStatusChange={handleStatusChange}
-                        onEdit={handleEditAppointment}
-                      />
-                    ))}
+                  <div className="max-h-[50vh] md:max-h-[55vh] overflow-y-auto scrollbar-hide pr-0.5 -mr-0.5">
+                    <div className="space-y-1.5 md:space-y-2">
+                      {sorted.map((appointment) => (
+                        <MobileAppointmentCard
+                          key={appointment.id}
+                          appointment={appointment}
+                          services={services}
+                          onStatusChange={handleStatusChange}
+                          onEdit={handleEditAppointment}
+                        />
+                      ))}
+                    </div>
                   </div>
                 )}
               </div>
@@ -692,43 +694,41 @@ export default function AppointmentsPage() {
           {/* List View */}
           {viewMode === 'list' && !showCreateForm && (
             <div className="dashboard-card">
-              <h3 className="dashboard-card-title-lg mb-4">
+              <h3 className="dashboard-card-title-lg mb-3 text-base md:text-lg">
                 Всі записи ({filteredAppointments.length})
               </h3>
               {filteredAppointments.length === 0 ? (
-                <div className="text-center py-12">
-                  <div className="mb-4 flex justify-center">
-                    <CalendarIcon className="w-16 h-16 text-gray-400" />
+                <div className="text-center py-8">
+                  <div className="mb-3 flex justify-center">
+                    <CalendarIcon className="w-14 h-14 text-gray-400" />
                   </div>
-                  <p className="text-gray-300 text-sm font-medium mb-2">
-                    Немає записів
-                  </p>
-                  <p className="text-xs text-gray-400 mb-4">
-                    Створіть новий запис, щоб почати
-                  </p>
+                  <p className="text-gray-300 text-sm font-medium mb-2">Немає записів</p>
+                  <p className="text-xs text-gray-400 mb-3">Створіть новий запис, щоб почати</p>
                   <button
                     onClick={() => {
                       setShowCreateForm(true)
                       setSelectedDate(new Date())
                     }}
-                    className="dashboard-btn-primary"
+                    className="dashboard-btn-primary text-sm px-3 py-2"
                   >
                     Створити запис
                   </button>
                 </div>
               ) : (
-                <div className="space-y-2 md:space-y-3">
-                  {filteredAppointments
-                    .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-                    .map((appointment) => (
-                      <MobileAppointmentCard
-                        key={appointment.id}
-                        appointment={appointment}
-                        services={services}
-                        onStatusChange={handleStatusChange}
-                        onEdit={handleEditAppointment}
-                      />
-                    ))}
+                <div className="max-h-[60vh] overflow-y-auto scrollbar-hide pr-0.5 -mr-0.5">
+                  <div className="space-y-1.5 md:space-y-2">
+                    {filteredAppointments
+                      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                      .map((appointment) => (
+                        <MobileAppointmentCard
+                          key={appointment.id}
+                          appointment={appointment}
+                          services={services}
+                          onStatusChange={handleStatusChange}
+                          onEdit={handleEditAppointment}
+                        />
+                      ))}
+                  </div>
                 </div>
               )}
             </div>
