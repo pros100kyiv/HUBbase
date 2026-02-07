@@ -40,6 +40,10 @@ interface MasterStats {
 
 export default function MastersPage() {
   const router = useRouter()
+  useEffect(() => {
+    router.replace('/dashboard/schedule')
+  }, [router])
+
   const [business, setBusiness] = useState<any>(null)
   const [masters, setMasters] = useState<Master[]>([])
   const [services, setServices] = useState<any[]>([])

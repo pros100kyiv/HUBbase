@@ -150,7 +150,7 @@ export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalS
   }
 
   const handleMasterClick = (id: string) => {
-    router.push(`/dashboard/masters?edit=${id}`)
+    router.push(`/dashboard/schedule?edit=${id}`)
     onClose()
   }
 

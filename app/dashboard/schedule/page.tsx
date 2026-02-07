@@ -1,16 +1,21 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { format, startOfWeek, addDays, isToday, isSameDay } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
-import { ClockIcon, UserIcon, EditIcon } from '@/components/icons'
+import { ClockIcon, UserIcon, EditIcon, SettingsIcon, TrashIcon } from '@/components/icons'
 import { MasterScheduleModal } from '@/components/admin/MasterScheduleModal'
+import { QuickMasterCard } from '@/components/admin/QuickMasterCard'
+import { toast } from '@/components/ui/toast'
 
 interface Master {
   id: string
   name: string
+  photo?: string | null
+  bio?: string | null
+  rating?: number
   isActive?: boolean
   workingHours?: string | null
 }
@@ -60,6 +65,8 @@ export default function SchedulePage() {
   const [loading, setLoading] = useState(true)
   const [savingId, setSavingId] = useState<string | null>(null)
   const [scheduleModalMaster, setScheduleModalMaster] = useState<Master | null>(null)
+  const [showQuickMasterCard, setShowQuickMasterCard] = useState(false)
+  const [editingMaster, setEditingMaster] = useState<Master | null>(null)
   const [selectedDayOffset, setSelectedDayOffset] = useState<number>(-1)
 
   const selectedDate = selectedDayOffset === -1
@@ -74,7 +81,7 @@ export default function SchedulePage() {
       .then((res) => (res.ok ? res.json() : Promise.reject(new Error('Failed to fetch'))))
       .then((data: Master[]) => {
         const list = Array.isArray(data) ? data : []
-        setMasters(list.filter((m) => m.isActive !== false))
+        setMasters(list)
       })
       .catch(() => setMasters([]))
       .finally(() => setLoading(false))
@@ -96,6 +103,17 @@ export default function SchedulePage() {
   useEffect(() => {
     if (business) loadMasters()
   }, [business, loadMasters])
+
+  const editId = searchParams.get('edit')
+  useEffect(() => {
+    if (!editId || masters.length === 0) return
+    const master = masters.find((m) => m.id === editId)
+    if (master) {
+      setEditingMaster(master)
+      setShowQuickMasterCard(true)
+      router.replace('/dashboard/schedule', { scroll: false })
+    }
+  }, [editId, masters, router])
 
   const isMasterWorkingOnDay = (master: Master, dayKey: string): boolean => {
     const hours = parseWorkingHours(master.workingHours)
@@ -158,8 +176,16 @@ export default function SchedulePage() {
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
             <h1 className="dashboard-page-title flex items-center gap-2">
               <ClockIcon className="w-6 h-6 md:w-7 md:h-7 text-white/90" />
-              Графік роботи
+              Графік роботи та спеціалісти
             </h1>
+            <button
+              type="button"
+              onClick={() => { setEditingMaster(null); setShowQuickMasterCard(true) }}
+              className="dashboard-btn-primary flex items-center gap-2"
+            >
+              <UserIcon className="w-5 h-5" />
+              Додати спеціаліста
+            </button>
           </div>
 
           {/* Хто працює — вибір дня + список */}
@@ -211,7 +237,7 @@ export default function SchedulePage() {
                 <p className="text-gray-400 mb-4">Немає спеціалістів</p>
                 <button
                   type="button"
-                  onClick={() => router.push('/dashboard/masters')}
+                  onClick={() => { setEditingMaster(null); setShowQuickMasterCard(true) }}
                   className="dashboard-btn-primary"
                 >
                   Додати спеціаліста
@@ -259,14 +285,32 @@ export default function SchedulePage() {
                           <p className="text-xs text-gray-500">Вихідний</p>
                         )}
                       </div>
-                      <button
-                        type="button"
-                        onClick={() => setScheduleModalMaster(master)}
-                        className="p-2 rounded-lg border border-white/20 bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white transition-colors"
-                        title="Редагувати графік"
-                      >
-                        <EditIcon className="w-4 h-4" />
-                      </button>
+                      <div className="flex items-center gap-1 flex-shrink-0">
+                        <button
+                          type="button"
+                          onClick={() => setScheduleModalMaster(master)}
+                          className="p-2 rounded-lg border border-white/20 bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white transition-colors"
+                          title="Редагувати графік"
+                        >
+                          <EditIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => { setEditingMaster(master); setShowQuickMasterCard(true) }}
+                          className="p-2 rounded-lg border border-white/20 bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white transition-colors"
+                          title="Профіль"
+                        >
+                          <SettingsIcon className="w-4 h-4" />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDeleteMaster(master)}
+                          className="p-2 rounded-lg border border-white/20 bg-white/10 text-red-400 hover:bg-red-500/20 transition-colors"
+                          title="Видалити"
+                        >
+                          <TrashIcon className="w-4 h-4" />
+                        </button>
+                      </div>
                     </li>
                   )
                 })}
@@ -357,10 +401,10 @@ export default function SchedulePage() {
             )}
             <button
               type="button"
-              onClick={() => router.push('/dashboard/masters')}
+              onClick={() => { setEditingMaster(null); setShowQuickMasterCard(true) }}
               className="w-full mt-4 dashboard-btn-secondary"
             >
-              Спеціалісти
+              Додати спеціаліста
             </button>
           </div>
         </div>
@@ -372,6 +416,15 @@ export default function SchedulePage() {
           businessId={business.id}
           onClose={() => setScheduleModalMaster(null)}
           onSave={handleScheduleSave}
+        />
+      )}
+
+      {showQuickMasterCard && business && (
+        <QuickMasterCard
+          businessId={business.id}
+          editingMaster={editingMaster}
+          onSuccess={handleQuickMasterSuccess}
+          onCancel={() => { setShowQuickMasterCard(false); setEditingMaster(null) }}
         />
       )}
     </div>

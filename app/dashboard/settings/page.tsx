@@ -955,176 +955,22 @@ export default function SettingsPage() {
             />
           )}
 
-          {/* Майстри */}
+          {/* Майстри — керуються в Графік роботи */}
           {activeTab === 'masters' && (
             <div className="space-y-6">
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-                <h2 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.02em' }}>Спеціалісти</h2>
+              <h2 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.02em' }}>Спеціалісти</h2>
+              <div className="rounded-xl p-6 md:p-8 card-glass border border-white/10 text-center">
+                <UserIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
+                <p className="text-white font-medium mb-1">Спеціалісти та їх графіки об’єднані в одному місці.</p>
+                <p className="text-sm text-gray-400 mb-4">Додавання, редагування профілю, графік роботи та видалення — у розділі «Графік роботи та спеціалісти».</p>
                 <Button
-                  onClick={() => {
-                    setShowMasterForm(true)
-                    setEditingMaster(null)
-                    setMasterForm({ name: '', bio: '', rating: '0', photo: '' })
-                  }}
-                  className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98]"
+                  onClick={() => router.push('/dashboard/schedule')}
+                  className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] inline-flex items-center gap-2"
                   style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                 >
-                  + Додати спеціаліста
+                  <ClockIcon className="w-5 h-5" />
+                  Перейти до графіка та спеціалістів
                 </Button>
-              </div>
-
-              {showMasterForm && (
-                <div ref={masterFormRef}>
-                <div className="rounded-xl p-4 md:p-6 card-glass">
-                  <h3 className="text-lg font-bold text-white mb-4" style={{ letterSpacing: '-0.02em' }}>
-                    {editingMaster ? 'Редагувати спеціаліста' : 'Новий спеціаліст'}
-                  </h3>
-                  <div className="space-y-4">
-                    <Input
-                      placeholder="Ім'я спеціаліста"
-                      value={masterForm.name}
-                      onChange={(e) => setMasterForm({ ...masterForm, name: e.target.value })}
-                      className="text-sm py-2 h-auto border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
-                    />
-                    <div>
-                      <label className="block text-xs font-medium mb-1 text-gray-400">
-                        Фото (URL або завантажити)
-                      </label>
-                      <div className="flex gap-2">
-                        <Input
-                          type="text"
-                          placeholder="https://example.com/photo.jpg"
-                          value={masterForm.photo}
-                          onChange={(e) => setMasterForm({ ...masterForm, photo: e.target.value })}
-                          className="text-sm py-2 h-auto flex-1 border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
-                        />
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          id="master-photo-upload"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0]
-                            if (file) {
-                              const reader = new FileReader()
-                              reader.onloadend = () => {
-                                setMasterForm({ ...masterForm, photo: reader.result as string })
-                              }
-                              reader.readAsDataURL(file)
-                            }
-                          }}
-                        />
-                        <Button
-                          type="button"
-                          variant="outline"
-                          size="sm"
-                          onClick={() => document.getElementById('master-photo-upload')?.click()}
-                          className="py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg"
-                        >
-                          <ImageIcon className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      {masterForm.photo && (
-                        <div className="mt-2">
-                          <img
-                            src={masterForm.photo}
-                            alt="Preview"
-                            className="w-16 h-16 object-cover rounded-lg border border-white/20"
-                            onError={(e) => {
-                              (e.target as HTMLImageElement).style.display = 'none'
-                            }}
-                          />
-                        </div>
-                      )}
-                    </div>
-                    <Input
-                      placeholder="Біографія"
-                      value={masterForm.bio}
-                      onChange={(e) => setMasterForm({ ...masterForm, bio: e.target.value })}
-                      className="text-sm py-2 h-auto border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
-                    />
-                    <Input
-                      type="number"
-                      placeholder="Рейтинг (0-5)"
-                      value={masterForm.rating}
-                      onChange={(e) => setMasterForm({ ...masterForm, rating: e.target.value })}
-                      min="0"
-                      max="5"
-                      step="0.1"
-                      className="text-sm py-2 h-auto border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
-                    />
-                    <div className="flex gap-3 pt-2">
-                      <Button
-                        onClick={handleSaveMaster}
-                        className="flex-1 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all active:scale-[0.98]"
-                        style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
-                        disabled={isSaving}
-                      >
-                        {isSaving ? 'Збереження...' : 'Зберегти'}
-                      </Button>
-                      <Button
-                        variant="outline"
-                        onClick={() => {
-                          setShowMasterForm(false)
-                          setEditingMaster(null)
-                        }}
-                        className="px-6 py-3 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg font-medium transition-all active:scale-[0.98]"
-                      >
-                        Скасувати
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-                </div>
-              )}
-
-              <div className="space-y-4">
-                {masters.map((master) => (
-                  <div key={master.id} className="space-y-4">
-                    <div className="rounded-xl p-4 md:p-6 card-glass">
-                        <div className="flex justify-between items-start mb-1.5">
-                          <div className="flex-1 min-w-0">
-                            <h3 className="text-sm font-bold text-white mb-0.5 truncate">
-                              {master.name}
-                            </h3>
-                            {master.bio && (
-                              <p className="text-xs text-gray-400 truncate">{master.bio}</p>
-                            )}
-                            <p className="text-[10px] text-gray-500 mt-1">
-                              Рейтинг: {master.rating}/5
-                            </p>
-                          </div>
-                        </div>
-                        <div className="flex gap-3">
-                          <Button
-                            onClick={() => startEditMaster(master)}
-                            className="flex-1 px-4 py-2 bg-white/20 text-white border border-white/30 font-medium rounded-lg hover:bg-white/25 transition-all active:scale-[0.98]"
-                          >
-                            Редагувати
-                          </Button>
-                          <Button
-                            variant="outline"
-                            onClick={() => handleDeleteMaster(master.id)}
-                            className="px-4 py-2 border border-red-400/50 bg-red-500/10 text-red-400 hover:bg-red-500/20 rounded-lg font-medium transition-all active:scale-[0.98]"
-                          >
-                            Видалити
-                          </Button>
-                        </div>
-                    </div>
-                    <WorkingHoursEditor
-                      masterId={master.id}
-                      businessId={business.id}
-                      currentHours={master.workingHours || undefined}
-                      onSave={(hours) => {
-                        setMasters(prev =>
-                          prev.map(m =>
-                            m.id === master.id ? { ...m, workingHours: hours } : m
-                          )
-                        )
-                      }}
-                    />
-                  </div>
-                ))}
               </div>
             </div>
           )}

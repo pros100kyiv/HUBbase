@@ -66,8 +66,7 @@ export function Sidebar({ className }: SidebarProps) {
     { id: 'appointments', label: 'Записи', icon: <CalendarIcon />, path: '/dashboard/appointments' },
     { id: 'price', label: 'Прайс', icon: <MoneyIcon />, path: '/dashboard/price' },
     { id: 'clients', label: 'Клієнти', icon: <UsersIcon />, path: '/dashboard/clients' },
-    { id: 'masters', label: 'Спеціалісти', icon: <UserIcon />, path: '/dashboard/masters' },
-    { id: 'schedule', label: 'Графік роботи', icon: <ClockIcon />, path: '/dashboard/schedule' },
+    { id: 'schedule', label: 'Графік роботи та спеціалісти', icon: <ClockIcon />, path: '/dashboard/schedule' },
     { id: 'social', label: 'Соцмережі', icon: <ShareIcon />, path: '/dashboard/social' },
     { id: 'analytics', label: 'Аналітика', icon: <ChartIcon />, path: '/dashboard/analytics' },
   ]
