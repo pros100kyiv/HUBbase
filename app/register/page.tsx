@@ -27,15 +27,16 @@ function RegisterForm() {
   useEffect(() => {
     const error = searchParams.get('error')
     if (error) {
-      // Видаляємо параметр помилки з URL
       const newUrl = window.location.pathname
       window.history.replaceState({}, '', newUrl)
-      
-      // Встановлюємо повідомлення про помилку
-      const decodedError = decodeURIComponent(error)
-      setErrorMessage(decodedError || 'Помилка при реєстрації. Будь ласка, спробуйте ще раз.')
+      const decoded = decodeURIComponent(error)
+      const friendlyMessages: Record<string, string> = {
+        not_registered: 'Цей email не зареєстровано. Зареєструйте бізнес нижче.',
+      }
+      const message = friendlyMessages[decoded] || decoded || 'Помилка при реєстрації. Спробуйте ще раз.'
+      setErrorMessage(message)
       setShowErrorToast(true)
-      setErrors({ submit: decodedError || 'Помилка при реєстрації' })
+      setErrors({ submit: message })
     }
   }, [searchParams])
 

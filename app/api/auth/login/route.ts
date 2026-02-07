@@ -65,16 +65,18 @@ export async function POST(request: Request) {
       select: { trustedDevices: true }
     })
     
-    // Перевіряємо, чи це новий пристрій
-    const isTrusted = isDeviceTrusted(businessWithDevices?.trustedDevices || null, deviceId)
-    
-    if (!isTrusted) {
-      // Якщо це новий пристрій - вимагаємо OAuth підтвердження
-      return NextResponse.json({
-        error: 'Це новий пристрій. Будь ласка, підтвердіть вхід через Telegram OAuth.',
-        requiresOAuth: true,
-        deviceId: deviceId
-      }, { status: 403 })
+    // Якщо ще немає довірених пристроїв — дозволяємо перший вхід (потім додамо пристрій)
+    const trustedJson = businessWithDevices?.trustedDevices || null
+    const hasTrustedDevices = trustedJson && trustedJson.trim() !== '' && trustedJson !== '[]'
+    if (hasTrustedDevices) {
+      const isTrusted = isDeviceTrusted(trustedJson, deviceId)
+      if (!isTrusted) {
+        return NextResponse.json({
+          error: 'Це новий пристрій. Будь ласка, підтвердіть вхід через Telegram OAuth.',
+          requiresOAuth: true,
+          deviceId: deviceId
+        }, { status: 403 })
+      }
     }
 
     // Оновлюємо дату останнього входу в Центрі управління

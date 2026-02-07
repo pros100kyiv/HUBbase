@@ -50,6 +50,13 @@ export function CreateAppointmentForm({
     }
   }, [])
 
+  // Коли завантажився список майстрів — авто-обрати першого, якщо ще нікого не обрано
+  useEffect(() => {
+    if (masters.length > 0 && !formData.masterId) {
+      setFormData((prev) => ({ ...prev, masterId: masters[0].id }))
+    }
+  }, [masters])
+
   const handleServiceToggle = (serviceId: string) => {
     setFormData((prev) => ({
       ...prev,

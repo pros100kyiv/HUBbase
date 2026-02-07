@@ -152,7 +152,12 @@ export default function SchedulePage() {
             m.id === master.id ? { ...m, workingHours: JSON.stringify(next) } : m
           )
         )
+      } else {
+        const data = await res.json().catch(() => ({}))
+        toast({ title: 'Помилка', description: (data as { error?: string }).error || 'Не вдалося оновити графік', type: 'error' })
       }
+    } catch {
+      toast({ title: 'Помилка', description: 'Не вдалося оновити графік', type: 'error' })
     } finally {
       setSavingId(null)
     }

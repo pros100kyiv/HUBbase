@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 export default function TestFlowPage() {
   const router = useRouter()
   const [isLoggingIn, setIsLoggingIn] = useState(false)
+  const [loginError, setLoginError] = useState<string | null>(null)
 
   const testBusiness = {
     email: 'admin@045barbershop.com',
@@ -18,13 +19,10 @@ export default function TestFlowPage() {
   const handleQuickLogin = async (e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    
     if (isLoggingIn) return
-    
+    setLoginError(null)
     setIsLoggingIn(true)
-    
     try {
-      console.log('Attempting login...')
       const response = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -33,22 +31,17 @@ export default function TestFlowPage() {
           password: testBusiness.password,
         }),
       })
-
-      console.log('Response status:', response.status)
       const data = await response.json()
-      console.log('Response data:', data)
-      
       if (response.ok && data.business) {
         localStorage.setItem('business', JSON.stringify(data.business))
-        console.log('Login successful, redirecting...')
         window.location.href = '/dashboard'
       } else {
-        alert('Помилка: ' + (data.error || 'Невідома помилка'))
+        setLoginError(data.error || 'Невідома помилка')
         setIsLoggingIn(false)
       }
-    } catch (error: any) {
-      console.error('Login error:', error)
-      alert('Помилка при вході: ' + (error.message || 'Невідома помилка'))
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Невідома помилка'
+      setLoginError('Помилка при вході: ' + message)
       setIsLoggingIn(false)
     }
   }
@@ -56,7 +49,6 @@ export default function TestFlowPage() {
   const handleNavigation = (path: string, e: React.MouseEvent<HTMLButtonElement>) => {
     e.preventDefault()
     e.stopPropagation()
-    console.log('Navigating to:', path)
     window.location.href = path
   }
 
@@ -87,6 +79,9 @@ export default function TestFlowPage() {
                 <p>Email: {testBusiness.email}</p>
                 <p>Password: {testBusiness.password}</p>
               </div>
+              {loginError && (
+                <p className="text-sm text-red-500 bg-red-500/10 rounded-lg px-3 py-2">{loginError}</p>
+              )}
               <Button 
                 onClick={handleQuickLogin} 
                 className="w-full"

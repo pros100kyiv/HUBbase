@@ -2,8 +2,8 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { SearchIcon, FilterIcon, CheckSquareIcon, SquareIcon, ChevronDownIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
+import { SearchIcon, FilterIcon, CheckSquareIcon, SquareIcon, ChevronDownIcon } from '@/components/icons'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { toast } from '@/components/ui/toast'
 
@@ -17,6 +17,7 @@ interface Service {
 }
 
 export default function PricePage() {
+  const router = useRouter()
   const [business, setBusiness] = useState<any>(null)
   const [services, setServices] = useState<Service[]>([])
   const [loading, setLoading] = useState(true)
@@ -39,15 +40,18 @@ export default function PricePage() {
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
-    if (businessData) {
-      try {
-        const parsed = JSON.parse(businessData)
-        setBusiness(parsed)
-      } catch (e) {
-        console.error('Failed to parse business data', e)
-      }
+    if (!businessData) {
+      router.push('/login')
+      return
     }
-  }, [])
+    try {
+      const parsed = JSON.parse(businessData)
+      setBusiness(parsed)
+    } catch (e) {
+      console.error('Failed to parse business data', e)
+      router.push('/login')
+    }
+  }, [router])
 
   useEffect(() => {
     if (business?.id) {
@@ -96,6 +100,14 @@ export default function PricePage() {
 
   const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0)
   const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0)
+
+  if (!business) {
+    return (
+      <div className="p-4 md:p-8 min-h-screen flex items-center justify-center text-white">
+        <p className="text-gray-400">Завантаження...</p>
+      </div>
+    )
+  }
 
   const handleCreateService = async (e: React.FormEvent) => {
     e.preventDefault()
