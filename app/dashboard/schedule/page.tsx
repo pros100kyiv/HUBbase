@@ -164,6 +164,7 @@ export default function SchedulePage() {
   }
 
   const handleDeleteMaster = async (master: Master) => {
+    if (!business?.id) return
     if (!window.confirm('Видалити цього спеціаліста?')) return
     try {
       const response = await fetch(`/api/masters/${master.id}?businessId=${business.id}`, { method: 'DELETE' })
