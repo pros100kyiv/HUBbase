@@ -345,13 +345,13 @@ export function MyDayCard({
     return (
       <button
         onClick={onClick}
-        className="w-full text-left bg-white/5 border border-white/10 rounded-xl p-3 md:p-3 hover:bg-white/10 transition-all active:scale-[0.99] group relative overflow-hidden touch-manipulation"
+        className="w-full text-left bg-white/5 border border-white/10 rounded-xl p-2.5 md:p-3 hover:bg-white/10 transition-all active:scale-[0.99] group relative overflow-hidden touch-manipulation"
       >
         {/* Мобільний: вертикальний стек. Десктоп: ряд */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
-          <div className="flex items-start gap-3 min-w-0">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
+          <div className="flex items-start gap-2.5 sm:gap-3 min-w-0">
             {/* Time Box */}
-            <div className="flex flex-col items-center justify-center w-11 h-11 sm:w-12 md:w-14 md:h-14 bg-[#2A2A2A] rounded-lg border border-white/10 flex-shrink-0 shadow-inner">
+            <div className="flex flex-col items-center justify-center w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 bg-[#2A2A2A] rounded-lg border border-white/10 flex-shrink-0 shadow-inner">
               <span className="text-sm font-bold text-blue-400 leading-none">
                 {format(startTime, 'HH:mm')}
               </span>
@@ -550,8 +550,8 @@ export function MyDayCard({
 
       {/* Appointments List */}
       {appointments.length > 0 ? (
-        <div className="space-y-2 md:space-y-3 mb-4">
-          <div className="flex items-center justify-between mb-2 md:mb-3 gap-2">
+        <div className="space-y-1.5 md:space-y-2 mb-3 md:mb-4">
+          <div className="flex items-center justify-between mb-1.5 md:mb-2 gap-2">
             <h4 className="text-xs md:text-sm font-semibold text-gray-300 uppercase flex-1" style={{ letterSpacing: '0.05em' }}>
               Записи {isToday ? 'на сьогодні' : `на ${format(selectedDate, 'd MMMM', { locale: uk })}`}
             </h4>
@@ -572,8 +572,8 @@ export function MyDayCard({
             </button>
           </div>
           <div
-            className={`space-y-2 transition-all duration-300 pr-1 ${
-              isExpanded ? '' : 'max-h-48 md:max-h-64 overflow-y-auto custom-scrollbar'
+            className={`space-y-1.5 md:space-y-2 transition-all duration-300 pr-1 ${
+              isExpanded ? '' : 'max-h-48 md:max-h-64 overflow-y-auto scrollbar-hide'
             }`}
           >
             {appointments
@@ -623,7 +623,7 @@ export function MyDayCard({
         <ModalPortal>
           <div className="modal-overlay sm:!p-4" onClick={() => setSelectedStatus(null)}>
             <div
-              className="relative w-[95%] sm:w-full max-w-lg modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+              className="relative w-[95%] sm:w-full max-w-lg modal-content modal-dialog text-white max-h-[82dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
               onTouchStart={handleTouchStart}
               onTouchEnd={(e) => handleTouchEnd(e, () => setSelectedStatus(null))}
@@ -638,9 +638,9 @@ export function MyDayCard({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <h3 className="modal-title pr-10 mb-2">{getStatusTitle(selectedStatus)}</h3>
-              <div className="flex-1 min-h-0 overflow-y-auto p-3 pt-0">
-                <div className="space-y-2">
+              <h3 className="modal-title pr-10 mb-1.5">{getStatusTitle(selectedStatus)}</h3>
+              <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide p-2 pt-0 sm:p-3 sm:pt-0">
+                <div className="space-y-1.5">
                   {getFilteredAppointments(selectedStatus).length > 0 ? (
                     getFilteredAppointments(selectedStatus).map((apt) => (
                       <AppointmentItem 
@@ -669,7 +669,7 @@ export function MyDayCard({
         <ModalPortal>
           <div className="modal-overlay sm:!p-4" onClick={() => setSelectedAppointment(null)}>
             <div
-              className="relative w-[95%] sm:w-full max-w-lg modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+              className="relative w-[95%] sm:w-full max-w-lg modal-content modal-dialog text-white max-h-[82dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
               onTouchStart={handleTouchStart}
               onTouchEnd={(e) => handleTouchEnd(e, () => setSelectedAppointment(null))}
@@ -684,14 +684,14 @@ export function MyDayCard({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <div className="pr-10 mb-2 flex-shrink-0">
+              <div className="pr-10 mb-1.5 flex-shrink-0">
                 <h3 className="modal-title truncate">{selectedAppointment.clientName}</h3>
                 <p className="modal-subtitle truncate">
                   {format(new Date(selectedAppointment.startTime), 'd MMMM yyyy', { locale: uk })}{' '}
                   • {format(new Date(selectedAppointment.startTime), 'HH:mm')}–{format(new Date(selectedAppointment.endTime), 'HH:mm')}
                 </p>
               </div>
-              <div className="flex-1 min-h-0 overflow-y-auto p-3 pt-0 space-y-2">
+              <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide p-2 pt-0 sm:p-3 sm:pt-0 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-400">Статус</span>
                   <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(selectedAppointment.status)}`}>
@@ -795,7 +795,7 @@ export function MyDayCard({
         <ModalPortal>
           <div className="modal-overlay sm:!p-4" onClick={() => setHistoryPhone(null)}>
             <div
-              className="relative w-[95%] sm:w-full max-w-xl modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+              className="relative w-[95%] sm:w-full max-w-xl modal-content modal-dialog text-white max-h-[82dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
               onTouchStart={handleTouchStart}
               onTouchEnd={(e) => handleTouchEnd(e, () => setHistoryPhone(null))}
@@ -814,7 +814,7 @@ export function MyDayCard({
                 <h3 className="modal-title truncate">Історія клієнта</h3>
                 <p className="modal-subtitle truncate">{historyPhone}</p>
               </div>
-              <div className="flex-1 min-h-0 overflow-y-auto p-3 pt-0">
+              <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide p-2 pt-0 sm:p-3 sm:pt-0">
                 {historyLoading ? (
                   <div className="text-center py-10 text-sm text-gray-400">Завантаження…</div>
                 ) : historyAppointments.length === 0 ? (
@@ -863,7 +863,7 @@ export function MyDayCard({
         <ModalPortal>
           <div className="modal-overlay sm:!p-4" onClick={() => setShowDatePicker(false)}>
             <div
-              className="relative w-[95%] sm:w-full max-w-sm modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+              className="relative w-[95%] sm:w-full max-w-sm modal-content modal-dialog text-white max-h-[82dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
             >
               <button
@@ -877,7 +877,7 @@ export function MyDayCard({
                 </svg>
               </button>
               <h3 className="modal-title pr-10 mb-2">Виберіть дату</h3>
-              <div className="space-y-2 flex-1 min-h-0 overflow-y-auto">
+              <div className="space-y-2 flex-1 min-h-0 overflow-y-auto scrollbar-hide">
               <input
                 type="date"
                 value={format(selectedDate, 'yyyy-MM-dd')}
