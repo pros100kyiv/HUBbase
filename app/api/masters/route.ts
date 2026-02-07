@@ -107,7 +107,9 @@ export async function POST(request: Request) {
       }
 
       // Check for Prisma-specific errors
-      if (error.message.includes('Unique constraint')) {
+      if (error.message.includes('scheduleDateOverrides') && error.message.includes('does not exist')) {
+        errorMessage = 'Колонка scheduleDateOverrides відсутня в базі. Застосуйте міграцію: npx prisma migrate deploy'
+      } else if (error.message.includes('Unique constraint')) {
         errorMessage = 'Master with this name already exists'
       } else if (error.message.includes('Foreign key constraint')) {
         errorMessage = 'Invalid business ID'
