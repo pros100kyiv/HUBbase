@@ -769,7 +769,7 @@
    * z-index: 100 — базовий; вкладені модалки — z-[200].
    */
 
-  /* Оверлей: повний екран, затемнення + blur, анімація появи */
+  /* Оверлей: фіксований екран, без скролу — скролить лише контент всередині модалки */
   .modal-overlay {
     background-color: var(--modal-overlay-bg);
     backdrop-filter: blur(10px);
@@ -777,17 +777,13 @@
     position: fixed;
     inset: 0;
     z-index: 100;
-    min-height: 100dvh;
+    height: 100dvh;
+    height: 100vh;
     min-height: -webkit-fill-available;
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    overflow-y: auto;
-    overflow-x: hidden;
-    overscroll-behavior-y: contain;
-    -webkit-overflow-scrolling: touch;
-    scroll-behavior: smooth;
-    touch-action: manipulation;
+    overflow: hidden;
     padding: env(safe-area-inset-top, 0) max(0.5rem, env(safe-area-inset-right, 0)) max(0.5rem, env(safe-area-inset-bottom, 0)) max(0.5rem, env(safe-area-inset-left, 0));
     box-sizing: border-box;
     animation: modal-overlay-in 0.22s ease-out;
@@ -799,17 +795,15 @@
   @media (min-width: 640px) {
     .modal-overlay {
       align-items: center;
-      min-height: 100vh;
-      height: auto;
-      padding: max(1.25rem, env(safe-area-inset-top)) max(1.25rem, env(safe-area-inset-right)) max(1.25rem, env(safe-area-inset-bottom)) max(1.25rem, env(safe-area-inset-left));
+      padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
     }
   }
 
-  /* Контейнер контенту: ширина, max-height, скрол, без вильоту */
+  /* Контейнер контенту: скрол тільки тут — саме вікно модалки не рухається */
   .modal-content {
     width: 100%;
     max-width: min(100%, 100vw - 1rem - env(safe-area-inset-left, 0) - env(safe-area-inset-right, 0));
-    max-height: min(92dvh, calc(100dvh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0) - 1rem));
+    max-height: min(85dvh, calc(100dvh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0) - 1rem));
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
@@ -830,21 +824,21 @@
   }
   @media (min-width: 640px) {
     .modal-content {
-      max-width: min(100%, calc(100vw - 2.5rem - env(safe-area-inset-left, 0) - env(safe-area-inset-right, 0)));
-      max-height: min(88vh, calc(100vh - 2 * max(1.25rem, env(safe-area-inset-top, 0)) - 2 * max(1.25rem, env(safe-area-inset-bottom, 0))));
+      max-width: min(100%, calc(100vw - 2rem - env(safe-area-inset-left, 0) - env(safe-area-inset-right, 0)));
+      max-height: min(85vh, calc(100vh - 2 * max(1rem, env(safe-area-inset-top, 0)) - 2 * max(1rem, env(safe-area-inset-bottom, 0))));
       align-self: center;
     }
   }
 
-  /* Єдиний дизайн діалогу: фон, рамка, тінь через змінні; чітка типографіка */
+  /* Єдиний дизайн діалогу: компактніший padding, скрол лише у .modal-content */
   .modal-dialog {
     background-color: var(--modal-dialog-bg);
     border: 1px solid var(--modal-dialog-border);
     border-radius: 1.25rem 1.25rem 0 0;
     box-shadow: var(--modal-dialog-shadow);
-    padding: clamp(1rem, 4vmin, 1.5rem);
-    padding-bottom: max(clamp(1rem, 4vmin, 1.5rem), env(safe-area-inset-bottom));
-    padding-top: 1.375rem;
+    padding: clamp(0.75rem, 3vmin, 1.25rem);
+    padding-bottom: max(clamp(0.75rem, 3vmin, 1.25rem), env(safe-area-inset-bottom));
+    padding-top: 1.125rem;
     min-width: 0;
     min-height: 0;
     overflow-x: hidden;
@@ -880,44 +874,44 @@
   @media (min-width: 640px) {
     .modal-dialog {
       border-radius: 1.25rem;
-      padding: 1.5rem 1.75rem;
-      padding-top: 1.5rem;
-      padding-bottom: max(1.25rem, env(safe-area-inset-bottom));
+      padding: 1.25rem 1.5rem;
+      padding-top: 1.25rem;
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
     }
     .modal-dialog::before {
       display: none;
     }
   }
 
-  /* Типографіка заголовків у модалках — однаковий вигляд */
+  /* Типографіка заголовків у модалках — компактніший вигляд */
   .modal-dialog .modal-title {
-    font-size: 1.125rem;
+    font-size: 1.0625rem;
     font-weight: 700;
     letter-spacing: -0.02em;
     line-height: 1.3;
-    margin: 0 0 0.25rem 0;
+    margin: 0 0 0.2rem 0;
   }
   .modal-dialog .modal-subtitle {
-    font-size: 0.875rem;
+    font-size: 0.8125rem;
     font-weight: 500;
     opacity: 0.85;
     letter-spacing: -0.01em;
     margin: 0;
   }
   .modal-dialog .modal-section-title {
-    font-size: 0.8125rem;
+    font-size: 0.75rem;
     font-weight: 600;
     letter-spacing: -0.01em;
-    margin: 0 0 0.5rem 0;
+    margin: 0 0 0.4rem 0;
   }
 
-  /* Кнопка закриття — однаковий стиль у всіх модалках */
+  /* Кнопка закриття — компактно */
   .modal-dialog .modal-close {
     position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    width: 2.25rem;
-    height: 2.25rem;
+    top: 0.625rem;
+    right: 0.625rem;
+    width: 2rem;
+    height: 2rem;
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -935,10 +929,10 @@
   }
   @media (min-width: 640px) {
     .modal-dialog .modal-close {
-      top: 1rem;
-      right: 1rem;
-      width: 2.5rem;
-      height: 2.5rem;
+      top: 0.875rem;
+      right: 0.875rem;
+      width: 2.25rem;
+      height: 2.25rem;
     }
   }
 
