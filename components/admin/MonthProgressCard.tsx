@@ -151,17 +151,18 @@ export function MonthProgressCard({ stats, loading }: MonthProgressCardProps) {
       {/* Модальне вікно з деталями */}
       {showModal && (
         <ModalPortal>
-          <div className="modal-overlay sm:!p-4">
-            <div className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white animate-in fade-in zoom-in-95 duration-200">
-              
-              <div className="flex items-center justify-between mb-6">
-                <h2 className="text-xl font-bold">Статистика місяця</h2>
-                <button 
-                  onClick={() => setShowModal(false)}
-                  className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-                >
-                  <XIcon className="w-5 h-5 text-gray-400" />
-                </button>
+          <div className="modal-overlay sm:!p-4" onClick={() => setShowModal(false)}>
+            <div className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white" onClick={(e) => e.stopPropagation()}>
+              <button
+                type="button"
+                onClick={() => setShowModal(false)}
+                className="modal-close text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded-xl"
+                aria-label="Закрити"
+              >
+                <XIcon className="w-5 h-5" />
+              </button>
+              <div className="pr-10 mb-6">
+                <h2 className="modal-title">Статистика місяця</h2>
               </div>
 
               <div className="grid grid-cols-2 gap-4 mb-6">

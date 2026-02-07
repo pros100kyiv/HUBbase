@@ -181,21 +181,19 @@ export function MasterScheduleModal({
   return (
     <ModalPortal>
       <div className="modal-overlay sm:!p-4">
-        <div className="relative w-[95%] sm:w-full sm:max-w-lg sm:my-auto modal-content modal-dialog text-white animate-in fade-in zoom-in-95 duration-200">
+        <div className="relative w-[95%] sm:w-full sm:max-w-lg sm:my-auto modal-content modal-dialog text-white">
         <button
+          type="button"
           onClick={onClose}
-          className="absolute top-2 right-2 sm:top-4 sm:right-4 p-2 rounded-lg hover:bg-white/10 transition-colors"
+          className="modal-close text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded-xl"
+          aria-label="Закрити"
         >
-          <XIcon className="w-5 h-5 text-gray-400" />
+          <XIcon className="w-5 h-5" />
         </button>
 
-        <div className="mb-4">
-          <h2 className="text-lg font-bold text-white mb-1">
-            Графік роботи
-          </h2>
-          <p className="text-sm text-gray-400 truncate">
-            {master.name}
-          </p>
+        <div className="pr-10 mb-4">
+          <h2 className="modal-title">Графік роботи</h2>
+          <p className="modal-subtitle truncate">{master.name}</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
