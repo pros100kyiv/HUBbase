@@ -14,6 +14,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
   const { state, setDate, setTime, setStep } = useBooking()
   const [availableSlots, setAvailableSlots] = useState<string[]>([])
   const [scheduleNotConfigured, setScheduleNotConfigured] = useState(false)
+  const [slotsLoadError, setSlotsLoadError] = useState(false)
   const [slotsLoading, setSlotsLoading] = useState(false)
   const [calendarReady, setCalendarReady] = useState(false)
   const [currentMonth, setCurrentMonth] = useState<Date | null>(null)
@@ -73,6 +74,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
   useEffect(() => {
     if (state.selectedDate && state.selectedMaster && businessId) {
       setSlotsLoading(true)
+      setSlotsLoadError(false)
       const dateStr = format(state.selectedDate, 'yyyy-MM-dd')
       const url = `/api/availability?masterId=${state.selectedMaster.id}&businessId=${businessId}&date=${dateStr}&durationMinutes=${totalDuration}`
       fetch(url)
@@ -91,11 +93,13 @@ export function TimeStep({ businessId }: TimeStepProps) {
           console.error('Error fetching availability:', error)
           setAvailableSlots([])
           setScheduleNotConfigured(false)
+          setSlotsLoadError(true)
         })
         .finally(() => setSlotsLoading(false))
     } else {
       setAvailableSlots([])
       setScheduleNotConfigured(false)
+      setSlotsLoadError(false)
       setSlotsLoading(false)
     }
   }, [state.selectedDate, state.selectedMaster, businessId, totalDuration])
@@ -159,16 +163,22 @@ export function TimeStep({ businessId }: TimeStepProps) {
 
         {state.selectedDate && (
           <div className="mb-3 sm:mb-4">
-            {scheduleNotConfigured && !slotsLoading && (
+            {slotsLoadError && !slotsLoading && (
+              <div className="rounded-xl p-4 mb-4 card-glass border border-red-500/30 bg-red-500/10">
+                <p className="text-sm font-medium text-red-200">Не вдалося завантажити доступні години.</p>
+                <p className="text-xs text-gray-400 mt-1">Перевірте з&apos;єднання та оновіть сторінку або спробуйте іншу дату.</p>
+              </div>
+            )}
+            {scheduleNotConfigured && !slotsLoading && !slotsLoadError && (
               <div className="rounded-xl p-4 mb-4 card-glass border border-amber-500/30 bg-amber-500/10">
                 <p className="text-sm font-medium text-amber-200">Графік не налаштовано або на цей день немає робочого часу.</p>
                 <p className="text-xs text-gray-400 mt-1">Оберіть іншу дату або зверніться до закладу для уточнення графіка.</p>
               </div>
             )}
-            {!scheduleNotConfigured && !slotsLoading && availableSlots.length === 0 && state.selectedDate && state.selectedMaster && businessId && (
+            {!scheduleNotConfigured && !slotsLoading && !slotsLoadError && availableSlots.length === 0 && state.selectedDate && state.selectedMaster && businessId && (
               <div className="rounded-xl p-4 mb-4 card-glass border border-white/20 bg-white/5">
-                <p className="text-sm font-medium text-gray-300">На цей день немає вільних годин або не вдалося їх завантажити.</p>
-                <p className="text-xs text-gray-400 mt-1">Спробуйте іншу дату або оновіть сторінку. Якщо графік майстра не налаштовано — налаштуйте його в кабінеті.</p>
+                <p className="text-sm font-medium text-gray-300">На цей день немає вільних годин.</p>
+                <p className="text-xs text-gray-400 mt-1">Усі години зайняті або обрана тривалість не вміщується у графік. Спробуйте іншу дату або коротшу послугу.</p>
               </div>
             )}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">

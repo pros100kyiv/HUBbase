@@ -104,7 +104,11 @@ export async function GET(request: Request) {
     ])
 
     if (!master || master.isActive === false) {
-      return NextResponse.json({ availableSlots: [], scheduleNotConfigured: false })
+      return NextResponse.json({
+        availableSlots: [],
+        scheduleNotConfigured: true,
+        message: 'Спеціаліст недоступний або графік не налаштовано.',
+      })
     }
 
     const appointments = await prisma.appointment.findMany({
@@ -138,11 +142,11 @@ export async function GET(request: Request) {
     const dayEnd = finalDay.end
     const isWorkingDay = finalDay.enabled
 
-    if (dayStart >= dayEnd) {
+    if (!isWorkingDay || dayStart >= dayEnd) {
       return NextResponse.json({
         availableSlots: [],
         scheduleNotConfigured: true,
-        message: 'На цей день немає робочого вікна.',
+        message: 'На цей день немає робочого вікна (графік бізнесу та майстра не перетинаються).',
       })
     }
 
