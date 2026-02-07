@@ -490,15 +490,15 @@ export default function MastersPage() {
         <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-4" />
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
           <div className="lg:col-span-3 space-y-4">
-            <div className="h-64 rounded-xl card-floating animate-pulse" />
+            <div className="h-64 rounded-xl card-glass animate-pulse" />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {[1, 2, 3].map((i) => (
-                <div key={i} className="h-24 rounded-xl card-floating animate-pulse" />
+                <div key={i} className="h-24 rounded-xl card-glass animate-pulse" />
               ))}
             </div>
           </div>
           <div className="space-y-4">
-            <div className="h-48 rounded-xl card-floating animate-pulse" />
+            <div className="h-48 rounded-xl card-glass animate-pulse" />
           </div>
         </div>
       </div>
@@ -545,7 +545,7 @@ export default function MastersPage() {
           </div>
 
           {/* Quick Stats */}
-          <div className="rounded-xl p-4 md:p-6 card-floating">
+          <div className="rounded-xl p-4 md:p-6 card-glass">
             <h3 className="text-base md:text-lg font-semibold text-white mb-4" style={{ letterSpacing: '-0.01em' }}>
               Статистика
             </h3>
@@ -578,7 +578,7 @@ export default function MastersPage() {
           </div>
 
           {/* Search and Filters */}
-          <div className="rounded-xl p-4 md:p-6 card-floating">
+          <div className="rounded-xl p-4 md:p-6 card-glass">
             <div className="flex flex-col gap-3 md:gap-4">
               {/* Search */}
               <div className="flex-1 relative">
@@ -692,7 +692,7 @@ export default function MastersPage() {
 
           {/* Masters List */}
           {filteredMasters.length === 0 ? (
-            <div className="rounded-xl p-4 md:p-6 card-floating text-center">
+            <div className="rounded-xl p-4 md:p-6 card-glass text-center">
               <div className="mb-4 flex justify-center">
                 <div className="w-16 h-16 md:w-20 md:h-20 bg-white/5 border border-white/10 rounded-full flex items-center justify-center">
                   <UserIcon className="w-8 h-8 md:w-10 md:h-10 text-gray-400" />
@@ -720,7 +720,7 @@ export default function MastersPage() {
           ) : (
             <div className="space-y-3 md:space-y-4">
               {viewMode === 'table' && typeof window !== 'undefined' && window.innerWidth >= 768 && (
-                <div className="rounded-xl p-4 md:p-6 card-floating overflow-x-auto">
+                <div className="rounded-xl p-4 md:p-6 card-glass overflow-x-auto">
                   <table className="w-full text-xs sm:text-sm min-w-[600px]">
                     <thead>
                       <tr className="border-b border-white/10">
@@ -866,7 +866,7 @@ export default function MastersPage() {
               <div
                 key={master.id}
                 className={cn(
-                  "rounded-xl overflow-hidden transition-all card-floating",
+                  "rounded-xl overflow-hidden transition-all card-glass",
                   isExpanded && "shadow-lg",
                   isSelected && "ring-2 ring-white/50"
                 )}
@@ -1067,7 +1067,7 @@ export default function MastersPage() {
 
         {/* Right Sidebar */}
         <div className="lg:col-span-1 space-y-3 md:space-y-6">
-          <div className="rounded-xl p-4 md:p-6 card-floating">
+          <div className="rounded-xl p-4 md:p-6 card-glass">
             <h3 className="text-base md:text-lg font-semibold text-white mb-3" style={{ letterSpacing: '-0.01em' }}>
               Швидкі дії
             </h3>

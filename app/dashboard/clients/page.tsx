@@ -627,7 +627,7 @@ export default function ClientsPage() {
           </div>
 
           {/* Search and Filters - card same as Dashboard */}
-          <div className="rounded-xl p-4 md:p-6 card-floating">
+          <div className="rounded-xl p-4 md:p-6 card-glass">
             <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
               <div className="flex-1 relative">
                 <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -716,7 +716,7 @@ export default function ClientsPage() {
 
           {/* Clients List */}
           {filteredClients.length === 0 ? (
-            <div className="rounded-xl p-8 md:p-12 text-center card-floating">
+            <div className="rounded-xl p-8 md:p-12 text-center card-glass">
               <div className="mb-6 flex justify-center">
                 <div className="w-24 h-24 md:w-32 md:h-32 bg-white/10 rounded-full flex items-center justify-center">
                   <UsersIcon className="w-12 h-12 md:w-16 md:h-16 text-gray-400" />
@@ -744,7 +744,7 @@ export default function ClientsPage() {
           ) : (
             <div className="space-y-3 md:space-y-6">
               {viewMode === 'table' && (
-                <div className="rounded-xl p-4 md:p-6 card-floating overflow-x-auto">
+                <div className="rounded-xl p-4 md:p-6 card-glass overflow-x-auto">
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-white/10">
@@ -824,7 +824,7 @@ export default function ClientsPage() {
               <div
                 key={client.id}
                 className={cn(
-                  'rounded-xl overflow-hidden transition-all card-floating',
+                  'rounded-xl overflow-hidden transition-all card-glass',
                   isExpanded && 'shadow-lg',
                   isSelected && 'ring-2 ring-white/50'
                 )}
@@ -1152,7 +1152,7 @@ export default function ClientsPage() {
         </div>
 
         <div className="lg:col-span-1 space-y-3 md:space-y-6">
-          <div className="rounded-xl p-4 md:p-6 card-floating">
+          <div className="rounded-xl p-4 md:p-6 card-glass">
             <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>Статистика</h3>
             <div className="space-y-2 md:space-y-3">
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10"><span className="text-sm text-gray-300">Всього</span><span className="text-sm font-semibold text-white">{stats.total}</span></div>
@@ -1163,7 +1163,7 @@ export default function ClientsPage() {
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10"><span className="text-sm text-gray-300">Середній чек</span><span className="text-sm font-semibold text-pink-400">{Math.round(stats.avgRevenue)} грн</span></div>
             </div>
           </div>
-          <div className="rounded-xl p-4 md:p-6 card-floating">
+          <div className="rounded-xl p-4 md:p-6 card-glass">
             <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>Швидкі дії</h3>
             <div className="space-y-2">
               <button onClick={() => { setEditingClient(null); setShowQuickClientCard(true) }} className="w-full px-3 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] text-left" style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}>+ Додати клієнта</button>

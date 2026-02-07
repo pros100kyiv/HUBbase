@@ -27,7 +27,7 @@ export function MonthGoalsCard({ goals, onToggleGoal, onEdit }: MonthGoalsCardPr
   const totalCount = displayGoals.length
 
   return (
-    <div className="rounded-xl p-6 card-floating">
+    <div className="rounded-xl p-6 card-glass">
       <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
           Month Goal's

@@ -128,12 +128,6 @@ export default function PricePage() {
     }
   }
 
-  // Style constants
-  const cardStyle = {
-    backgroundColor: 'rgba(255, 255, 255, 0.05)',
-    backdropFilter: 'blur(10px)',
-    border: '1px solid rgba(255, 255, 255, 0.1)'
-  }
 
   return (
     <div className="p-4 md:p-8 pb-24 min-h-screen text-white">
@@ -318,10 +312,9 @@ export default function PricePage() {
               className={cn(
                 "group relative rounded-2xl p-4 cursor-pointer transition-all duration-200 hover:-translate-y-1",
                 isSelected(service.id)
-                  ? "bg-gradient-to-br from-blue-500/20 to-purple-600/20 border-blue-500/50"
-                  : "hover:bg-white/10"
+                  ? "bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-blue-500/50"
+                  : "card-glass hover:bg-white/10"
               )}
-              style={isSelected(service.id) ? { border: '1px solid rgba(59, 130, 246, 0.5)' } : cardStyle}
             >
               <div className="flex justify-between items-start gap-4">
                 <div className="flex-1 min-w-0">

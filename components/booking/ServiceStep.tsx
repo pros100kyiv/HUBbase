@@ -43,7 +43,7 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
               onClick={() => toggleService(service)}
               onKeyDown={(e) => e.key === 'Enter' && toggleService(service)}
               className={cn(
-                'rounded-xl p-3 sm:p-4 card-floating cursor-pointer transition-all hover:bg-white/[0.08] active:scale-[0.99] min-h-[56px] touch-target flex items-center',
+                'rounded-xl p-3 sm:p-4 card-glass cursor-pointer transition-all hover:bg-white/[0.08] active:scale-[0.99] min-h-[56px] touch-target flex items-center',
                 isSelected(service.id) && 'ring-2 ring-white/50 bg-white/[0.12]'
               )}
             >
@@ -62,7 +62,7 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
         </div>
 
         {state.selectedServices.length > 0 && (
-          <div className="rounded-xl p-4 mb-4 card-floating">
+          <div className="rounded-xl p-4 mb-4 card-glass">
             <div className="flex justify-between items-center mb-3">
               <span className="text-sm font-medium text-gray-300">Всього:</span>
               <div className="text-right">

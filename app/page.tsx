@@ -17,9 +17,9 @@ export default function Home() {
         </span>
       </div>
 
-      {/* Main Content Card — card-floating, base style */}
+      {/* Main Content Card — card-glass-elevated, base style */}
       <div className="relative z-10 w-full max-w-4xl mx-auto">
-        <div className="rounded-xl p-8 md:p-12 card-floating border border-white/10">
+        <div className="rounded-xl p-8 md:p-12 card-glass-elevated border border-white/10">
           {/* Logo */}
           <div className="flex items-center justify-center gap-2 mb-8">
             <div className="w-12 h-12 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white font-bold text-xl">

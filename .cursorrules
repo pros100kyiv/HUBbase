@@ -171,12 +171,12 @@ export async function GET(request: NextRequest) {
 - **Кнопки:**
   - `dashboard-btn-primary` — головна дія (білий фон, чорний текст)
   - `dashboard-btn-secondary` — другорядна дія (border, напівпрозорий фон)
-- **Картки:** `dashboard-card` або `card-floating` + `rounded-xl p-4 md:p-6`
+- **Картки:** `dashboard-card` або `card-glass` / `card-glass-subtle` / `card-glass-elevated` + `rounded-xl p-4 md:p-6` (напівпрозорі, як на вкладці Прайс). `card-floating` лише для MyDayCard!
 - **Заголовки карток:** `dashboard-card-title` або `dashboard-card-title-lg`
 
 ### Правила стилю
 - Темний фон сторінки (глобально в body)
-- Картки — напівпрозорі темні (`card-floating`)
+- Картки — напівпрозорі темні (`card-glass*`), адаптуються під тему
 - Текст білий/сірий
 - Акценти статусів: orange (очікує), green (підтверджено), blue (виконано), purple (дохід)
 - Мобільна версія: сітка зводиться до однієї колонки

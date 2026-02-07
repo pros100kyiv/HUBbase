@@ -118,7 +118,7 @@ export default function SocialPage() {
 
           {/* Telegram OAuth Section */}
           {business && (
-            <div className="rounded-xl p-4 md:p-6 card-floating">
+            <div className="rounded-xl p-4 md:p-6 card-glass">
               <TelegramOAuth businessId={business.id} onConnected={handleTelegramConnected} />
             </div>
           )}
@@ -129,7 +129,7 @@ export default function SocialPage() {
               <div
                 key={integration.id}
                 className={cn(
-                  'rounded-xl p-4 md:p-6 card-floating relative overflow-hidden',
+                  'rounded-xl p-4 md:p-6 card-glass relative overflow-hidden',
                   integration.connected && 'ring-2 ring-white/30'
                 )}
               >
@@ -186,7 +186,7 @@ export default function SocialPage() {
         </div>
 
         <div className="lg:col-span-1 space-y-3 md:space-y-6">
-          <div className="rounded-xl p-4 md:p-6 card-floating">
+          <div className="rounded-xl p-4 md:p-6 card-glass">
             <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>
               Швидкі дії
             </h3>

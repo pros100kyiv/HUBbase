@@ -42,7 +42,7 @@ export default function AdminLoginPage() {
 
   return (
     <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md rounded-xl p-6 md:p-8 card-floating">
+      <div className="w-full max-w-md rounded-xl p-6 md:p-8 card-glass-elevated">
         <div className="text-center mb-8">
           <BuildingIcon className="w-14 h-14 mx-auto text-blue-400 mb-4" />
           <h1 className="text-xl md:text-2xl font-bold text-white mb-2" style={{ letterSpacing: '-0.02em' }}>

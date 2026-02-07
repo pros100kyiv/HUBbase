@@ -180,7 +180,7 @@ export default function AnalyticsPage() {
           )}
 
           {/* Tabs */}
-          <div className="rounded-xl p-4 md:p-6 card-floating">
+          <div className="rounded-xl p-4 md:p-6 card-glass">
             <div className="flex gap-2 flex-wrap">
               {(['overview', 'revenue', 'clients', 'services', 'masters'] as const).map((tab) => (
                 <button
@@ -202,17 +202,17 @@ export default function AnalyticsPage() {
           {activeTab === 'overview' && advancedStats && (
             <div className="space-y-3 md:space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
-                <div className="rounded-xl p-4 md:p-6 card-floating">
+                <div className="rounded-xl p-4 md:p-6 card-glass">
                   <div className="text-xs text-gray-400 mb-1">Поточний прибуток</div>
                   <div className="text-xl md:text-2xl font-bold text-purple-400">{formatCurrency(advancedStats.currentRevenue || 0)}</div>
                   <div className="text-xs text-gray-500 mt-1">Виконані записи</div>
                 </div>
-                <div className="rounded-xl p-4 md:p-6 card-floating">
+                <div className="rounded-xl p-4 md:p-6 card-glass">
                   <div className="text-xs text-gray-400 mb-1">Прогнозований прибуток</div>
                   <div className="text-xl md:text-2xl font-bold text-blue-400">{formatCurrency(advancedStats.forecastedRevenue || 0)}</div>
                   <div className="text-xs text-gray-500 mt-1">Підтверджені записи</div>
                 </div>
-                <div className="rounded-xl p-4 md:p-6 card-floating">
+                <div className="rounded-xl p-4 md:p-6 card-glass">
                   <div className="text-xs text-gray-400 mb-1">Прогноз на наступний період</div>
                   <div className="text-xl md:text-2xl font-bold text-green-400">{formatCurrency(advancedStats.forecastNextPeriod || 0)}</div>
                   <div className="text-xs text-gray-500 mt-1">
@@ -221,19 +221,19 @@ export default function AnalyticsPage() {
                 </div>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                <div className="rounded-xl p-4 md:p-6 card-floating">
+                <div className="rounded-xl p-4 md:p-6 card-glass">
                   <h3 className="text-base font-semibold text-white mb-3 flex items-center gap-2"><TargetIcon className="w-5 h-5 text-purple-400" />Customer Lifetime Value</h3>
                   <div className="text-2xl md:text-3xl font-bold text-purple-400">{formatCurrency(advancedStats.avgLTV || 0)}</div>
                   <div className="text-xs text-gray-500 mt-1">Оцінка вартості клієнта за період</div>
                 </div>
-                <div className="rounded-xl p-4 md:p-6 card-floating">
+                <div className="rounded-xl p-4 md:p-6 card-glass">
                   <h3 className="text-base font-semibold text-white mb-3 flex items-center gap-2"><UsersIcon className="w-5 h-5 text-blue-400" />Retention Rate</h3>
                   <div className="text-2xl md:text-3xl font-bold text-blue-400">{Math.round(advancedStats.retentionRate || 0)}%</div>
                   <div className="text-xs text-gray-500 mt-1">Активні: {advancedStats.activeClients || 0} / {advancedStats.totalClients || 0}</div>
                 </div>
               </div>
               {advancedStats.conversionFunnel && (
-                <div className="rounded-xl p-4 md:p-6 card-floating">
+                <div className="rounded-xl p-4 md:p-6 card-glass">
                   <h3 className="text-base font-semibold text-white mb-4">Воронка конверсії</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="p-3 bg-white/5 rounded-lg border border-white/10">
@@ -256,7 +256,7 @@ export default function AnalyticsPage() {
                 </div>
               )}
               {advancedStats.dailyTrends && advancedStats.dailyTrends.length > 0 && (
-                <div className="rounded-xl p-4 md:p-6 card-floating">
+                <div className="rounded-xl p-4 md:p-6 card-glass">
                   <h3 className="text-base font-semibold text-white mb-4">Тренди доходу</h3>
                   <div className="space-y-2">
                     {advancedStats.dailyTrends.map((day: any) => {
@@ -283,7 +283,7 @@ export default function AnalyticsPage() {
           {activeTab === 'revenue' && advancedStats && (
             <div className="space-y-3 md:space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                <div className="rounded-xl p-4 md:p-6 card-floating">
+                <div className="rounded-xl p-4 md:p-6 card-glass">
                   <h3 className="text-base font-semibold text-white mb-4">Аналіз джерел</h3>
                   {advancedStats.sourceAnalysis && Object.entries(advancedStats.sourceAnalysis).map(([source, data]: [string, any]) => (
                     <div key={source} className="flex justify-between items-center p-3 border-b border-white/10 last:border-0">
@@ -295,7 +295,7 @@ export default function AnalyticsPage() {
                     </div>
                   ))}
                 </div>
-                <div className="rounded-xl p-4 md:p-6 card-floating">
+                <div className="rounded-xl p-4 md:p-6 card-glass">
                   <h3 className="text-base font-semibold text-white mb-4">Прогноз</h3>
                   <div className="space-y-3">
                     <div className="p-3 bg-white/5 rounded-lg border border-white/10">
@@ -325,7 +325,7 @@ export default function AnalyticsPage() {
           {activeTab === 'clients' && advancedStats && (
             <div className="space-y-3 md:space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                <div className="rounded-xl p-4 md:p-6 card-floating">
+                <div className="rounded-xl p-4 md:p-6 card-glass">
                   <h3 className="text-base font-semibold text-white mb-3 flex items-center gap-2"><UsersIcon className="w-5 h-5 text-purple-400" /> Клієнти</h3>
                   <div className="p-3 bg-white/5 rounded-lg border border-white/10">
                     <div className="text-xs text-gray-400 mb-1">Всього клієнтів</div>
@@ -336,7 +336,7 @@ export default function AnalyticsPage() {
                     <div className="text-2xl font-bold text-blue-400">{advancedStats.activeClients ?? 0}</div>
                   </div>
                 </div>
-                <div className="rounded-xl p-4 md:p-6 card-floating">
+                <div className="rounded-xl p-4 md:p-6 card-glass">
                   <h3 className="text-base font-semibold text-white mb-3 flex items-center gap-2"><TargetIcon className="w-5 h-5 text-blue-400" /> Утримання та LTV</h3>
                   <div className="p-3 bg-white/5 rounded-lg border border-white/10">
                     <div className="text-xs text-gray-400 mb-1">Retention Rate</div>
@@ -354,7 +354,7 @@ export default function AnalyticsPage() {
           {/* Services Tab */}
           {activeTab === 'services' && advancedStats?.serviceAnalysis && (
             <div className="space-y-3 md:space-y-6">
-              <div className="rounded-xl p-4 md:p-6 card-floating">
+              <div className="rounded-xl p-4 md:p-6 card-glass">
                 <h3 className="text-base font-semibold text-white mb-4">Детальний аналіз послуг</h3>
                 <div className="space-y-3">
                   {advancedStats.serviceAnalysis.map((service: any) => (
@@ -383,7 +383,7 @@ export default function AnalyticsPage() {
           {/* Masters Tab */}
           {activeTab === 'masters' && advancedStats?.masterUtilization && (
             <div className="space-y-3 md:space-y-6">
-              <div className="rounded-xl p-4 md:p-6 card-floating">
+              <div className="rounded-xl p-4 md:p-6 card-glass">
                 <h3 className="text-base font-semibold text-white mb-4">Завантаженість спеціалістів</h3>
                 <div className="space-y-3">
                   {advancedStats.masterUtilization.map((master: any) => (
@@ -417,34 +417,34 @@ export default function AnalyticsPage() {
 
           {/* Main Stats */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
-            <div className="rounded-xl p-4 card-floating">
+            <div className="rounded-xl p-4 card-glass">
               <div className="flex items-center gap-2 mb-1"><CalendarIcon className="w-5 h-5 text-orange-400" /></div>
               <div className="text-xs text-gray-400">Всього записів</div>
               <div className="text-lg font-bold text-white">{stats?.totalAppointments || 0}</div>
             </div>
-            <div className="rounded-xl p-4 card-floating">
+            <div className="rounded-xl p-4 card-glass">
               <div className="flex items-center gap-2 mb-1"><CheckIcon className="w-5 h-5 text-green-400" /></div>
               <div className="text-xs text-gray-400">Підтверджено</div>
               <div className="text-lg font-bold text-white">{stats?.confirmedAppointments || 0}</div>
             </div>
-            <div className="rounded-xl p-4 card-floating">
+            <div className="rounded-xl p-4 card-glass">
               <div className="flex items-center gap-2 mb-1"><CheckIcon className="w-5 h-5 text-green-400" /></div>
               <div className="text-xs text-gray-400">Виконано</div>
               <div className="text-lg font-bold text-white">{stats?.completedAppointments || 0}</div>
             </div>
-            <div className="rounded-xl p-4 card-floating">
+            <div className="rounded-xl p-4 card-glass">
               <div className="flex items-center gap-2 mb-1"><XIcon className="w-5 h-5 text-pink-400" /></div>
               <div className="text-xs text-gray-400">Скасовано</div>
               <div className="text-lg font-bold text-white">{stats?.cancelledAppointments || 0}</div>
             </div>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-            <div className="rounded-xl p-4 md:p-6 card-floating">
+            <div className="rounded-xl p-4 md:p-6 card-glass">
               <div className="flex items-center gap-2 mb-1"><MoneyIcon className="w-5 h-5 text-blue-400" /></div>
               <div className="text-xs text-gray-400">Загальний дохід</div>
               <div className="text-xl font-bold text-white">{formatCurrency(stats?.totalRevenue || 0)}</div>
             </div>
-            <div className="rounded-xl p-4 md:p-6 card-floating">
+            <div className="rounded-xl p-4 md:p-6 card-glass">
               <div className="flex items-center gap-2 mb-1"><UsersIcon className="w-5 h-5 text-purple-400" /></div>
               <div className="text-xs text-gray-400">Унікальні клієнти</div>
               <div className="text-xl font-bold text-white">{stats?.uniqueClients || 0}</div>
@@ -453,7 +453,7 @@ export default function AnalyticsPage() {
 
           {/* Service Stats */}
           {stats?.serviceStats && Object.keys(stats.serviceStats).length > 0 ? (
-            <div className="rounded-xl p-4 md:p-6 card-floating">
+            <div className="rounded-xl p-4 md:p-6 card-glass">
               <h2 className="text-base font-semibold text-white mb-4">Популярність послуг</h2>
               <div className="space-y-3">
                 {Object.entries(stats.serviceStats)
@@ -478,7 +478,7 @@ export default function AnalyticsPage() {
               </div>
             </div>
           ) : (
-            <div className="rounded-xl p-8 md:p-12 text-center card-floating">
+            <div className="rounded-xl p-8 md:p-12 text-center card-glass">
               <div className="mb-4 flex justify-center">
                 <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center"><ChartIcon className="w-12 h-12 text-gray-400" /></div>
               </div>
@@ -489,7 +489,7 @@ export default function AnalyticsPage() {
 
           {/* Master Stats */}
           {stats?.masterStats && stats.masterStats.length > 0 ? (
-            <div className="rounded-xl p-4 md:p-6 card-floating">
+            <div className="rounded-xl p-4 md:p-6 card-glass">
               <h2 className="text-base font-semibold text-white mb-4">Статистика спеціалістів</h2>
               <div className="space-y-3">
                 {stats.masterStats
@@ -510,7 +510,7 @@ export default function AnalyticsPage() {
               </div>
             </div>
           ) : (
-            <div className="rounded-xl p-8 md:p-12 text-center card-floating">
+            <div className="rounded-xl p-8 md:p-12 text-center card-glass">
               <div className="mb-4 flex justify-center">
                 <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center"><UsersIcon className="w-12 h-12 text-gray-400" /></div>
               </div>
@@ -522,7 +522,7 @@ export default function AnalyticsPage() {
 
         <div className="lg:col-span-1 space-y-3 md:space-y-6">
           <MonthProgressCard stats={stats} loading={!stats} />
-          <div className="rounded-xl p-4 md:p-6 card-floating">
+          <div className="rounded-xl p-4 md:p-6 card-glass">
             <h3 className="text-base font-semibold text-white mb-3 md:mb-4 flex items-center gap-2" style={{ letterSpacing: '-0.01em' }}>
               <LightBulbIcon className="w-5 h-5 text-purple-400" /> Інсайти
             </h3>
@@ -545,7 +545,7 @@ export default function AnalyticsPage() {
               </div>
             </div>
           </div>
-          <div className="rounded-xl p-4 md:p-6 card-floating">
+          <div className="rounded-xl p-4 md:p-6 card-glass">
             <h3 className="text-base font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>Швидкі дії</h3>
             <div className="space-y-2">
               <button

@@ -499,7 +499,7 @@ export default function SettingsPage() {
   if (!business) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="text-center rounded-xl p-8 card-floating max-w-sm">
+        <div className="text-center rounded-xl p-8 card-glass max-w-sm">
           <p className="text-gray-300 mb-4">Бізнес не знайдено</p>
           <Button
             onClick={() => router.push('/login')}
@@ -530,8 +530,8 @@ export default function SettingsPage() {
             </div>
           </div>
 
-          {/* Tabs - card-floating dark theme */}
-          <div className="rounded-xl p-3 card-floating">
+          {/* Tabs - card-glass dark theme */}
+          <div className="rounded-xl p-3 card-glass-subtle">
             <div className="flex gap-2 flex-wrap">
               {(['info', 'masters', 'services', 'businessCard', 'telegram', 'integrations'] as Tab[]).map((tab) => (
                 <button
@@ -560,7 +560,7 @@ export default function SettingsPage() {
         <div className="space-y-6">
           {/* Інформація */}
           {activeTab === 'info' && (
-            <div className="rounded-xl p-4 md:p-6 card-floating">
+            <div className="rounded-xl p-4 md:p-6 card-glass">
               <h2 className="text-lg font-bold text-white mb-6" style={{ letterSpacing: '-0.02em' }}>Основна інформація</h2>
               <div className="space-y-4">
                 <div>
@@ -689,7 +689,7 @@ export default function SettingsPage() {
 
               {showMasterForm && (
                 <div ref={masterFormRef}>
-                <div className="rounded-xl p-4 md:p-6 card-floating">
+                <div className="rounded-xl p-4 md:p-6 card-glass">
                   <h3 className="text-lg font-bold text-white mb-4" style={{ letterSpacing: '-0.02em' }}>
                     {editingMaster ? 'Редагувати спеціаліста' : 'Новий спеціаліст'}
                   </h3>
@@ -795,7 +795,7 @@ export default function SettingsPage() {
               <div className="space-y-4">
                 {masters.map((master) => (
                   <div key={master.id} className="space-y-4">
-                    <div className="rounded-xl p-4 md:p-6 card-floating">
+                    <div className="rounded-xl p-4 md:p-6 card-glass">
                         <div className="flex justify-between items-start mb-1.5">
                           <div className="flex-1 min-w-0">
                             <h3 className="text-sm font-bold text-white mb-0.5 truncate">
@@ -863,7 +863,7 @@ export default function SettingsPage() {
 
               {showServiceForm && (
                 <div ref={serviceFormRef}>
-                <div className="rounded-xl p-4 md:p-6 card-floating">
+                <div className="rounded-xl p-4 md:p-6 card-glass">
                   <h3 className="text-lg font-bold text-white mb-4" style={{ letterSpacing: '-0.02em' }}>
                     {editingService ? 'Редагувати послугу' : 'Нова послуга'}
                   </h3>
@@ -1056,7 +1056,7 @@ export default function SettingsPage() {
                       )
                       
                       return (
-                        <div key={category} className="rounded-xl overflow-hidden card-floating">
+                        <div key={category} className="rounded-xl overflow-hidden card-glass">
                           {/* Category Header - Clickable */}
                           <button
                             onClick={() => toggleCategory(category)}
@@ -1156,7 +1156,7 @@ export default function SettingsPage() {
 
           {/* Візитівка */}
           {activeTab === 'businessCard' && business && (
-            <div ref={businessCardRef} className="rounded-xl p-4 md:p-6 card-floating">
+            <div ref={businessCardRef} className="rounded-xl p-4 md:p-6 card-glass">
             <BusinessCardEditor
               business={business}
               onSave={async (data) => {
@@ -1192,7 +1192,7 @@ export default function SettingsPage() {
 
           {/* Telegram Tab */}
           {activeTab === 'telegram' && business && (
-            <div className="rounded-xl p-4 md:p-6 card-floating">
+            <div className="rounded-xl p-4 md:p-6 card-glass">
               <TelegramSettings
                 business={business}
                 onUpdate={(updated) => {
@@ -1207,7 +1207,7 @@ export default function SettingsPage() {
 
           {/* Integrations Tab */}
           {activeTab === 'integrations' && business && (
-            <div className="rounded-xl p-4 md:p-6 card-floating">
+            <div className="rounded-xl p-4 md:p-6 card-glass">
             <IntegrationsSettings
               business={business}
               onUpdate={async (data) => {

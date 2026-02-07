@@ -46,7 +46,7 @@ function AppointmentCard({ appointment, onConfirm, onReschedule, processing }: A
   const [showReschedule, setShowReschedule] = useState(false)
 
   return (
-    <div className="rounded-xl p-3 card-floating">
+    <div className="rounded-xl p-3 card-glass-subtle">
       <div className="flex items-start justify-between gap-2 mb-2">
         <div className="flex-1 min-w-0">
           <h3 className="text-sm font-semibold text-white mb-1">

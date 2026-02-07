@@ -257,7 +257,7 @@ export default function ControlCenterPage() {
       </div>
 
       {/* Tab Content */}
-      <div className="card-floating rounded-xl p-6">
+      <div className="card-glass rounded-xl p-6">
         {activeTab === 'overview' && (
           <OverviewTab stats={stats} loading={loading} />
         )}
@@ -363,7 +363,7 @@ function LiveStatsBar() {
 
   if (loading && !realtimeStats) {
     return (
-      <div className="mb-4 rounded-xl p-4 card-floating animate-pulse">
+      <div className="mb-4 rounded-xl p-4 card-glass animate-pulse">
         <div className="h-12 bg-white/10 rounded-lg" />
       </div>
     )
@@ -372,7 +372,7 @@ function LiveStatsBar() {
   const s = realtimeStats || { total: 0, online: 0, idle: 0, offline: 0, newToday: 0, blocked: 0 }
 
   return (
-    <div className="mb-4 rounded-xl p-4 card-floating">
+    <div className="mb-4 rounded-xl p-4 card-glass">
       <div className="flex flex-wrap items-center gap-4 md:gap-6">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2.5 w-2.5">
@@ -471,7 +471,7 @@ function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
           return (
             <div
               key={index}
-              className="card-floating rounded-xl p-6"
+              className="card-glass rounded-xl p-6"
             >
               <div className="flex items-center justify-between mb-4">
                 <Icon className={`w-8 h-8 text-${card.color}-500`} />
@@ -2017,7 +2017,7 @@ function AdminsTab() {
       {/* Create/Edit Modal */}
       {showCreateModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="card-floating rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+          <div className="card-glass rounded-lg p-6 w-full max-w-2xl max-h-[90vh] overflow-y-auto">
             <h3 className="text-xl font-bold mb-4 text-white">
               {editingAdmin ? 'Редагувати адміна' : 'Створити нового адміна'}
             </h3>

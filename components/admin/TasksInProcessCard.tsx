@@ -26,7 +26,7 @@ export function TasksInProcessCard({ tasks, onAddNote, onEdit, onDelete }: Tasks
   const displayTasks = tasks || []
 
   return (
-    <div className="rounded-xl p-4 md:p-6 card-floating">
+    <div className="rounded-xl p-4 md:p-6 card-glass">
       <div className="flex items-center justify-between mb-3 md:mb-4">
         <h3 className="text-base md:text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
           Найближчі записи ({displayTasks.length})

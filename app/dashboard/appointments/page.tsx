@@ -455,7 +455,7 @@ export default function AppointmentsPage() {
           </div>
 
           {/* Search and Filters - stacked on mobile, row on desktop */}
-          <div className="rounded-xl p-3 sm:p-4 md:p-6 card-floating">
+          <div className="rounded-xl p-3 sm:p-4 md:p-6 card-glass">
             <div className="flex flex-col gap-2 md:gap-3">
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                 <div className="flex-1 relative min-w-0">
@@ -515,7 +515,7 @@ export default function AppointmentsPage() {
             )}
           </div>
           {/* Month Navigation & Calendar — картка календаря */}
-          <div className="rounded-xl p-4 md:p-6 card-floating">
+          <div className="rounded-xl p-4 md:p-6 card-glass">
             {!calendarReady || !currentMonth ? (
               <div className="flex items-center justify-center py-12 text-gray-400">
                 <span className="text-sm">Завантаження календаря...</span>
@@ -714,7 +714,7 @@ export default function AppointmentsPage() {
 
           {/* List View */}
           {viewMode === 'list' && !showCreateForm && (
-            <div className="rounded-xl p-4 md:p-6 card-floating">
+            <div className="rounded-xl p-4 md:p-6 card-glass">
               <h3 className="text-lg font-bold text-white mb-4" style={{ letterSpacing: '-0.02em' }}>
                 Всі записи ({filteredAppointments.length})
               </h3>
@@ -758,7 +758,7 @@ export default function AppointmentsPage() {
           )}
 
           {viewMode === 'calendar' && !selectedDate && !showCreateForm && (
-            <div className="rounded-xl p-8 md:p-12 text-center card-floating">
+            <div className="rounded-xl p-8 md:p-12 text-center card-glass">
               <div className="mb-6 flex justify-center">
                 <div className="w-24 h-24 md:w-32 md:h-32 bg-white/10 rounded-full flex items-center justify-center">
                   <CalendarIcon className="w-12 h-12 md:w-16 md:h-16 text-gray-400" />
@@ -788,7 +788,7 @@ export default function AppointmentsPage() {
         {/* Right Column - Sidebar (1 column) - same as Dashboard */}
         <div className="lg:col-span-1 space-y-3 md:space-y-6">
           {/* Quick Stats - same card style as Dashboard sidebar */}
-          <div className="rounded-xl p-4 md:p-6 card-floating">
+          <div className="rounded-xl p-4 md:p-6 card-glass">
             <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>
               Статистика
             </h3>
@@ -816,7 +816,7 @@ export default function AppointmentsPage() {
             </div>
           </div>
 
-          <div className="rounded-xl p-4 md:p-6 card-floating">
+          <div className="rounded-xl p-4 md:p-6 card-glass">
             <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>
               Швидкі дії
             </h3>

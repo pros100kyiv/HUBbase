@@ -128,7 +128,7 @@
     color: #FFFFFF;
   }
   
-  /* Floating light dark card style (replaced white) */
+  /* Floating light dark card style (replaced white) - ЗАЛИШАЄМО для MyDayCard */
   .card-floating {
     background-color: #2A2A2A;
     color: #FFFFFF;
@@ -136,6 +136,31 @@
       0 10px 25px -5px rgba(0, 0, 0, 0.6),
       0 8px 10px -6px rgba(0, 0, 0, 0.5),
       0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+
+  /* Стандарт карток: напівпрозорі (як на вкладці Прайс), адаптуються під будь-яку тему фону */
+  .card-glass {
+    background-color: rgba(255, 255, 255, 0.05);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #FFFFFF;
+  }
+  /* Більш прозора — для другорядних/сайдбар карток */
+  .card-glass-subtle {
+    background-color: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    color: #FFFFFF;
+  }
+  /* Трохи щільніша — для акцентних/головних карток */
+  .card-glass-elevated {
+    background-color: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    color: #FFFFFF;
   }
   
   .dark body {
@@ -156,6 +181,18 @@
   .oled .dashboard-card {
     background-color: #0C0C0E;
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
+  }
+  .oled .card-glass {
+    background-color: rgba(255, 255, 255, 0.04);
+    border-color: rgba(255, 255, 255, 0.08);
+  }
+  .oled .card-glass-subtle {
+    background-color: rgba(255, 255, 255, 0.02);
+    border-color: rgba(255, 255, 255, 0.06);
+  }
+  .oled .card-glass-elevated {
+    background-color: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.1);
   }
   .oled .bg-gray-100 {
     background-color: #0C0C0E;
@@ -208,13 +245,7 @@
     @apply px-4 py-2 text-sm font-medium rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors;
   }
   .dashboard-card {
-    @apply rounded-xl p-4 md:p-6;
-    background-color: #2A2A2A;
-    color: #FFFFFF;
-    box-shadow:
-      0 10px 25px -5px rgba(0, 0, 0, 0.6),
-      0 8px 10px -6px rgba(0, 0, 0, 0.5),
-      0 0 0 1px rgba(255, 255, 255, 0.08);
+    @apply rounded-xl p-4 md:p-6 card-glass;
   }
   .dashboard-card-title {
     @apply text-base md:text-lg font-semibold text-white tracking-dashboard-card;

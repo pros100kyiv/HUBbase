@@ -102,10 +102,10 @@ export function TimeStep({ businessId }: TimeStepProps) {
         <div className="mb-3 sm:mb-4">
           <h3 className="text-sm font-semibold text-white mb-2">Оберіть дату:</h3>
           {!calendarReady || !currentMonth || !monthStart || !monthEnd ? (
-            <div className="rounded-xl p-4 sm:p-6 card-floating text-center text-gray-400 text-sm">Завантаження календаря...</div>
+            <div className="rounded-xl p-4 sm:p-6 card-glass text-center text-gray-400 text-sm">Завантаження календаря...</div>
           ) : (
             <>
-              <div className="rounded-xl p-2.5 sm:p-3 mb-2 card-floating">
+              <div className="rounded-xl p-2.5 sm:p-3 mb-2 card-glass">
                 <div className="flex items-center justify-between gap-1">
                   <button type="button" onClick={() => setCurrentMonth(subMonths(currentMonth, 1))} className="touch-target min-h-[40px] min-w-[40px] px-2 py-2 border border-white/20 bg-white/10 text-white rounded-lg text-xs font-medium hover:bg-white/20 transition-colors flex items-center justify-center" title="Попередній місяць">←</button>
                   <h4 className="text-xs sm:text-sm font-semibold text-white truncate flex-1 text-center px-1">{format(currentMonth, 'MMMM yyyy', { locale: uk })}</h4>
@@ -113,7 +113,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
                   <button type="button" onClick={() => setCurrentMonth(addMonths(currentMonth, 1))} className="touch-target min-h-[40px] min-w-[40px] px-2 py-2 border border-white/20 bg-white/10 text-white rounded-lg text-xs font-medium hover:bg-white/20 transition-colors flex items-center justify-center" title="Наступний місяць">→</button>
                 </div>
               </div>
-              <div className="rounded-xl p-2 card-floating w-full max-w-[320px] sm:max-w-xs mx-auto">
+              <div className="rounded-xl p-2 card-glass w-full max-w-[320px] sm:max-w-xs mx-auto">
                 <div className="grid grid-cols-7 gap-0.5 mb-1.5">
                   {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
                     <div key={day} className="text-center text-[10px] font-semibold text-gray-400">{day}</div>
@@ -181,7 +181,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
               })}
             </div>
             {state.selectedTime && (
-              <div className="mt-3 p-3 rounded-xl card-floating">
+              <div className="mt-3 p-3 rounded-xl card-glass">
                 <p className="text-sm font-medium text-white">Обрано: <span className="text-white">{state.selectedTime}</span></p>
               </div>
             )}
@@ -189,7 +189,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
         )}
 
         {state.selectedTime && state.selectedDate && (
-          <div className="rounded-xl p-4 mb-4 card-floating">
+          <div className="rounded-xl p-4 mb-4 card-glass">
             <p className="text-xs mb-1 text-gray-400">Обрано:</p>
             <p className="text-sm font-semibold text-white">{format(state.selectedDate, 'd MMMM yyyy', { locale: uk })}, {state.selectedTime}</p>
             <p className="text-xs mt-1 text-gray-400">Тривалість: {totalDuration} хв</p>

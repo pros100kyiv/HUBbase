@@ -87,7 +87,7 @@ export function MasterStep({ businessId }: MasterStepProps) {
                 onClick={() => setMaster(master)}
                 onKeyDown={(e) => e.key === 'Enter' && setMaster(master)}
                 className={cn(
-                  'rounded-xl p-3 sm:p-4 card-floating cursor-pointer transition-all hover:bg-white/[0.08] active:scale-[0.99] min-h-[44px] touch-target',
+                  'rounded-xl p-3 sm:p-4 card-glass cursor-pointer transition-all hover:bg-white/[0.08] active:scale-[0.99] min-h-[44px] touch-target',
                   state.selectedMaster?.id === master.id && 'ring-2 ring-white/50 bg-white/[0.12]'
                 )}
               >

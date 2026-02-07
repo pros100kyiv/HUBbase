@@ -12,7 +12,7 @@
 |----|------|
 | **Класи макету та кнопок** | `app/globals.css` — секція `@layer components` (dashboard-container, dashboard-grid, dashboard-btn-primary тощо) |
 | **Токени (тіні, letter-spacing)** | `tailwind.config.ts` — `boxShadow.dashboard-button`, `letterSpacing.dashboard-title` / `dashboard-card` |
-| **Картки (напівпрозора темна)** | `app/globals.css` — клас `.card-floating` у `@layer base` |
+| **Картки (напівпрозора темна)** | `app/globals.css` — класи `.card-glass`, `.card-glass-subtle`, `.card-glass-elevated` у `@layer base`. `card-floating` — лише для MyDayCard |
 
 **Використовуй класи з бази замість дублювання утиліт у компонентах.**
 
@@ -45,14 +45,17 @@
 
 ### 4. Картки
 
-- **Клас картки:** `dashboard-card` (або `card-floating` + `rounded-xl p-4 md:p-6`).
+- **Клас картки:** `dashboard-card` (включає `card-glass`) або `card-glass` / `card-glass-subtle` / `card-glass-elevated` + `rounded-xl p-4 md:p-6`. Картки з напівпрозорим фоном адаптуються під будь-яку тему.
+  - `card-glass` — стандарт (rgba 0.05), для більшості карток
+  - `card-glass-subtle` — більш прозора (0.03), для сайдбару / другорядних
+  - `card-glass-elevated` — щільніша (0.08), для акцентних / auth / empty states
 - **Заголовки всередині карток:**
   - `dashboard-card-title` — `text-base md:text-lg font-semibold`, letter-spacing `-0.01em`
   - `dashboard-card-title-lg` — `text-lg font-bold`, letter-spacing `-0.02em`
 
 ### 5. Теми та кольори
 
-- Темний фон сторінки (глобально в `body`), картки — напівпрозорі темні (`card-floating` / `dashboard-card`), текст білий/сірий.
+- Темний фон сторінки (глобально в `body`), картки — напівпрозорі темні (`card-glass*` / `dashboard-card`), текст білий/сірий. **ВАЖЛИВО:** картку МІЙ ДЕНЬ не змінюємо — вона використовує `card-floating`.
 - Акценти статусів: orange (очікує), green (підтверджено), blue (виконано), purple (дохід) — без зміни загальної палітри.
 
 ### 6. Мобільна версія

@@ -91,7 +91,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
           Контактні дані
         </h2>
 
-        <div className="rounded-xl p-3 sm:p-4 mb-4 card-floating">
+        <div className="rounded-xl p-3 sm:p-4 mb-4 card-glass">
           <div className="space-y-4">
             <div>
               <label className="block text-sm font-medium mb-1.5 text-gray-300">Ім'я *</label>
@@ -123,7 +123,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
           </div>
         </div>
 
-        <div className="rounded-xl p-4 mb-4 card-floating">
+        <div className="rounded-xl p-4 mb-4 card-glass">
           <h3 className="text-base font-semibold mb-3 text-white">Деталі запису:</h3>
           <div className="space-y-1.5 text-sm">
             <div className="flex justify-between"><span className="text-gray-400">Майстер:</span><span className="font-medium text-white">{state.selectedMaster?.name}</span></div>
