@@ -4,7 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
-import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, BellIcon, XIcon, ShareIcon, MoneyIcon } from '@/components/icons'
+import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, BellIcon, XIcon, ShareIcon, MoneyIcon, ClockIcon } from '@/components/icons'
 import { XbaseLogo } from '@/components/layout/XbaseLogo'
 import { NotificationsPanel } from './NotificationsPanel'
 
@@ -77,6 +77,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     { id: 'price', label: 'Прайс', icon: <MoneyIcon />, path: '/dashboard/price' },
     { id: 'clients', label: 'Клієнти', icon: <UsersIcon />, path: '/dashboard/clients' },
     { id: 'masters', label: 'Спеціалісти', icon: <UserIcon />, path: '/dashboard/masters' },
+    { id: 'schedule', label: 'Графік роботи', icon: <ClockIcon />, path: '/dashboard/schedule' },
     { id: 'social', label: 'Соцмережі', icon: <ShareIcon />, path: '/dashboard/social' },
     { id: 'analytics', label: 'Аналітика', icon: <ChartIcon />, path: '/dashboard/analytics' },
     { id: 'notifications', label: 'Сповіщення', icon: <BellIcon />, path: '#', badge: pendingCount, onClick: () => setShowNotifications(true) },

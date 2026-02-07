@@ -1,17 +1,18 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
-import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, eachDayOfInterval, getDay, isToday, addMonths, subMonths } from 'date-fns'
+import { format, startOfWeek, addDays, isToday, isSameDay } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
-import { ChevronLeftIcon, ChevronRightIcon, CalendarIcon, UserIcon } from '@/components/icons'
+import { ClockIcon, UserIcon, EditIcon } from '@/components/icons'
+import { MasterScheduleModal } from '@/components/admin/MasterScheduleModal'
 
 interface Master {
   id: string
   name: string
   isActive?: boolean
-  workingHours?: string
+  workingHours?: string | null
 }
 
 interface DaySchedule {
@@ -24,313 +25,355 @@ interface WorkingHours {
   [key: string]: DaySchedule
 }
 
-const dayNames = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд']
-const dayNamesFull = ['Понеділок', 'Вівторок', 'Середа', 'Четвер', 'П\'ятниця', 'Субота', 'Неділя']
+const DAY_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
+const DAY_LABELS_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд']
+const DAY_LABELS_FULL: Record<string, string> = {
+  monday: 'Понеділок',
+  tuesday: 'Вівторок',
+  wednesday: 'Середа',
+  thursday: 'Четвер',
+  friday: "П'ятниця",
+  saturday: 'Субота',
+  sunday: 'Неділя',
+}
+
+function getDayKey(date: Date): string {
+  const d = date.getDay()
+  const dayIndex = d === 0 ? 6 : d - 1
+  return DAY_KEYS[dayIndex]
+}
+
+function parseWorkingHours(workingHours?: string | null): WorkingHours | null {
+  if (!workingHours) return null
+  try {
+    const parsed = JSON.parse(workingHours) as WorkingHours
+    return parsed
+  } catch {
+    return null
+  }
+}
 
 export default function SchedulePage() {
   const router = useRouter()
-  const [business, setBusiness] = useState<any>(null)
+  const [business, setBusiness] = useState<{ id: string } | null>(null)
   const [masters, setMasters] = useState<Master[]>([])
-  const [currentMonth, setCurrentMonth] = useState(() => {
-    const today = new Date()
-    today.setHours(0, 0, 0, 0)
-    return today
-  })
   const [loading, setLoading] = useState(true)
+  const [savingId, setSavingId] = useState<string | null>(null)
+  const [scheduleModalMaster, setScheduleModalMaster] = useState<Master | null>(null)
+  const [selectedDayOffset, setSelectedDayOffset] = useState<number>(-1)
+
+  const selectedDate = selectedDayOffset === -1
+    ? new Date()
+    : addDays(startOfWeek(new Date(), { weekStartsOn: 1 }), selectedDayOffset)
+
+  const selectedDayKey = getDayKey(selectedDate)
+
+  const loadMasters = useCallback(() => {
+    if (!business?.id) return
+    fetch(`/api/masters?businessId=${business.id}`)
+      .then((res) => (res.ok ? res.json() : Promise.reject(new Error('Failed to fetch'))))
+      .then((data: Master[]) => {
+        const list = Array.isArray(data) ? data : []
+        setMasters(list.filter((m) => m.isActive !== false))
+      })
+      .catch(() => setMasters([]))
+      .finally(() => setLoading(false))
+  }, [business?.id])
 
   useEffect(() => {
-    const businessData = localStorage.getItem('business')
-    if (!businessData) {
+    const raw = localStorage.getItem('business')
+    if (!raw) {
       router.push('/login')
       return
     }
     try {
-      const parsed = JSON.parse(businessData)
-      setBusiness(parsed)
+      setBusiness(JSON.parse(raw))
     } catch {
       router.push('/login')
     }
   }, [router])
 
   useEffect(() => {
-    if (!business) return
+    if (business) loadMasters()
+  }, [business, loadMasters])
 
-    fetch(`/api/masters?businessId=${business.id}`)
-      .then((res) => {
-        if (!res.ok) {
-          throw new Error('Failed to fetch masters')
-        }
-        return res.json()
-      })
-      .then((data) => {
-        const mastersArray = Array.isArray(data) ? data : []
-        setMasters(mastersArray.filter((m: Master) => m.isActive !== false))
-        setLoading(false)
-      })
-      .catch((error) => {
-        console.error('Error loading masters:', error)
-        setMasters([])
-        setLoading(false)
-      })
-  }, [business])
+  const isMasterWorkingOnDay = (master: Master, dayKey: string): boolean => {
+    const hours = parseWorkingHours(master.workingHours)
+    return hours?.[dayKey]?.enabled === true
+  }
 
-  const parseWorkingHours = (workingHours?: string): WorkingHours | null => {
-    if (!workingHours) return null
+  const getMasterScheduleForDay = (master: Master, dayKey: string): DaySchedule | null => {
+    const hours = parseWorkingHours(master.workingHours)
+    const day = hours?.[dayKey]
+    return day ?? null
+  }
+
+  const setMasterDayEnabled = async (master: Master, dayKey: string, enabled: boolean) => {
+    if (!business?.id) return
+    const hours = parseWorkingHours(master.workingHours) || {}
+    const current = hours[dayKey] || { enabled: false, start: '09:00', end: '18:00' }
+    const next: WorkingHours = {
+      ...hours,
+      [dayKey]: { ...current, enabled },
+    }
+    setSavingId(master.id)
     try {
-      return JSON.parse(workingHours)
-    } catch {
-      return null
+      const res = await fetch(`/api/masters/${master.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId: business.id,
+          workingHours: JSON.stringify(next),
+        }),
+      })
+      if (res.ok) {
+        setMasters((prev) =>
+          prev.map((m) =>
+            m.id === master.id ? { ...m, workingHours: JSON.stringify(next) } : m
+          )
+        )
+      }
+    } finally {
+      setSavingId(null)
     }
   }
 
-  const getDayName = (date: Date): string => {
-    const dayIndex = getDay(date) === 0 ? 6 : getDay(date) - 1
-    return dayNamesFull[dayIndex]
+  const handleScheduleSave = (_?: string, __?: string) => {
+    loadMasters()
+    setScheduleModalMaster(null)
   }
-
-  const isMasterWorking = (master: Master, date: Date): boolean => {
-    if (!master.isActive) return false
-    
-    const workingHours = parseWorkingHours(master.workingHours)
-    if (!workingHours) return false
-
-    const dayName = getDayName(date)
-    const daySchedule = workingHours[dayName]
-    
-    return daySchedule?.enabled === true
-  }
-
-  const getWorkingMastersForDay = (date: Date): Master[] => {
-    return masters.filter((master) => isMasterWorking(master, date))
-  }
-
-  const getMasterColor = (masterId: string, index: number): string => {
-    const colors = [
-      'bg-gradient-to-r from-candy-purple to-candy-blue',
-      'bg-gradient-to-r from-candy-blue to-candy-mint',
-      'bg-gradient-to-r from-candy-mint to-candy-pink',
-      'bg-gradient-to-r from-candy-pink to-candy-orange',
-      'bg-gradient-to-r from-candy-orange to-candy-purple',
-    ]
-    return colors[index % colors.length]
-  }
-
-  const daysInMonth = eachDayOfInterval({
-    start: startOfWeek(startOfMonth(currentMonth), { weekStartsOn: 1 }),
-    end: endOfWeek(endOfMonth(currentMonth), { weekStartsOn: 1 }),
-  })
 
   if (!business || loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-gray-500">Завантаження...</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <p className="text-gray-400">Завантаження...</p>
       </div>
     )
   }
 
   return (
     <div className="max-w-7xl mx-auto">
-      {/* Header */}
-      <div className="mb-6">
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-black text-gray-900 dark:text-white mb-2">
+      <div className="dashboard-grid">
+        <div className="dashboard-main space-y-4 md:space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+            <h1 className="dashboard-page-title flex items-center gap-2">
+              <ClockIcon className="w-6 h-6 md:w-7 md:h-7 text-white/90" />
               Графік роботи
             </h1>
-            <p className="text-base text-gray-600 dark:text-gray-400">
-              Розклад роботи спеціалістів
+          </div>
+
+          {/* Хто працює — вибір дня + список */}
+          <div className="dashboard-card">
+            <h2 className="dashboard-card-title mb-4">Хто працює</h2>
+            <p className="text-xs text-gray-400 mb-4">
+              Оберіть день і вмикайте/вимикайте спеціалістів одним кліком. Для зміни годин натисніть «Редагувати».
             </p>
-          </div>
-          <div className="flex gap-2">
-            <button
-              onClick={() => setCurrentMonth(subMonths(currentMonth, 1))}
-              className="p-2 rounded-candy-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
-            >
-              <ChevronLeftIcon className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => setCurrentMonth(new Date())}
-              className="px-4 py-2 bg-gradient-to-r from-candy-blue to-candy-purple text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
-            >
-              Сьогодні
-            </button>
-            <button
-              onClick={() => setCurrentMonth(addMonths(currentMonth, 1))}
-              className="p-2 rounded-candy-sm border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95"
-            >
-              <ChevronRightIcon className="w-5 h-5" />
-            </button>
-          </div>
-        </div>
-      </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Calendar */}
-        <div className="lg:col-span-2">
-          <div className="card-candy p-6">
-            <h2 className="text-xl font-black text-gray-900 dark:text-white mb-6 text-center">
-              {format(currentMonth, 'LLLL yyyy', { locale: uk })}
-            </h2>
-
-            {/* Day Names */}
-            <div className="grid grid-cols-7 gap-2 mb-2">
-              {dayNames.map((day) => (
-                <div key={day} className="text-center text-sm font-bold text-gray-500 dark:text-gray-400 py-2">
-                  {day}
-                </div>
+            <div className="flex flex-wrap gap-2 mb-6">
+              <button
+                onClick={() => setSelectedDayOffset(-1)}
+                className={cn(
+                  'px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                  selectedDayOffset === -1
+                    ? 'bg-white text-black shadow-dashboard-button'
+                    : 'border border-white/20 bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white'
+                )}
+              >
+                Сьогодні
+              </button>
+              {DAY_LABELS_SHORT.map((label, i) => (
+                <button
+                  key={label}
+                  onClick={() => setSelectedDayOffset(i)}
+                  className={cn(
+                    'px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+                    selectedDayOffset === i
+                      ? 'bg-white text-black shadow-dashboard-button'
+                      : 'border border-white/20 bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white'
+                  )}
+                >
+                  {label}
+                </button>
               ))}
             </div>
 
-            {/* Calendar Grid */}
-            <div className="grid grid-cols-7 gap-2">
-              {daysInMonth.map((day) => {
-                const isCurrentMonth = day.getMonth() === currentMonth.getMonth()
-                const isTodayDate = isToday(day)
-                const workingMasters = getWorkingMastersForDay(day)
-
-                return (
-                  <div
-                    key={day.toISOString()}
-                    className={cn(
-                      'relative p-3 rounded-candy-sm border min-h-[100px] flex flex-col backdrop-blur-sm',
-                      isCurrentMonth
-                        ? 'bg-white dark:bg-gray-800/50 border-gray-200 dark:border-gray-700'
-                        : 'bg-gray-50 dark:bg-gray-900 border-gray-100 dark:border-gray-800 opacity-50',
-                      isTodayDate && 'ring-2 ring-candy-purple/50',
-                      workingMasters.length > 0 && 'bg-gradient-to-br from-candy-purple/5 to-candy-blue/5'
-                    )}
-                  >
-                    <div className={cn(
-                      'text-base font-black mb-2',
-                      isCurrentMonth
-                        ? isTodayDate
-                          ? 'text-candy-purple'
-                          : 'text-gray-900 dark:text-white'
-                        : 'text-gray-400 dark:text-gray-600'
-                    )}>
-                      {format(day, 'd')}
-                    </div>
-
-                    <div className="flex-1 flex flex-col gap-1 mt-auto">
-                      {workingMasters.slice(0, 3).map((master, idx) => {
-                        const masterIndex = masters.findIndex((m) => m.id === master.id)
-                        return (
-                          <div
-                            key={master.id}
-                            className={cn(
-                              'px-2 py-1 rounded-candy-xs text-xs font-bold text-white truncate',
-                              getMasterColor(master.id, masterIndex)
-                            )}
-                            title={master.name}
-                          >
-                            {master.name}
-                          </div>
-                        )
-                      })}
-                      {workingMasters.length > 3 && (
-                        <div className="px-2 py-1 rounded-candy-xs bg-gray-300 dark:bg-gray-700 text-xs font-bold text-gray-700 dark:text-gray-300 text-center">
-                          +{workingMasters.length - 3}
-                        </div>
-                      )}
-                      {workingMasters.length === 0 && isCurrentMonth && (
-                        <div className="text-xs text-gray-400 dark:text-gray-600 text-center mt-auto">
-                          Вихідний
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )
-              })}
+            <div className="text-sm text-gray-400 mb-4">
+              {isToday(selectedDate)
+                ? 'Сьогодні'
+                : format(selectedDate, 'EEEE, d MMMM', { locale: uk })}
+              {' · '}
+              <span className="text-white font-medium">{selectedDayKey ? DAY_LABELS_FULL[selectedDayKey] : ''}</span>
             </div>
-          </div>
-        </div>
 
-        {/* Right Sidebar */}
-        <div className="space-y-6">
-          {/* Masters List */}
-          <div className="card-candy p-6">
-            <h2 className="text-xl font-black text-gray-900 dark:text-white mb-4">
-              Спеціалісти та їх графік
-            </h2>
             {masters.length === 0 ? (
-              <div className="text-center py-8">
-                <div className="mb-4 flex justify-center">
-                  <div className="w-24 h-24 bg-gradient-to-br from-candy-purple/20 to-candy-blue/20 rounded-full flex items-center justify-center">
-                    <UserIcon className="w-12 h-12 text-candy-purple" />
-                  </div>
-                </div>
-                <p className="text-gray-600 dark:text-gray-400 mb-4">
-                  Немає спеціалістів
-                </p>
+              <div className="py-8 text-center rounded-xl bg-white/5 border border-white/10">
+                <UserIcon className="w-12 h-12 text-gray-500 mx-auto mb-2" />
+                <p className="text-gray-400 mb-4">Немає спеціалістів</p>
                 <button
-                  onClick={() => router.push('/dashboard/settings?tab=masters')}
-                  className="px-4 py-2 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95"
+                  type="button"
+                  onClick={() => router.push('/dashboard/masters')}
+                  className="dashboard-btn-primary"
                 >
                   Додати спеціаліста
                 </button>
               </div>
             ) : (
-              <div className="space-y-3">
-                {masters.map((master, idx) => {
-                  const workingHours = parseWorkingHours(master.workingHours)
-                  const workingDays = workingHours
-                    ? Object.entries(workingHours)
-                        .filter(([, schedule]) => schedule.enabled)
-                        .map(([dayName]) => dayName.substring(0, 2))
-                    : []
-
+              <ul className="space-y-2">
+                {masters.map((master) => {
+                  const working = isMasterWorkingOnDay(master, selectedDayKey)
+                  const schedule = getMasterScheduleForDay(master, selectedDayKey)
+                  const isSaving = savingId === master.id
                   return (
-                    <div
+                    <li
                       key={master.id}
-                      className="flex items-center gap-3 p-3 rounded-candy-sm bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-800 dark:to-gray-700 border border-gray-200 dark:border-gray-700"
+                      className={cn(
+                        'flex items-center gap-3 p-3 rounded-xl border transition-colors',
+                        working
+                          ? 'bg-white/5 border-white/15'
+                          : 'bg-white/[0.02] border-white/10'
+                      )}
                     >
-                      <div className={cn(
-                        'w-10 h-10 rounded-full flex-shrink-0',
-                        getMasterColor(master.id, idx)
-                      )} />
+                      <button
+                        type="button"
+                        onClick={() => setMasterDayEnabled(master, selectedDayKey, !working)}
+                        disabled={isSaving}
+                        className={cn(
+                          'w-10 h-6 rounded-full transition-colors flex-shrink-0 relative',
+                          working ? 'bg-green-500/80' : 'bg-white/20'
+                        )}
+                      >
+                        <span
+                          className={cn(
+                            'absolute top-1 w-4 h-4 rounded-full bg-white transition-all',
+                            working ? 'left-5' : 'left-1'
+                          )}
+                        />
+                      </button>
                       <div className="flex-1 min-w-0">
-                        <p className="text-base font-black text-gray-900 dark:text-white truncate mb-1">
-                          {master.name}
-                        </p>
-                        {workingDays.length > 0 ? (
-                          <p className="text-sm text-gray-600 dark:text-gray-400">
-                            {workingDays.join(', ')}
+                        <p className="text-sm font-medium text-white truncate">{master.name}</p>
+                        {working && schedule ? (
+                          <p className="text-xs text-gray-400">
+                            {schedule.start} – {schedule.end}
                           </p>
                         ) : (
-                          <p className="text-sm text-gray-400 dark:text-gray-500">
-                            Графік не налаштовано
-                          </p>
+                          <p className="text-xs text-gray-500">Вихідний</p>
                         )}
                       </div>
-                    </div>
+                      <button
+                        type="button"
+                        onClick={() => setScheduleModalMaster(master)}
+                        className="p-2 rounded-lg border border-white/20 bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white transition-colors"
+                        title="Редагувати графік"
+                      >
+                        <EditIcon className="w-4 h-4" />
+                      </button>
+                    </li>
                   )
                 })}
-              </div>
+              </ul>
             )}
           </div>
 
-          {/* Quick Actions */}
-          <div className="card-candy p-6 bg-gradient-to-br from-candy-purple/10 to-candy-blue/10">
-            <h3 className="text-lg font-black text-gray-900 dark:text-white mb-4">
-              Швидкі дії
-            </h3>
-            <div className="space-y-2">
-              <button
-                onClick={() => router.push('/dashboard/settings?tab=masters')}
-                className="w-full px-4 py-3 bg-gradient-to-r from-candy-purple to-candy-blue text-white font-bold rounded-candy-sm shadow-soft-xl hover:shadow-soft-2xl transition-all active:scale-95 text-left"
-              >
-                Налаштувати графік
-              </button>
-              <button
-                onClick={() => router.push('/dashboard/masters')}
-                className="w-full px-4 py-3 border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 transition-all active:scale-95 rounded-candy-sm font-bold text-left"
-              >
-                Переглянути спеціалістів
-              </button>
+          {/* Сітка тижня */}
+          {masters.length > 0 && (
+            <div className="dashboard-card">
+              <h2 className="dashboard-card-title mb-4">Тиждень</h2>
+              <p className="text-xs text-gray-400 mb-4">
+                Огляд по днях. Клік по спеціалісту — повний графік та корекція.
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full min-w-[400px] text-sm">
+                  <thead>
+                    <tr className="border-b border-white/10">
+                      <th className="text-left py-2 px-2 text-gray-400 font-medium">Спеціаліст</th>
+                      {DAY_KEYS.map((key, i) => (
+                        <th key={key} className="py-2 px-1 text-center text-gray-400 font-medium w-[72px]">
+                          {DAY_LABELS_SHORT[i]}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {masters.map((master) => (
+                      <tr key={master.id} className="border-b border-white/5 hover:bg-white/5">
+                        <td className="py-2 px-2">
+                          <button
+                            type="button"
+                            onClick={() => setScheduleModalMaster(master)}
+                            className="text-left text-white font-medium hover:underline truncate max-w-[140px] block"
+                          >
+                            {master.name}
+                          </button>
+                        </td>
+                        {DAY_KEYS.map((dayKey) => {
+                          const daySchedule = getMasterScheduleForDay(master, dayKey)
+                          const isWorking = daySchedule?.enabled
+                          return (
+                            <td key={dayKey} className="py-1.5 px-1 text-center">
+                              <button
+                                type="button"
+                                onClick={() => setScheduleModalMaster(master)}
+                                className={cn(
+                                  'w-full py-1.5 rounded-lg text-[10px] transition-colors',
+                                  isWorking
+                                    ? 'bg-green-500/20 text-green-400 border border-green-500/30'
+                                    : 'bg-white/5 text-gray-500 border border-white/10'
+                                )}
+                              >
+                                {isWorking ? `${daySchedule?.start || '—'}–${daySchedule?.end || '—'}` : '—'}
+                              </button>
+                            </td>
+                          )
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
+          )}
+        </div>
+
+        <div className="dashboard-sidebar space-y-4">
+          <div className="dashboard-card">
+            <h3 className="dashboard-card-title mb-3">Спеціалісти</h3>
+            {masters.length === 0 ? (
+              <p className="text-sm text-gray-400">Додайте спеціалістів у розділі Спеціалісти.</p>
+            ) : (
+              <ul className="space-y-2">
+                {masters.map((master) => (
+                  <li key={master.id} className="flex items-center justify-between gap-2">
+                    <span className="text-sm text-white truncate">{master.name}</span>
+                    <button
+                      type="button"
+                      onClick={() => setScheduleModalMaster(master)}
+                      className="dashboard-btn-secondary flex-shrink-0 px-2 py-1 text-xs"
+                    >
+                      Графік
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            <button
+              type="button"
+              onClick={() => router.push('/dashboard/masters')}
+              className="w-full mt-4 dashboard-btn-secondary"
+            >
+              Спеціалісти
+            </button>
           </div>
         </div>
       </div>
+
+      {scheduleModalMaster && business && (
+        <MasterScheduleModal
+          master={scheduleModalMaster}
+          businessId={business.id}
+          onClose={() => setScheduleModalMaster(null)}
+          onSave={handleScheduleSave}
+        />
+      )}
     </div>
   )
 }
