@@ -119,9 +119,8 @@ export function MyDayCard({
     ? `Сьогодні, ${format(selectedDate, 'd MMMM yyyy', { locale: uk })}`
     : format(selectedDate, 'EEEE, d MMMM yyyy', { locale: uk })
 
-  const dateDisplayMobile = isToday
-    ? `Сьогодні, ${format(selectedDate, 'd MMM', { locale: uk })}`
-    : format(selectedDate, 'd MMM', { locale: uk })
+  // Мобільний формат максимально короткий, щоб хедер був в один рядок
+  const dateDisplayMobile = format(selectedDate, 'dd.MM', { locale: uk })
 
   const handleBookAppointment = () => {
     if (onBookAppointment) {
@@ -437,13 +436,16 @@ export function MyDayCard({
     <div className="bg-[#1A1A1A] text-white rounded-xl p-4 md:p-6 card-floating">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 mb-4 md:mb-6">
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 flex-1 min-w-0">
-          <h3 className="text-lg md:text-2xl font-bold text-white whitespace-nowrap flex-shrink-0" style={{ letterSpacing: '-0.02em' }}>
+        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+          <h3
+            className="text-base sm:text-lg md:text-2xl font-bold text-white whitespace-nowrap flex-shrink-0"
+            style={{ letterSpacing: '-0.02em' }}
+          >
             МІЙ ДЕНЬ
           </h3>
           
           {/* Date Navigation */}
-          <div className="flex items-center gap-1 md:gap-2 flex-wrap">
+          <div className="flex items-center gap-1 md:gap-2 min-w-0 flex-1 whitespace-nowrap">
             <button
               onClick={handlePreviousDay}
               className="touch-target p-1.5 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center active:scale-95 flex-shrink-0"
@@ -456,13 +458,13 @@ export function MyDayCard({
             
             <button
               onClick={() => setShowDatePicker(true)}
-              className="px-2 md:px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-xs md:text-sm text-white flex items-center gap-1 md:gap-2 max-w-full"
+              className="px-2 md:px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-xs md:text-sm text-white flex items-center gap-1 md:gap-2 min-w-0 flex-1"
             >
               <svg className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
               </svg>
-              <span className="capitalize md:hidden">{dateDisplayMobile}</span>
-              <span className="hidden md:inline capitalize">{dateDisplay}</span>
+              <span className="md:hidden truncate">{dateDisplayMobile}</span>
+              <span className="hidden md:inline capitalize truncate">{dateDisplay}</span>
             </button>
             
             <button
