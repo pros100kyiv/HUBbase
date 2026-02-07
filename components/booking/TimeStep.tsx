@@ -88,12 +88,25 @@ export function TimeStep({ businessId }: TimeStepProps) {
           const futureOnly = raw.filter((slotStr: string) => new Date(slotStr) > now)
           setAvailableSlots(futureOnly)
           setScheduleNotConfigured(Boolean(data.scheduleNotConfigured))
+          if (futureOnly.length > 0) {
+            const nearestSlot = futureOnly[0]
+            const nearestTime = nearestSlot.slice(11, 16)
+            const currentKey = state.selectedDate
+              ? `${format(state.selectedDate, 'yyyy-MM-dd')}T${state.selectedTime || ''}`
+              : ''
+            if (!state.selectedTime || !futureOnly.includes(currentKey)) {
+              setTime(nearestTime)
+            }
+          } else {
+            setTime('')
+          }
         })
         .catch(error => {
           console.error('Error fetching availability:', error)
           setAvailableSlots([])
           setScheduleNotConfigured(false)
           setSlotsLoadError(true)
+          setTime('')
         })
         .finally(() => setSlotsLoading(false))
     } else {

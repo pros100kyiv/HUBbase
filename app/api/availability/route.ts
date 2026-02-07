@@ -12,7 +12,7 @@ interface WorkingHours {
   [key: string]: DaySchedule
 }
 
-// date-fns getDay: 0 = Sunday, 1 = Monday, ... 6 = Saturday
+// date-fns getDay: 0 = Sunday, 1 = Monday, ... 6 = Saturday. Ключі збігаються з MasterScheduleModal (monday..sunday).
 const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 
 function parseWorkingHours(json: string | null): WorkingHours | null {
