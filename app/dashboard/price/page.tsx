@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { SearchIcon, MoneyIcon, FilterIcon, CheckSquareIcon, SquareIcon } from '@/components/icons'
+import { SearchIcon, FilterIcon, CheckSquareIcon, SquareIcon, ChevronDownIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { toast } from '@/components/ui/toast'
@@ -22,6 +22,8 @@ export default function PricePage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
+  const [sortBy, setSortBy] = useState<'name' | 'price' | 'duration' | 'category'>('name')
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [selectedServices, setSelectedServices] = useState<Service[]>([])
   const [showCreateModal, setShowCreateModal] = useState(false)
   const [createForm, setCreateForm] = useState({ name: '', price: '', duration: '', category: '' })
@@ -66,12 +68,21 @@ export default function PricePage() {
   const categories = Array.from(new Set(services.map(s => s.category).filter(Boolean))) as string[]
 
   // Filter services
-  const filteredServices = services.filter(service => {
-    const matchesSearch = service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      (service.category && service.category.toLowerCase().includes(searchQuery.toLowerCase()))
-    const matchesCategory = selectedCategory ? service.category === selectedCategory : true
-    return matchesSearch && matchesCategory
-  })
+  const filteredServices = services
+    .filter(service => {
+      const matchesSearch = service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        (service.category && service.category.toLowerCase().includes(searchQuery.toLowerCase()))
+      const matchesCategory = selectedCategory ? service.category === selectedCategory : true
+      return matchesSearch && matchesCategory
+    })
+    .sort((a, b) => {
+      let cmp = 0
+      if (sortBy === 'name') cmp = (a.name || '').localeCompare(b.name || '', 'uk')
+      else if (sortBy === 'price') cmp = a.price - b.price
+      else if (sortBy === 'duration') cmp = a.duration - b.duration
+      else if (sortBy === 'category') cmp = (a.category || '').localeCompare(b.category || '', 'uk')
+      return sortOrder === 'asc' ? cmp : -cmp
+    })
 
   const isSelected = (id: string) => selectedServices.some(s => s.id === id)
 
@@ -149,18 +160,40 @@ export default function PricePage() {
             <span className="text-lg leading-none">+</span>
             Додати до прайсу
           </button>
-          {/* Search & Filter */}
-          <div className="relative flex-1 md:w-64">
+          {/* Search */}
+          <div className="relative flex-1 md:w-56">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-              <SearchIcon className="h-5 w-5 text-gray-400" />
+              <SearchIcon className="h-4 w-4 text-gray-400" />
             </div>
             <input
               type="text"
-              className="block w-full pl-10 pr-3 py-2.5 rounded-xl bg-white/5 border border-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+              className="block w-full pl-9 pr-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
               placeholder="Пошук послуг..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
+          </div>
+          {/* Sort */}
+          <div className="relative">
+            <select
+              value={`${sortBy}-${sortOrder}`}
+              onChange={e => {
+                const [s, o] = (e.target.value || 'name-asc').split('-') as [typeof sortBy, typeof sortOrder]
+                setSortBy(s)
+                setSortOrder(o)
+              }}
+              className="appearance-none pl-3 pr-8 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent cursor-pointer"
+            >
+              <option value="name-asc">Назва А→Я</option>
+              <option value="name-desc">Назва Я→А</option>
+              <option value="price-asc">Ціна ↑</option>
+              <option value="price-desc">Ціна ↓</option>
+              <option value="duration-asc">Тривалість ↑</option>
+              <option value="duration-desc">Тривалість ↓</option>
+              <option value="category-asc">Категорія А→Я</option>
+              <option value="category-desc">Категорія Я→А</option>
+            </select>
+            <ChevronDownIcon className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
           </div>
         </div>
       </div>
@@ -304,51 +337,39 @@ export default function PricePage() {
           <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
         </div>
       ) : filteredServices.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-3">
           {filteredServices.map((service) => (
             <div
               key={service.id}
               onClick={() => toggleService(service)}
               className={cn(
-                "group relative rounded-2xl p-4 cursor-pointer transition-all duration-200 hover:-translate-y-1",
+                "group relative rounded-xl p-3 cursor-pointer transition-all duration-150 hover:bg-white/[0.08]",
                 isSelected(service.id)
                   ? "bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-blue-500/50"
                   : "card-glass hover:bg-white/10"
               )}
             >
-              <div className="flex justify-between items-start gap-4">
+              <div className="flex items-start justify-between gap-2">
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-semibold text-lg truncate text-white group-hover:text-blue-200 transition-colors">
-                      {service.name}
-                    </h3>
-                  </div>
+                  <h3 className="font-semibold text-sm truncate text-white group-hover:text-blue-200 transition-colors">
+                    {service.name}
+                  </h3>
                   {service.category && (
-                    <span className="inline-block px-2 py-0.5 rounded text-xs font-medium bg-white/5 text-gray-400 mb-2">
+                    <span className="inline-block mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-medium bg-white/5 text-gray-400 truncate max-w-full">
                       {service.category}
                     </span>
                   )}
-                  {service.description && (
-                    <p className="text-sm text-gray-400 line-clamp-2">{service.description}</p>
-                  )}
                 </div>
-                <div className="flex flex-col items-end gap-2">
-                  <div className={cn(
-                    "w-6 h-6 rounded-md flex items-center justify-center transition-colors",
-                    isSelected(service.id) ? "bg-blue-500 text-white" : "bg-white/10 text-gray-500"
-                  )}>
-                    {isSelected(service.id) ? <CheckSquareIcon className="w-4 h-4" /> : <SquareIcon className="w-4 h-4" />}
-                  </div>
+                <div className={cn(
+                  "w-5 h-5 rounded flex-shrink-0 flex items-center justify-center transition-colors",
+                  isSelected(service.id) ? "bg-blue-500 text-white" : "bg-white/10 text-gray-500"
+                )}>
+                  {isSelected(service.id) ? <CheckSquareIcon className="w-3 h-3" /> : <SquareIcon className="w-3 h-3" />}
                 </div>
               </div>
-
-              <div className="mt-4 flex items-center justify-between pt-3 border-t border-white/5">
-                <div className="text-sm text-gray-400">
-                  {service.duration} хв
-                </div>
-                <div className="text-lg font-bold text-white">
-                  {Math.round(service.price)} ₴
-                </div>
+              <div className="mt-2 flex items-center justify-between text-xs">
+                <span className="text-gray-400">{service.duration} хв</span>
+                <span className="font-bold text-white">{Math.round(service.price)} ₴</span>
               </div>
             </div>
           ))}
