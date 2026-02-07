@@ -166,7 +166,7 @@ export default function SchedulePage() {
   const handleDeleteMaster = async (master: Master) => {
     if (!window.confirm('Видалити цього спеціаліста?')) return
     try {
-      const response = await fetch(`/api/masters/${master.id}`, { method: 'DELETE' })
+      const response = await fetch(`/api/masters/${master.id}?businessId=${business.id}`, { method: 'DELETE' })
       if (response.ok) {
         loadMasters()
         toast({ title: 'Успішно!', description: 'Спеціаліста видалено', type: 'success' })

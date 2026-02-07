@@ -34,15 +34,22 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json()
-    const { businessId, name, photo, bio, rating } = body
-
-    console.log('Creating master with data:', { businessId, name, photo, bio, rating })
+    let body: Record<string, unknown>
+    try {
+      body = (await request.json()) as Record<string, unknown>
+    } catch {
+      return NextResponse.json({ error: 'Невірний формат JSON' }, { status: 400 })
+    }
+    const businessId = body.businessId != null ? String(body.businessId) : ''
+    const name = body.name != null ? String(body.name).trim() : ''
+    const photo = body.photo != null ? String(body.photo).trim() || null : null
+    const bio = body.bio != null ? String(body.bio).trim() || null : null
+    const rating = body.rating !== undefined && body.rating !== null ? Number(body.rating) || 0 : 0
 
     if (!businessId || !name) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'businessId and name are required',
-        received: { businessId: !!businessId, name: !!name }
+        received: { businessId: !!businessId, name: !!name },
       }, { status: 400 })
     }
 
@@ -53,20 +60,20 @@ export async function POST(request: Request) {
     })
 
     if (!business) {
-      return NextResponse.json({ 
+      return NextResponse.json({
         error: 'Business not found',
-        businessId 
+        businessId,
       }, { status: 404 })
     }
 
     // Prepare data
     const masterData = {
       businessId,
-      name: name.trim(),
-      photo: photo?.trim() || null,
-      bio: bio?.trim() || null,
-      rating: rating !== undefined && rating !== null ? parseFloat(rating.toString()) : 0,
-      isActive: true, // Default to active
+      name,
+      photo,
+      bio,
+      rating,
+      isActive: true,
     }
 
     console.log('Master data to create:', masterData)

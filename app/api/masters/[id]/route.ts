@@ -3,14 +3,36 @@ import { prisma } from '@/lib/prisma'
 import { verifyBusinessOwnership } from '@/lib/middleware/business-isolation'
 import { jsonSafe } from '@/lib/utils/json'
 
+function toScheduleJson(value: unknown): string | null {
+  if (value == null) return null
+  if (typeof value === 'string') return value
+  try {
+    return JSON.stringify(value)
+  } catch {
+    return null
+  }
+}
+
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
     const resolvedParams = await Promise.resolve(params)
-    const body = await request.json()
-    let { businessId, name, photo, bio, rating, isActive, workingHours, scheduleDateOverrides } = body
+    let body: Record<string, unknown>
+    try {
+      body = (await request.json()) as Record<string, unknown>
+    } catch {
+      return NextResponse.json({ error: 'Невірний формат JSON' }, { status: 400 })
+    }
+    let businessId = body.businessId as string | undefined
+    const name = body.name as string | undefined
+    const photo = body.photo as string | undefined
+    const bio = body.bio as string | undefined
+    const rating = body.rating as number | undefined
+    const isActive = body.isActive as boolean | undefined
+    const workingHoursRaw = body.workingHours
+    const scheduleDateOverridesRaw = body.scheduleDateOverrides
 
     // Якщо businessId не передано — отримуємо з запису майстра (для викликів з налаштувань)
     if (!businessId) {
@@ -21,24 +43,28 @@ export async function PATCH(
       if (!master) return NextResponse.json({ error: 'Master not found' }, { status: 404 })
       businessId = master.businessId
     }
+    const bid = String(businessId)
 
     // Перевіряємо, чи запис належить цьому бізнесу
-    const isOwner = await verifyBusinessOwnership(businessId, 'master', resolvedParams.id)
+    const isOwner = await verifyBusinessOwnership(bid, 'master', resolvedParams.id)
     if (!isOwner) {
       return NextResponse.json({ error: 'Master not found or access denied' }, { status: 404 })
     }
 
+    const workingHours = workingHoursRaw !== undefined ? toScheduleJson(workingHoursRaw) : undefined
+    const scheduleDateOverrides = scheduleDateOverridesRaw !== undefined ? toScheduleJson(scheduleDateOverridesRaw) : undefined
+
     const master = await prisma.master.update({
-      where: { 
+      where: {
         id: resolvedParams.id,
-        businessId // Додаткова перевірка на рівні бази даних
+        businessId: bid,
       },
       data: {
-        ...(name && { name }),
-        ...(photo !== undefined && { photo }),
-        ...(bio !== undefined && { bio }),
-        ...(rating !== undefined && { rating }),
-        ...(isActive !== undefined && { isActive }),
+        ...(name != null && name !== '' && { name: String(name).trim() }),
+        ...(photo !== undefined && { photo: photo != null ? String(photo).trim() || null : null }),
+        ...(bio !== undefined && { bio: bio != null ? String(bio).trim() || null : null }),
+        ...(rating !== undefined && { rating: Number(rating) || 0 }),
+        ...(isActive !== undefined && { isActive: Boolean(isActive) }),
         ...(workingHours !== undefined && { workingHours }),
         ...(scheduleDateOverrides !== undefined && { scheduleDateOverrides }),
       },

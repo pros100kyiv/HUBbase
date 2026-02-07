@@ -18,12 +18,14 @@ interface Master {
   bio?: string | null
   rating: number
   isActive: boolean
-  totalAppointments: number
-  totalRevenue: number
-  averageRating: number
-  utilizationRate: number
-  createdAt: string
-  updatedAt: string
+  workingHours?: string | null
+  scheduleDateOverrides?: string | null
+  totalAppointments?: number
+  totalRevenue?: number
+  averageRating?: number
+  utilizationRate?: number
+  createdAt?: string
+  updatedAt?: string
 }
 
 interface MasterStats {
