@@ -188,8 +188,8 @@ export function QuickClientCard({
 
   return (
     <ModalPortal>
-      <div className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4">
-        <div className="relative w-full sm:max-w-md bg-[#1A1A1A] border border-white/10 rounded-t-xl sm:rounded-xl p-4 sm:p-6 sm:my-auto modal-content text-white shadow-xl pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="modal-overlay sm:!p-4">
+        <div className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white">
         {/* Close button */}
         {onCancel && (
           <button

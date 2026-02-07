@@ -273,8 +273,7 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
                   aria-hidden
                 />
                 <div
-                  className="relative w-[95%] sm:w-full max-w-md bg-[#2A2A2A] rounded-xl border border-white/10 shadow-2xl modal-content animate-in fade-in zoom-in-95 duration-200 flex flex-col pb-[max(0.5rem,env(safe-area-inset-bottom))]"
-                  style={{ position: 'relative', zIndex: 10000 }}
+                  className="relative w-[95%] sm:w-full max-w-md modal-content modal-dialog animate-in fade-in zoom-in-95 duration-200 flex flex-col"
                   onClick={(e) => e.stopPropagation()}
                 >
                 {/* Header - Fixed */}

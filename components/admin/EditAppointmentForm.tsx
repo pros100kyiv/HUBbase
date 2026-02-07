@@ -167,8 +167,8 @@ export function EditAppointmentForm({
 
   return (
     <ModalPortal>
-      <div ref={formRef} className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4">
-        <div className="relative w-full sm:max-w-2xl bg-[#1A1A1A] border border-white/10 rounded-t-xl sm:rounded-xl p-4 sm:p-6 sm:my-auto modal-content text-white shadow-xl pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div ref={formRef} className="modal-overlay sm:!p-4">
+        <div className="relative w-[95%] sm:w-full sm:max-w-2xl sm:my-auto modal-content modal-dialog text-white">
         {/* Close button */}
         <button
           onClick={onCancel}
@@ -286,11 +286,11 @@ export function EditAppointmentForm({
           {showServiceModal && (
             <ModalPortal>
               <div
-                className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4 z-[200]"
+                className="modal-overlay sm:!p-4 z-[200]"
                 onClick={() => setShowServiceModal(false)}
               >
                 <div
-                  className="w-full max-w-md modal-content flex flex-col rounded-xl bg-[#1A1A1A] border border-white/10 shadow-xl pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+                  className="w-[95%] sm:w-full max-w-md modal-content modal-dialog flex flex-col"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="p-4 border-b border-white/10">

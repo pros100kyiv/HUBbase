@@ -1041,8 +1041,8 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
       {/* Block Modal */}
       {blockModalOpen && selectedBusiness && (
         <ModalPortal>
-          <div className="modal-overlay bg-black/50 sm:!p-4" onClick={() => { setBlockModalOpen(false); setSelectedBusiness(null); setBlockReason('') }}>
-            <div className="relative w-full sm:max-w-md modal-content card-floating rounded-lg shadow-xl p-6" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-overlay sm:!p-4" onClick={() => { setBlockModalOpen(false); setSelectedBusiness(null); setBlockReason('') }}>
+            <div className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog" onClick={(e) => e.stopPropagation()}>
               <h3 className="text-xl font-bold mb-4 text-white" style={{ letterSpacing: '-0.02em' }}>
               Заблокувати акаунт
             </h3>
@@ -1107,7 +1107,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
       {detailModalBusiness && (
         <ModalPortal>
           <div className="modal-overlay bg-black/70 sm:!p-4" onClick={() => setDetailModalBusiness(null)}>
-            <div className="w-full sm:max-w-lg modal-content rounded-xl card-floating p-6 border border-white/10 sm:my-auto" onClick={(e) => e.stopPropagation()}>
+            <div className="w-[95%] sm:w-full sm:max-w-lg sm:my-auto modal-content modal-dialog" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-xl font-bold text-white">{detailModalBusiness.name}</h3>
               <button onClick={() => setDetailModalBusiness(null)} className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white">

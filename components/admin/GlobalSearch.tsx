@@ -118,7 +118,7 @@ export function GlobalSearch({ businessId, isOpen, onClose }: GlobalSearchProps)
           aria-hidden
         />
         {/* Search Modal */}
-        <div className="relative w-full sm:max-w-2xl bg-[#2A2A2A] rounded-xl shadow-2xl border border-white/10 sm:my-auto modal-content pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+        <div className="relative w-[95%] sm:w-full sm:max-w-2xl sm:my-auto modal-content modal-dialog">
         {/* Search Input */}
         <div className="p-4 border-b border-white/10">
           <div className="flex items-center gap-3">

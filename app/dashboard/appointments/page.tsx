@@ -846,11 +846,11 @@ export default function AppointmentsPage() {
       {showCreateForm && business && (
         <ModalPortal>
           <div
-            className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4"
+            className="modal-overlay sm:!p-4"
             onClick={() => setShowCreateForm(false)}
           >
             <div
-              className="relative w-[95%] sm:w-full sm:max-w-2xl bg-[#1A1A1A] border border-white/10 rounded-t-xl sm:rounded-xl shadow-xl modal-content sm:my-auto pb-[max(1rem,env(safe-area-inset-bottom))]"
+              className="relative w-[95%] sm:w-full sm:max-w-2xl sm:my-auto modal-content modal-dialog"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4 sm:p-6">

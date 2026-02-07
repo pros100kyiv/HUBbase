@@ -633,19 +633,14 @@ export function MyDayCard({
       {/* Status Details Modal */}
       {selectedStatus && (
         <ModalPortal>
-          <div className="modal-overlay sm:!p-4">
+          <div className="modal-overlay sm:!p-4" onClick={() => setSelectedStatus(null)}>
             <div
-              className="fixed inset-0 min-h-[100dvh] bg-black/70 backdrop-blur-sm"
-              onClick={() => setSelectedStatus(null)}
-              aria-hidden
-            />
-            <div
-              className="relative w-[95%] sm:w-full max-w-lg bg-[#2A2A2A] rounded-xl flex flex-col border border-white/10 shadow-2xl modal-content animate-in fade-in zoom-in-95 duration-200 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+              className="relative w-[95%] sm:w-full max-w-lg modal-content modal-dialog flex flex-col animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
               onTouchStart={handleTouchStart}
               onTouchEnd={(e) => handleTouchEnd(e, () => setSelectedStatus(null))}
             >
-              <div className="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
+              <div className="flex items-center justify-between pb-4 border-b border-white/10 flex-shrink-0">
                 <h3 className="text-lg font-semibold text-white">{getStatusTitle(selectedStatus)}</h3>
                 <button
                   onClick={() => setSelectedStatus(null)}
@@ -685,14 +680,9 @@ export function MyDayCard({
       {/* Appointment Details Modal */}
       {selectedAppointment && (
         <ModalPortal>
-          <div className="modal-overlay sm:!p-4">
+          <div className="modal-overlay sm:!p-4" onClick={() => setSelectedAppointment(null)}>
             <div
-              className="fixed inset-0 min-h-[100dvh] bg-black/70 backdrop-blur-sm"
-              onClick={() => setSelectedAppointment(null)}
-              aria-hidden
-            />
-            <div
-              className="relative w-[95%] sm:w-full max-w-lg bg-[#2A2A2A] rounded-xl flex flex-col border border-white/10 shadow-2xl modal-content overflow-y-auto animate-in fade-in zoom-in-95 duration-200 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+              className="relative w-[95%] sm:w-full max-w-lg modal-content modal-dialog flex flex-col animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
               onTouchStart={handleTouchStart}
               onTouchEnd={(e) => handleTouchEnd(e, () => setSelectedAppointment(null))}
@@ -804,14 +794,9 @@ export function MyDayCard({
       {/* Client History Modal */}
       {historyPhone && (
         <ModalPortal>
-          <div className="modal-overlay sm:!p-4">
+          <div className="modal-overlay sm:!p-4" onClick={() => setHistoryPhone(null)}>
             <div
-              className="fixed inset-0 min-h-[100dvh] bg-black/70 backdrop-blur-sm"
-              onClick={() => setHistoryPhone(null)}
-              aria-hidden
-            />
-            <div
-              className="relative w-[95%] sm:w-full max-w-xl bg-[#2A2A2A] rounded-xl flex flex-col border border-white/10 shadow-2xl modal-content overflow-y-auto animate-in fade-in zoom-in-95 duration-200 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+              className="relative w-[95%] sm:w-full max-w-xl modal-content modal-dialog flex flex-col animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
               onTouchStart={handleTouchStart}
               onTouchEnd={(e) => handleTouchEnd(e, () => setHistoryPhone(null))}
@@ -879,18 +864,9 @@ export function MyDayCard({
       {/* Date Picker Modal */}
       {showDatePicker && (
         <ModalPortal>
-          <div className="modal-overlay sm:!p-4">
-            <div
-              className="fixed inset-0 min-h-[100dvh] bg-black/70 backdrop-blur-sm"
-              onClick={() => setShowDatePicker(false)}
-              aria-hidden
-            />
+          <div className="modal-overlay sm:!p-4" onClick={() => setShowDatePicker(false)}>
             <div 
-              className="relative w-[95%] sm:w-full max-w-sm bg-[#2A2A2A] rounded-xl p-4 sm:p-6 border border-white/10 shadow-2xl modal-content animate-in fade-in zoom-in-95 duration-200 pb-[max(1rem,env(safe-area-inset-bottom))]"
-              style={{ 
-                position: 'relative',
-                zIndex: 10000
-              }}
+              className="relative w-[95%] sm:w-full max-w-sm modal-content modal-dialog animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
             >
             <div className="flex items-center justify-between mb-4">

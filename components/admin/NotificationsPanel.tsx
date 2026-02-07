@@ -240,8 +240,8 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
 
   return (
     <ModalPortal>
-      <div className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4">
-        <div className="w-[95%] sm:w-full sm:max-w-2xl modal-content overflow-y-auto flex flex-col rounded-t-xl sm:rounded-xl card-floating border border-white/10 shadow-2xl sm:my-auto pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+      <div className="modal-overlay sm:!p-4">
+        <div className="w-[95%] sm:w-full sm:max-w-2xl sm:my-auto modal-content modal-dialog flex flex-col overflow-y-auto">
         {/* Header - base style */}
         <div className="flex items-center justify-between p-4 border-b border-white/10 shrink-0">
           <h2 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.02em' }}>

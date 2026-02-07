@@ -420,27 +420,30 @@
   }
 
   /* ========== СТАНДАРТ МОДАЛЬНИХ ВІКОН ==========
-   * Один стандарт для всіх модалок: автоматично підлаштовуються під різні екрани,
-   * пристрої та масштаб (viewport, safe-area, clamp для відступів).
-   * z-index: 100 — базовий модал; вкладені модалки використовують z-[200].
+   * Єдиний стиль: overlay + modal-dialog + modal-content.
+   * Адаптивність: mobile-first, safe-area, clamp для відступів.
+   * z-index: 100 — базовий; вкладені модалки — z-[200].
    */
 
-  /* Оверлей: повний екран, safe-area, фон розширюється разом з контентом при скролі */
+  /* Оверлей: повний екран, фон, скрол, safe-area */
   .modal-overlay {
+    background-color: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
     position: fixed;
     inset: 0;
     z-index: 100;
-    min-height: max(100dvh, min-content); /* фон покриває всю висоту контенту при довгому тексті */
+    min-height: 100dvh;
+    min-height: 100vh;
     display: flex;
     align-items: flex-end;
     justify-content: center;
     overflow-y: auto;
+    overflow-x: hidden;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-    padding-top: env(safe-area-inset-top, 0);
-    padding-bottom: env(safe-area-inset-bottom, 0);
-    padding-left: max(env(safe-area-inset-left, 0), clamp(0.5rem, 2.5vmin, 1rem));
-    padding-right: max(env(safe-area-inset-right, 0), clamp(0.5rem, 2.5vmin, 1rem));
+    scroll-behavior: smooth;
+    padding: env(safe-area-inset-top, 0) max(clamp(0.5rem, 2.5vmin, 1rem), env(safe-area-inset-right, 0)) max(clamp(0.5rem, 2.5vmin, 1rem), env(safe-area-inset-bottom, 0)) max(clamp(0.5rem, 2.5vmin, 1rem), env(safe-area-inset-left, 0));
     box-sizing: border-box;
   }
   @media (min-width: 640px) {
@@ -450,21 +453,71 @@
     }
   }
 
-  /* Контент модалки: ширина/висота під viewport і safe-area, розширюється з текстом.
-   * На sm+ max-width задають класи компонента (sm:max-w-md, sm:max-w-2xl тощо). */
+  /* Контейнер контенту: ширина, max-height, скрол */
   .modal-content {
     width: 100%;
     max-width: min(100%, calc(100vw - 2 * clamp(0.5rem, 2.5vmin, 1rem) - env(safe-area-inset-left, 0) - env(safe-area-inset-right, 0)));
-    max-height: min(90dvh, calc(100dvh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0) - 2 * clamp(0.25rem, 1.5vmin, 0.5rem)));
-    min-height: min-content; /* висота підлаштовується під контент */
-    overflow-y: auto; /* скрол при довгому тексті замість обрізання */
+    max-height: min(90dvh, calc(100dvh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0) - 2 * clamp(0.5rem, 2.5vmin, 1rem)));
+    min-height: 0; /* для flex scroll */
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+    scroll-behavior: smooth;
     box-sizing: border-box;
     flex-shrink: 0;
+    align-self: flex-end;
   }
   @media (min-width: 640px) {
     .modal-content {
-      max-height: min(80vh, calc(100vh - 2 * max(1rem, env(safe-area-inset-top, 0)) - 2 * max(1rem, env(safe-area-inset-bottom, 0))));
+      max-height: min(85vh, calc(100vh - 2 * max(1rem, env(safe-area-inset-top, 0)) - 2 * max(1rem, env(safe-area-inset-bottom, 0))));
+      align-self: center;
     }
+  }
+
+  /* Єдиний дизайн діалогу: фон, рамка, скруглення, тінь, padding */
+  .modal-dialog {
+    background-color: #1a1a1a;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 1rem 1rem 0 0;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    padding: 1rem;
+    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+  }
+  @media (min-width: 640px) {
+    .modal-dialog {
+      border-radius: 1.25rem;
+      padding: 1.5rem;
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+  }
+
+  /* Варіант для світлої теми (ProfileSetup, DatePicker, MasterSchedule) */
+  .modal-dialog-light {
+    background-color: white;
+    border-color: rgba(0, 0, 0, 0.1);
+    color: #111;
+  }
+  @media (prefers-color-scheme: dark) {
+    .modal-dialog-light {
+      background-color: #1f2937;
+      border-color: rgba(255, 255, 255, 0.1);
+      color: #f9fafb;
+    }
+  }
+
+  /* Скролбар для модалок */
+  .modal-content::-webkit-scrollbar {
+    width: 6px;
+  }
+  .modal-content::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .modal-content::-webkit-scrollbar-thumb {
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 3px;
+  }
+  .modal-content::-webkit-scrollbar-thumb:hover {
+    background: rgba(255, 255, 255, 0.3);
   }
 
   /* Mobile: touch targets min 44px, safe area */

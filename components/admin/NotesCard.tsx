@@ -398,15 +398,9 @@ export function NotesCard({ businessId }: NotesCardProps) {
       {/* Edit Modal */}
       {showEditModal && (
         <ModalPortal>
-          <div className="modal-overlay sm:!p-4">
+          <div className="modal-overlay sm:!p-4" onClick={() => setShowEditModal(false)}>
             <div
-              className="fixed inset-0 min-h-[100dvh] bg-black/70 backdrop-blur-sm"
-              onClick={() => setShowEditModal(false)}
-              aria-hidden
-            />
-            <div
-              className="relative w-[95%] sm:w-full max-w-md bg-[#2A2A2A] rounded-xl p-4 sm:p-6 border border-white/10 shadow-2xl modal-content animate-in fade-in zoom-in-95 duration-200 pb-[max(1rem,env(safe-area-inset-bottom))]"
-              style={{ position: 'relative', zIndex: 10000 }}
+              className="relative w-[95%] sm:w-full max-w-md modal-content modal-dialog animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
             >
             <div className="flex items-center justify-between mb-4">
@@ -483,15 +477,9 @@ export function NotesCard({ businessId }: NotesCardProps) {
       {/* Date Picker Modal */}
       {showDatePicker && (
         <ModalPortal>
-          <div className="modal-overlay sm:!p-4">
+          <div className="modal-overlay sm:!p-4" onClick={() => setShowDatePicker(false)}>
             <div
-              className="fixed inset-0 min-h-[100dvh] bg-black/70 backdrop-blur-sm"
-              onClick={() => setShowDatePicker(false)}
-              aria-hidden
-            />
-            <div
-              className="relative w-[95%] sm:w-full max-w-sm bg-[#2A2A2A] rounded-xl p-4 sm:p-6 border border-white/10 shadow-2xl modal-content animate-in fade-in zoom-in-95 duration-200 pb-[max(1rem,env(safe-area-inset-bottom))]"
-              style={{ position: 'relative', zIndex: 10000 }}
+              className="relative w-[95%] sm:w-full max-w-sm modal-content modal-dialog animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
             >
             <div className="flex items-center justify-between mb-4">
