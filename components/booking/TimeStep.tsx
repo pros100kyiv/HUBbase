@@ -71,13 +71,14 @@ export function TimeStep({ businessId }: TimeStepProps) {
 
   const totalDurationFromServices = state.selectedServices.reduce((sum, s) => sum + s.duration, 0)
   const totalDuration = totalDurationFromServices > 0 ? totalDurationFromServices : 30
+  const effectiveBusinessId = businessId ?? state.businessId ?? null
 
   useEffect(() => {
-    if (state.selectedDate && state.selectedMaster && businessId) {
+    if (state.selectedDate && state.selectedMaster && effectiveBusinessId) {
       setSlotsLoading(true)
       setSlotsLoadError(false)
       const dateStr = format(state.selectedDate, 'yyyy-MM-dd')
-      const url = `/api/availability?masterId=${state.selectedMaster.id}&businessId=${businessId}&date=${dateStr}&durationMinutes=${totalDuration}`
+      const url = `/api/availability?masterId=${state.selectedMaster.id}&businessId=${effectiveBusinessId}&date=${dateStr}&durationMinutes=${totalDuration}`
       fetch(url)
         .then(res => res.json().catch(() => ({ availableSlots: [], scheduleNotConfigured: true })))
         .then(data => {
@@ -118,7 +119,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
       setSlotsLoadError(false)
       setSlotsLoading(false)
     }
-  }, [state.selectedDate, state.selectedMaster, businessId, totalDuration])
+  }, [state.selectedDate, state.selectedMaster, effectiveBusinessId, totalDuration])
 
   return (
     <div className="min-h-screen py-4 sm:py-6 px-3 md:px-6 pb-[env(safe-area-inset-bottom)]">
@@ -179,7 +180,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
 
         {state.selectedDate && (
           <div className="mb-3 sm:mb-4">
-            {!slotsLoading && (slotsLoadError || scheduleNotConfigured || (availableSlots.length === 0 && state.selectedMaster && businessId)) && (
+            {!slotsLoading && (slotsLoadError || scheduleNotConfigured || (availableSlots.length === 0 && state.selectedMaster && effectiveBusinessId)) && (
               <div className="rounded-xl p-4 mb-4 card-glass border border-white/20 bg-white/5">
                 <p className="text-sm font-medium text-gray-300">Місць немає на цей день.</p>
                 <p className="text-xs text-gray-400 mt-1">

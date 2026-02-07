@@ -1,3 +1,10 @@
+/**
+ * Availability API: вільні слоти для запису до майстра.
+ * Логіка: клієнт обирає майстра → дату → запит сюди. Ми беремо графік майстра на цей день,
+ * генеруємо слоти по 30 хв, виключаємо зайняті (існуючі записи + blockedPeriods), повертаємо список.
+ * Заброньований слот не потрапляє в availableSlots; після створення запису (POST /api/appointments)
+ * він з’явиться в кабінеті (календар, Мій день, сповіщення).
+ */
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { format, addMinutes } from 'date-fns'
@@ -134,7 +141,8 @@ export async function GET(request: Request) {
       let t = new Date(apt.startTime)
       const end = new Date(apt.endTime)
       while (t < end) {
-        occupied.add(format(t, "yyyy-MM-dd'T'HH:mm"))
+        const key = format(t, "yyyy-MM-dd'T'HH:mm")
+        if (key.startsWith(dateNorm)) occupied.add(key)
         t = addMinutes(t, 30)
       }
     }
@@ -151,7 +159,8 @@ export async function GET(request: Request) {
       let t = new Date(b.start)
       const end = new Date(b.end)
       while (t < end) {
-        occupied.add(format(t, "yyyy-MM-dd'T'HH:mm"))
+        const key = format(t, "yyyy-MM-dd'T'HH:mm")
+        if (key.startsWith(dateNorm)) occupied.add(key)
         t = addMinutes(t, 30)
       }
     }
