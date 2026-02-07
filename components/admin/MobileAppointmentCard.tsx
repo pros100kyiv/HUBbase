@@ -3,7 +3,7 @@
 import { format, isValid } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
-import { ClockIcon, CheckIcon, XIcon, UserIcon, SettingsIcon } from '@/components/icons'
+import { ClockIcon, CheckIcon, XIcon, UserIcon, PhoneIcon, EditIcon } from '@/components/icons'
 
 interface Appointment {
   id: string
@@ -19,22 +19,33 @@ interface Appointment {
 
 interface MobileAppointmentCardProps {
   appointment: Appointment
+  services?: Array<{ id: string; name: string }>
   onStatusChange?: (id: string, status: string) => void
   onEdit?: (appointment: Appointment) => void
 }
 
 export function MobileAppointmentCard({
   appointment,
+  services = [],
   onStatusChange,
   onEdit,
 }: MobileAppointmentCardProps) {
   const startTimeDate = new Date(appointment.startTime)
   const endTimeDate = new Date(appointment.endTime)
-  
   const startTime = isValid(startTimeDate) ? startTimeDate : new Date()
   const endTime = isValid(endTimeDate) ? endTimeDate : new Date()
+  const isDone = appointment.status === 'Done' || appointment.status === 'Виконано'
 
-  /** Статус у стилі Dashboard: напівпрозорі фони та акцентний текст */
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'Pending': return 'Очікує'
+      case 'Confirmed': return 'Підтверджено'
+      case 'Done': return 'Виконано'
+      case 'Cancelled': return 'Скасовано'
+      default: return status
+    }
+  }
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Pending':
@@ -54,163 +65,128 @@ export function MobileAppointmentCard({
     }
   }
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'Pending':
-        return 'Очікує'
-      case 'Confirmed':
-        return 'Підтверджено'
-      case 'Done':
-        return 'Виконано'
-      case 'Cancelled':
-        return 'Скасовано'
-      default:
-        return status
-    }
-  }
-
-  let servicesList: string[] = []
+  let serviceIds: string[] = []
   try {
     if (appointment.services) {
-      servicesList = JSON.parse(appointment.services)
+      const parsed = JSON.parse(appointment.services)
+      serviceIds = Array.isArray(parsed) ? parsed : [parsed]
     }
-  } catch (e) {
-    // Ignore
+  } catch {
+    // ignore
   }
-
-  const getStatusBorderColor = (status: string) => {
-    switch (status) {
-      case 'Pending':
-      case 'Очікує':
-        return 'border-l-4 border-orange-500/60'
-      case 'Confirmed':
-      case 'Підтверджено':
-        return 'border-l-4 border-green-500/60'
-      case 'Done':
-      case 'Виконано':
-        return 'border-l-4 border-blue-500/60'
-      case 'Cancelled':
-      case 'Скасовано':
-        return 'border-l-4 border-red-500/60'
-      default:
-        return 'border-l-4 border-gray-500/60'
-    }
-  }
+  const serviceNames = serviceIds.map((id) => services.find((s) => s.id === id)?.name || id)
+  const serviceDisplay = serviceNames.length > 0 ? serviceNames.join(', ') : 'Послуга не вказана'
 
   return (
-    <div className={cn("rounded-xl p-3 overflow-hidden transition-all bg-white/5 border border-white/10 hover:bg-white/10", getStatusBorderColor(appointment.status))}>
-      {/* Header with time and status */}
-      <div className="flex items-center justify-between gap-1.5">
-        <div className="flex items-center gap-1.5 flex-1 min-w-0">
-          <div className="w-12 h-12 rounded-lg bg-[#2A2A2A] border border-white/10 flex flex-col items-center justify-center text-blue-400 flex-shrink-0 overflow-hidden shadow-inner">
-            <span className="text-sm font-bold leading-tight">
-              {format(startTime, 'HH:mm')}
-            </span>
-            <span className="text-[10px] font-semibold leading-tight text-gray-400">
-              {format(startTime, 'dd.MM')}
-            </span>
-          </div>
-          <div className="flex-1 min-w-0 overflow-hidden">
-            <p className="font-black text-white text-sm mb-0.5 truncate">{appointment.clientName}</p>
-            <p className="text-xs text-gray-300 font-medium mb-0.5 truncate">{appointment.clientPhone}</p>
-            {appointment.masterName && (
-              <div className="flex items-center gap-1 min-w-0">
-                <UserIcon className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                <p className="text-[10px] text-gray-400 font-semibold truncate min-w-0">
-                  {appointment.masterName}
-                </p>
-              </div>
+    <div className="w-full text-left bg-white/5 border border-white/10 rounded-xl p-3 md:p-4 hover:bg-white/10 transition-all active:scale-[0.99] group">
+      <div className="flex items-center gap-3 md:gap-4">
+        {/* Time box — як у MyDayCard */}
+        <div className="flex flex-col items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-[#2A2A2A] rounded-lg border border-white/10 flex-shrink-0 shadow-inner">
+          <span className="text-sm md:text-base font-bold text-blue-400 leading-none">
+            {format(startTime, 'HH:mm')}
+          </span>
+          <div className="w-1 h-1 rounded-full bg-gray-600 mt-1" />
+        </div>
+
+        {/* Info — клієнт, телефон, послуги, майстер */}
+        <div className="flex-1 min-w-0 py-0.5">
+          <div className="flex items-center gap-2 mb-0.5">
+            <h5 className="text-sm md:text-base font-bold text-white truncate leading-tight">
+              {appointment.clientName}
+            </h5>
+            {appointment.clientPhone && (
+              <a
+                href={`tel:${appointment.clientPhone}`}
+                onClick={(e) => e.stopPropagation()}
+                className="text-gray-400 hover:text-white transition-colors p-1 flex-shrink-0"
+                title={appointment.clientPhone}
+              >
+                <PhoneIcon className="w-3 h-3 md:w-3.5 md:h-3.5" />
+              </a>
             )}
+          </div>
+          <div className="text-xs md:text-sm text-gray-300 font-medium truncate mb-0.5">
+            {serviceDisplay}
+          </div>
+          <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-gray-500">
+            <UserIcon className="w-3 h-3 flex-shrink-0" />
+            <span className="truncate">{appointment.masterName || 'Невідомий спеціаліст'}</span>
           </div>
         </div>
-        <div className="flex items-center gap-1 flex-shrink-0">
-          <span
-            className={cn(
-              "px-2 py-0.5 rounded text-[10px] font-medium border whitespace-nowrap",
-              getStatusColor(appointment.status)
-            )}
-          >
+
+        {/* Права частина: статус, кнопки, редагувати */}
+        <div className="flex flex-col items-end gap-2 pl-2 flex-shrink-0">
+          <div className={cn('px-2 py-0.5 rounded text-[10px] md:text-xs font-medium border', getStatusColor(appointment.status))}>
             {getStatusLabel(appointment.status)}
-          </span>
-          {onStatusChange && (
-            <div className="flex flex-col gap-1">
-              {appointment.status === 'Pending' && (
-                <>
+          </div>
+          <div className="flex items-center gap-1">
+            {onStatusChange && (
+              <>
+                {(appointment.status === 'Pending' || appointment.status === 'Очікує') && (
+                  <>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onStatusChange(appointment.id, 'Confirmed') }}
+                      className="px-2 py-1 rounded-lg text-[10px] md:text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/50 hover:bg-green-500/30 transition-all active:scale-95"
+                      title="Підтвердити"
+                    >
+                      <CheckIcon className="w-3 h-3 inline mr-0.5" />
+                      Підтвердити
+                    </button>
+                    <button
+                      onClick={(e) => { e.stopPropagation(); onStatusChange(appointment.id, 'Done') }}
+                      className="px-2 py-1 rounded-lg text-[10px] md:text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/50 hover:bg-blue-500/30 transition-all active:scale-95"
+                      title="Виконано"
+                    >
+                      <CheckIcon className="w-3 h-3 inline mr-0.5" />
+                      В роботі
+                    </button>
+                  </>
+                )}
+                {(appointment.status === 'Confirmed' || appointment.status === 'Підтверджено') && (
                   <button
-                    onClick={() => onStatusChange(appointment.id, 'Confirmed')}
-                    className="px-2 py-1 rounded-lg text-[10px] font-semibold whitespace-nowrap flex items-center justify-center gap-1 bg-green-500/20 text-green-400 border border-green-500/50 hover:bg-green-500/30 transition-all active:scale-95"
-                    title="Підтвердити"
+                    onClick={(e) => { e.stopPropagation(); onStatusChange(appointment.id, 'Done') }}
+                    className="px-2 py-1 rounded-lg text-[10px] md:text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/50 hover:bg-blue-500/30 transition-all active:scale-95"
+                    title="Виконано"
                   >
-                    <CheckIcon className="w-3 h-3" />
-                    Підтвердити
+                    <CheckIcon className="w-3 h-3 inline mr-0.5" />
+                    Виконано
                   </button>
+                )}
+                {!isDone && (
                   <button
-                    onClick={() => onStatusChange(appointment.id, 'Done')}
-                    className="px-2 py-1 rounded-lg text-[10px] font-semibold whitespace-nowrap flex items-center justify-center gap-1 bg-blue-500/20 text-blue-400 border border-blue-500/50 hover:bg-blue-500/30 transition-all active:scale-95"
-                    title="В роботі"
+                    onClick={(e) => { e.stopPropagation(); onStatusChange(appointment.id, 'Cancelled') }}
+                    className="px-2 py-1 rounded-lg text-[10px] md:text-xs font-semibold bg-red-500/20 text-red-400 border border-red-500/50 hover:bg-red-500/30 transition-all active:scale-95"
+                    title="Скасувати"
                   >
-                    <CheckIcon className="w-3 h-3" />
-                    В роботі
+                    <XIcon className="w-3 h-3 inline mr-0.5" />
+                    Скасувати
                   </button>
-                </>
-              )}
-              {appointment.status === 'Confirmed' && (
-                <button
-                  onClick={() => onStatusChange(appointment.id, 'Done')}
-                  className="px-2 py-1 rounded-lg text-[10px] font-semibold whitespace-nowrap flex items-center justify-center gap-1 bg-blue-500/20 text-blue-400 border border-blue-500/50 hover:bg-blue-500/30 transition-all active:scale-95"
-                  title="Виконано"
-                >
-                  <CheckIcon className="w-3 h-3" />
-                  Виконано
-                </button>
-              )}
-              {appointment.status !== 'Cancelled' && (
-                <button
-                  onClick={() => onStatusChange(appointment.id, 'Cancelled')}
-                  className="px-2 py-1 rounded-lg text-[10px] font-semibold whitespace-nowrap flex items-center justify-center gap-1 bg-red-500/20 text-red-400 border border-red-500/50 hover:bg-red-500/30 transition-all active:scale-95"
-                  title="Скасувати"
-                >
-                  <XIcon className="w-3 h-3" />
-                  Скасувати
-                </button>
-              )}
-            </div>
-          )}
+                )}
+              </>
+            )}
+            {onEdit && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onEdit(appointment) }}
+                className="p-1.5 md:p-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 hover:text-white transition-all border border-white/10"
+                title="Редагувати"
+              >
+                <EditIcon className="w-4 h-4 md:w-5 md:h-5" />
+              </button>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* Services and Time */}
-      {(servicesList.length > 0 || true) && (
-        <div className="flex items-center justify-between gap-1.5 mt-1.5 pt-1.5 border-t border-white/10">
-          {servicesList.length > 0 && (
-            <div className="flex items-center gap-1 flex-wrap">
-              <span className="text-[9px] text-gray-400 font-semibold uppercase">Послуги:</span>
-              {servicesList.slice(0, 2).map((serviceId, idx) => (
-                <span
-                  key={idx}
-                  className="px-1.5 py-0.5 rounded bg-white/5 border border-white/10 text-[9px] font-semibold text-gray-300"
-                >
-                  {idx + 1}
-                </span>
-              ))}
-              {servicesList.length > 2 && (
-                <span className="text-[9px] text-gray-500 font-semibold">+{servicesList.length - 2}</span>
-              )}
-            </div>
-          )}
-          <div className="flex items-center gap-1 flex-shrink-0">
-            <ClockIcon className="w-3 h-3 text-gray-400" />
-            <span className="text-[10px] font-semibold text-gray-300">
-              {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
-            </span>
-            <span className="text-[9px] text-gray-400">•</span>
-            <span className="text-[10px] text-gray-400 font-medium">
-              {Math.round((endTime.getTime() - startTime.getTime()) / 60000)} хв
-            </span>
-          </div>
-        </div>
-      )}
+      {/* Час внизу — один рядок */}
+      <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/10">
+        <ClockIcon className="w-3 h-3 text-gray-400 flex-shrink-0" />
+        <span className="text-[10px] md:text-xs text-gray-400 font-medium">
+          {format(startTime, 'HH:mm')} – {format(endTime, 'HH:mm')}
+          <span className="text-gray-500 ml-1">
+            ({Math.round((endTime.getTime() - startTime.getTime()) / 60000)} хв)
+          </span>
+        </span>
+      </div>
     </div>
   )
 }
-

@@ -5,6 +5,7 @@ import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, ea
 import { uk } from 'date-fns/locale'
 import { useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { UserIcon, ClockIcon } from '@/components/icons'
 
 interface WeeklyProcessCardProps {
   businessId?: string
@@ -245,43 +246,28 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
               {dayAppointments.map((apt) => {
                 const startTime = new Date(apt.startTime)
                 const endTime = new Date(apt.endTime)
-                const getStatusColor = (status: string) => {
-                  switch (status) {
-                    case 'Pending':
-                    case 'Очікує':
-                      return 'bg-orange-500/20 text-orange-400 border-orange-500/50'
-                    case 'Confirmed':
-                    case 'Підтверджено':
-                      return 'bg-green-500/20 text-green-400 border-green-500/50'
-                    case 'Done':
-                    case 'Виконано':
-                      return 'bg-blue-500/20 text-blue-400 border-blue-500/50'
-                    case 'Cancelled':
-                    case 'Скасовано':
-                      return 'bg-red-500/20 text-red-400 border-red-500/50'
-                    default:
-                      return 'bg-gray-500/20 text-gray-400 border-gray-500/50'
-                  }
-                }
-
+                const durationMin = Math.round((endTime.getTime() - startTime.getTime()) / 60000)
                 return (
-                  <div
+                  <button
                     key={apt.id}
-                    className="bg-white/5 border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-all"
+                    type="button"
+                    onClick={() => router.push('/dashboard/appointments')}
+                    className="w-full text-left bg-white/5 border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-all active:scale-[0.99]"
                   >
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex-1 min-w-0">
-                        <div className="text-sm font-semibold text-white mb-0.5 truncate">
+                    <div className="flex items-center gap-2 md:gap-3">
+                      <div className="flex flex-col items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-[#2A2A2A] rounded-lg border border-white/10 flex-shrink-0 shadow-inner">
+                        <span className="text-xs md:text-sm font-bold text-blue-400 leading-none">
+                          {format(startTime, 'HH:mm')}
+                        </span>
+                        <div className="w-0.5 h-0.5 rounded-full bg-gray-600 mt-0.5" />
+                      </div>
+                      <div className="flex-1 min-w-0 py-0.5">
+                        <div className="text-sm font-bold text-white truncate leading-tight">
                           {apt.clientName}
                         </div>
-                        <div className="text-xs text-gray-400 mb-1 truncate">
-                          {apt.master?.name || 'Невідомий майстер'}
-                        </div>
-                        <div className="flex items-center gap-2 text-xs text-gray-300">
-                          <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
+                        <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-gray-500 truncate">
+                          <UserIcon className="w-3 h-3 flex-shrink-0" />
+                          <span>{apt.master?.name || 'Невідомий майстер'}</span>
                         </div>
                       </div>
                       <div className={cn(
@@ -291,21 +277,14 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
                         {getStatusLabel(apt.status)}
                       </div>
                     </div>
-                    {apt.services && (
-                      <div className="text-xs text-gray-400 mt-2">
-                        {(() => {
-                          try {
-                            const services = JSON.parse(apt.services)
-                            return Array.isArray(services) 
-                              ? services.map((s: any) => s.name || s).join(', ')
-                              : apt.services
-                          } catch {
-                            return apt.services
-                          }
-                        })()}
-                      </div>
-                    )}
-                  </div>
+                    <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/10">
+                      <ClockIcon className="w-3 h-3 text-gray-400 flex-shrink-0" />
+                      <span className="text-[10px] text-gray-400 font-medium">
+                        {format(startTime, 'HH:mm')} – {format(endTime, 'HH:mm')}
+                        <span className="text-gray-500 ml-1">({durationMin} хв)</span>
+                      </span>
+                    </div>
+                  </button>
                 )
               })}
             </div>

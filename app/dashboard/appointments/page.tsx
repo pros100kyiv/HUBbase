@@ -415,27 +415,6 @@ export default function AppointmentsPage() {
     return 'bg-white/25 text-white'
   }
 
-  const getAppointmentsByHour = (date: Date) => {
-    if (!isValid(date)) return {}
-    const dayAppointments = filteredAppointments.filter((apt) => {
-      const start = new Date(apt.startTime)
-      if (!isValid(start)) return false
-      return isSameDay(start, date)
-    })
-    
-    const byHour: Record<number, Appointment[]> = {}
-    dayAppointments.forEach((apt) => {
-      const start = new Date(apt.startTime)
-      const hour = start.getHours()
-      if (!byHour[hour]) {
-        byHour[hour] = []
-      }
-      byHour[hour].push(apt)
-    })
-    
-    return byHour
-  }
-
   if (!business) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -642,92 +621,78 @@ export default function AppointmentsPage() {
             )}
           </div>
 
-          {/* Selected Date Details — дата + компактні фільтри (той самий стиль, що й картка календаря) */}
-          {selectedDate && (
-            <div className="rounded-xl p-4 md:p-6 card-glass text-white">
-              <div className="flex flex-col gap-3 mb-4">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <h3 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
-                    {safeFormat(selectedDate, 'd MMMM yyyy', { locale: uk }) || 'Некоректна дата'}
-                  </h3>
-                  <button
-                    onClick={() => setSelectedDate(null)}
-                    className="px-3 py-1.5 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-xs font-medium transition-colors"
-                  >
-                    Закрити
-                  </button>
-                </div>
-                {/* Фільтри статусів — компактні пігулки */}
-                <div className="flex flex-wrap gap-1.5">
-                  {['all', 'Pending', 'Confirmed', 'Done', 'Cancelled'].map((status) => (
+          {/* Розгорнутий блок обраної дати — стиль проєкту (dashboard-card) */}
+          {selectedDate && (() => {
+            const dayAppointments = getAppointmentsForDay(selectedDate)
+            const sorted = [...dayAppointments].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+            return (
+              <div className="dashboard-card">
+                <div className="flex flex-col gap-3 mb-4">
+                  <div className="flex flex-wrap items-center justify-between gap-2">
+                    <h3 className="dashboard-card-title-lg">
+                      {safeFormat(selectedDate, 'd MMMM yyyy', { locale: uk }) || 'Некоректна дата'}
+                    </h3>
                     <button
-                      key={status}
-                      onClick={() => setFilterStatus(status)}
-                      className={cn(
-                        'px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors whitespace-nowrap active:scale-[0.98]',
-                        filterStatus === status
-                          ? 'bg-white text-black'
-                          : 'bg-white/10 text-gray-400 hover:bg-white/15 hover:text-white border border-white/10'
-                      )}
-                      style={filterStatus === status ? { boxShadow: '0 1px 2px rgba(0,0,0,0.2)' } : {}}
+                      onClick={() => setSelectedDate(null)}
+                      className="dashboard-btn-secondary px-3 py-1.5 text-xs"
                     >
-                      {status === 'all' ? 'Всі' : status === 'Pending' ? 'Очікує' : status === 'Confirmed' ? 'Підтверджено' : status === 'Done' ? 'Виконано' : 'Скасовано'}
+                      Закрити
                     </button>
-                  ))}
-                </div>
-              </div>
-
-              {(() => {
-                const byHour = getAppointmentsByHour(selectedDate)
-                const hours = Object.keys(byHour).map(Number).sort((a, b) => a - b)
-
-                if (hours.length === 0) {
-                  return (
-                    <div className="text-center py-8">
-                      <div className="mb-3 flex justify-center">
-                        <CalendarIcon className="w-12 h-12 text-gray-400" />
-                      </div>
-                      <p className="text-gray-300 text-sm font-medium mb-1">
-                        Немає записів на цей день
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        Створіть новий запис, щоб почати
-                      </p>
-                    </div>
-                  )
-                }
-
-                return (
-                  <div className="space-y-3">
-                    {hours.map((hour) => (
-                      <div key={hour} className="border-l-2 border-white/30 pl-3">
-                        <div className="text-sm font-semibold text-gray-300 mb-2">
-                          {String(hour).padStart(2, '0')}:00
-                        </div>
-                        <div className="space-y-2">
-                          {byHour[hour]
-                            .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-                            .map((appointment) => (
-                              <MobileAppointmentCard
-                                key={appointment.id}
-                                appointment={appointment}
-                                onStatusChange={handleStatusChange}
-                                onEdit={handleEditAppointment}
-                              />
-                            ))}
-                        </div>
-                      </div>
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {['all', 'Pending', 'Confirmed', 'Done', 'Cancelled'].map((status) => (
+                      <button
+                        key={status}
+                        onClick={() => setFilterStatus(status)}
+                        className={cn(
+                          'px-2.5 py-1 rounded-md text-[11px] font-medium transition-colors whitespace-nowrap active:scale-[0.98]',
+                          filterStatus === status
+                            ? 'bg-white text-black'
+                            : 'bg-white/10 text-gray-400 hover:bg-white/15 hover:text-white border border-white/10'
+                        )}
+                        style={filterStatus === status ? { boxShadow: '0 1px 2px rgba(0,0,0,0.2)' } : {}}
+                      >
+                        {status === 'all' ? 'Всі' : status === 'Pending' ? 'Очікує' : status === 'Confirmed' ? 'Підтверджено' : status === 'Done' ? 'Виконано' : 'Скасовано'}
+                      </button>
                     ))}
                   </div>
-                )
-              })()}
-            </div>
-          )}
+                </div>
+
+                {sorted.length === 0 ? (
+                  <div className="text-center py-10">
+                    <div className="mb-4 flex justify-center">
+                      <CalendarIcon className="w-14 h-14 text-gray-400" />
+                    </div>
+                    <p className="text-gray-300 text-sm font-medium mb-1">Немає записів на цей день</p>
+                    <p className="text-xs text-gray-400 mb-4">Створіть новий запис, щоб почати</p>
+                    <button
+                      onClick={() => setShowCreateForm(true)}
+                      className="dashboard-btn-primary"
+                    >
+                      Створити запис
+                    </button>
+                  </div>
+                ) : (
+                  <div className="space-y-2 md:space-y-3">
+                    {sorted.map((appointment) => (
+                      <MobileAppointmentCard
+                        key={appointment.id}
+                        appointment={appointment}
+                        services={services}
+                        onStatusChange={handleStatusChange}
+                        onEdit={handleEditAppointment}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
+            )
+          })()}
 
           {/* List View */}
           {viewMode === 'list' && !showCreateForm && (
-            <div className="rounded-xl p-4 md:p-6 card-glass">
-              <h3 className="text-lg font-bold text-white mb-4" style={{ letterSpacing: '-0.02em' }}>
+            <div className="dashboard-card">
+              <h3 className="dashboard-card-title-lg mb-4">
                 Всі записи ({filteredAppointments.length})
               </h3>
               {filteredAppointments.length === 0 ? (
@@ -746,20 +711,20 @@ export default function AppointmentsPage() {
                       setShowCreateForm(true)
                       setSelectedDate(new Date())
                     }}
-                    className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98]"
-                    style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+                    className="dashboard-btn-primary"
                   >
                     Створити запис
                   </button>
                 </div>
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-2 md:space-y-3">
                   {filteredAppointments
                     .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
                     .map((appointment) => (
                       <MobileAppointmentCard
                         key={appointment.id}
                         appointment={appointment}
+                        services={services}
                         onStatusChange={handleStatusChange}
                         onEdit={handleEditAppointment}
                       />
@@ -787,8 +752,7 @@ export default function AppointmentsPage() {
                   setShowCreateForm(true)
                   setSelectedDate(new Date())
                 }}
-                className="px-4 py-2 md:px-6 md:py-3 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98]"
-                style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+                className="dashboard-btn-primary md:px-6 md:py-3"
               >
                 Створити запис
               </button>
