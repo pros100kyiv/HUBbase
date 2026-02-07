@@ -99,8 +99,15 @@ export function TimeStep({ businessId }: TimeStepProps) {
     fetch(`/api/availability?${params.toString()}`)
       .then((res) => (res.ok ? res.json() : Promise.resolve(null)))
       .then((data: { recommendedSlots?: RecommendedSlot[] } | null) => {
-        const list = data?.recommendedSlots
-        setRecommendedSlots(Array.isArray(list) ? list : [])
+        const list = data?.recommendedSlots ?? []
+        const now = new Date()
+        const futureOnly = Array.isArray(list)
+          ? list.filter((rec) => {
+              const d = new Date(rec.slot)
+              return !isNaN(d.getTime()) && d > now
+            })
+          : []
+        setRecommendedSlots(futureOnly)
       })
       .catch(() => setRecommendedSlots([]))
   }, [masterId, bid, totalDuration])
