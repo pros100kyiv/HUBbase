@@ -126,8 +126,9 @@ export default function MastersPage() {
                 }
               })
               
+              // customPrice в БД зберігається в копійках
               if (apt.customPrice) {
-                totalRevenue += apt.customPrice
+                totalRevenue += Number(apt.customPrice) / 100
               }
             } catch (e) {
               // Ignore
@@ -203,8 +204,9 @@ export default function MastersPage() {
             }
           })
           
+          // customPrice в БД зберігається в копійках
           if (apt.customPrice) {
-            earned += apt.customPrice
+            earned += Number(apt.customPrice) / 100
           }
         } catch (e) {
           // Ignore
@@ -311,8 +313,9 @@ export default function MastersPage() {
                   }
                 })
                 
+                // customPrice в БД зберігається в копійках
                 if (apt.customPrice) {
-                  totalRevenue += apt.customPrice
+                  totalRevenue += Number(apt.customPrice) / 100
                 }
               } catch (e) {
                 // Ignore

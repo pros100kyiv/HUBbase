@@ -128,9 +128,9 @@ export default function ClientsPage() {
                   }
                 })
                 
-                // Додаємо customPrice якщо є
+                // Додаємо customPrice (в БД зберігається в копійках)
                 if (apt.customPrice) {
-                  totalSpent += apt.customPrice
+                  totalSpent += Number(apt.customPrice) / 100
                 }
               } catch (e) {
                 // Ignore
@@ -189,8 +189,9 @@ export default function ClientsPage() {
           }
         })
         
+        // customPrice в БД зберігається в копійках
         if (apt.customPrice) {
-          totalSpent += apt.customPrice
+          totalSpent += Number(apt.customPrice) / 100
         }
       } catch (e) {
         // Ignore
@@ -256,8 +257,9 @@ export default function ClientsPage() {
       return sum + (service?.price || 0)
     }, 0)
     
+    // customPrice в БД зберігається в копійках
     if (appointment.customPrice) {
-      total += appointment.customPrice
+      total += Number(appointment.customPrice) / 100
     }
     
     return total
@@ -425,8 +427,9 @@ export default function ClientsPage() {
                     }
                   })
                   
+                  // customPrice в БД зберігається в копійках
                   if (apt.customPrice) {
-                    totalSpent += apt.customPrice
+                    totalSpent += Number(apt.customPrice) / 100
                   }
                 } catch (e) {
                   // Ignore
