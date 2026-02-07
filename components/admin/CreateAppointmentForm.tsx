@@ -95,8 +95,14 @@ export function CreateAppointmentForm({
       })
 
       if (!response.ok) {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to create appointment')
+        let errorData: { error?: string; details?: string } = {}
+        try {
+          errorData = await response.json()
+        } catch {
+          errorData = { error: 'Помилка сервера. Спробуйте пізніше.' }
+        }
+        const msg = errorData.error || 'Не вдалося створити запис'
+        throw new Error(msg)
       }
 
       toast({ title: 'Запис створено', type: 'success' })

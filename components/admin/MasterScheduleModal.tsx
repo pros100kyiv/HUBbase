@@ -336,36 +336,33 @@ export function MasterScheduleModal({
             )}
 
             {activeTab === 'month' && (
-              <div>
-                <h3 className="text-sm font-semibold text-white mb-2">Виключення за датами (місяць)</h3>
-                <p className="text-xs text-gray-400 mb-3">
-                  Оберіть день і вкажіть години або вихідний. Якщо не вказано — використовується графік тижня.
-                </p>
-                <div className="flex items-center justify-between gap-2 mb-3">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between gap-2">
                   <button
                     type="button"
                     onClick={() => setMonthDate(subMonths(monthDate, 1))}
-                    className="p-2 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20"
+                    className="p-1.5 rounded border border-white/20 bg-white/10 text-white hover:bg-white/20 text-xs"
                   >
                     ←
                   </button>
-                  <span className="text-sm font-medium text-white">
-                    {format(monthDate, 'MMMM yyyy', { locale: uk })}
+                  <span className="text-xs font-semibold text-white capitalize">
+                    {format(monthDate, 'LLLL yyyy', { locale: uk })}
                   </span>
                   <button
                     type="button"
                     onClick={() => setMonthDate(addMonths(monthDate, 1))}
-                    className="p-2 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20"
+                    className="p-1.5 rounded border border-white/20 bg-white/10 text-white hover:bg-white/20 text-xs"
                   >
                     →
                   </button>
                 </div>
-                <div className="grid grid-cols-7 gap-1 mb-2">
+                <p className="text-[10px] text-gray-400">Клік по дню — змінити години або вихідний. Без виключення = графік тижня.</p>
+                <div className="grid grid-cols-7 gap-0.5 mb-1">
                   {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((d) => (
-                    <div key={d} className="text-center text-[10px] font-semibold text-gray-400">{d}</div>
+                    <div key={d} className="text-center text-[9px] font-medium text-gray-500 py-0.5">{d}</div>
                   ))}
                 </div>
-                <div className="grid grid-cols-7 gap-1 mb-4">
+                <div className="grid grid-cols-7 gap-0.5 mb-3">
                   {calendarDays.map((day) => {
                     const inMonth = isSameMonth(day, monthDate)
                     const dateKey = format(day, 'yyyy-MM-dd')
@@ -374,6 +371,7 @@ export function MasterScheduleModal({
                     const weekHours = workingHours[dayKey]
                     const isWorking = override ? override.enabled : weekHours?.enabled ?? false
                     const isEditing = editingDate === dateKey
+                    const label = override ? (override.enabled ? `${override.start.slice(0, 5)}–${override.end.slice(0, 5)}` : 'в') : (isWorking ? '✓' : '—')
                     return (
                       <div key={dateKey} className="relative">
                         <button
@@ -390,59 +388,60 @@ export function MasterScheduleModal({
                             )
                           }}
                           disabled={!inMonth}
+                          title={inMonth ? `${format(day, 'd MMM', { locale: uk })}: ${override ? (override.enabled ? `${override.start}–${override.end}` : 'вихідний') : (isWorking ? 'за тижнем' : 'вихідний')}` : ''}
                           className={cn(
-                            'w-full aspect-square rounded-lg text-[10px] font-medium transition-colors flex flex-col items-center justify-center',
-                            !inMonth && 'opacity-30 cursor-default',
-                            inMonth && isWorking && !override && 'bg-white/10 border border-white/20 text-white',
-                            inMonth && isWorking && override && 'bg-green-500/20 border border-green-500/40 text-green-200',
-                            inMonth && !isWorking && 'bg-red-500/10 border border-red-500/20 text-red-300',
-                            inMonth && 'cursor-pointer hover:ring-2 hover:ring-white/40'
+                            'w-full min-h-[28px] py-0.5 rounded text-[9px] font-medium transition-colors flex flex-col items-center justify-center leading-tight',
+                            !inMonth && 'opacity-25 cursor-default',
+                            inMonth && isWorking && !override && 'bg-white/10 border border-white/15 text-white',
+                            inMonth && isWorking && override && 'bg-green-500/25 border border-green-500/30 text-green-200',
+                            inMonth && !isWorking && 'bg-red-500/15 border border-red-500/20 text-red-300',
+                            inMonth && 'cursor-pointer hover:ring-1 hover:ring-white/50'
                           )}
                         >
-                          {format(day, 'd')}
-                          {override && <span className="text-[8px] mt-0.5">•</span>}
+                          <span>{format(day, 'd')}</span>
+                          {inMonth && <span className="text-[8px] opacity-80 truncate max-w-full">{label}</span>}
                         </button>
                         {isEditing && inMonth && (
-                          <div className="absolute left-0 top-full z-10 mt-1 p-3 rounded-xl bg-[#2A2A2A] border border-white/20 shadow-xl min-w-[200px]">
-                            <div className="text-xs font-medium text-white mb-2">{format(day, 'd MMMM yyyy', { locale: uk })}</div>
-                            <label className="flex items-center gap-2 mb-2">
+                          <div className="absolute left-0 top-full z-20 mt-1 p-2.5 rounded-lg bg-[#2A2A2A] border border-white/20 shadow-xl min-w-[180px]">
+                            <div className="text-[10px] font-medium text-white mb-1.5">{format(day, 'd MMM yyyy', { locale: uk })}</div>
+                            <label className="flex items-center gap-1.5 mb-1.5">
                               <input
                                 type="checkbox"
                                 checked={editOverride.enabled}
                                 onChange={(e) => setEditOverride((o) => ({ ...o, enabled: e.target.checked }))}
-                                className="w-4 h-4 rounded"
+                                className="w-3.5 h-3.5 rounded"
                               />
-                              <span className="text-xs text-gray-300">Робочий день</span>
+                              <span className="text-[10px] text-gray-300">Робочий</span>
                             </label>
                             {editOverride.enabled && (
-                              <div className="flex items-center gap-1 mb-2">
+                              <div className="flex items-center gap-1 mb-1.5">
                                 <input
                                   type="time"
                                   value={editOverride.start}
                                   onChange={(e) => setEditOverride((o) => ({ ...o, start: e.target.value }))}
-                                  className="flex-1 px-2 py-1 text-xs rounded bg-white/10 text-white border border-white/20"
+                                  className="flex-1 px-1.5 py-1 text-[10px] rounded bg-white/10 text-white border border-white/20"
                                 />
-                                <span className="text-gray-500">–</span>
+                                <span className="text-gray-500 text-[10px]">–</span>
                                 <input
                                   type="time"
                                   value={editOverride.end}
                                   onChange={(e) => setEditOverride((o) => ({ ...o, end: e.target.value }))}
-                                  className="flex-1 px-2 py-1 text-xs rounded bg-white/10 text-white border border-white/20"
+                                  className="flex-1 px-1.5 py-1 text-[10px] rounded bg-white/10 text-white border border-white/20"
                                 />
                               </div>
                             )}
-                            <div className="flex gap-1">
+                            <div className="flex gap-1 mt-1">
                               <button
                                 type="button"
                                 onClick={() => setOverrideForDate(dateKey, editOverride)}
-                                className="flex-1 px-2 py-1.5 text-xs font-medium rounded-lg bg-white text-black"
+                                className="flex-1 px-2 py-1 text-[10px] font-medium rounded bg-white text-black"
                               >
                                 Зберегти
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setOverrideForDate(dateKey, null)}
-                                className="px-2 py-1.5 text-xs font-medium rounded-lg border border-white/20 text-gray-400 hover:bg-white/10"
+                                className="px-2 py-1 text-[10px] rounded border border-white/20 text-gray-400 hover:bg-white/10"
                               >
                                 Як у тижні
                               </button>
@@ -453,20 +452,44 @@ export function MasterScheduleModal({
                     )
                   })}
                 </div>
-                <div className="flex flex-wrap gap-2">
+                {(() => {
+                  const start = startOfMonth(monthDate)
+                  const end = endOfMonth(monthDate)
+                  const daysInMonth = eachDayOfInterval({ start, end })
+                  const overridesInMonth = daysInMonth
+                    .map((d) => ({ dateKey: format(d, 'yyyy-MM-dd'), override: getOverrideForDate(format(d, 'yyyy-MM-dd')) }))
+                    .filter((x) => x.override != null)
+                  if (overridesInMonth.length === 0) return null
+                  return (
+                    <div className="rounded-lg border border-white/10 bg-white/5 p-2">
+                      <div className="text-[9px] font-semibold text-gray-400 mb-1">Виключення цього місяця:</div>
+                      <div className="max-h-20 overflow-y-auto space-y-0.5">
+                        {overridesInMonth.map(({ dateKey, override }) => (
+                          <div key={dateKey} className="flex items-center justify-between text-[10px]">
+                            <span className="text-white">{format(parse(dateKey, 'yyyy-MM-dd', new Date()), 'd MMM', { locale: uk })}</span>
+                            <span className={override!.enabled ? 'text-green-300' : 'text-red-300'}>
+                              {override!.enabled ? `${override!.start}–${override!.end}` : 'вихідний'}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )
+                })()}
+                <div className="flex flex-wrap gap-1.5">
                   <button
                     type="button"
                     onClick={copyWeekToMonth}
-                    className="px-3 py-2 text-xs font-medium rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20"
+                    className="px-2.5 py-1.5 text-[10px] font-medium rounded border border-white/20 bg-white/10 text-white hover:bg-white/20"
                   >
                     Копіювати тиждень на місяць
                   </button>
                   <button
                     type="button"
                     onClick={clearMonthOverrides}
-                    className="px-3 py-2 text-xs font-medium rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20"
+                    className="px-2.5 py-1.5 text-[10px] font-medium rounded border border-white/20 bg-white/10 text-white hover:bg-white/20"
                   >
-                    Очистити виключення місяця
+                    Очистити виключення
                   </button>
                 </div>
               </div>

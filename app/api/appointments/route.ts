@@ -63,7 +63,21 @@ export async function POST(request: Request) {
     const { businessId, masterId, clientName, clientPhone, clientEmail, startTime, endTime, services, notes, customPrice, customServiceName, customService } = body
 
     if (!businessId || !masterId || !clientName || !clientPhone || !startTime || !endTime) {
-      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
+      return NextResponse.json(
+        { error: 'Не заповнені обов’язкові поля: бізнес, спеціаліст, ім’я, телефон, дата та час' },
+        { status: 400 }
+      )
+    }
+
+    const [business, master] = await Promise.all([
+      prisma.business.findUnique({ where: { id: businessId }, select: { id: true } }),
+      prisma.master.findUnique({ where: { id: masterId, businessId }, select: { id: true } }),
+    ])
+    if (!business) {
+      return NextResponse.json({ error: 'Бізнес не знайдено' }, { status: 400 })
+    }
+    if (!master) {
+      return NextResponse.json({ error: 'Спеціаліста не знайдено або він не належить цьому бізнесу' }, { status: 400 })
     }
 
     const start = new Date(startTime)
@@ -164,9 +178,15 @@ export async function POST(request: Request) {
     return NextResponse.json(appointment, { status: 201 })
   } catch (error) {
     console.error('Error creating appointment:', error)
-    return NextResponse.json({ 
-      error: 'Failed to create appointment',
-      details: error instanceof Error ? error.message : 'Unknown error'
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    const isConflict = message.includes('Unique constraint') || message.includes('conflict')
+    const isForeignKey = message.includes('Foreign key') || message.includes('Record to update not found')
+    let userMessage = 'Не вдалося створити запис. Спробуйте ще раз.'
+    if (isConflict) userMessage = 'Цей час вже зайнятий або конфлікт даних.'
+    else if (isForeignKey) userMessage = 'Спеціаліст або бізнес не знайдено. Оновіть сторінку та спробуйте знову.'
+    return NextResponse.json({
+      error: userMessage,
+      details: process.env.NODE_ENV === 'development' ? message : undefined,
     }, { status: 500 })
   }
 }
