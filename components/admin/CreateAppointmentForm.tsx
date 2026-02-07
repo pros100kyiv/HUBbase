@@ -263,13 +263,13 @@ export function CreateAppointmentForm({
                       )}
                     </div>
                     <div className="p-4 border-t border-gray-200 dark:border-white/10">
-                      <Button
+                      <button
                         type="button"
                         onClick={() => setShowServiceModal(false)}
-                        className="w-full btn-primary"
+                        className="w-full dashboard-btn-primary"
                       >
                         Готово
-                      </Button>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -328,20 +328,20 @@ export function CreateAppointmentForm({
 
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-2 pt-2">
-              <Button
+              <button
                 type="submit"
                 disabled={isSubmitting || !formData.masterId || !formData.clientName || !formData.clientPhone}
-                className="btn-primary flex-1 min-h-[48px] touch-target"
+                className="dashboard-btn-primary flex-1 min-h-[48px] touch-target"
               >
                 {isSubmitting ? 'Створення...' : 'Створити запис'}
-              </Button>
-              <Button
+              </button>
+              <button
                 type="button"
                 onClick={onCancel}
-                className="btn-secondary min-h-[48px] touch-target"
+                className="dashboard-btn-secondary min-h-[48px] touch-target"
               >
                 Скасувати
-              </Button>
+              </button>
             </div>
           </form>
   )
