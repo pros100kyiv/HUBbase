@@ -36,11 +36,12 @@ interface GlobalSearchProps {
   businessId: string
   isOpen: boolean
   onClose: () => void
-  /** Якщо передано — модалка позиціонується біля елемента (під кнопкою пошука) */
+  /** Елемент-якір: popover з’являється під ним (під кнопкою пошука) */
   anchorRef?: React.RefObject<HTMLElement | null>
 }
 
-const MODAL_WIDTH = 512 // max-w-2xl = 32rem
+const POPOVER_WIDTH = 420
+const POPOVER_MAX_HEIGHT = 420
 
 export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalSearchProps) {
   const router = useRouter()
@@ -153,37 +154,43 @@ export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalS
     onClose()
   }
 
-  const useAnchorPosition = Boolean(anchorRef && anchorPosition)
+  const hasPosition = Boolean(anchorRef && anchorPosition)
 
   return (
     <ModalPortal>
-      <div className="modal-overlay sm:!items-center sm:!p-4">
-        {/* Backdrop */}
-        <div
-          className="fixed inset-0 bg-black/70 backdrop-blur-sm min-h-[100dvh]"
-          onClick={onClose}
-          aria-hidden
-        />
-        {/* Search Modal — біля кнопки пошука (anchor) або по центру */}
-        <div
-          className="relative w-[95%] sm:w-full sm:max-w-2xl sm:my-auto modal-content modal-dialog"
-          style={
-            useAnchorPosition && anchorPosition
-              ? {
-                  position: 'fixed',
-                  top: anchorPosition.top,
-                  right: anchorPosition.right,
-                  left: 'auto',
-                  width: `min(95vw, ${MODAL_WIDTH}px)`,
-                  maxHeight: 'min(70vh, 480px)',
-                }
-              : undefined
-          }
-        >
-        {/* Search Input */}
-        <div className="p-4 border-b border-white/10">
-          <div className="flex items-center gap-3">
-            <svg className="w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      {/* Клік поза панеллю закриває (прозорий оверлей) */}
+      <div
+        className="fixed inset-0 z-[99] min-h-[100dvh]"
+        onClick={onClose}
+        aria-hidden
+      />
+      {/* Popover пошуку — під кнопкою або по центру, якщо немає anchor */}
+      <div
+        role="dialog"
+        aria-label="Пошук"
+        className="fixed z-[100] rounded-xl border border-white/10 bg-[#1a1a1a] shadow-xl overflow-hidden flex flex-col"
+        style={
+          hasPosition && anchorPosition
+            ? {
+                top: anchorPosition.top,
+                right: anchorPosition.right,
+                left: 'auto',
+                width: `min(95vw, ${POPOVER_WIDTH}px)`,
+                maxHeight: POPOVER_MAX_HEIGHT,
+              }
+            : {
+                top: '50%',
+                left: '50%',
+                transform: 'translate(-50%, -50%)',
+                width: `min(95vw, ${POPOVER_WIDTH}px)`,
+                maxHeight: POPOVER_MAX_HEIGHT,
+              }
+        }
+      >
+        {/* Поле пошуку */}
+        <div className="p-3 border-b border-white/10 flex-shrink-0">
+          <div className="flex items-center gap-2">
+            <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
             <input
@@ -191,14 +198,16 @@ export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalS
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Пошук по всьому сервісу..."
-              className="flex-1 bg-transparent text-white placeholder-gray-400 outline-none"
+              placeholder="Пошук..."
+              className="flex-1 min-w-0 bg-transparent text-white placeholder-gray-400 outline-none text-sm"
               style={{ letterSpacing: '-0.01em' }}
             />
             {query && (
               <button
+                type="button"
                 onClick={() => setQuery('')}
                 className="p-1 hover:bg-white/10 rounded transition-colors"
+                aria-label="Очистити"
               >
                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -208,18 +217,18 @@ export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalS
           </div>
         </div>
 
-        {/* Results */}
-        <div>
+        {/* Результати — скрол всередині popover */}
+        <div className="overflow-y-auto min-h-0 flex-1">
           {error ? (
-            <div className="p-8 text-center text-red-400">{error}</div>
+            <div className="p-4 text-center text-red-400 text-sm">{error}</div>
           ) : loading ? (
-            <div className="p-8 text-center text-gray-400">Завантаження...</div>
+            <div className="p-4 text-center text-gray-400 text-sm">Завантаження...</div>
           ) : !query || query.length < 2 ? (
-            <div className="p-8 text-center text-gray-400">
-              Введіть мінімум 2 символи для пошуку
+            <div className="p-4 text-center text-gray-400 text-sm">
+              Введіть мінімум 2 символи
             </div>
           ) : results && (
-            <div className="p-4 space-y-4">
+            <div className="p-3 space-y-3">
               {/* Appointments */}
               {results.appointments.length > 0 && (
                 <div>
@@ -300,18 +309,15 @@ export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalS
                 </div>
               )}
 
-              {results.appointments.length === 0 && 
-               results.clients.length === 0 && 
-               results.services.length === 0 && 
+              {results.appointments.length === 0 &&
+               results.clients.length === 0 &&
+               results.services.length === 0 &&
                results.masters.length === 0 && (
-                <div className="p-8 text-center text-gray-400">
-                  Нічого не знайдено
-                </div>
+                <div className="p-4 text-center text-gray-400 text-sm">Нічого не знайдено</div>
               )}
             </div>
           )}
         </div>
-      </div>
       </div>
     </ModalPortal>
   )

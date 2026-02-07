@@ -94,6 +94,19 @@ export function Navbar() {
     }
   }, [pathname])
 
+  // Швидкий виклик пошуку: Ctrl+K / Cmd+K (тільки на dashboard)
+  useEffect(() => {
+    if (!pathname?.startsWith('/dashboard')) return
+    const handleKey = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault()
+        setSearchOpen((open) => !open)
+      }
+    }
+    window.addEventListener('keydown', handleKey)
+    return () => window.removeEventListener('keydown', handleKey)
+  }, [pathname])
+
   // Don't show on dashboard pages (they have sidebar)
   if (pathname?.startsWith('/dashboard')) {
     return (
