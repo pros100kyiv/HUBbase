@@ -96,7 +96,7 @@ export default function PricePage() {
       return
     }
     if (!business?.id) {
-      toast({ title: 'Помилка', message: 'Бізнес не визначено', variant: 'error' })
+      toast({ title: 'Помилка', description: 'Бізнес не визначено', type: 'error' })
       return
     }
     setIsSubmitting(true)
@@ -117,7 +117,7 @@ export default function PricePage() {
         toast({ title: 'Помилка', description: data?.error || 'Не вдалося додати послугу', type: 'error' })
         return
       }
-      toast({ title: 'Готово', message: 'Послугу додано до прайсу', variant: 'success' })
+      toast({ title: 'Готово', description: 'Послугу додано до прайсу', type: 'success' })
       setShowCreateModal(false)
       setCreateForm({ name: '', price: '', duration: '', category: '' })
       loadServices()
