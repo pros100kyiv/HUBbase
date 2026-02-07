@@ -64,16 +64,15 @@ export function MonthProgressCard({ stats, loading }: MonthProgressCardProps) {
     }).format(Math.round(amount))
   }
 
-  // Розрахунок довжини кола для svg (r=26 -> l=2*pi*26 ≈ 163.36)
-  const radius = 26
+  const radius = 28
   const circumference = 2 * Math.PI * radius
   const dashArray = `${(successRate / 100) * circumference} ${circumference}`
 
   return (
     <>
-      <div className="rounded-xl p-4 md:p-6 card-glass hover:border-white/20 transition-colors cursor-pointer" onClick={() => setShowModal(true)}>
+      <div className="dashboard-card hover:border-white/20 transition-all duration-200 cursor-pointer group" onClick={() => setShowModal(true)}>
         <div className="flex items-center justify-between mb-3 md:mb-4">
-          <h3 className="text-base md:text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
+          <h3 className="dashboard-card-title">
             Прогрес місяця
           </h3>
           <button
@@ -81,76 +80,72 @@ export function MonthProgressCard({ stats, loading }: MonthProgressCardProps) {
               e.stopPropagation()
               router.push('/dashboard/analytics')
             }}
-            className="p-1.5 md:p-2 hover:bg-white/10 rounded-lg transition-colors hidden md:flex"
+            className="p-1.5 md:p-2 hover:bg-white/10 rounded-lg transition-colors hidden md:flex opacity-80 group-hover:opacity-100"
             title="Повна аналітика"
           >
             <ChartIcon className="w-4 h-4 md:w-5 md:h-5 text-gray-300" />
           </button>
         </div>
 
-        <p className="text-xs md:text-sm text-gray-300 mb-3 md:mb-4">
-          {successRate}% записів успішні
+        <p className="text-xs md:text-sm text-gray-400 mb-4">
+          <span className="font-semibold text-white">{successRate}%</span> записів успішні
         </p>
 
-        <div className="flex items-start gap-4 md:gap-6 mb-3 md:mb-4">
+        <div className="flex items-start gap-4 md:gap-5 mb-4">
           <div className="flex-1 min-w-0">
-            <p className="text-[10px] md:text-xs font-semibold text-gray-400 uppercase mb-1.5 md:mb-2" style={{ letterSpacing: '0.05em' }}>
-              ОГЛЯД
+            <p className="text-[10px] md:text-xs font-semibold text-gray-500 uppercase mb-2 tracking-wide">
+              Огляд
             </p>
-            <div className="space-y-1.5 md:space-y-2">
+            <div className="space-y-2">
               {overview.map((item, i) => (
                 <div key={i} className="flex items-center justify-between gap-2">
-                  <div className="flex items-center gap-1.5 md:gap-2">
-                    <div className={cn("w-1.5 h-1.5 md:w-2 md:h-2 rounded-full flex-shrink-0", item.color)}></div>
+                  <div className="flex items-center gap-2">
+                    <div className={cn('w-2 h-2 rounded-full flex-shrink-0 ring-2 ring-white/10', item.color)} />
                     <span className="text-xs md:text-sm text-gray-300 truncate">{item.label}</span>
                   </div>
-                  <span className={cn("text-xs md:text-sm font-semibold", item.textColor)}>{item.value}</span>
+                  <span className={cn('text-xs md:text-sm font-semibold tabular-nums', item.textColor)}>{item.value}</span>
                 </div>
               ))}
             </div>
           </div>
-          
-          {/* Кругова діаграма */}
-          <div className="relative w-16 h-16 md:w-24 md:h-24 flex-shrink-0">
-            <svg className="w-16 h-16 md:w-24 md:h-24 transform -rotate-90">
+
+          <div className="relative flex-shrink-0" style={{ width: '4.5rem', height: '4.5rem' }}>
+            <svg className="w-full h-full transform -rotate-90" viewBox="0 0 64 64">
+              <defs>
+                <linearGradient id="month-progress-ring" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#8B5CF6" stopOpacity="1" />
+                  <stop offset="100%" stopColor="#6366F1" stopOpacity="0.9" />
+                </linearGradient>
+              </defs>
+              <circle cx="32" cy="32" r={radius} fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="5" />
               <circle
-                cx="50%"
-                cy="50%"
+                cx="32"
+                cy="32"
                 r={radius}
                 fill="none"
-                stroke="#374151" // gray-700
-                strokeWidth="5"
-              />
-              <circle
-                cx="50%"
-                cy="50%"
-                r={radius}
-                fill="none"
-                stroke="#60A5FA" // blue-400
+                stroke="url(#month-progress-ring)"
                 strokeWidth="5"
                 strokeDasharray={dashArray}
                 strokeLinecap="round"
-                className="transition-all duration-1000 ease-out"
+                className="transition-all duration-700 ease-out"
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center flex-col">
-              <span className="text-sm md:text-lg font-bold text-white">{stats.totalAppointments}</span>
-              <span className="text-[8px] md:text-[10px] text-gray-400">всього</span>
+              <span className="text-base md:text-lg font-bold text-white tabular-nums">{stats.totalAppointments}</span>
+              <span className="text-[9px] md:text-[10px] text-gray-500 uppercase tracking-wide">всього</span>
             </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            onClick={(e) => {
-              e.stopPropagation()
-              setShowModal(true)
-            }}
-            className="flex-1 px-3 md:px-4 py-1.5 md:py-2 bg-white/10 border border-white/20 rounded-lg text-xs md:text-sm font-medium text-white hover:bg-white/20 transition-colors active:scale-[0.98]"
-          >
-            Детальніше
-          </button>
-        </div>
+        <button
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowModal(true)
+          }}
+          className="w-full dashboard-btn-secondary text-center"
+        >
+          Детальніше
+        </button>
       </div>
 
       {/* Модальне вікно з деталями */}

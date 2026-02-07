@@ -469,6 +469,60 @@
   .dashboard-card-title-lg {
     @apply text-lg font-bold text-white tracking-dashboard-title;
   }
+
+  /* ========== Chart styles (analytics, progress, trends) ========== */
+  .chart-container {
+    @apply rounded-xl p-4 md:p-6 card-glass;
+  }
+  .chart-title {
+    @apply text-base font-semibold text-white tracking-dashboard-card mb-4;
+  }
+  /* Horizontal bar track */
+  .chart-bar-track {
+    @apply flex-1 rounded-full h-6 md:h-7 overflow-hidden;
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+  }
+  .chart-bar-fill {
+    @apply h-full rounded-full transition-all duration-700 ease-out;
+    min-width: 4px;
+  }
+  .chart-bar-fill-revenue {
+    background: linear-gradient(90deg, rgba(139, 92, 246, 0.9) 0%, rgba(99, 102, 241, 0.85) 100%);
+    box-shadow: 0 0 12px rgba(139, 92, 246, 0.35);
+  }
+  .chart-bar-fill-success {
+    background: linear-gradient(90deg, rgba(16, 185, 129, 0.9) 0%, rgba(52, 199, 89, 0.85) 100%);
+  }
+  .chart-bar-fill-util {
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.9) 0%, rgba(99, 102, 241, 0.85) 100%);
+  }
+  /* Circular progress ring */
+  .chart-ring-bg {
+    fill: none;
+    stroke: rgba(255, 255, 255, 0.08);
+    stroke-width: 4;
+  }
+  .chart-ring-fill {
+    fill: none;
+    stroke-linecap: round;
+    transition: stroke-dasharray 0.8s ease-out;
+  }
+  .chart-ring-fill-primary {
+    stroke: url(#chart-ring-gradient-primary);
+  }
+  .chart-ring-fill-success {
+    stroke: url(#chart-ring-gradient-success);
+  }
+  /* Linear progress (utilization, etc.) */
+  .chart-progress-track {
+    @apply w-full rounded-full h-2.5 overflow-hidden;
+    background: rgba(255, 255, 255, 0.08);
+  }
+  .chart-progress-fill {
+    @apply h-full rounded-full transition-all duration-500 ease-out;
+    min-width: 2px;
+  }
 }
 
 @layer utilities {

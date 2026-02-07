@@ -233,43 +233,48 @@ export default function AnalyticsPage() {
                 </div>
               </div>
               {advancedStats.conversionFunnel && (
-                <div className="rounded-xl p-4 md:p-6 card-glass">
-                  <h3 className="text-base font-semibold text-white mb-4">Воронка конверсії</h3>
+                <div className="chart-container">
+                  <h3 className="chart-title">Воронка конверсії</h3>
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                    <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-                      <div className="text-xs text-gray-400 mb-1">Всього</div>
-                      <div className="text-lg font-semibold text-white">{advancedStats.conversionFunnel.total}</div>
+                    <div className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/15 transition-colors">
+                      <div className="text-xs text-gray-400 mb-1 uppercase tracking-wide">Всього</div>
+                      <div className="text-xl font-bold text-white tabular-nums">{advancedStats.conversionFunnel.total}</div>
                     </div>
-                    <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-                      <div className="text-xs text-gray-400 mb-1">Підтверджено</div>
-                      <div className="text-lg font-semibold text-blue-400">{advancedStats.conversionFunnel.confirmed} ({Math.round(advancedStats.conversionFunnel.confirmationRate)}%)</div>
+                    <div className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-blue-400/30 transition-colors">
+                      <div className="text-xs text-gray-400 mb-1 uppercase tracking-wide">Підтверджено</div>
+                      <div className="text-xl font-bold text-blue-400 tabular-nums">{advancedStats.conversionFunnel.confirmed} <span className="text-sm font-medium text-gray-400">({Math.round(advancedStats.conversionFunnel.confirmationRate)}%)</span></div>
                     </div>
-                    <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-                      <div className="text-xs text-gray-400 mb-1">Виконано</div>
-                      <div className="text-lg font-semibold text-green-400">{advancedStats.conversionFunnel.completed} ({Math.round(advancedStats.conversionFunnel.completionRate)}%)</div>
+                    <div className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-green-400/30 transition-colors">
+                      <div className="text-xs text-gray-400 mb-1 uppercase tracking-wide">Виконано</div>
+                      <div className="text-xl font-bold text-green-400 tabular-nums">{advancedStats.conversionFunnel.completed} <span className="text-sm font-medium text-gray-400">({Math.round(advancedStats.conversionFunnel.completionRate)}%)</span></div>
                     </div>
-                    <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-                      <div className="text-xs text-gray-400 mb-1">Скасовано</div>
-                      <div className="text-lg font-semibold text-red-400">{advancedStats.conversionFunnel.cancelled} ({Math.round(advancedStats.conversionFunnel.cancellationRate)}%)</div>
+                    <div className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-red-400/30 transition-colors">
+                      <div className="text-xs text-gray-400 mb-1 uppercase tracking-wide">Скасовано</div>
+                      <div className="text-xl font-bold text-red-400 tabular-nums">{advancedStats.conversionFunnel.cancelled} <span className="text-sm font-medium text-gray-400">({Math.round(advancedStats.conversionFunnel.cancellationRate)}%)</span></div>
                     </div>
                   </div>
                 </div>
               )}
               {advancedStats.dailyTrends && advancedStats.dailyTrends.length > 0 && (
-                <div className="rounded-xl p-4 md:p-6 card-glass">
-                  <h3 className="text-base font-semibold text-white mb-4">Тренди доходу</h3>
-                  <div className="space-y-2">
+                <div className="chart-container">
+                  <h3 className="chart-title">Тренди доходу</h3>
+                  <div className="space-y-3">
                     {advancedStats.dailyTrends.map((day: any) => {
-                      const maxRevenue = Math.max(...advancedStats.dailyTrends.map((d: any) => d.revenue))
-                      const barWidth = maxRevenue > 0 ? (day.revenue / maxRevenue) * 100 : 0
+                      const maxRevenue = Math.max(...advancedStats.dailyTrends.map((d: any) => d.revenue), 1)
+                      const barWidth = (day.revenue / maxRevenue) * 100
                       return (
-                        <div key={day.date} className="flex items-center gap-4">
-                          <div className="w-20 text-xs text-gray-400">{day.dateLabel}</div>
-                          <div className="flex-1 bg-white/10 rounded-full h-6 relative overflow-hidden">
-                            <div className="h-full bg-white/30 rounded-full transition-all" style={{ width: `${barWidth}%` }} />
-                            <div className="absolute inset-0 flex items-center justify-center text-xs font-semibold text-white">{formatCurrency(day.revenue)}</div>
+                        <div key={day.date} className="flex items-center gap-3 md:gap-4">
+                          <div className="w-14 md:w-20 text-xs text-gray-400 tabular-nums shrink-0">{day.dateLabel}</div>
+                          <div className="chart-bar-track flex-1 min-w-0">
+                            <div
+                              className="chart-bar-fill chart-bar-fill-revenue"
+                              style={{ width: `${barWidth}%` }}
+                            />
                           </div>
-                          <div className="w-16 text-xs text-gray-400 text-right">{day.completed} записів</div>
+                          <div className="flex items-center gap-2 shrink-0 min-w-0">
+                            <span className="text-xs font-semibold text-white tabular-nums truncate max-w-[80px] md:max-w-none">{formatCurrency(day.revenue)}</span>
+                            <span className="text-xs text-gray-500 hidden sm:inline">{day.completed} зап.</span>
+                          </div>
                         </div>
                       )
                     })}
@@ -401,12 +406,15 @@ export default function AnalyticsPage() {
                       <div className="space-y-2">
                         <div className="flex justify-between text-xs text-gray-400">
                           <span>Завантаженість</span>
-                          <span className="font-medium text-white">{master.utilizationRate.toFixed(1)}%</span>
+                          <span className="font-semibold text-white tabular-nums">{master.utilizationRate.toFixed(1)}%</span>
                         </div>
-                        <div className="w-full bg-white/10 rounded-full h-2">
-                          <div className="h-full bg-white/30 rounded-full transition-all" style={{ width: `${Math.min(master.utilizationRate, 100)}%` }} />
+                        <div className="chart-progress-track">
+                          <div
+                            className="chart-progress-fill chart-bar-fill-util"
+                            style={{ width: `${Math.min(master.utilizationRate, 100)}%` }}
+                          />
                         </div>
-                        <div className="text-xs text-gray-500">{master.totalHours.toFixed(1)} год / {master.availableHours.toFixed(1)} год</div>
+                        <div className="text-xs text-gray-500 tabular-nums">{master.totalHours.toFixed(1)} год / {master.availableHours.toFixed(1)} год</div>
                       </div>
                     </div>
                   ))}
@@ -478,11 +486,13 @@ export default function AnalyticsPage() {
               </div>
             </div>
           ) : (
-            <div className="rounded-xl p-8 md:p-12 text-center card-glass">
+            <div className="chart-container text-center py-12 md:py-16">
               <div className="mb-4 flex justify-center">
-                <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center"><ChartIcon className="w-12 h-12 text-gray-400" /></div>
+                <div className="w-20 h-20 rounded-full bg-white/10 border border-white/10 flex items-center justify-center">
+                  <ChartIcon className="w-10 h-10 text-gray-500" />
+                </div>
               </div>
-              <h3 className="text-lg font-semibold text-white mb-2">Немає даних про послуги</h3>
+              <h3 className="chart-title mb-2">Немає даних про послуги</h3>
               <p className="text-sm text-gray-400">Статистика з'явиться після перших записів</p>
             </div>
           )}

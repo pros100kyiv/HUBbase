@@ -51,29 +51,29 @@ export function LastProjectsCard({ projects }: LastProjectsCardProps) {
             style={{ boxShadow: '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)' }}
           >
             <div className="absolute top-2 right-2 md:top-4 md:right-4">
-              <div className="relative w-8 h-8 md:w-12 md:h-12">
-                <svg className="w-8 h-8 md:w-12 md:h-12 transform -rotate-90">
+              <div className="relative w-9 h-9 md:w-12 md:h-12">
+                <svg className="w-full h-full transform -rotate-90" viewBox="0 0 36 36">
+                  <defs>
+                    <linearGradient id={`last-project-ring-${project.id}`} x1="0%" y1="0%" x2="100%" y2="100%">
+                      <stop offset="0%" stopColor={project.progress === 100 ? '#10B981' : '#8B5CF6'} stopOpacity="1" />
+                      <stop offset="100%" stopColor={project.progress === 100 ? '#059669' : '#6366F1'} stopOpacity="0.9" />
+                    </linearGradient>
+                  </defs>
+                  <circle cx="18" cy="18" r="14" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="3" />
                   <circle
-                    cx="16"
-                    cy="16"
-                    r="13"
+                    cx="18"
+                    cy="18"
+                    r="14"
                     fill="none"
-                    stroke="#374151"
+                    stroke={`url(#last-project-ring-${project.id})`}
                     strokeWidth="3"
-                  />
-                  <circle
-                    cx="16"
-                    cy="16"
-                    r="13"
-                    fill="none"
-                    stroke={project.progress === 100 ? '#10B981' : '#6366F1'}
-                    strokeWidth="3"
-                    strokeDasharray={`${(project.progress / 100) * 81.68} 81.68`}
+                    strokeDasharray={`${(project.progress / 100) * 87.96} 87.96`}
                     strokeLinecap="round"
+                    className="transition-all duration-500 ease-out"
                   />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="text-[8px] md:text-xs font-bold">{project.progress}%</span>
+                  <span className="text-[9px] md:text-xs font-bold tabular-nums text-white">{project.progress}%</span>
                 </div>
               </div>
             </div>
