@@ -23,6 +23,10 @@ export interface BookingState {
   businessId: string | null
   step: number
   selectedServices: Service[]
+  /** Запис без вибору послуги (вартість після процедури) */
+  bookingWithoutService: boolean
+  /** Текст своєї послуги від клієнта (вартість після процедури) */
+  customServiceName: string
   selectedMaster: Master | null
   selectedDate: Date | null
   selectedTime: string | null
@@ -36,6 +40,8 @@ interface BookingContextType {
   setStep: (step: number) => void
   addService: (service: Service) => void
   removeService: (serviceId: string) => void
+  setBookingWithoutService: (value: boolean) => void
+  setCustomServiceName: (name: string) => void
   setMaster: (master: Master | null) => void
   setDate: (date: Date | null) => void
   setTime: (time: string | null) => void
@@ -48,6 +54,8 @@ const initialState: BookingState = {
   businessId: null,
   step: 0,
   selectedServices: [],
+  bookingWithoutService: false,
+  customServiceName: '',
   selectedMaster: null,
   selectedDate: null,
   selectedTime: null,
@@ -75,6 +83,22 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     setState(prev => ({
       ...prev,
       selectedServices: prev.selectedServices.filter(s => s.id !== serviceId),
+    }))
+  }
+
+  const setBookingWithoutService = (value: boolean) => {
+    setState(prev => ({
+      ...prev,
+      bookingWithoutService: value,
+      ...(value ? { customServiceName: '' } : {}),
+    }))
+  }
+
+  const setCustomServiceName = (name: string) => {
+    setState(prev => ({
+      ...prev,
+      customServiceName: name,
+      ...(name.trim() ? { bookingWithoutService: false } : {}),
     }))
   }
 
@@ -118,6 +142,8 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         setStep,
         addService,
         removeService,
+        setBookingWithoutService,
+        setCustomServiceName,
         setMaster,
         setDate,
         setTime,

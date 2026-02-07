@@ -226,8 +226,9 @@ model Appointment {
   startTime           DateTime
   endTime             DateTime
   status              String    @default("Pending") // Pending, Confirmed, Done, Cancelled
-  services            String // JSON array of service IDs
-  customPrice         Int? // Індивідуальна ціна для клієнта (в копійках)
+  services            String // JSON array of service IDs (може бути [])
+  customServiceName   String? // Текст послуги від клієнта (вартість після процедури)
+  customPrice         Int? // Індивідуальна ціна для клієнта (в копійках), вказується після процедури
   notes               String?
   reminderSent        Boolean   @default(false)
   // Циклічні записи

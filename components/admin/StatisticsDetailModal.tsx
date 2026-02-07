@@ -28,6 +28,7 @@ interface Appointment {
   endTime: string
   status: string
   services?: string
+  customServiceName?: string | null
   customPrice?: number
 }
 
@@ -446,17 +447,20 @@ export function StatisticsDetailModal({
                                   {getStatusLabel(apt.status)}
                                 </div>
                               </div>
-                              {apt.services && (
+                              {(apt.services || apt.customServiceName) && (
                                 <div className="text-xs text-gray-400 mt-2">
                                   {(() => {
                                     try {
-                                      const servicesList = JSON.parse(apt.services) as string[]
-                                      return servicesList.map((sid: string) => {
-                                        const service = services.find(s => s.id === sid)
-                                        return service?.name || sid
-                                      }).join(', ')
+                                      const servicesList = JSON.parse(apt.services || '[]') as string[]
+                                      if (servicesList.length > 0) {
+                                        return servicesList.map((sid: string) => {
+                                          const service = services.find(s => s.id === sid)
+                                          return service?.name || sid
+                                        }).join(', ')
+                                      }
+                                      return apt.customServiceName?.trim() || 'Послуга не вказана'
                                     } catch {
-                                      return apt.services
+                                      return apt.customServiceName?.trim() || apt.services || '—'
                                     }
                                   })()}
                                 </div>

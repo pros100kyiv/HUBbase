@@ -20,11 +20,10 @@ function normalizeUaPhone(phone: string): string {
 }
 
 function normalizeServicesToJsonArrayString(services: unknown): string | null {
-  // В БД зберігаємо JSON-рядок масиву ID послуг: '["id1","id2"]'
-  // Приймаємо як масив, так і рядок JSON.
+  // В БД зберігаємо JSON-рядок масиву ID послуг: '["id1","id2"]' або '[]' (без послуги / своя послуга)
   try {
     const parsed = typeof services === 'string' ? JSON.parse(services) : services
-    if (!Array.isArray(parsed) || parsed.length === 0) return null
+    if (!Array.isArray(parsed)) return null
     return JSON.stringify(parsed)
   } catch {
     return null
@@ -61,7 +60,7 @@ function checkConflict(
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { businessId, masterId, clientName, clientPhone, clientEmail, startTime, endTime, services, notes, customPrice } = body
+    const { businessId, masterId, clientName, clientPhone, clientEmail, startTime, endTime, services, notes, customPrice, customServiceName, customService } = body
 
     if (!businessId || !masterId || !clientName || !clientPhone || !startTime || !endTime) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -89,14 +88,21 @@ export async function POST(request: Request) {
     const normalizedClientEmail =
       typeof clientEmail === 'string' && clientEmail.trim() ? clientEmail.trim() : null
 
-    // Послуги опціональні — якщо не вказані, зберігаємо порожній масив
-    const servicesJson = services ? normalizeServicesToJsonArrayString(services) : '[]'
+    // Послуги опціональні — порожній масив дозволено (запис без послуги або своя послуга)
+    const servicesJson = services !== undefined && services !== null
+      ? normalizeServicesToJsonArrayString(services)
+      : '[]'
     if (servicesJson === null) {
       return NextResponse.json(
         { error: 'Invalid services format. Expected array of service IDs.' },
         { status: 400 }
       )
     }
+
+    const customServiceNameValue =
+      typeof customServiceName === 'string' && customServiceName.trim()
+        ? customServiceName.trim()
+        : (typeof customService === 'string' && customService.trim() ? customService.trim() : null)
 
     // КРИТИЧНО: гарантуємо, що клієнт з’явиться у вкладці "Клієнти"
     // Робимо upsert по @@unique([businessId, phone]) — без race condition та без дублікатів.
@@ -131,6 +137,7 @@ export async function POST(request: Request) {
           startTime: start,
           endTime: end,
           services: servicesJson,
+          customServiceName: customServiceNameValue,
           notes: typeof notes === 'string' && notes.trim() ? notes.trim() : null,
           customPrice: typeof customPrice === 'number' && customPrice > 0 ? customPrice : null,
           status: 'Pending',

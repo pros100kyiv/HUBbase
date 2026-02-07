@@ -90,7 +90,8 @@ export function TimeStep({ businessId }: TimeStepProps) {
     }
   }
 
-  const totalDuration = state.selectedServices.reduce((sum, s) => sum + s.duration, 0)
+  const totalDurationFromServices = state.selectedServices.reduce((sum, s) => sum + s.duration, 0)
+  const totalDuration = totalDurationFromServices > 0 ? totalDurationFromServices : 30
 
   return (
     <div className="min-h-screen py-4 sm:py-6 px-3 md:px-6 pb-[env(safe-area-inset-bottom)]">

@@ -22,7 +22,7 @@ function normalizeUaPhone(phone: string): string {
 function normalizeServicesToJsonArrayString(services: unknown): string | null {
   try {
     const parsed = typeof services === 'string' ? JSON.parse(services) : services
-    if (!Array.isArray(parsed) || parsed.length === 0) return null
+    if (!Array.isArray(parsed)) return null
     return JSON.stringify(parsed)
   } catch {
     return null
@@ -48,6 +48,8 @@ export async function PATCH(
       services,
       notes,
       customPrice,
+      customServiceName,
+      customService,
     } = body
 
     // КРИТИЧНО: Перевірка businessId для ізоляції даних
@@ -101,6 +103,11 @@ export async function PATCH(
     }
     if (notes !== undefined) updateData.notes = notes?.trim() || null
     if (customPrice !== undefined) updateData.customPrice = customPrice || null
+    if (customServiceName !== undefined) {
+      updateData.customServiceName = typeof customServiceName === 'string' && customServiceName.trim() ? customServiceName.trim() : null
+    } else if (customService !== undefined) {
+      updateData.customServiceName = typeof customService === 'string' && customService.trim() ? customService.trim() : null
+    }
 
     // Якщо змінюємо дані клієнта — оновлюємо/створюємо клієнта і прив'язуємо appointment.clientId
     const shouldEnsureClient = Boolean(updateData.clientPhone && updateData.clientName)

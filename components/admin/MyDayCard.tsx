@@ -15,6 +15,8 @@ interface Appointment {
   status: string
   masterName?: string
   services?: string
+  customServiceName?: string | null
+  customPrice?: number | null
   notes?: string | null
 }
 
@@ -174,14 +176,17 @@ export function MyDayCard({
     }
   }
 
-  /** Повертає масив назв послуг за JSON-рядком з масивом ID послуг */
-  const getServiceNamesList = (servicesJson?: string): string[] => {
+  /** Повертає масив назв послуг за JSON-рядком з масивом ID послуг або customServiceName */
+  const getServiceNamesList = (servicesJson?: string, customServiceName?: string | null): string[] => {
     const ids = parseServices(servicesJson) as string[]
-    if (ids.length === 0) return []
-    return ids.map((id) => {
-      const service = servicesList.find((s) => s.id === id)
-      return service ? service.name : id
-    })
+    if (ids.length > 0) {
+      return ids.map((id) => {
+        const service = servicesList.find((s) => s.id === id)
+        return service ? service.name : id
+      })
+    }
+    if (customServiceName && customServiceName.trim()) return [customServiceName.trim()]
+    return []
   }
 
   const getDaySummaryText = () => {
@@ -334,8 +339,8 @@ export function MyDayCard({
   const AppointmentItem = ({ apt, onClick }: { apt: Appointment; onClick: () => void }) => {
     const startTime = new Date(apt.startTime)
     const isDone = apt.status === 'Done' || apt.status === 'Виконано'
-    const serviceNames = getServiceNamesList(apt.services)
-    const serviceDisplay = serviceNames.length > 0 ? serviceNames.join(', ') : 'Послуга не вказана'
+    const serviceNames = getServiceNamesList(apt.services, apt.customServiceName)
+    const serviceDisplay = serviceNames.length > 0 ? serviceNames.join(', ') : (apt.customServiceName?.trim() ? apt.customServiceName.trim() : 'Послуга не вказана')
 
     return (
       <button
@@ -718,8 +723,9 @@ export function MyDayCard({
                   </div>
                 )}
 
-                {selectedAppointment.services !== undefined && selectedAppointment.services !== null && (() => {
-                  const modalServiceNames = getServiceNamesList(selectedAppointment.services)
+                {(() => {
+                  const modalServiceNames = getServiceNamesList(selectedAppointment.services, selectedAppointment.customServiceName)
+                  const hasCustomPrice = selectedAppointment.customPrice != null && selectedAppointment.customPrice > 0
                   return (
                     <div>
                       <div className="text-xs text-gray-400 mb-2">Послуги</div>
@@ -739,6 +745,19 @@ export function MyDayCard({
                               </span>
                             )}
                       </div>
+                      {hasCustomPrice && (
+                        <div className="text-xs text-gray-400 mt-2">
+                          Вартість: <span className="text-white font-medium">{(selectedAppointment.customPrice! / 100).toFixed(0)} ₴</span>
+                        </div>
+                      )}
+                      {!hasCustomPrice && (selectedAppointment.customServiceName?.trim() || (() => {
+                        try {
+                          const ids = selectedAppointment.services ? JSON.parse(selectedAppointment.services) : []
+                          return Array.isArray(ids) && ids.length === 0
+                        } catch { return false }
+                      })()) && (
+                        <div className="text-xs text-gray-400 mt-1">Вартість узгоджується після процедури</div>
+                      )}
                     </div>
                   )
                 })()}

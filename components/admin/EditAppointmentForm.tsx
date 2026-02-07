@@ -20,6 +20,8 @@ interface EditAppointmentFormProps {
     endTime: string
     status: string
     services?: string
+    customServiceName?: string | null
+    customPrice?: number | null
     notes?: string
   }
   businessId: string
@@ -58,8 +60,8 @@ export function EditAppointmentForm({
     date: format(safeStartTimeDate, 'yyyy-MM-dd'),
     startTime: format(safeStartTimeDate, 'HH:mm'),
     notes: appointment.notes || '',
-    customService: '',
-    customPrice: 0,
+    customService: appointment.customServiceName || '',
+    customPrice: appointment.customPrice != null && appointment.customPrice > 0 ? Math.round(appointment.customPrice / 100) : 0,
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showErrorToast, setShowErrorToast] = useState(false)
@@ -105,9 +107,12 @@ export function EditAppointmentForm({
         notes: formData.notes?.trim() || null,
       }
 
-      if (formData.customService && formData.customPrice > 0) {
-        appointmentData.customService = formData.customService
-        appointmentData.customPrice = formData.customPrice
+      if (formData.customService.trim()) {
+        appointmentData.customServiceName = formData.customService.trim()
+        appointmentData.customPrice = formData.customPrice > 0 ? formData.customPrice * 100 : null
+      } else {
+        appointmentData.customServiceName = null
+        appointmentData.customPrice = null
       }
 
       // Отримуємо businessId з appointment або передаємо через props

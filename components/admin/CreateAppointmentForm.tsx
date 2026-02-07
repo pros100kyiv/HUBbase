@@ -83,9 +83,9 @@ export function CreateAppointmentForm({
         isFromBooking: false,
       }
 
-      if (formData.customService && formData.customPrice > 0) {
-        appointmentData.customService = formData.customService
-        appointmentData.customPrice = formData.customPrice
+      if (formData.customService.trim()) {
+        appointmentData.customServiceName = formData.customService.trim()
+        appointmentData.customPrice = formData.customPrice > 0 ? formData.customPrice * 100 : null
       }
 
       const response = await fetch('/api/appointments', {

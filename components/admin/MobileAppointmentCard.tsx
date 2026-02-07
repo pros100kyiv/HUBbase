@@ -15,6 +15,8 @@ interface Appointment {
   endTime: string
   status: string
   services?: string
+  customServiceName?: string | null
+  customPrice?: number | null
 }
 
 interface MobileAppointmentCardProps {
@@ -74,7 +76,9 @@ export function MobileAppointmentCard({
   } catch {
     // ignore
   }
-  const serviceNames = serviceIds.map((id) => services.find((s) => s.id === id)?.name || id)
+  const serviceNames = serviceIds.length > 0
+    ? serviceIds.map((id) => services.find((s) => s.id === id)?.name || id)
+    : (appointment.customServiceName?.trim() ? [appointment.customServiceName.trim()] : [])
   const serviceDisplay = serviceNames.length > 0 ? serviceNames.join(', ') : 'Послуга не вказана'
 
   return (

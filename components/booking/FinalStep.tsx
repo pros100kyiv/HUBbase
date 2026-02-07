@@ -40,11 +40,16 @@ export function FinalStep({ businessId }: FinalStepProps) {
     setIsSubmitting(true)
 
     try {
-      const totalDuration = state.selectedServices.reduce((sum, s) => sum + s.duration, 0)
+      const totalDurationFromServices = state.selectedServices.reduce((sum, s) => sum + s.duration, 0)
+      const totalDuration = totalDurationFromServices > 0 ? totalDurationFromServices : 30
       const [hours, minutes] = state.selectedTime!.split(':').map(Number)
       const startTime = new Date(state.selectedDate!)
       startTime.setHours(hours, minutes, 0, 0)
       const endTime = new Date(startTime.getTime() + totalDuration * 60000)
+
+      const isWithoutService = state.bookingWithoutService || (state.customServiceName && state.customServiceName.trim().length > 0)
+      const servicesPayload = isWithoutService ? [] : state.selectedServices.map(s => s.id)
+      const customServiceNamePayload = state.customServiceName && state.customServiceName.trim() ? state.customServiceName.trim() : null
 
       const response = await fetch('/api/appointments', {
         method: 'POST',
@@ -56,7 +61,8 @@ export function FinalStep({ businessId }: FinalStepProps) {
           clientPhone: state.clientPhone,
           startTime: startTime.toISOString(),
           endTime: endTime.toISOString(),
-          services: state.selectedServices.map(s => s.id),
+          services: servicesPayload,
+          ...(customServiceNamePayload && { customServiceName: customServiceNamePayload }),
         }),
       })
 
@@ -83,6 +89,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
   }
 
   const totalPrice = state.selectedServices.reduce((sum, s) => sum + s.price, 0)
+  const isPriceAfterProcedure = state.bookingWithoutService || (state.customServiceName && state.customServiceName.trim().length > 0)
 
   return (
     <div className="min-h-screen py-4 sm:py-6 px-3 md:px-6 pb-[env(safe-area-inset-bottom)]">
@@ -128,8 +135,12 @@ export function FinalStep({ businessId }: FinalStepProps) {
           <div className="space-y-1.5 text-sm">
             <div className="flex justify-between"><span className="text-gray-400">Майстер:</span><span className="font-medium text-white">{state.selectedMaster?.name}</span></div>
             <div className="flex justify-between"><span className="text-gray-400">Дата та час:</span><span className="font-medium text-white">{state.selectedDate && format(state.selectedDate, 'd MMMM yyyy', { locale: uk })}, {state.selectedTime}</span></div>
-            <div className="flex justify-between"><span className="text-gray-400">Послуги:</span><span className="font-medium text-white text-right max-w-[60%]">{state.selectedServices.map(s => s.name).join(', ')}</span></div>
-            <div className="flex justify-between pt-2 border-t border-white/10"><span className="font-semibold text-white">Всього:</span><span className="text-lg font-bold text-white">{Math.round(totalPrice)} ₴</span></div>
+            <div className="flex justify-between"><span className="text-gray-400">Послуги:</span><span className="font-medium text-white text-right max-w-[60%]">
+              {isPriceAfterProcedure
+                ? (state.customServiceName?.trim() ? state.customServiceName.trim() : 'Без послуги — вартість після процедури')
+                : state.selectedServices.map(s => s.name).join(', ')}
+            </span></div>
+            <div className="flex justify-between pt-2 border-t border-white/10"><span className="font-semibold text-white">Всього:</span><span className="text-lg font-bold text-white">{isPriceAfterProcedure ? 'Вартість узгоджується після процедури' : `${Math.round(totalPrice)} ₴`}</span></div>
           </div>
         </div>
 

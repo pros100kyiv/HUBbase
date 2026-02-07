@@ -8,8 +8,10 @@ interface ServiceStepProps {
   businessId?: string
 }
 
+const DEFAULT_DURATION_NO_SERVICE = 30
+
 export function ServiceStep({ businessId }: ServiceStepProps) {
-  const { state, addService, removeService, setStep } = useBooking()
+  const { state, addService, removeService, setStep, setBookingWithoutService, setCustomServiceName } = useBooking()
   const [services, setServices] = useState<Service[]>([])
 
   useEffect(() => {
@@ -21,9 +23,28 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
 
   const isSelected = (serviceId: string) => state.selectedServices.some(s => s.id === serviceId)
   const toggleService = (service: Service) => {
+    setBookingWithoutService(false)
+    setCustomServiceName('')
     if (isSelected(service.id)) removeService(service.id)
     else addService(service)
   }
+
+  const handleWithoutService = () => {
+    setBookingWithoutService(true)
+    setCustomServiceName('')
+    state.selectedServices.forEach(s => removeService(s.id))
+  }
+
+  const handleCustomServiceFocus = () => {
+    setBookingWithoutService(false)
+    state.selectedServices.forEach(s => removeService(s.id))
+  }
+
+  const canProceed =
+    state.selectedServices.length > 0 ||
+    state.bookingWithoutService ||
+    (state.customServiceName && state.customServiceName.trim().length > 0)
+
   const totalPrice = state.selectedServices.reduce((sum, s) => sum + s.price, 0)
   const totalDuration = state.selectedServices.reduce((sum, s) => sum + s.duration, 0)
 
@@ -31,9 +52,44 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
     <div className="min-h-screen py-4 sm:py-6 px-3 md:px-6 pb-[env(safe-area-inset-bottom)]">
       <div className="max-w-4xl mx-auto">
         <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 text-center text-white" style={{ letterSpacing: '-0.02em' }}>
-          Оберіть послугу
+          Виберіть послугу
         </h2>
 
+        {/* Опції без вибору послуги з каталогу */}
+        <div className="space-y-2 mb-4">
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={handleWithoutService}
+            onKeyDown={(e) => e.key === 'Enter' && handleWithoutService()}
+            className={cn(
+              'rounded-xl p-3 sm:p-4 card-glass cursor-pointer transition-all hover:bg-white/[0.08] active:scale-[0.99] min-h-[56px] flex items-center border-2',
+              state.bookingWithoutService ? 'ring-2 ring-white/50 bg-white/[0.12] border-white/30' : 'border-transparent'
+            )}
+          >
+            <div className="flex-1">
+              <h3 className="text-sm sm:text-base font-semibold text-white">Записатися без послуги</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Вартість узгоджується після процедури</p>
+            </div>
+          </div>
+          <div className={cn(
+            'rounded-xl p-3 sm:p-4 card-glass min-h-[56px] border-2 transition-all',
+            state.customServiceName.trim() ? 'ring-2 ring-white/50 bg-white/[0.12] border-white/30' : 'border-transparent'
+          )}>
+            <label className="block text-sm font-semibold text-white mb-1.5">Або вкажіть свою послугу</label>
+            <input
+              type="text"
+              value={state.customServiceName}
+              onChange={(e) => setCustomServiceName(e.target.value)}
+              onFocus={handleCustomServiceFocus}
+              placeholder="Наприклад: консультація, масаж спини..."
+              className="w-full px-4 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/30 text-sm"
+            />
+            <p className="text-xs text-gray-400 mt-1">Вартість визначиться після процедури</p>
+          </div>
+        </div>
+
+        <p className="text-xs text-gray-400 mb-2 px-0.5">Або оберіть з каталогу:</p>
         <div className="space-y-2 sm:space-y-2 mb-4">
           {services.map((service) => (
             <div
@@ -81,6 +137,15 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
           </div>
         )}
 
+        {(state.bookingWithoutService || state.customServiceName.trim()) && (
+          <div className="rounded-xl p-4 mb-4 card-glass">
+            <p className="text-sm text-gray-300">
+              {state.bookingWithoutService ? 'Запис без послуги — вартість узгоджується після процедури.' : `Своя послуга: «${state.customServiceName.trim()}» — вартість після процедури.`}
+            </p>
+            <p className="text-xs text-gray-400 mt-1">Тривалість слота: {DEFAULT_DURATION_NO_SERVICE} хв (можна змінити в кабінеті)</p>
+          </div>
+        )}
+
         <div className="flex gap-2 sm:gap-3">
           <button type="button" onClick={() => setStep(0)} className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors active:scale-[0.98]">
             Назад
@@ -88,7 +153,7 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
           <button
             type="button"
             onClick={() => setStep(2)}
-            disabled={state.selectedServices.length === 0}
+            disabled={!canProceed}
             className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg bg-white text-black text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
           >
