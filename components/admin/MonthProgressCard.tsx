@@ -251,7 +251,6 @@ export function MonthProgressCard({ stats, loading }: MonthProgressCardProps) {
                   Перейти до повної аналітики
                 </button>
               </div>
-              </div>
             </div>
           </div>
         </ModalPortal>
