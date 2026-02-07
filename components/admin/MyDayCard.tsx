@@ -56,8 +56,17 @@ export function MyDayCard({
   const [historyPhone, setHistoryPhone] = useState<string | null>(null)
   const [historyLoading, setHistoryLoading] = useState(false)
   const [historyAppointments, setHistoryAppointments] = useState<Appointment[]>([])
+  const [servicesList, setServicesList] = useState<Array<{ id: string; name: string }>>([])
   const [touchStart, setTouchStart] = useState<{x: number, y: number} | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!businessId) return
+    fetch(`/api/services?businessId=${businessId}`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setServicesList(Array.isArray(data) ? data : []))
+      .catch(() => setServicesList([]))
+  }, [businessId])
 
   const handleTouchStart = (e: React.TouchEvent) => {
     setTouchStart({ x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY })
@@ -160,6 +169,16 @@ export function MyDayCard({
     } catch {
       return [services]
     }
+  }
+
+  /** Повертає масив назв послуг за JSON-рядком з масивом ID послуг */
+  const getServiceNamesList = (servicesJson?: string): string[] => {
+    const ids = parseServices(servicesJson) as string[]
+    if (ids.length === 0) return []
+    return ids.map((id) => {
+      const service = servicesList.find((s) => s.id === id)
+      return service ? service.name : id
+    })
   }
 
   const getDaySummaryText = () => {
@@ -326,18 +345,9 @@ export function MyDayCard({
 
   const AppointmentItem = ({ apt, onClick }: { apt: Appointment; onClick: () => void }) => {
     const startTime = new Date(apt.startTime)
-    // const endTime = new Date(apt.endTime)
     const isDone = apt.status === 'Done' || apt.status === 'Виконано'
-    const serviceName = (() => {
-      try {
-        const services = JSON.parse(apt.services || '[]')
-        return Array.isArray(services) 
-          ? services.map((s: any) => s.name || s).join(', ')
-          : apt.services
-      } catch {
-        return apt.services
-      }
-    })()
+    const serviceNames = getServiceNamesList(apt.services)
+    const serviceDisplay = serviceNames.length > 0 ? serviceNames.join(', ') : 'Послуга не вказана'
 
     return (
       <button
@@ -373,7 +383,7 @@ export function MyDayCard({
             </div>
             
             <div className="text-xs md:text-sm text-gray-300 font-medium truncate mb-0.5">
-              {serviceName || 'Послуга не вказана'}
+              {serviceDisplay}
             </div>
             
             <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-gray-500">
@@ -769,21 +779,30 @@ export function MyDayCard({
                   </div>
                 )}
 
-                {selectedAppointment.services && (
-                  <div>
-                    <div className="text-xs text-gray-400 mb-2">Послуги</div>
-                    <div className="flex flex-wrap gap-2">
-                      {parseServices(selectedAppointment.services).map((s: any, idx: number) => (
-                        <span
-                          key={idx}
-                          className="px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-gray-200"
-                        >
-                          {typeof s === 'string' ? s : s?.name || JSON.stringify(s)}
-                        </span>
-                      ))}
+                {selectedAppointment.services !== undefined && selectedAppointment.services !== null && (() => {
+                  const modalServiceNames = getServiceNamesList(selectedAppointment.services)
+                  return (
+                    <div>
+                      <div className="text-xs text-gray-400 mb-2">Послуги</div>
+                      <div className="flex flex-wrap gap-2">
+                        {modalServiceNames.length > 0
+                          ? modalServiceNames.map((name, idx) => (
+                              <span
+                                key={idx}
+                                className="px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-gray-200"
+                              >
+                                {name}
+                              </span>
+                            ))
+                          : (
+                              <span className="px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-gray-400">
+                                Послуга не вказана
+                              </span>
+                            )}
+                      </div>
                     </div>
-                  </div>
-                )}
+                  )
+                })()}
 
                 {selectedAppointment.notes && (
                   <div className="p-3 bg-white/5 border border-white/10 rounded-lg">
