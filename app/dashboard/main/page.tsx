@@ -136,7 +136,7 @@ export default function MainPage() {
               confirmedAppointments={todayConfirmed}
               onBookAppointment={() => router.push('/dashboard/appointments?create=true')}
               selectedDate={selectedDate}
-              onDateChange={setSelectedDate}
+              onDateChange={(date) => setSelectedDate(startOfDay(date))}
               onRefresh={handleRefresh}
             />
           )}

@@ -92,27 +92,43 @@ export function MyDayCard({
     setTouchStart(null)
   }
 
-  const selectedDate = externalSelectedDate || internalSelectedDate
+  const selectedDate = externalSelectedDate
+    ? startOfDay(externalSelectedDate)
+    : internalSelectedDate
   const isToday = isSameDay(selectedDate, new Date())
+
+  /** Записи тільки для вибраного дня (за календарною датою), щоб відображення завжди відповідало обраній даті */
+  const appointmentsForSelectedDay = appointments.filter((apt) =>
+    isSameDay(new Date(apt.startTime), selectedDate)
+  )
+  const totalForDay = appointmentsForSelectedDay.length
+  const completedForDay = appointmentsForSelectedDay.filter(
+    (apt) => apt.status === 'Done' || apt.status === 'Виконано'
+  ).length
+  const pendingForDay = appointmentsForSelectedDay.filter(
+    (apt) => apt.status === 'Pending' || apt.status === 'Очікує'
+  ).length
+  const confirmedForDay = appointmentsForSelectedDay.filter(
+    (apt) => apt.status === 'Confirmed' || apt.status === 'Підтверджено'
+  ).length
   
   const handleDateChange = (newDate: Date) => {
+    const normalized = startOfDay(newDate)
     if (onDateChange) {
-      onDateChange(newDate)
+      onDateChange(normalized)
     } else {
-      setInternalSelectedDate(startOfDay(newDate))
+      setInternalSelectedDate(normalized)
     }
   }
-  
+
   const handlePreviousDay = () => {
-    const newDate = subDays(selectedDate, 1)
-    handleDateChange(newDate)
+    handleDateChange(subDays(selectedDate, 1))
   }
-  
+
   const handleNextDay = () => {
-    const newDate = addDays(selectedDate, 1)
-    handleDateChange(newDate)
+    handleDateChange(addDays(selectedDate, 1))
   }
-  
+
   const handleToday = () => {
     handleDateChange(startOfDay(new Date()))
   }
@@ -133,7 +149,7 @@ export function MyDayCard({
   }
 
   const handleAppointmentClick = (id: string) => {
-    const apt = appointments.find((a) => a.id === id) || null
+    const apt = appointmentsForSelectedDay.find((a) => a.id === id) ?? appointments.find((a) => a.id === id) ?? null
     setSelectedAppointment(apt)
   }
 
@@ -191,11 +207,11 @@ export function MyDayCard({
 
   const getDaySummaryText = () => {
     const dateLabel = isToday ? 'Сьогодні' : format(selectedDate, 'd MMMM yyyy', { locale: uk })
-    let text = `Мій день — ${dateLabel}\nЗаписів: ${totalAppointments} (підтверджено: ${confirmedAppointments}, очікує: ${pendingAppointments}, виконано: ${completedAppointments})`
+    let text = `Мій день — ${dateLabel}\nЗаписів: ${totalForDay} (підтверджено: ${confirmedForDay}, очікує: ${pendingForDay}, виконано: ${completedForDay})`
     if (totalRevenue > 0) text += `\nДохід: ${totalRevenue} грн`
-    if (appointments.length > 0) {
+    if (appointmentsForSelectedDay.length > 0) {
       text += '\n\nЗаписи:\n'
-      appointments.forEach((apt) => {
+      appointmentsForSelectedDay.forEach((apt) => {
         const start = format(new Date(apt.startTime), 'HH:mm')
         const end = format(new Date(apt.endTime), 'HH:mm')
         text += `• ${apt.clientName} ${start}–${end} — ${apt.status}\n`
@@ -265,7 +281,7 @@ export function MyDayCard({
   }
 
   const getFilteredAppointments = (type: 'pending' | 'confirmed' | 'done') => {
-    return appointments.filter(apt => {
+    return appointmentsForSelectedDay.filter(apt => {
       const status = apt.status
       switch (type) {
         case 'pending':
@@ -519,41 +535,41 @@ export function MyDayCard({
         </div>
       </div>
 
-      {/* Statistics Grid */}
+      {/* Statistics Grid — завжди для вибраного дня */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
         <div className="bg-white/5 border border-white/10 rounded-lg p-3 md:p-4">
-          <div className="text-xl md:text-2xl font-bold text-white mb-0.5 md:mb-1">{totalAppointments}</div>
+          <div className="text-xl md:text-2xl font-bold text-white mb-0.5 md:mb-1">{totalForDay}</div>
           <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Всього записів</div>
         </div>
         <button 
           onClick={() => setSelectedStatus('confirmed')}
           className="bg-white/5 border border-white/10 rounded-lg p-3 md:p-4 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
         >
-          <div className="text-xl md:text-2xl font-bold text-green-400 mb-0.5 md:mb-1">{confirmedAppointments}</div>
+          <div className="text-xl md:text-2xl font-bold text-green-400 mb-0.5 md:mb-1">{confirmedForDay}</div>
           <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Підтверджено</div>
         </button>
         <button 
           onClick={() => setSelectedStatus('pending')}
           className="bg-white/5 border border-white/10 rounded-lg p-3 md:p-4 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
         >
-          <div className="text-xl md:text-2xl font-bold text-orange-400 mb-0.5 md:mb-1">{pendingAppointments}</div>
+          <div className="text-xl md:text-2xl font-bold text-orange-400 mb-0.5 md:mb-1">{pendingForDay}</div>
           <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Очікує</div>
         </button>
         <button 
           onClick={() => setSelectedStatus('done')}
           className="bg-white/5 border border-white/10 rounded-lg p-3 md:p-4 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
         >
-          <div className="text-xl md:text-2xl font-bold text-blue-400 mb-0.5 md:mb-1">{completedAppointments}</div>
+          <div className="text-xl md:text-2xl font-bold text-blue-400 mb-0.5 md:mb-1">{completedForDay}</div>
           <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Виконано</div>
         </button>
       </div>
 
-      {/* Appointments List */}
-      {appointments.length > 0 ? (
+      {/* Appointments List — тільки записи вибраного дня */}
+      {appointmentsForSelectedDay.length > 0 ? (
         <div className="space-y-1.5 md:space-y-2 mb-3 md:mb-4">
           <div className="flex items-center justify-between mb-1.5 md:mb-2 gap-2">
             <h4 className="text-xs md:text-sm font-semibold text-gray-300 uppercase flex-1" style={{ letterSpacing: '0.05em' }}>
-              Записи {isToday ? 'на сьогодні' : `на ${format(selectedDate, 'd MMMM', { locale: uk })}`}
+              {isToday ? 'Записи на сьогодні' : `Записи на ${format(selectedDate, 'd MMMM', { locale: uk })}`}
             </h4>
             <button
               onClick={() => setIsExpanded(!isExpanded)}
@@ -576,7 +592,7 @@ export function MyDayCard({
               isExpanded ? '' : 'max-h-48 md:max-h-64 overflow-y-auto scrollbar-hide'
             }`}
           >
-            {appointments
+            {appointmentsForSelectedDay
               .filter(apt => apt.status !== 'Done' && apt.status !== 'Виконано' && apt.status !== 'Cancelled' && apt.status !== 'Скасовано')
               .map((apt) => (
               <AppointmentItem 
