@@ -36,20 +36,24 @@ export function FinalStep({ businessId }: FinalStepProps) {
 
   const handleSubmit = async () => {
     if (!validate()) return
+    if (!state.selectedDate || !state.selectedTime) {
+      alert('Оберіть дату та час запису.')
+      return
+    }
 
     setIsSubmitting(true)
 
     try {
       const totalDurationFromServices = state.selectedServices.reduce((sum, s) => sum + s.duration, 0)
       const totalDuration = totalDurationFromServices > 0 ? totalDurationFromServices : 30
-      const [hours, minutes] = state.selectedTime!.split(':').map(Number)
+      const [hours, minutes] = state.selectedTime.split(':').map(Number)
       const startTime = new Date(state.selectedDate!)
       startTime.setHours(hours, minutes, 0, 0)
       const endTime = new Date(startTime.getTime() + totalDuration * 60000)
 
       const isWithoutService = state.bookingWithoutService || (state.customServiceName && state.customServiceName.trim().length > 0)
       const servicesPayload = isWithoutService ? [] : state.selectedServices.map(s => s.id)
-      const customServiceNamePayload = state.customServiceName && state.customServiceName.trim() ? state.customServiceName.trim() : null
+      const customServiceNamePayload = state.customServiceName?.trim() || null
 
       const response = await fetch('/api/appointments', {
         method: 'POST',
@@ -149,7 +153,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
           <button
             type="button"
             onClick={handleSubmit}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !state.selectedDate || !state.selectedTime}
             className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg bg-white text-black text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
           >

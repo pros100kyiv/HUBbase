@@ -58,10 +58,12 @@ export default function BookingPage() {
       })
       .catch(error => {
         console.error('Error loading business:', error)
-        setIsLoading(false)
         if (loadedSlugRef.current === slug) {
           loadedSlugRef.current = null
+          setBusiness(null)
+          setBusinessId(null)
         }
+        setIsLoading(false)
       })
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug])

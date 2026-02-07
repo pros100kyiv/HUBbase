@@ -51,16 +51,13 @@ export function MasterStep({ businessId }: MasterStepProps) {
   useEffect(() => {
     if (!businessId) return
     fetch(`/api/masters?businessId=${businessId}`)
-      .then(res => res.json())
+      .then(res => (res.ok ? res.json() : []))
       .then(data => {
-        // Filter only active masters
-        const activeMasters = data.filter((master: Master) => master.isActive !== false)
+        const list = Array.isArray(data) ? data : []
+        const activeMasters = list.filter((master: Master) => master.isActive !== false)
         setMasters(activeMasters)
       })
-      .catch(error => {
-        console.error('Error loading masters:', error)
-        setMasters([])
-      })
+      .catch(() => setMasters([]))
   }, [businessId])
 
   const isAvailableToday = (masterId: string) => {

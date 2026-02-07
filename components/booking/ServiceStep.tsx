@@ -17,8 +17,9 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
   useEffect(() => {
     if (!businessId) return
     fetch(`/api/services?businessId=${businessId}`)
-      .then(res => res.json())
-      .then(data => setServices(data))
+      .then(res => (res.ok ? res.json() : []))
+      .then(data => setServices(Array.isArray(data) ? data : []))
+      .catch(() => setServices([]))
   }, [businessId])
 
   const isSelected = (serviceId: string) => state.selectedServices.some(s => s.id === serviceId)
