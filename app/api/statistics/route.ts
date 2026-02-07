@@ -44,6 +44,7 @@ export async function GET(request: Request) {
           services: true,
           customPrice: true,
           clientId: true,
+          masterId: true,
         },
       }),
       prisma.client.findMany({
