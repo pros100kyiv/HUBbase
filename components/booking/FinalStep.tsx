@@ -82,11 +82,19 @@ export function FinalStep({ businessId }: FinalStepProps) {
           }
         }
       } else {
-        const data = await response.json()
-        alert(data.error || 'Помилка при створенні запису')
+        let msg = 'Помилка при створенні запису'
+        try {
+          const data = await response.json()
+          msg = data.error || msg
+          if (data.details) msg += `\n\n(${data.details})`
+        } catch {
+          // ignore
+        }
+        alert(msg)
       }
     } catch (error) {
-      alert('Помилка при створенні запису')
+      const errMsg = error instanceof Error ? error.message : 'Помилка при створенні запису'
+      alert(errMsg)
     } finally {
       setIsSubmitting(false)
     }

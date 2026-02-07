@@ -71,12 +71,12 @@ export async function POST(request: Request) {
 
     const [business, master] = await Promise.all([
       prisma.business.findUnique({ where: { id: businessId }, select: { id: true } }),
-      prisma.master.findUnique({ where: { id: masterId, businessId }, select: { id: true } }),
+      prisma.master.findUnique({ where: { id: masterId }, select: { id: true, businessId: true } }),
     ])
     if (!business) {
       return NextResponse.json({ error: 'Бізнес не знайдено' }, { status: 400 })
     }
-    if (!master) {
+    if (!master || master.businessId !== businessId) {
       return NextResponse.json({ error: 'Спеціаліста не знайдено або він не належить цьому бізнесу' }, { status: 400 })
     }
 
