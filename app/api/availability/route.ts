@@ -69,9 +69,9 @@ function getWindow(
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const masterId = searchParams.get('masterId')
-    const businessId = searchParams.get('businessId')
-    const dateParam = searchParams.get('date')
+    const masterId = String(searchParams.get('masterId') ?? '').trim()
+    const businessId = String(searchParams.get('businessId') ?? '').trim()
+    const dateParam = String(searchParams.get('date') ?? '').trim()
     const durationParam = searchParams.get('durationMinutes')
 
     if (!masterId || !businessId || !dateParam) {
@@ -96,10 +96,15 @@ export async function GET(request: Request) {
 
     const dateNorm = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
 
-    const master = await prisma.master.findUnique({
-      where: { id: masterId },
-      select: { workingHours: true, blockedPeriods: true, isActive: true },
-    })
+    let master: { workingHours: string | null; blockedPeriods: string | null; isActive: boolean | null } | null = null
+    try {
+      master = await prisma.master.findUnique({
+        where: { id: masterId },
+        select: { workingHours: true, blockedPeriods: true, isActive: true },
+      })
+    } catch (e) {
+      console.error('Availability: master fetch error', e)
+    }
 
     if (!master) {
       return NextResponse.json({ availableSlots: [], scheduleNotConfigured: true }, { status: 200 })
@@ -110,12 +115,12 @@ export async function GET(request: Request) {
 
     const wh = parseWorkingHours(master.workingHours)
     let window = getWindow(wh, dayName)
-    if (!window) {
+    if (!window || window.start >= window.end) {
       window = { start: 9, end: 18 }
     }
 
-    const dayStart = window.start
-    const dayEnd = window.end
+    const dayStart = Math.max(0, Math.min(23, window.start))
+    const dayEnd = Math.max(dayStart + 1, Math.min(24, window.end))
 
     const slots: string[] = []
     for (let h = dayStart; h < dayEnd; h++) {
@@ -124,27 +129,34 @@ export async function GET(request: Request) {
       }
     }
 
-    const startOfDayDate = new Date(year, month, day, 0, 0, 0, 0)
-    const endOfDayDate = new Date(year, month, day, 23, 59, 59, 999)
-
-    const appointments = await prisma.appointment.findMany({
-      where: {
-        businessId,
-        masterId,
-        startTime: { gte: startOfDayDate, lte: endOfDayDate },
-        status: { not: 'Cancelled' },
-      },
-    })
+    let appointments: Array<{ startTime: Date; endTime: Date }> = []
+    try {
+      const startOfDayDate = new Date(year, month, day, 0, 0, 0, 0)
+      const endOfDayDate = new Date(year, month, day, 23, 59, 59, 999)
+      appointments = await prisma.appointment.findMany({
+        where: {
+          businessId,
+          masterId,
+          startTime: { gte: startOfDayDate, lte: endOfDayDate },
+          status: { not: 'Cancelled' },
+        },
+        select: { startTime: true, endTime: true },
+      })
+    } catch (e) {
+      console.error('Availability: appointments fetch error', e)
+    }
 
     const occupied = new Set<string>()
     for (const apt of appointments) {
-      let t = new Date(apt.startTime)
-      const end = new Date(apt.endTime)
-      while (t < end) {
-        const key = format(t, "yyyy-MM-dd'T'HH:mm")
-        if (key.startsWith(dateNorm)) occupied.add(key)
-        t = addMinutes(t, 30)
-      }
+      try {
+        let t = new Date(apt.startTime)
+        const end = new Date(apt.endTime)
+        while (t < end) {
+          const key = format(t, "yyyy-MM-dd'T'HH:mm")
+          if (key.startsWith(dateNorm)) occupied.add(key)
+          t = addMinutes(t, 30)
+        }
+      } catch (_) {}
     }
 
     let blockedPeriods: Array<{ start: string; end: string }> = []
@@ -156,28 +168,33 @@ export async function GET(request: Request) {
       }
     }
     for (const b of blockedPeriods) {
-      let t = new Date(b.start)
-      const end = new Date(b.end)
-      while (t < end) {
-        const key = format(t, "yyyy-MM-dd'T'HH:mm")
-        if (key.startsWith(dateNorm)) occupied.add(key)
-        t = addMinutes(t, 30)
-      }
+      try {
+        let t = new Date(b.start)
+        const end = new Date(b.end)
+        while (t < end) {
+          const key = format(t, "yyyy-MM-dd'T'HH:mm")
+          if (key.startsWith(dateNorm)) occupied.add(key)
+          t = addMinutes(t, 30)
+        }
+      } catch (_) {}
     }
 
     const steps = Math.ceil(durationMinutes / 30)
     const availableSlots = slots.filter((slotStr) => {
-      const slotDate = new Date(slotStr)
-      for (let i = 0; i < steps; i++) {
-        const t = addMinutes(slotDate, i * 30)
-        const key = format(t, "yyyy-MM-dd'T'HH:mm")
-        if (occupied.has(key)) return false
-        const h = t.getHours()
-        const m = t.getMinutes()
-        const v = h + m / 60
-        if (v < dayStart || v >= dayEnd) return false
+      try {
+        const slotDate = new Date(slotStr)
+        if (isNaN(slotDate.getTime())) return false
+        for (let i = 0; i < steps; i++) {
+          const t = addMinutes(slotDate, i * 30)
+          const key = format(t, "yyyy-MM-dd'T'HH:mm")
+          if (occupied.has(key)) return false
+          const v = t.getHours() + t.getMinutes() / 60
+          if (v < dayStart || v >= dayEnd) return false
+        }
+        return true
+      } catch {
+        return false
       }
-      return true
     })
 
     return NextResponse.json({

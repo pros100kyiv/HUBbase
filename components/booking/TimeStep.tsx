@@ -74,14 +74,35 @@ export function TimeStep({ businessId }: TimeStepProps) {
   const effectiveBusinessId = businessId ?? state.businessId ?? null
 
   useEffect(() => {
-    if (state.selectedDate && state.selectedMaster && effectiveBusinessId) {
+    const masterId = state.selectedMaster?.id
+    const hasValidMaster = typeof masterId === 'string' && masterId.trim().length > 0
+    const hasValidBusiness = typeof effectiveBusinessId === 'string' && effectiveBusinessId.trim().length > 0
+
+    if (state.selectedDate && hasValidMaster && hasValidBusiness) {
       setSlotsLoading(true)
       setSlotsLoadError(false)
       const dateStr = format(state.selectedDate, 'yyyy-MM-dd')
-      const url = `/api/availability?masterId=${state.selectedMaster.id}&businessId=${effectiveBusinessId}&date=${dateStr}&durationMinutes=${totalDuration}`
+      const params = new URLSearchParams({
+        masterId: masterId!.trim(),
+        businessId: effectiveBusinessId.trim(),
+        date: dateStr,
+        durationMinutes: String(totalDuration),
+      })
+      const url = `/api/availability?${params.toString()}`
       fetch(url)
-        .then(res => res.json().catch(() => ({ availableSlots: [], scheduleNotConfigured: true })))
+        .then(res => {
+          if (!res.ok) return res.text().then(() => ({ availableSlots: [], scheduleNotConfigured: true }))
+          return res.json()
+        })
+        .catch(() => ({ availableSlots: [], scheduleNotConfigured: true }))
         .then(data => {
+          if (!data || typeof data !== 'object') {
+            setAvailableSlots([])
+            setScheduleNotConfigured(false)
+            setSlotsLoadError(true)
+            setTime('')
+            return
+          }
           const raw = Array.isArray(data?.availableSlots) ? data.availableSlots : []
           const now = new Date()
           const futureOnly = raw.filter((slotStr: string) => {
@@ -184,9 +205,11 @@ export function TimeStep({ businessId }: TimeStepProps) {
               <div className="rounded-xl p-4 mb-4 card-glass border border-white/20 bg-white/5">
                 <p className="text-sm font-medium text-gray-300">Місць немає на цей день.</p>
                 <p className="text-xs text-gray-400 mt-1">
-                  {slotsReason === 'all_occupied'
-                    ? 'Усі години на цей день зайняті записами. Оберіть іншу дату в календарі вище.'
-                    : 'Графік майстра на цей день не налаштовано або немає робочого часу. Увімкніть день і години в кабінеті (Графік роботи та спеціалісти). Оберіть іншу дату.'}
+                  {slotsLoadError
+                    ? 'Не вдалося завантажити доступні години. Перевірте зʼєднання та спробуйте ще раз або оберіть іншу дату.'
+                    : slotsReason === 'all_occupied'
+                      ? 'Усі години на цей день зайняті записами. Оберіть іншу дату в календарі вище.'
+                      : 'Графік майстра на цей день не налаштовано або немає робочого часу. Увімкніть день і години в кабінеті (Графік роботи та спеціалісти). Оберіть іншу дату.'}
                 </p>
               </div>
             )}
