@@ -8,6 +8,7 @@ import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
 import { CreateAppointmentForm } from '@/components/admin/CreateAppointmentForm'
 import { EditAppointmentForm } from '@/components/admin/EditAppointmentForm'
 import { QuickClientCard } from '@/components/admin/QuickClientCard'
+import { ModalPortal } from '@/components/ui/modal-portal'
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon, FilterIcon, DownloadIcon, CheckIcon, UserIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui/toast'
@@ -782,19 +783,6 @@ export default function AppointmentsPage() {
             </div>
           )}
 
-          {/* Create Appointment Form */}
-          {showCreateForm && (
-            <div className="rounded-xl p-4 md:p-6 card-floating">
-              <CreateAppointmentForm
-                businessId={business.id}
-                masters={masters}
-                services={services}
-                selectedDate={selectedDate || undefined}
-                onSuccess={handleAppointmentCreated}
-                onCancel={() => setShowCreateForm(false)}
-              />
-            </div>
-          )}
         </div>
 
         {/* Right Column - Sidebar (1 column) - same as Dashboard */}
@@ -853,6 +841,44 @@ export default function AppointmentsPage() {
           </div>
         </div>
       </div>
+
+      {/* Create Appointment Modal */}
+      {showCreateForm && business && (
+        <ModalPortal>
+          <div
+            className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4 z-[100]"
+            onClick={() => setShowCreateForm(false)}
+          >
+            <div
+              className="relative w-[95%] sm:w-full sm:max-w-2xl bg-[#1A1A1A] border border-white/10 rounded-t-xl sm:rounded-xl shadow-xl modal-content overflow-y-auto sm:my-auto pb-[max(1rem,env(safe-area-inset-bottom))]"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-white">Створити новий запис</h2>
+                  <button
+                    type="button"
+                    onClick={() => setShowCreateForm(false)}
+                    className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                    aria-label="Закрити"
+                  >
+                    <span className="text-xl leading-none">×</span>
+                  </button>
+                </div>
+                <CreateAppointmentForm
+                  businessId={business.id}
+                  masters={masters}
+                  services={services}
+                  selectedDate={selectedDate || undefined}
+                  onSuccess={handleAppointmentCreated}
+                  onCancel={() => setShowCreateForm(false)}
+                  embedded
+                />
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
 
       {/* Quick Client Card Modal */}
       {showQuickClientCard && business && (

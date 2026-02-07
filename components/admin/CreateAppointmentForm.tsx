@@ -15,6 +15,8 @@ interface CreateAppointmentFormProps {
   selectedDate?: Date
   onSuccess: () => void
   onCancel: () => void
+  /** У модальному вікні — без Card і заголовка */
+  embedded?: boolean
 }
 
 export function CreateAppointmentForm({
@@ -24,6 +26,7 @@ export function CreateAppointmentForm({
   selectedDate,
   onSuccess,
   onCancel,
+  embedded = false,
 }: CreateAppointmentFormProps) {
   const formRef = useRef<HTMLDivElement>(null)
   const initialDate = selectedDate && isValid(selectedDate) ? selectedDate : new Date()
@@ -110,14 +113,8 @@ export function CreateAppointmentForm({
     }
   }
 
-  return (
-    <div ref={formRef}>
-      <Card className="card-candy">
-        <CardHeader>
-          <CardTitle className="text-subheading">Створити новий запис</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+  const formContent = (
+    <form onSubmit={handleSubmit} className="space-y-4">
             {/* Master Selection */}
             <div>
               <label className="block text-sm font-medium mb-2 text-foreground">
@@ -347,6 +344,20 @@ export function CreateAppointmentForm({
               </Button>
             </div>
           </form>
+  )
+
+  if (embedded) {
+    return <div ref={formRef}>{formContent}</div>
+  }
+
+  return (
+    <div ref={formRef}>
+      <Card className="card-candy">
+        <CardHeader>
+          <CardTitle className="text-subheading">Створити новий запис</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {formContent}
         </CardContent>
       </Card>
     </div>
