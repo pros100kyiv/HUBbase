@@ -228,12 +228,12 @@ export function MasterScheduleModal({
             <XIcon className="w-5 h-5" />
           </button>
 
-          <div className="pr-10 mb-4 flex-shrink-0">
+          <div className="pr-10 mb-2 flex-shrink-0">
             <h2 className="modal-title">Графік роботи</h2>
             <p className="modal-subtitle truncate">{master.name}</p>
           </div>
 
-          <div className="flex gap-2 mb-4 border-b border-white/20 pb-2">
+          <div className="flex gap-2 mb-2 border-b border-white/20 pb-2">
             <button
               type="button"
               onClick={() => setActiveTab('week')}
@@ -256,7 +256,7 @@ export function MasterScheduleModal({
             </button>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4 flex-1 min-h-0 overflow-y-auto">
+          <form onSubmit={handleSubmit} className="space-y-2.5 flex-1 min-h-0 overflow-y-auto">
             {activeTab === 'week' && (
               <div>
                 <h3 className="text-sm font-semibold text-white mb-2">Робочі години (типовий тиждень)</h3>

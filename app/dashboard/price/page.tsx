@@ -228,7 +228,7 @@ export default function PricePage() {
                 <span className="text-xl leading-none">×</span>
               </button>
               <div className="pr-10 flex-1 min-h-0 overflow-y-auto">
-                <h2 className="modal-title text-white mb-4">Додати до прайсу</h2>
+                <h2 className="modal-title text-white mb-2">Додати до прайсу</h2>
                 <form onSubmit={handleCreateService} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1.5">Назва послуги *</label>

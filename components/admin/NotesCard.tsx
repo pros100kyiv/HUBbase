@@ -221,13 +221,13 @@ export function NotesCard({ businessId }: NotesCardProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <div className="pr-10 mb-4">
+              <div className="pr-10 mb-2">
                 <h3 className="modal-title">
                   {editingNote ? 'Редагувати нотатку' : 'Створити нотатку'}
                 </h3>
               </div>
 
-              <div className="space-y-4 flex-1 min-h-0 overflow-y-auto">
+              <div className="space-y-2.5 flex-1 min-h-0 overflow-y-auto">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Дата</label>
                   <input
@@ -298,7 +298,7 @@ export function NotesCard({ businessId }: NotesCardProps) {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <h3 className="modal-title pr-10 mb-4">Виберіть дату</h3>
+              <h3 className="modal-title pr-10 mb-2">Виберіть дату</h3>
 
               <div className="space-y-2">
                 <input

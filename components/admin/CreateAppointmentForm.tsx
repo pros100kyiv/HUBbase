@@ -242,8 +242,8 @@ export function CreateAppointmentForm({
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
-                    <h3 className="modal-title pr-10 mb-2">Обрати послуги</h3>
-                    <div className="p-2 pb-4 border-b border-white/10 flex-shrink-0">
+                    <h3 className="modal-title pr-10 mb-1.5">Обрати послуги</h3>
+                    <div className="p-1.5 pb-2 border-b border-white/10 flex-shrink-0">
                       <input
                         type="text"
                         value={serviceSearchQuery}
@@ -285,11 +285,11 @@ export function CreateAppointmentForm({
                         </p>
                       )}
                     </div>
-                    <div className="p-4 border-t border-white/10 flex-shrink-0">
+                    <div className="p-2 border-t border-white/10 flex-shrink-0">
                       <button
                         type="button"
                         onClick={() => setShowServiceModal(false)}
-                        className="w-full dashboard-btn-primary min-h-[48px] touch-target"
+                        className="w-full dashboard-btn-primary min-h-[40px] py-2 touch-target"
                       >
                         Готово
                       </button>

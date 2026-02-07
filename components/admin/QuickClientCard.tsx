@@ -201,7 +201,7 @@ export function QuickClientCard({
           </button>
         )}
 
-        <div className="pr-10 mb-4 flex-shrink-0">
+        <div className="pr-10 mb-2 flex-shrink-0">
           <h2 className="modal-title">
             {editingClient ? 'Редагувати клієнта' : 'Швидке створення клієнта'}
           </h2>
@@ -210,7 +210,7 @@ export function QuickClientCard({
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 flex-1 min-h-0 overflow-y-auto">
+        <form onSubmit={handleSubmit} className="space-y-2.5 flex-1 min-h-0 overflow-y-auto">
           {/* Ім'я */}
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-300">

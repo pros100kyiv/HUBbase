@@ -268,7 +268,7 @@ export function StatisticsDetailModal({
           >
             <XIcon className="w-5 h-5" />
           </button>
-          <div className="pr-10 mb-4 flex-shrink-0 flex items-center gap-3">
+          <div className="pr-10 mb-2 flex-shrink-0 flex items-center gap-3">
             <div className={cn('w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0', iconColor)}>
               {icon}
             </div>
@@ -286,7 +286,7 @@ export function StatisticsDetailModal({
               <p className="mt-4 text-gray-400">Завантаження...</p>
             </div>
           ) : (
-            <div className="space-y-6 flex-1 min-h-0 overflow-y-auto">
+            <div className="space-y-4 flex-1 min-h-0 overflow-y-auto">
               {/* Загальна статистика */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl bg-white/5 border border-white/10">

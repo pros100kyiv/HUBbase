@@ -250,9 +250,9 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
         >
           <XIcon className="w-5 h-5" />
         </button>
-        <h2 className="modal-title pr-10 mb-4">Нові бронювання ({appointments.length})</h2>
+        <h2 className="modal-title pr-10 mb-2">Нові бронювання ({appointments.length})</h2>
 
-        <div className="flex-1 min-h-0 overflow-y-auto p-4 pt-0">
+        <div className="flex-1 min-h-0 overflow-y-auto p-3 pt-0">
           {loading ? (
             <div className="text-center py-8">
               <p className="text-gray-400">Завантаження...</p>

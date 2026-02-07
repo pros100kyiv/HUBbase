@@ -161,11 +161,11 @@ export function MonthProgressCard({ stats, loading }: MonthProgressCardProps) {
               >
                 <XIcon className="w-5 h-5" />
               </button>
-              <div className="pr-10 mb-6">
+              <div className="pr-10 mb-2">
                 <h2 className="modal-title">Статистика місяця</h2>
               </div>
 
-              <div className="grid grid-cols-2 gap-4 mb-6">
+              <div className="grid grid-cols-2 gap-3 mb-3">
                 <div className="p-4 rounded-xl bg-white/5 border border-white/10">
                   <div className="flex items-center gap-2 text-gray-400 mb-2">
                     <CheckIcon className="w-4 h-4 text-green-400" />
@@ -184,7 +184,7 @@ export function MonthProgressCard({ stats, loading }: MonthProgressCardProps) {
                 </div>
               </div>
 
-              <div className="space-y-3 mb-6">
+              <div className="space-y-2 mb-3">
                 <h3 className="text-sm font-semibold text-gray-300 mb-2">Деталі записів</h3>
                 
                 <div className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">

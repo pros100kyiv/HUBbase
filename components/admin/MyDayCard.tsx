@@ -639,7 +639,7 @@ export function MyDayCard({
                 </svg>
               </button>
               <h3 className="modal-title pr-10 mb-2">{getStatusTitle(selectedStatus)}</h3>
-              <div className="flex-1 min-h-0 overflow-y-auto p-4 pt-0">
+              <div className="flex-1 min-h-0 overflow-y-auto p-3 pt-0">
                 <div className="space-y-2">
                   {getFilteredAppointments(selectedStatus).length > 0 ? (
                     getFilteredAppointments(selectedStatus).map((apt) => (
@@ -691,7 +691,7 @@ export function MyDayCard({
                   • {format(new Date(selectedAppointment.startTime), 'HH:mm')}–{format(new Date(selectedAppointment.endTime), 'HH:mm')}
                 </p>
               </div>
-              <div className="flex-1 min-h-0 overflow-y-auto p-4 pt-0 space-y-3">
+              <div className="flex-1 min-h-0 overflow-y-auto p-3 pt-0 space-y-2">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-400">Статус</span>
                   <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(selectedAppointment.status)}`}>
@@ -795,28 +795,26 @@ export function MyDayCard({
         <ModalPortal>
           <div className="modal-overlay sm:!p-4" onClick={() => setHistoryPhone(null)}>
             <div
-              className="relative w-[95%] sm:w-full max-w-xl modal-content modal-dialog flex flex-col animate-in fade-in zoom-in-95 duration-200"
+              className="relative w-[95%] sm:w-full max-w-xl modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
               onTouchStart={handleTouchStart}
               onTouchEnd={(e) => handleTouchEnd(e, () => setHistoryPhone(null))}
             >
-              <div className="flex items-center justify-between p-4 border-b border-white/10 flex-shrink-0">
-                <div className="min-w-0">
-                  <h3 className="text-lg font-semibold text-white truncate">Історія клієнта</h3>
-                  <p className="text-xs text-gray-400 truncate">{historyPhone}</p>
-                </div>
-                <button
-                  onClick={() => setHistoryPhone(null)}
-                  className="p-1.5 hover:bg-white/10 rounded-lg transition-colors text-gray-400 hover:text-white"
-                  aria-label="Закрити"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
+              <button
+                type="button"
+                onClick={() => setHistoryPhone(null)}
+                className="modal-close text-gray-400 hover:text-white rounded-xl"
+                aria-label="Закрити"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <div className="pr-10 mb-2 flex-shrink-0">
+                <h3 className="modal-title truncate">Історія клієнта</h3>
+                <p className="modal-subtitle truncate">{historyPhone}</p>
               </div>
-
-              <div className="p-4">
+              <div className="flex-1 min-h-0 overflow-y-auto p-3 pt-0">
                 {historyLoading ? (
                   <div className="text-center py-10 text-sm text-gray-400">Завантаження…</div>
                 ) : historyAppointments.length === 0 ? (
@@ -878,7 +876,7 @@ export function MyDayCard({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <h3 className="modal-title pr-10 mb-4">Виберіть дату</h3>
+              <h3 className="modal-title pr-10 mb-2">Виберіть дату</h3>
               <div className="space-y-2 flex-1 min-h-0 overflow-y-auto">
               <input
                 type="date"

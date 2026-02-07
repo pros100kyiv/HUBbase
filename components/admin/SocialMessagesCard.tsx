@@ -281,7 +281,7 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                     </svg>
                   </button>
-                  <div className="pr-10 mb-2 flex-shrink-0 flex items-center gap-3">
+                  <div className="pr-10 mb-1.5 flex-shrink-0 flex items-center gap-2">
                     <div className={cn(
                       'w-10 h-10 rounded-full flex items-center justify-center text-white flex-shrink-0',
                       getPlatformBgColor(selectedMessage.platform)
@@ -293,7 +293,7 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
                       <div className="modal-subtitle">{getPlatformShortName(selectedMessage.platform)}</div>
                     </div>
                   </div>
-                  <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-4 pt-0">
+                  <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-4 py-3 pt-0">
                   {/* Original Message */}
                   <div className="bg-white/5 rounded-lg p-3 mb-4">
                     <p className="text-sm text-gray-300 whitespace-pre-wrap break-words">{selectedMessage.message}</p>
