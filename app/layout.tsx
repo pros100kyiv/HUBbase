@@ -34,8 +34,7 @@ export default function RootLayout({
               (function() {
                 try {
                   var theme = localStorage.getItem('theme');
-                  var systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-                  var initialTheme = theme === 'light' || theme === 'dark' || theme === 'oled' ? theme : systemTheme;
+                  var initialTheme = theme === 'light' || theme === 'dark' || theme === 'oled' ? theme : 'dark';
                   var root = document.documentElement;
                   root.classList.remove('light', 'dark', 'oled');
                   if (initialTheme === 'oled') {
