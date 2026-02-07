@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { SearchIcon, MoneyIcon, FilterIcon, CheckSquareIcon, SquareIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
+import { ModalPortal } from '@/components/ui/modal-portal'
+import { toast } from '@/components/ui/toast'
 
 interface Service {
   id: string
@@ -21,6 +23,17 @@ export default function PricePage() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null)
   const [selectedServices, setSelectedServices] = useState<Service[]>([])
+  const [showCreateModal, setShowCreateModal] = useState(false)
+  const [createForm, setCreateForm] = useState({ name: '', price: '', duration: '', category: '' })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+
+  const loadServices = () => {
+    if (!business?.id) return
+    fetch(`/api/services?businessId=${business.id}`)
+      .then(res => res.json())
+      .then(data => { if (Array.isArray(data)) setServices(data) })
+      .catch(err => console.error('Failed to load services', err))
+  }
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -73,6 +86,48 @@ export default function PricePage() {
   const totalPrice = selectedServices.reduce((sum, s) => sum + s.price, 0)
   const totalDuration = selectedServices.reduce((sum, s) => sum + s.duration, 0)
 
+  const handleCreateService = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const name = createForm.name.trim()
+    const priceNum = parseInt(createForm.price, 10)
+    const durationNum = parseInt(createForm.duration, 10)
+    if (!name || isNaN(priceNum) || priceNum < 0 || isNaN(durationNum) || durationNum < 1) {
+      toast({ title: 'Помилка', description: 'Заповніть назву, ціну (≥ 0) та тривалість (≥ 1 хв)', type: 'error' })
+      return
+    }
+    if (!business?.id) {
+      toast({ title: 'Помилка', message: 'Бізнес не визначено', variant: 'error' })
+      return
+    }
+    setIsSubmitting(true)
+    try {
+      const res = await fetch('/api/services', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId: business.id,
+          name,
+          price: priceNum,
+          duration: durationNum,
+          category: createForm.category.trim() || undefined,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        toast({ title: 'Помилка', description: data?.error || 'Не вдалося додати послугу', type: 'error' })
+        return
+      }
+      toast({ title: 'Готово', message: 'Послугу додано до прайсу', variant: 'success' })
+      setShowCreateModal(false)
+      setCreateForm({ name: '', price: '', duration: '', category: '' })
+      loadServices()
+    } catch (err) {
+      toast({ title: 'Помилка', description: 'Помилка мережі', type: 'error' })
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   // Style constants
   const cardStyle = {
     backgroundColor: 'rgba(255, 255, 255, 0.05)',
@@ -91,8 +146,16 @@ export default function PricePage() {
           <p className="text-gray-400 mt-1">Оберіть послуги для розрахунку вартості</p>
         </div>
         
-        {/* Search & Filter */}
-        <div className="flex gap-2 w-full md:w-auto">
+        <div className="flex flex-wrap gap-2 w-full md:w-auto">
+          <button
+            type="button"
+            onClick={() => setShowCreateModal(true)}
+            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-black font-semibold text-sm hover:bg-gray-100 transition-colors shadow-lg"
+          >
+            <span className="text-lg leading-none">+</span>
+            Додати до прайсу
+          </button>
+          {/* Search & Filter */}
           <div className="relative flex-1 md:w-64">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <SearchIcon className="h-5 w-5 text-gray-400" />
@@ -107,6 +170,108 @@ export default function PricePage() {
           </div>
         </div>
       </div>
+
+      {/* Modal: додати позицію до прайсу */}
+      {showCreateModal && (
+        <ModalPortal>
+          <div className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4 z-[100]" onClick={() => !isSubmitting && setShowCreateModal(false)}>
+            <div
+              className="relative w-full sm:max-w-md bg-[#1A1A1A] border border-white/10 rounded-xl shadow-xl modal-content overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom))]"
+              onClick={e => e.stopPropagation()}
+            >
+              <div className="p-4 sm:p-6">
+                <div className="flex items-center justify-between mb-4">
+                  <h2 className="text-xl font-bold text-white">Додати до прайсу</h2>
+                  <button
+                    type="button"
+                    onClick={() => !isSubmitting && setShowCreateModal(false)}
+                    className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+                    aria-label="Закрити"
+                  >
+                    <span className="text-xl leading-none">×</span>
+                  </button>
+                </div>
+                <form onSubmit={handleCreateService} className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Назва послуги *</label>
+                    <input
+                      type="text"
+                      value={createForm.name}
+                      onChange={e => setCreateForm(f => ({ ...f, name: e.target.value }))}
+                      placeholder="Наприклад: Стрижка чоловіча"
+                      required
+                      className="w-full px-4 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                    />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1.5">Ціна (₴) *</label>
+                      <input
+                        type="number"
+                        min="0"
+                        value={createForm.price}
+                        onChange={e => setCreateForm(f => ({ ...f, price: e.target.value }))}
+                        placeholder="100"
+                        required
+                        className="w-full px-4 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-300 mb-1.5">Тривалість (хв) *</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={createForm.duration}
+                        onChange={e => setCreateForm(f => ({ ...f, duration: e.target.value }))}
+                        placeholder="30"
+                        required
+                        className="w-full px-4 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Категорія (опціонально)</label>
+                    <input
+                      type="text"
+                      value={createForm.category}
+                      onChange={e => setCreateForm(f => ({ ...f, category: e.target.value }))}
+                      placeholder="Наприклад: Стрижка, Манікюр"
+                      className="w-full px-4 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                    />
+                    {categories.length > 0 && (
+                      <select
+                        onChange={e => e.target.value && setCreateForm(f => ({ ...f, category: e.target.value }))}
+                        className="mt-1.5 w-full px-3 py-2 rounded-lg border border-white/20 bg-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                      >
+                        <option value="">Або виберіть існуючу категорію</option>
+                        {categories.map(cat => (
+                          <option key={cat} value={cat}>{cat}</option>
+                        ))}
+                      </select>
+                    )}
+                  </div>
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => !isSubmitting && setShowCreateModal(false)}
+                      className="flex-1 px-4 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white font-medium hover:bg-white/15 transition-colors"
+                    >
+                      Скасувати
+                    </button>
+                    <button
+                      type="submit"
+                      disabled={isSubmitting}
+                      className="flex-1 px-4 py-2.5 rounded-lg bg-white text-black font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50"
+                    >
+                      {isSubmitting ? 'Збереження...' : 'Додати'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
 
       {/* Categories */}
       {categories.length > 0 && (
