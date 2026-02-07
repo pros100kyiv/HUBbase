@@ -634,12 +634,13 @@ export function MyDayCard({
         </div>
       )}
 
-      {/* Status Details Modal */}
+      {/* Status Details Modal — обмежена ширина, щоб не розтягувалась на весь екран */}
       {selectedStatus && (
         <ModalPortal>
           <div className="modal-overlay sm:!p-4" onClick={() => setSelectedStatus(null)}>
             <div
-              className="relative w-[95%] sm:w-full max-w-lg modal-content modal-dialog text-white max-h-[82dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+              className="relative w-[95%] sm:w-full modal-content modal-dialog text-white max-h-[82dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+              style={{ maxWidth: 'min(32rem, 95vw)' }}
               onClick={(e) => e.stopPropagation()}
               onTouchStart={handleTouchStart}
               onTouchEnd={(e) => handleTouchEnd(e, () => setSelectedStatus(null))}
@@ -680,12 +681,13 @@ export function MyDayCard({
         </ModalPortal>
       )}
 
-      {/* Appointment Details Modal */}
+      {/* Appointment Details Modal — обмежена ширина */}
       {selectedAppointment && (
         <ModalPortal>
           <div className="modal-overlay sm:!p-4" onClick={() => setSelectedAppointment(null)}>
             <div
-              className="relative w-[95%] sm:w-full max-w-lg modal-content modal-dialog text-white max-h-[82dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+              className="relative w-[95%] sm:w-full modal-content modal-dialog text-white max-h-[82dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+              style={{ maxWidth: 'min(32rem, 95vw)' }}
               onClick={(e) => e.stopPropagation()}
               onTouchStart={handleTouchStart}
               onTouchEnd={(e) => handleTouchEnd(e, () => setSelectedAppointment(null))}
@@ -806,12 +808,13 @@ export function MyDayCard({
         </ModalPortal>
       )}
 
-      {/* Client History Modal */}
+      {/* Client History Modal — обмежена ширина */}
       {historyPhone && (
         <ModalPortal>
           <div className="modal-overlay sm:!p-4" onClick={() => setHistoryPhone(null)}>
             <div
-              className="relative w-[95%] sm:w-full max-w-xl modal-content modal-dialog text-white max-h-[82dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+              className="relative w-[95%] sm:w-full modal-content modal-dialog text-white max-h-[82dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+              style={{ maxWidth: 'min(36rem, 95vw)' }}
               onClick={(e) => e.stopPropagation()}
               onTouchStart={handleTouchStart}
               onTouchEnd={(e) => handleTouchEnd(e, () => setHistoryPhone(null))}
@@ -874,12 +877,13 @@ export function MyDayCard({
         </ModalPortal>
       )}
 
-      {/* Date Picker Modal */}
+      {/* Date Picker Modal — компактна ширина */}
       {showDatePicker && (
         <ModalPortal>
           <div className="modal-overlay sm:!p-4" onClick={() => setShowDatePicker(false)}>
             <div
-              className="relative w-[95%] sm:w-full max-w-sm modal-content modal-dialog text-white max-h-[82dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+              className="relative w-[95%] sm:w-full modal-content modal-dialog text-white max-h-[82dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+              style={{ maxWidth: 'min(24rem, 95vw)' }}
               onClick={(e) => e.stopPropagation()}
             >
               <button
