@@ -23,15 +23,37 @@ const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'frida
 // 5. Графік є, але всі згенеровані слоти зайняті записами або в blockedPeriods → availableSlots: [], reason: 'all_occupied'
 // 6. На клієнті: слоти відфільтровані як минулі (futureOnly) — якщо обрано сьогодні і зараз пізно, усі слоти можуть бути в минулому
 
-function parseWorkingHours(json: string | null): WorkingHours | null {
-  if (!json || !json.trim()) return null
-  try {
-    const parsed = JSON.parse(json)
-    if (parsed && typeof parsed === 'object') return parsed
-  } catch (e) {
-    console.error('Error parsing working hours:', e)
+function parseWorkingHours(json: string | Record<string, unknown> | null | undefined): WorkingHours | null {
+  if (json == null) return null
+  let parsed: Record<string, unknown>
+  if (typeof json === 'object' && !Array.isArray(json)) {
+    parsed = json
+  } else if (typeof json === 'string') {
+    if (!json.trim()) return null
+    try {
+      parsed = JSON.parse(json) as Record<string, unknown>
+    } catch (e) {
+      console.error('Error parsing working hours:', e)
+      return null
+    }
+  } else {
+    return null
   }
-  return null
+  if (!parsed || typeof parsed !== 'object') return null
+  const result: WorkingHours = {}
+  for (const dayNameKey of dayNames) {
+    const rawKey = Object.keys(parsed).find((k) => k.toLowerCase() === dayNameKey) ?? dayNameKey
+    const day = parsed[rawKey]
+    if (day && typeof day === 'object' && day !== null && 'enabled' in day) {
+      const d = day as { enabled?: boolean; start?: string; end?: string }
+      result[dayNameKey] = {
+        enabled: Boolean(d.enabled),
+        start: typeof d.start === 'string' ? d.start : '09:00',
+        end: typeof d.end === 'string' ? d.end : '18:00',
+      }
+    }
+  }
+  return Object.keys(result).length > 0 ? result : null
 }
 
 /** Повертає діапазон годин дня. Якщо графік не налаштований або день вимкнений — enabled: false (не підставляємо 9–21). */
@@ -39,17 +61,16 @@ function getDayWindow(
   workingHours: WorkingHours | null,
   dayName: string
 ): { start: number; end: number; enabled: boolean } {
-  if (!workingHours || !workingHours[dayName]) {
-    return { start: 0, end: 0, enabled: false }
-  }
+  if (!workingHours) return { start: 0, end: 0, enabled: false }
   const day = workingHours[dayName]
-  if (!day.enabled) {
-    return { start: 0, end: 0, enabled: false }
-  }
-  const [startH, startM] = (day.start || '09:00').split(':').map(Number)
-  const [endH, endM] = (day.end || '18:00').split(':').map(Number)
-  const start = startH + (startM || 0) / 60
-  const endExact = endH + (endM || 0) / 60
+  if (!day || typeof day !== 'object') return { start: 0, end: 0, enabled: false }
+  if (day.enabled !== true) return { start: 0, end: 0, enabled: false }
+  const startStr = day.start != null ? String(day.start) : '09:00'
+  const endStr = day.end != null ? String(day.end) : '18:00'
+  const [startH, startM] = startStr.split(':').map((n) => parseInt(n, 10) || 0)
+  const [endH, endM] = endStr.split(':').map((n) => parseInt(n, 10) || 0)
+  const start = startH + startM / 60
+  const endExact = endH + endM / 60
   const startHour = Math.floor(start)
   const endHour = endExact > Math.floor(endExact) ? Math.ceil(endExact) : Math.floor(endExact)
   return { start: startHour, end: endHour, enabled: true }
