@@ -225,7 +225,7 @@ export function CreateAppointmentForm({
             {showServiceModal && (
               <ModalPortal>
                 <div
-                  className="modal-overlay sm:!p-4 z-[200]"
+                  className="modal-overlay modal-overlay-nested sm:!p-4"
                   onClick={() => setShowServiceModal(false)}
                 >
                   <div
