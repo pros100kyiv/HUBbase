@@ -60,6 +60,7 @@ function parseWorkingHours(workingHours?: string | null): WorkingHours | null {
 
 export default function SchedulePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [business, setBusiness] = useState<{ id: string } | null>(null)
   const [masters, setMasters] = useState<Master[]>([])
   const [loading, setLoading] = useState(true)
