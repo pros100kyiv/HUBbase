@@ -112,10 +112,17 @@ export function MyDayCard({
     : internalSelectedDate
   const isToday = isSameDay(selectedDate, new Date())
 
-  /** Записи тільки для вибраного дня (за календарною датою), щоб відображення завжди відповідало обраній даті */
-  const appointmentsForSelectedDay = appointments.filter((apt) =>
-    isSameDay(new Date(apt.startTime), selectedDate)
-  )
+  /** Записи тільки для вибраного дня (за календарною датою). Якщо startTime відсутній або невалідний — не відкидаємо запис, щоб не втрачати дані */
+  const appointmentsForSelectedDay = appointments.filter((apt) => {
+    if (apt.startTime == null || apt.startTime === '') return true
+    try {
+      const start = new Date(apt.startTime)
+      if (Number.isNaN(start.getTime())) return true
+      return isSameDay(start, selectedDate)
+    } catch {
+      return true
+    }
+  })
   const totalForDay = appointmentsForSelectedDay.length
   const completedForDay = appointmentsForSelectedDay.filter(
     (apt) => apt.status === 'Done' || apt.status === 'Виконано'

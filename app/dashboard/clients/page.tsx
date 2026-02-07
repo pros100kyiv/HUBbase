@@ -86,20 +86,25 @@ export default function ClientsPage() {
           fetch(`/api/appointments?businessId=${business.id}`),
         ])
 
-        const [servicesData, mastersData, clientsData, appointmentsData] = await Promise.all([
+        const [servicesDataRaw, mastersDataRaw, clientsDataRaw, appointmentsDataRaw] = await Promise.all([
           servicesRes.json(),
           mastersRes.json(),
           clientsRes.json(),
           appointmentsRes.json(),
         ])
 
-        setServices(servicesData || [])
-        setMasters(mastersData || [])
-        setAppointments(appointmentsData || [])
+        const servicesData = Array.isArray(servicesDataRaw) ? servicesDataRaw : []
+        const mastersData = Array.isArray(mastersDataRaw) ? mastersDataRaw : []
+        const clientsData = Array.isArray(clientsDataRaw) ? clientsDataRaw : []
+        const appointmentsData = Array.isArray(appointmentsDataRaw) ? appointmentsDataRaw : []
+
+        setServices(servicesData)
+        setMasters(mastersData)
+        setAppointments(appointmentsData)
         
         // Об'єднуємо дані клієнтів з appointments для розрахунку статистики
-        const clientsWithStats = (clientsData || []).map((client: any) => {
-          const clientAppointments = (appointmentsData || []).filter(
+        const clientsWithStats = clientsData.map((client: any) => {
+          const clientAppointments = appointmentsData.filter(
             (apt: any) => apt.clientPhone === client.phone
           )
           const appointmentsDesc = [...clientAppointments].sort(

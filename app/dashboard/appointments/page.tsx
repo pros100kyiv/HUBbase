@@ -124,7 +124,8 @@ export default function AppointmentsPage() {
         return res.json()
       })
       .then((data) => {
-        const withMasters = (data || []).map((apt: Appointment) => {
+        const list = Array.isArray(data) ? data : []
+        const withMasters = list.map((apt: Appointment) => {
           const master = masters.find((m: any) => m.id === apt.masterId)
           return { ...apt, masterName: master?.name || apt.master?.name || 'Невідомий спеціаліст' }
         })
