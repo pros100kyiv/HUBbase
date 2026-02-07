@@ -363,9 +363,9 @@ export function MyDayCard({
         onClick={onClick}
         className="w-full text-left bg-white/5 border border-white/10 rounded-xl p-2.5 md:p-3 hover:bg-white/10 transition-all active:scale-[0.99] group relative overflow-hidden touch-manipulation"
       >
-        {/* Мобільний: вертикальний стек. Десктоп: ряд */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-3">
-          <div className="flex items-start gap-2.5 sm:gap-3 min-w-0">
+        {/* Ряд: контент зліва, статус і кнопки дій завжди справа в одній колонці */}
+        <div className="flex flex-row items-stretch gap-2 sm:gap-3">
+          <div className="flex items-start gap-2.5 sm:gap-3 min-w-0 flex-1">
             {/* Time Box */}
             <div className="flex flex-col items-center justify-center w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 bg-[#2A2A2A] rounded-lg border border-white/10 flex-shrink-0 shadow-inner">
               <span className="text-sm font-bold text-blue-400 leading-none">
@@ -405,9 +405,9 @@ export function MyDayCard({
             </div>
           </div>
 
-          {/* Right: Status & Actions — завжди внизу на мобільному, справа на десктопі */}
-          <div className="flex items-center justify-between sm:justify-end gap-2 sm:flex-col sm:items-end sm:pl-0">
-            <div className={`px-2 py-1 rounded text-[10px] font-medium border flex-shrink-0 ${getStatusColor(apt.status)}`}>
+          {/* Права колонка: статус зверху, кнопки дій знизу — однаково в списку та в архіві (модалці) */}
+          <div className="flex flex-col items-end justify-center gap-1.5 flex-shrink-0">
+            <div className={`px-2 py-1 rounded text-[10px] font-medium border ${getStatusColor(apt.status)}`}>
               {getStatusLabel(apt.status)}
             </div>
             <div className="flex items-center gap-1.5">
