@@ -67,8 +67,8 @@ export default function PricePage() {
 
   // Filter services
   const filteredServices = services.filter(service => {
-    const matchesSearch = service.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          (service.category && service.category.toLowerCase().includes(searchQuery.toLowerCase()))
+    const matchesSearch = service.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      (service.category && service.category.toLowerCase().includes(searchQuery.toLowerCase()))
     const matchesCategory = selectedCategory ? service.category === selectedCategory : true
     return matchesSearch && matchesCategory
   })
@@ -145,7 +145,7 @@ export default function PricePage() {
           </h1>
           <p className="text-gray-400 mt-1">Оберіть послуги для розрахунку вартості</p>
         </div>
-        
+
         <div className="flex flex-wrap gap-2 w-full md:w-auto">
           <button
             type="button"
@@ -176,7 +176,7 @@ export default function PricePage() {
         <ModalPortal>
           <div className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4 z-[100]" onClick={() => !isSubmitting && setShowCreateModal(false)}>
             <div
-              className="relative w-full sm:max-w-md bg-[#1A1A1A] border border-white/10 rounded-xl shadow-xl modal-content overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom))]"
+              className="relative w-[95%] sm:w-full sm:max-w-md bg-[#1A1A1A] border border-white/10 rounded-t-xl sm:rounded-xl shadow-xl modal-content overflow-y-auto sm:my-auto pb-[max(1rem,env(safe-area-inset-bottom))]"
               onClick={e => e.stopPropagation()}
             >
               <div className="p-4 sm:p-6">
@@ -280,8 +280,8 @@ export default function PricePage() {
             onClick={() => setSelectedCategory(null)}
             className={cn(
               "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
-              !selectedCategory 
-                ? "bg-white text-black" 
+              !selectedCategory
+                ? "bg-white text-black"
                 : "bg-white/5 text-gray-300 hover:bg-white/10"
             )}
           >
@@ -294,7 +294,7 @@ export default function PricePage() {
               className={cn(
                 "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
                 selectedCategory === cat
-                  ? "bg-white text-black" 
+                  ? "bg-white text-black"
                   : "bg-white/5 text-gray-300 hover:bg-white/10"
               )}
             >
@@ -317,8 +317,8 @@ export default function PricePage() {
               onClick={() => toggleService(service)}
               className={cn(
                 "group relative rounded-2xl p-4 cursor-pointer transition-all duration-200 hover:-translate-y-1",
-                isSelected(service.id) 
-                  ? "bg-gradient-to-br from-blue-500/20 to-purple-600/20 border-blue-500/50" 
+                isSelected(service.id)
+                  ? "bg-gradient-to-br from-blue-500/20 to-purple-600/20 border-blue-500/50"
                   : "hover:bg-white/10"
               )}
               style={isSelected(service.id) ? { border: '1px solid rgba(59, 130, 246, 0.5)' } : cardStyle}
@@ -348,7 +348,7 @@ export default function PricePage() {
                   </div>
                 </div>
               </div>
-              
+
               <div className="mt-4 flex items-center justify-between pt-3 border-t border-white/5">
                 <div className="text-sm text-gray-400">
                   {service.duration} хв
@@ -372,7 +372,7 @@ export default function PricePage() {
         "fixed bottom-0 left-0 right-0 md:left-64 p-4 transition-transform duration-300 z-30",
         selectedServices.length > 0 ? "translate-y-0" : "translate-y-full"
       )}>
-        <div 
+        <div
           className="max-w-4xl mx-auto rounded-2xl p-4 flex items-center justify-between shadow-2xl shadow-black/50"
           style={{
             backgroundColor: 'rgba(20, 20, 20, 0.95)',
@@ -388,7 +388,7 @@ export default function PricePage() {
               ~ {Math.floor(totalDuration / 60) > 0 ? `${Math.floor(totalDuration / 60)} год ` : ''}{totalDuration % 60} хв
             </span>
           </div>
-          
+
           <div className="flex items-center gap-4">
             <div className="text-right">
               <div className="text-sm text-gray-400">Загальна вартість</div>
