@@ -837,8 +837,8 @@ export default function AppointmentsPage() {
               >
                 <span className="text-xl leading-none">×</span>
               </button>
-              <div className="pr-10 flex-1 min-h-0 overflow-y-auto">
-                <h2 className="modal-title text-white mb-4">Створити новий запис</h2>
+              <div className="pr-10 flex-1 min-h-0 overflow-y-auto scrollbar-hide">
+                <h2 className="modal-title text-white mb-2">Створити новий запис</h2>
                 <CreateAppointmentForm
                   businessId={business.id}
                   masters={masters}

@@ -936,6 +936,33 @@
     }
   }
 
+  /* Поля в модалці: без сірого фону — лише тонка рамка, прозорий фон */
+  .modal-dialog input:not([type="checkbox"]):not([type="radio"]),
+  .modal-dialog textarea,
+  .modal-dialog select {
+    max-width: 100%;
+    box-sizing: border-box;
+    background-color: transparent !important;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.5rem;
+    color: inherit;
+  }
+  .modal-dialog input::placeholder,
+  .modal-dialog textarea::placeholder {
+    opacity: 0.6;
+  }
+  .modal-dialog input:focus,
+  .modal-dialog textarea:focus,
+  .modal-dialog select:focus {
+    outline: none;
+    border-color: rgba(255, 255, 255, 0.4);
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+  }
+  .modal-dialog select {
+    appearance: auto;
+    padding-right: 2rem;
+  }
+
   /* Запобігання вильоту форм та тексту на мобільних. Touch targets 44px+ */
   .modal-dialog input,
   .modal-dialog textarea,
@@ -969,19 +996,13 @@
     color: inherit;
   }
 
-  /* Скролбар для модалок — через змінні під тему */
+  /* Скролбар у модалках приховано — скрол працює, повзунка не видно */
+  .modal-content {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
   .modal-content::-webkit-scrollbar {
-    width: 6px;
-  }
-  .modal-content::-webkit-scrollbar-track {
-    background: transparent;
-  }
-  .modal-content::-webkit-scrollbar-thumb {
-    background: var(--modal-scrollbar);
-    border-radius: 4px;
-  }
-  .modal-content::-webkit-scrollbar-thumb:hover {
-    background: var(--modal-scrollbar-hover);
+    display: none;
   }
 
   /* Mobile: touch targets min 44px, safe area */

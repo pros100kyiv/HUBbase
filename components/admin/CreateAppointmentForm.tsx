@@ -127,17 +127,17 @@ export function CreateAppointmentForm({
   }
 
   const formContent = (
-    <form onSubmit={handleSubmit} className="space-y-4">
+    <form onSubmit={handleSubmit} className={embedded ? 'space-y-2.5' : 'space-y-4'}>
             {/* Master Selection */}
             <div>
-              <label className="block text-sm font-medium mb-2 text-foreground">
+              <label className={`block text-sm font-medium text-foreground ${embedded ? 'mb-1' : 'mb-2'}`}>
                 Спеціаліст *
               </label>
               <select
                 value={formData.masterId}
                 onChange={(e) => setFormData({ ...formData, masterId: e.target.value })}
                 required
-                className="w-full px-3 py-2.5 sm:py-2 min-h-[48px] sm:min-h-0 border border-gray-300 dark:border-gray-700 rounded-candy-sm bg-white dark:bg-gray-800 text-foreground"
+                className={embedded ? 'w-full px-3 py-2 rounded-lg min-h-[40px] border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-white/30' : 'w-full px-3 py-2.5 sm:py-2 min-h-[48px] sm:min-h-0 border border-gray-300 dark:border-gray-700 rounded-candy-sm bg-white dark:bg-gray-800 text-foreground'}
               >
                 <option value="">Оберіть спеціаліста</option>
                 {masters.map((master) => (
@@ -301,7 +301,7 @@ export function CreateAppointmentForm({
 
             {/* Custom Service */}
             <div>
-              <label className="block text-sm font-medium mb-2 text-foreground">
+              <label className={`block text-sm font-medium text-foreground ${embedded ? 'mb-1' : 'mb-2'}`}>
                 Додаткова послуга (опціонально)
               </label>
               <div className="flex gap-2">
@@ -309,7 +309,7 @@ export function CreateAppointmentForm({
                   value={formData.customService}
                   onChange={(e) => setFormData({ ...formData, customService: e.target.value })}
                   placeholder="Назва послуги"
-                  className="flex-1"
+                  className={embedded ? 'flex-1 min-h-[40px] py-2' : 'flex-1'}
                 />
                 <Input
                   type="number"
@@ -317,14 +317,14 @@ export function CreateAppointmentForm({
                   onChange={(e) => setFormData({ ...formData, customPrice: Number(e.target.value) })}
                   placeholder="Ціна"
                   min="0"
-                  className="w-24"
+                  className={embedded ? 'w-20 min-h-[40px] py-2' : 'w-24'}
                 />
               </div>
             </div>
 
             {/* Date */}
             <div>
-              <label className="block text-sm font-medium mb-2 text-foreground">
+              <label className={`block text-sm font-medium text-foreground ${embedded ? 'mb-1' : 'mb-2'}`}>
                 Дата *
               </label>
               <Input
@@ -333,12 +333,13 @@ export function CreateAppointmentForm({
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 required
                 min={format(new Date(), 'yyyy-MM-dd')}
+                className={embedded ? 'min-h-[40px] py-2' : undefined}
               />
             </div>
 
             {/* Start Time */}
             <div>
-              <label className="block text-sm font-medium mb-2 text-foreground">
+              <label className={`block text-sm font-medium text-foreground ${embedded ? 'mb-1' : 'mb-2'}`}>
                 Час початку *
               </label>
               <Input
@@ -346,22 +347,23 @@ export function CreateAppointmentForm({
                 value={formData.startTime}
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
                 required
+                className={embedded ? 'min-h-[40px] py-2' : undefined}
               />
             </div>
 
             {/* Actions */}
-            <div className="flex flex-col sm:flex-row gap-2 pt-2">
+            <div className={`flex flex-col sm:flex-row gap-2 ${embedded ? 'pt-1' : 'pt-2'}`}>
               <button
                 type="submit"
                 disabled={isSubmitting || !formData.masterId || !formData.clientName || !formData.clientPhone}
-                className="dashboard-btn-primary flex-1 min-h-[48px] touch-target"
+                className={embedded ? 'dashboard-btn-primary flex-1 min-h-[40px] py-2' : 'dashboard-btn-primary flex-1 min-h-[48px] touch-target'}
               >
                 {isSubmitting ? 'Створення...' : 'Створити запис'}
               </button>
               <button
                 type="button"
                 onClick={onCancel}
-                className="dashboard-btn-secondary min-h-[48px] touch-target"
+                className={embedded ? 'dashboard-btn-secondary min-h-[40px] py-2' : 'dashboard-btn-secondary min-h-[48px] touch-target'}
               >
                 Скасувати
               </button>
