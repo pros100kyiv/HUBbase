@@ -1,13 +1,16 @@
 /**
- * GET /api/availability?masterId=...&businessId=...&date=YYYY-MM-DD&durationMinutes=30
+ * GET /api/availability
  *
- * Повертає вільні слоти для запису до майстра на вказану дату.
- * Логіка: графік майстра (workingHours) → вікно годин на день → слоти по 30 хв → мінус зайняті (записи + blockedPeriods).
- * Формат слоту: "YYYY-MM-DDTHH:mm" (локальний час без Z).
+ * Режими:
+ * 1) onlySchedule=1 + masterId + businessId — повертає робочі дні тижня: { workingWeekdays: [0..6] }
+ * 2) from=YYYY-MM-DD&days=N&limit=M + masterId + businessId + durationMinutes — рекомендовані слоти: { recommendedSlots: [{ date, time, slot }] }
+ * 3) date=YYYY-MM-DD + masterId + businessId + durationMinutes — слоти на день: { availableSlots: string[] }
+ *
+ * Формат слоту: "YYYY-MM-DDTHH:mm"
  */
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { format, addMinutes } from 'date-fns'
+import { format, addMinutes, addDays } from 'date-fns'
 
 const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 
@@ -56,75 +59,22 @@ function getWindowForDay(
   return { start: Math.max(0, Math.floor(start)), end: Math.min(24, Math.ceil(end)) }
 }
 
-export async function GET(request: Request) {
-  const url = request.url
-  let masterId: string
-  let businessId: string
-  let dateStr: string
-  let durationMinutes: number
+type MasterRow = { workingHours: string | null; blockedPeriods: string | null }
 
-  try {
-    const { searchParams } = new URL(url)
-    masterId = String(searchParams.get('masterId') ?? '').trim()
-    businessId = String(searchParams.get('businessId') ?? '').trim()
-    dateStr = String(searchParams.get('date') ?? '').trim()
-    const durationParam = searchParams.get('durationMinutes')
-    durationMinutes = durationParam
-      ? Math.max(30, Math.min(480, parseInt(durationParam, 10) || 30))
-      : 30
-  } catch {
-    return NextResponse.json(
-      { availableSlots: [], scheduleNotConfigured: true },
-      { status: 200 }
-    )
-  }
-
-  if (!masterId || !businessId || !dateStr) {
-    return NextResponse.json(
-      { availableSlots: [], scheduleNotConfigured: true },
-      { status: 200 }
-    )
-  }
-
-  const parts = dateStr.split('-')
-  if (parts.length !== 3) {
-    return NextResponse.json(
-      { availableSlots: [], scheduleNotConfigured: true },
-      { status: 200 }
-    )
-  }
+async function getAvailableSlotsForDate(
+  master: MasterRow,
+  dateNorm: string,
+  businessId: string,
+  masterId: string,
+  durationMinutes: number,
+  now: Date
+): Promise<string[]> {
+  const parts = dateNorm.split('-')
+  if (parts.length !== 3) return []
   const year = parseInt(parts[0], 10)
   const month = parseInt(parts[1], 10) - 1
   const day = parseInt(parts[2], 10)
-  if (isNaN(year) || isNaN(month) || isNaN(day) || month < 0 || month > 11 || day < 1 || day > 31) {
-    return NextResponse.json(
-      { availableSlots: [], scheduleNotConfigured: true },
-      { status: 200 }
-    )
-  }
-
-  const dateNorm = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
-
-  let master: { workingHours: string | null; blockedPeriods: string | null } | null = null
-  try {
-    master = await prisma.master.findUnique({
-      where: { id: masterId },
-      select: { workingHours: true, blockedPeriods: true },
-    })
-  } catch (e) {
-    console.error('[availability] master fetch error', e)
-    return NextResponse.json(
-      { availableSlots: [], scheduleNotConfigured: true },
-      { status: 200 }
-    )
-  }
-
-  if (!master) {
-    return NextResponse.json(
-      { availableSlots: [], scheduleNotConfigured: true },
-      { status: 200 }
-    )
-  }
+  if (isNaN(year) || isNaN(month) || isNaN(day) || month < 0 || month > 11 || day < 1 || day > 31) return []
 
   const dayOfWeek = getDayOfWeekUTC(year, month, day)
   const dayName = DAY_NAMES[dayOfWeek]
@@ -140,21 +90,21 @@ export async function GET(request: Request) {
     }
   }
 
-  const startOfDay = new Date(year, month, day, 0, 0, 0, 0)
-  const endOfDay = new Date(year, month, day, 23, 59, 59, 999)
+  const startOfDayDate = new Date(year, month, day, 0, 0, 0, 0)
+  const endOfDayDate = new Date(year, month, day, 23, 59, 59, 999)
   let appointments: Array<{ startTime: Date; endTime: Date }> = []
   try {
     appointments = await prisma.appointment.findMany({
       where: {
         businessId,
         masterId,
-        startTime: { gte: startOfDay, lte: endOfDay },
+        startTime: { gte: startOfDayDate, lte: endOfDayDate },
         status: { not: 'Cancelled' },
       },
       select: { startTime: true, endTime: true },
     })
-  } catch (e) {
-    console.error('[availability] appointments fetch error', e)
+  } catch {
+    // ignore
   }
 
   const occupied = new Set<string>()
@@ -187,16 +137,17 @@ export async function GET(request: Request) {
         t = addMinutes(t, 30)
       }
     } catch {
-      // skip invalid block
+      // skip
     }
   }
 
   const steps = Math.ceil(durationMinutes / 30)
-  const availableSlots = slots
+  return slots
     .filter((slotStr) => {
       if (typeof slotStr !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(slotStr)) return false
       const slotDate = new Date(slotStr)
       if (isNaN(slotDate.getTime())) return false
+      if (slotDate <= now) return false
       for (let i = 0; i < steps; i++) {
         const t = addMinutes(slotDate, i * 30)
         const key = format(t, "yyyy-MM-dd'T'HH:mm")
@@ -207,10 +158,159 @@ export async function GET(request: Request) {
       return true
     })
     .filter((s) => s.startsWith(dateNorm))
+}
 
-  return NextResponse.json({
-    availableSlots,
-    scheduleNotConfigured: false,
-    ...(availableSlots.length === 0 && { reason: 'all_occupied' }),
-  })
+export async function GET(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const masterId = String(searchParams.get('masterId') ?? '').trim()
+    const businessId = String(searchParams.get('businessId') ?? '').trim()
+    const dateStr = String(searchParams.get('date') ?? '').trim()
+    const onlySchedule = searchParams.get('onlySchedule') === '1'
+    const fromStr = String(searchParams.get('from') ?? '').trim()
+    const daysParam = searchParams.get('days')
+    const limitParam = searchParams.get('limit')
+    const durationParam = searchParams.get('durationMinutes')
+    const durationMinutes = durationParam
+      ? Math.max(30, Math.min(480, parseInt(durationParam, 10) || 30))
+      : 30
+
+    if (!masterId || !businessId) {
+      return NextResponse.json(
+        { availableSlots: [], scheduleNotConfigured: true },
+        { status: 200 }
+      )
+    }
+
+    let master: MasterRow | null = null
+    try {
+      master = await prisma.master.findUnique({
+        where: { id: masterId },
+        select: { workingHours: true, blockedPeriods: true },
+      })
+    } catch (e) {
+      console.error('[availability] master fetch error', e)
+      return NextResponse.json(
+        { availableSlots: [], scheduleNotConfigured: true },
+        { status: 200 }
+      )
+    }
+
+    if (!master) {
+      return NextResponse.json(
+        { availableSlots: [], scheduleNotConfigured: true },
+        { status: 200 }
+      )
+    }
+
+    // Режим 1: тільки робочі дні тижня (для блокування вихідних в календарі)
+    if (onlySchedule) {
+      const wh = parseWorkingHours(master.workingHours)
+      const workingWeekdays: number[] = []
+      for (let i = 0; i <= 6; i++) {
+        const dayName = DAY_NAMES[i]
+        if (wh && wh[dayName] && wh[dayName].enabled) workingWeekdays.push(i)
+      }
+      return NextResponse.json({
+        workingWeekdays: workingWeekdays.length > 0 ? workingWeekdays : [0, 1, 2, 3, 4, 5, 6],
+        scheduleNotConfigured: false,
+      })
+    }
+
+    // Режим 2: рекомендовані найближчі слоти (from + days + limit)
+    if (fromStr && daysParam && limitParam) {
+      const parts = fromStr.split('-')
+      if (parts.length !== 3) {
+        return NextResponse.json({ recommendedSlots: [] }, { status: 200 })
+      }
+      const fromYear = parseInt(parts[0], 10)
+      const fromMonth = parseInt(parts[1], 10) - 1
+      const fromDay = parseInt(parts[2], 10)
+      if (isNaN(fromYear) || isNaN(fromMonth) || isNaN(fromDay)) {
+        return NextResponse.json({ recommendedSlots: [] }, { status: 200 })
+      }
+      const days = Math.max(1, Math.min(60, parseInt(daysParam, 10) || 14))
+      const limit = Math.max(1, Math.min(20, parseInt(limitParam, 10) || 8))
+      const now = new Date()
+      const recommendedSlots: Array<{ date: string; time: string; slot: string }> = []
+      for (let d = 0; d < days && recommendedSlots.length < limit; d++) {
+        const date = addDays(new Date(fromYear, fromMonth, fromDay), d)
+        const dateNorm = format(date, 'yyyy-MM-dd')
+        const daySlots = await getAvailableSlotsForDate(
+          master,
+          dateNorm,
+          businessId,
+          masterId,
+          durationMinutes,
+          now
+        )
+        for (const slot of daySlots) {
+          if (recommendedSlots.length >= limit) break
+          const time = slot.slice(11, 16)
+          recommendedSlots.push({ date: dateNorm, time, slot })
+        }
+      }
+      return NextResponse.json({ recommendedSlots })
+    }
+
+    // Режим 3: слоти на один день (date=YYYY-MM-DD)
+    if (!dateStr) {
+      return NextResponse.json(
+        { availableSlots: [], scheduleNotConfigured: true },
+        { status: 200 }
+      )
+    }
+
+    const parts = dateStr.split('-')
+    if (parts.length !== 3) {
+      return NextResponse.json(
+        { availableSlots: [], scheduleNotConfigured: true },
+        { status: 200 }
+      )
+    }
+    const year = parseInt(parts[0], 10)
+    const month = parseInt(parts[1], 10) - 1
+    const day = parseInt(parts[2], 10)
+    if (isNaN(year) || isNaN(month) || isNaN(day) || month < 0 || month > 11 || day < 1 || day > 31) {
+      return NextResponse.json(
+        { availableSlots: [], scheduleNotConfigured: true },
+        { status: 200 }
+      )
+    }
+
+    const dateNorm = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+    const dayOfWeek = getDayOfWeekUTC(year, month, day)
+    const dayName = DAY_NAMES[dayOfWeek]
+    const wh = parseWorkingHours(master.workingHours)
+    const window = getWindowForDay(wh, dayName)
+    if (!wh || !wh[dayName] || !wh[dayName].enabled) {
+      return NextResponse.json({
+        availableSlots: [],
+        scheduleNotConfigured: false,
+        reason: 'day_off',
+      })
+    }
+
+    const now = new Date()
+    const availableSlots = await getAvailableSlotsForDate(
+      master,
+      dateNorm,
+      businessId,
+      masterId,
+      durationMinutes,
+      now
+    )
+
+    return NextResponse.json({
+      availableSlots,
+      scheduleNotConfigured: false,
+      ...(availableSlots.length === 0 && { reason: 'all_occupied' }),
+    })
+  } catch (err) {
+    console.error('Availability error:', err)
+    return NextResponse.json(
+      { availableSlots: [], scheduleNotConfigured: true },
+      { status: 200 }
+    )
+  }
 }
