@@ -106,7 +106,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       {/* Mobile Sidebar — у стилі Dashboard (темний glass) */}
       <aside
         className={cn(
-          'fixed top-0 left-0 h-full w-72 border-r z-50 transform transition-transform duration-300 ease-in-out md:hidden sidebar-theme backdrop-blur-xl',
+          'fixed top-0 left-0 h-full w-[min(288px,85vw)] border-r z-50 transform transition-transform duration-300 ease-in-out md:hidden sidebar-theme backdrop-blur-xl pl-[env(safe-area-inset-left)]',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >

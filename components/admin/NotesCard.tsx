@@ -287,7 +287,7 @@ export function NotesCard({ businessId }: NotesCardProps) {
                 <div
                   key={index}
                   className={cn(
-                    'flex-shrink-0 w-56 md:w-64 rounded-lg p-3 md:p-4 border transition-colors',
+                    'flex-shrink-0 w-48 sm:w-56 md:w-64 rounded-lg p-3 md:p-4 border transition-colors',
                     isSelected
                       ? 'bg-white/10 border-white/20'
                       : 'bg-white/5 border-white/10'
@@ -312,7 +312,7 @@ export function NotesCard({ businessId }: NotesCardProps) {
                           <div
                             onClick={() => handleToggle(note.id)}
                             className={cn(
-                              'w-3.5 h-3.5 md:w-4 md:h-4 rounded border-2 flex items-center justify-center transition-colors cursor-pointer flex-shrink-0',
+                              'w-4 h-4 rounded border-2 flex items-center justify-center transition-colors cursor-pointer flex-shrink-0 touch-manipulation min-w-[24px] min-h-[24px]',
                               note.completed
                                 ? 'bg-white border-white'
                                 : 'bg-transparent border-gray-400'
@@ -361,7 +361,7 @@ export function NotesCard({ businessId }: NotesCardProps) {
               notes.map((note) => (
                 <div 
                   key={note.id}
-                  className="flex items-center gap-2 md:gap-3 cursor-pointer hover:bg-white/10 rounded-lg p-2 -mx-2 transition-colors active:scale-[0.98]"
+                  className="flex items-center gap-2 md:gap-3 cursor-pointer hover:bg-white/10 rounded-lg p-2 -mx-2 transition-colors active:scale-[0.98] touch-manipulation min-h-[44px]"
                   onClick={() => handleEdit(note)}
                 >
                   <div
@@ -370,7 +370,7 @@ export function NotesCard({ businessId }: NotesCardProps) {
                       handleToggle(note.id)
                     }}
                     className={cn(
-                      'w-4 h-4 md:w-5 md:h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0',
+                      'w-5 h-5 rounded border-2 flex items-center justify-center transition-colors flex-shrink-0 touch-manipulation min-w-[28px] min-h-[28px]',
                       note.completed
                         ? 'bg-white border-white'
                         : 'bg-transparent border-gray-400'

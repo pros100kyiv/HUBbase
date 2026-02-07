@@ -121,9 +121,9 @@ export default function DashboardLayout({
       {/* Mobile Sidebar */}
       <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       
-      {/* Main Content Area */}
-      <main className="relative ml-0 md:ml-64 pt-14 md:pt-16 min-h-screen safe-bottom" style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}>
-        <div className="px-3 py-3 md:p-6 pb-6 md:pb-6">
+      {/* Main Content Area — safe-area для notch та home indicator */}
+      <main className="relative ml-0 md:ml-64 pt-14 md:pt-16 min-h-screen safe-bottom pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]" style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}>
+        <div className="px-3 py-3 md:p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:pb-6">
           {children}
         </div>
       </main>

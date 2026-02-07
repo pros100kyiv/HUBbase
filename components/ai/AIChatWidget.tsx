@@ -102,7 +102,7 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-4 right-4 w-14 h-14 rounded-full bg-gradient-to-r from-candy-blue to-candy-purple text-white shadow-soft-xl hover:shadow-soft-2xl transition-all z-50 flex items-center justify-center"
+          className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 md:bottom-4 w-14 h-14 rounded-full bg-gradient-to-r from-candy-blue to-candy-purple text-white shadow-soft-xl hover:shadow-soft-2xl transition-all z-50 flex items-center justify-center touch-manipulation"
           title="AI Помічник"
         >
           <BotIcon className="w-6 h-6" />
@@ -110,8 +110,8 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
       )}
       
       {isOpen && (
-        <div className={`fixed bottom-4 right-4 w-96 h-[500px] bg-white dark:bg-gray-800 rounded-candy-sm shadow-soft-2xl flex flex-col z-50 ${className}`}>
-          <div className="p-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+        <div className={`fixed inset-0 md:inset-auto md:bottom-4 md:right-4 md:w-96 md:h-[500px] md:max-h-[85vh] w-full h-full md:rounded-xl bg-white dark:bg-gray-800 shadow-soft-2xl flex flex-col z-50 ${className}`}>
+          <div className="p-4 pt-[max(1rem,env(safe-area-inset-top))] border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <BotIcon className="w-5 h-5 text-candy-purple" />
               <h3 className="text-sm font-black text-gray-900 dark:text-white">AI Помічник</h3>
@@ -186,7 +186,7 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
                 onChange={(e) => setInput(e.target.value)}
                 onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
                 placeholder="Напишіть повідомлення..."
-                className="flex-1 px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-candy-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple"
+                className="flex-1 px-3 py-2.5 md:py-2 text-sm md:text-xs border border-gray-300 dark:border-gray-600 rounded-candy-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple min-h-[44px] md:min-h-0"
                 disabled={isLoading}
               />
               <button

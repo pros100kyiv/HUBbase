@@ -142,20 +142,26 @@ export default function MainPage() {
           )}
         </div>
 
-        {/* Right Column - Sidebar (1 column) */}
-        <div className="lg:col-span-1 space-y-3 md:space-y-6">
-          {/* Social Messages */}
+        {/* Right Column - Sidebar (1 column). Мобільний порядок: Соцмережі → Нотатки → Календар */}
+        <div className="lg:col-span-1 space-y-3 md:space-y-6 flex flex-col">
+          {/* Social Messages — першими на мобільному (швидка відповідь) */}
           {business?.id && (
-            <SocialMessagesCard businessId={business.id} />
+            <div className="order-1">
+              <SocialMessagesCard businessId={business.id} />
+            </div>
           )}
 
-          {/* Calendar Card */}
-          <WeeklyProcessCard businessId={business?.id} />
-
-          {/* Notes Card */}
+          {/* Notes Card — другі (щоденні задачі) */}
           {business?.id && (
-            <NotesCard businessId={business.id} />
+            <div className="order-2 md:order-3">
+              <NotesCard businessId={business.id} />
+            </div>
           )}
+
+          {/* Calendar Card — третьі (огляд тижня) */}
+          <div className="order-3 md:order-2">
+            <WeeklyProcessCard businessId={business?.id} />
+          </div>
         </div>
       </div>
     </div>

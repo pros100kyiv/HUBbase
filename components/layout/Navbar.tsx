@@ -97,7 +97,7 @@ export function Navbar() {
   if (pathname?.startsWith('/dashboard')) {
     return (
       <>
-        <nav className="fixed top-0 left-0 md:left-64 right-0 z-50 border-b safe-top navbar-theme">
+        <nav className="fixed top-0 left-0 md:left-64 right-0 z-50 border-b safe-top navbar-theme pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
           <div className="px-2 sm:px-3 md:px-6">
             <div className="flex justify-between items-center h-14 md:h-16 gap-2">
               {/* Left side - Menu button (mobile) and Hi User */}
@@ -114,7 +114,9 @@ export function Navbar() {
                   <MenuIcon className="w-5 h-5 text-white" />
                 </button>
                 
-                <h2 className="text-sm md:text-base font-medium text-white truncate" style={{ letterSpacing: '-0.01em' }}>Hi, User!</h2>
+                <h2 className="text-sm md:text-base font-medium text-white truncate" style={{ letterSpacing: '-0.01em' }}>
+                  {business?.name || 'Hi, User!'}
+                </h2>
               </div>
 
               {/* Right side - Actions */}

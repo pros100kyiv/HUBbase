@@ -110,7 +110,7 @@ export function GlobalSearch({ businessId, isOpen, onClose }: GlobalSearchProps)
 
   return (
     <ModalPortal>
-      <div className="modal-overlay pt-4 px-2 sm:px-4 sm:!items-center sm:!p-4">
+      <div className="modal-overlay sm:!items-center sm:!p-4">
         {/* Backdrop */}
         <div
           className="fixed inset-0 bg-black/70 backdrop-blur-sm min-h-[100dvh]"

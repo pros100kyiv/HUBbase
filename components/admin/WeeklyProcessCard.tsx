@@ -203,7 +203,7 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
               key={day.toISOString()}
               onClick={() => handleDayClick(day)}
               className={cn(
-                'relative p-1.5 md:p-2 rounded-lg border transition-all min-h-[36px] md:min-h-[40px] flex flex-col items-center justify-start active:scale-[0.98]',
+                'relative p-1.5 md:p-2 rounded-lg border transition-all min-h-[40px] md:min-h-[40px] flex flex-col items-center justify-start active:scale-[0.98] touch-manipulation',
                 !isCurrentMonth && 'opacity-30',
                 isSelected
                   ? 'border-white bg-white/25 text-white shadow-lg shadow-black/20'
@@ -271,7 +271,7 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
                     key={apt.id}
                     type="button"
                     onClick={() => router.push('/dashboard/appointments')}
-                    className="w-full text-left bg-white/5 border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-all active:scale-[0.99]"
+                    className="w-full text-left bg-white/5 border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-all active:scale-[0.99] touch-manipulation min-h-[56px]"
                   >
                     <div className="flex items-center gap-2 md:gap-3">
                       <div className="flex flex-col items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-[#2A2A2A] rounded-lg border border-white/10 flex-shrink-0 shadow-inner">

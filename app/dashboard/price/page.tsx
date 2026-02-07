@@ -141,40 +141,41 @@ export default function PricePage() {
 
 
   return (
-    <div className="p-4 md:p-8 pb-24 min-h-screen text-white">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
-            Прайс-лист
-          </h1>
-          <p className="text-gray-400 mt-1">Оберіть послуги для розрахунку вартості</p>
-        </div>
-
-        <div className="flex flex-wrap gap-2 w-full md:w-auto">
+    <div className="p-4 md:p-8 min-h-screen text-white pb-[max(6rem,calc(5rem+env(safe-area-inset-bottom)))] md:pb-24">
+      {/* Header — мобільний: компактний, кнопка на першому плані */}
+      <div className="flex flex-col gap-4 mb-6 md:mb-8">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+          <div>
+            <h1 className="text-xl md:text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-white to-gray-400">
+              Прайс-лист
+            </h1>
+            <p className="text-gray-400 mt-0.5 text-sm">Оберіть послуги для розрахунку вартості</p>
+          </div>
           <button
             type="button"
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white text-black font-semibold text-sm hover:bg-gray-100 transition-colors shadow-lg"
+            className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white text-black font-semibold text-sm hover:bg-gray-100 transition-colors shadow-lg touch-manipulation min-h-[48px] w-full sm:w-auto"
           >
             <span className="text-lg leading-none">+</span>
             Додати до прайсу
           </button>
+        </div>
+        <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
           {/* Search */}
-          <div className="relative flex-1 md:w-56">
+          <div className="relative flex-1 min-w-0">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <SearchIcon className="h-4 w-4 text-gray-400" />
             </div>
             <input
               type="text"
-              className="block w-full pl-9 pr-3 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all"
+              className="block w-full pl-9 pr-3 py-2.5 sm:py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all min-h-[44px] sm:min-h-0"
               placeholder="Пошук послуг..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </div>
           {/* Sort */}
-          <div className="relative">
+          <div className="relative min-w-0 sm:w-44">
             <select
               value={`${sortBy}-${sortOrder}`}
               onChange={e => {
@@ -182,7 +183,7 @@ export default function PricePage() {
                 setSortBy(s)
                 setSortOrder(o)
               }}
-              className="appearance-none pl-3 pr-8 py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent cursor-pointer"
+              className="appearance-none pl-3 pr-8 py-2.5 sm:py-2 rounded-xl bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent cursor-pointer w-full min-h-[44px] sm:min-h-0"
             >
               <option value="name-asc">Назва А→Я</option>
               <option value="name-desc">Назва Я→А</option>
@@ -343,7 +344,7 @@ export default function PricePage() {
               key={service.id}
               onClick={() => toggleService(service)}
               className={cn(
-                "group relative rounded-xl p-3 cursor-pointer transition-all duration-150 hover:bg-white/[0.08]",
+                "group relative rounded-xl p-3 cursor-pointer transition-all duration-150 hover:bg-white/[0.08] active:scale-[0.98] touch-manipulation min-h-[72px] flex flex-col justify-center",
                 isSelected(service.id)
                   ? "bg-gradient-to-br from-blue-500/20 to-purple-600/20 border border-blue-500/50"
                   : "card-glass hover:bg-white/10"
@@ -381,13 +382,13 @@ export default function PricePage() {
         </div>
       )}
 
-      {/* Floating Bottom Bar */}
+      {/* Floating Bottom Bar — safe-area для мобільних */}
       <div className={cn(
-        "fixed bottom-0 left-0 right-0 md:left-64 p-4 transition-transform duration-300 z-30",
+        "fixed bottom-0 left-0 right-0 md:left-64 p-4 pb-[max(1rem,env(safe-area-inset-bottom))] md:pb-4 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] md:pl-4 transition-transform duration-300 z-30",
         selectedServices.length > 0 ? "translate-y-0" : "translate-y-full"
       )}>
         <div
-          className="max-w-4xl mx-auto rounded-2xl p-4 flex items-center justify-between shadow-2xl shadow-black/50"
+          className="max-w-4xl mx-auto rounded-2xl p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-2xl shadow-black/50"
           style={{
             backgroundColor: 'rgba(20, 20, 20, 0.95)',
             backdropFilter: 'blur(20px)',

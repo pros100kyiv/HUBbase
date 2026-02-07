@@ -226,7 +226,7 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
                 key={message.id}
                 onClick={() => setSelectedMessage(message)}
                 className={cn(
-                  'w-full text-left rounded-lg p-2 md:p-3 transition-colors active:scale-[0.98]',
+                  'w-full text-left rounded-lg p-3 md:p-3 transition-colors active:scale-[0.98] touch-manipulation min-h-[64px]',
                   !message.isRead
                     ? 'bg-white/10 border border-white/20'
                     : 'bg-white/5 border border-white/10 hover:bg-white/8'

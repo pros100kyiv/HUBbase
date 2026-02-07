@@ -657,13 +657,21 @@
     box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
   }
 
-  .scrollbar-hide {
+  .scrollbar-hide,
+  .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
 
-  .scrollbar-hide::-webkit-scrollbar {
+  .scrollbar-hide::-webkit-scrollbar,
+  .no-scrollbar::-webkit-scrollbar {
     display: none;
+  }
+
+  /* Мобільний: градієнтна маска для горизонтального скролу (fade edges) */
+  .mask-linear-fade {
+    -webkit-mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
+    mask-image: linear-gradient(to right, transparent 0%, black 8%, black 92%, transparent 100%);
   }
 
   /* ========== СТАНДАРТ МОДАЛЬНИХ ВІКОН ==========
@@ -741,28 +749,64 @@
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 1rem 1rem 0 0;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    padding: clamp(0.75rem, 3vmin, 1rem);
-    padding-bottom: max(clamp(0.75rem, 3vmin, 1rem), env(safe-area-inset-bottom));
+    padding: clamp(0.875rem, 4vmin, 1.5rem);
+    padding-bottom: max(clamp(1rem, 4vmin, 1.5rem), env(safe-area-inset-bottom));
+    padding-top: 1.25rem; /* Місце для drag handle */
     min-width: 0;
     min-height: 0;
     overflow-x: hidden;
     overflow-wrap: break-word;
     word-break: break-word;
+    position: relative;
+  }
+  .modal-dialog::before {
+    content: '';
+    position: absolute;
+    top: 0.5rem;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 2.5rem;
+    height: 0.25rem;
+    background: rgba(255, 255, 255, 0.25);
+    border-radius: 9999px;
+    pointer-events: none;
   }
   @media (min-width: 640px) {
     .modal-dialog {
       border-radius: 1.25rem;
       padding: 1.5rem;
+      padding-top: 1.5rem;
       padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+    .modal-dialog::before {
+      display: none;
     }
   }
 
-  /* Запобігання вильоту форм та тексту на мобільних */
+  /* Запобігання вильоту форм та тексту на мобільних. Touch targets 44px+ */
   .modal-dialog input,
   .modal-dialog textarea,
   .modal-dialog select {
     max-width: 100%;
     box-sizing: border-box;
+  }
+  @media (max-width: 639px) {
+    .modal-dialog input:not([type="checkbox"]):not([type="radio"]),
+    .modal-dialog textarea,
+    .modal-dialog select {
+      min-height: 44px;
+      font-size: 16px; /* Запобігає zoom на iOS при фокусі */
+    }
+    .modal-dialog button:not(.no-touch-target) {
+      min-height: 44px;
+      padding-top: 0.5rem;
+      padding-bottom: 0.5rem;
+    }
+    .modal-dialog .flex.gap-2 button,
+    .modal-dialog [class*="flex"] [class*="gap"] button {
+      min-height: 44px;
+      padding: 0.5rem 1rem;
+    }
   }
 
   /* Варіант для світлої теми (ProfileSetup, DatePicker, MasterSchedule) */

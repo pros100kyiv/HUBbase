@@ -78,8 +78,8 @@ export function MobileAppointmentCard({
   const serviceDisplay = serviceNames.length > 0 ? serviceNames.join(', ') : 'Послуга не вказана'
 
   return (
-    <div className="w-full text-left bg-white/5 border border-white/10 rounded-xl p-3 md:p-4 hover:bg-white/10 transition-all active:scale-[0.99] group">
-      <div className="flex items-center gap-3 md:gap-4">
+    <div className="w-full text-left bg-white/5 border border-white/10 rounded-xl p-3 md:p-4 hover:bg-white/10 transition-all active:scale-[0.99] group touch-manipulation">
+      <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
         {/* Time box — як у MyDayCard */}
         <div className="flex flex-col items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-[#2A2A2A] rounded-lg border border-white/10 flex-shrink-0 shadow-inner">
           <span className="text-sm md:text-base font-bold text-blue-400 leading-none">
@@ -115,7 +115,7 @@ export function MobileAppointmentCard({
         </div>
 
         {/* Права частина: статус, кнопки, редагувати */}
-        <div className="flex flex-col items-end gap-2 pl-2 flex-shrink-0">
+        <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-2 sm:pl-2 flex-shrink-0 w-full sm:w-auto">
           <div className={cn('px-2 py-0.5 rounded text-[10px] md:text-xs font-medium border', getStatusColor(appointment.status))}>
             {getStatusLabel(appointment.status)}
           </div>
@@ -126,7 +126,7 @@ export function MobileAppointmentCard({
                   <>
                     <button
                       onClick={(e) => { e.stopPropagation(); onStatusChange(appointment.id, 'Confirmed') }}
-                      className="px-2 py-1 rounded-lg text-[10px] md:text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/50 hover:bg-green-500/30 transition-all active:scale-95"
+                      className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/50 hover:bg-green-500/30 transition-all active:scale-95 touch-manipulation min-h-[36px]"
                       title="Підтвердити"
                     >
                       <CheckIcon className="w-3 h-3 inline mr-0.5" />
@@ -134,8 +134,8 @@ export function MobileAppointmentCard({
                     </button>
                     <button
                       onClick={(e) => { e.stopPropagation(); onStatusChange(appointment.id, 'Done') }}
-                      className="px-2 py-1 rounded-lg text-[10px] md:text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/50 hover:bg-blue-500/30 transition-all active:scale-95"
-                      title="Виконано"
+                      className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/50 hover:bg-blue-500/30 transition-all active:scale-95 touch-manipulation min-h-[36px]"
+                      title="В роботі"
                     >
                       <CheckIcon className="w-3 h-3 inline mr-0.5" />
                       В роботі
@@ -145,7 +145,7 @@ export function MobileAppointmentCard({
                 {(appointment.status === 'Confirmed' || appointment.status === 'Підтверджено') && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onStatusChange(appointment.id, 'Done') }}
-                    className="px-2 py-1 rounded-lg text-[10px] md:text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/50 hover:bg-blue-500/30 transition-all active:scale-95"
+                    className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/50 hover:bg-blue-500/30 transition-all active:scale-95 touch-manipulation min-h-[36px]"
                     title="Виконано"
                   >
                     <CheckIcon className="w-3 h-3 inline mr-0.5" />
@@ -155,7 +155,7 @@ export function MobileAppointmentCard({
                 {!isDone && (
                   <button
                     onClick={(e) => { e.stopPropagation(); onStatusChange(appointment.id, 'Cancelled') }}
-                    className="px-2 py-1 rounded-lg text-[10px] md:text-xs font-semibold bg-red-500/20 text-red-400 border border-red-500/50 hover:bg-red-500/30 transition-all active:scale-95"
+                    className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-red-500/20 text-red-400 border border-red-500/50 hover:bg-red-500/30 transition-all active:scale-95 touch-manipulation min-h-[36px]"
                     title="Скасувати"
                   >
                     <XIcon className="w-3 h-3 inline mr-0.5" />
@@ -167,7 +167,7 @@ export function MobileAppointmentCard({
             {onEdit && (
               <button
                 onClick={(e) => { e.stopPropagation(); onEdit(appointment) }}
-                className="p-1.5 md:p-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 hover:text-white transition-all border border-white/10"
+                className="p-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 hover:text-white transition-all border border-white/10 touch-manipulation min-h-[36px] min-w-[36px] flex items-center justify-center"
                 title="Редагувати"
               >
                 <EditIcon className="w-4 h-4 md:w-5 md:h-5" />

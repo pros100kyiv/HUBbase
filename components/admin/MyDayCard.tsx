@@ -352,75 +352,77 @@ export function MyDayCard({
     return (
       <button
         onClick={onClick}
-        className="w-full text-left bg-white/5 border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-all active:scale-[0.99] group relative overflow-hidden"
+        className="w-full text-left bg-white/5 border border-white/10 rounded-xl p-3 md:p-3 hover:bg-white/10 transition-all active:scale-[0.99] group relative overflow-hidden touch-manipulation"
       >
-        <div className="flex items-center gap-3 md:gap-4">
-          {/* Time Box */}
-          <div className="flex flex-col items-center justify-center w-12 h-12 md:w-14 md:h-14 bg-[#2A2A2A] rounded-lg border border-white/10 flex-shrink-0 shadow-inner">
-            <span className="text-sm md:text-base font-bold text-blue-400 leading-none">
-              {format(startTime, 'HH:mm')}
-            </span>
-            <div className="w-1 h-1 rounded-full bg-gray-600 mt-1" />
+        {/* Мобільний: вертикальний стек. Десктоп: ряд */}
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4">
+          <div className="flex items-start gap-3 min-w-0">
+            {/* Time Box */}
+            <div className="flex flex-col items-center justify-center w-11 h-11 sm:w-12 md:w-14 md:h-14 bg-[#2A2A2A] rounded-lg border border-white/10 flex-shrink-0 shadow-inner">
+              <span className="text-sm font-bold text-blue-400 leading-none">
+                {format(startTime, 'HH:mm')}
+              </span>
+              <div className="w-1 h-1 rounded-full bg-gray-600 mt-1 hidden sm:block" />
+            </div>
+
+            {/* Info */}
+            <div className="flex-1 min-w-0 py-0.5">
+              <div className="flex items-center gap-2 mb-0.5">
+                <h5 className="text-sm font-bold text-white truncate leading-tight">
+                  {apt.clientName}
+                </h5>
+                {apt.clientPhone && (
+                  <a
+                    href={`tel:${apt.clientPhone}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="text-gray-400 hover:text-white transition-colors p-1.5 -m-1.5 touch-manipulation"
+                    aria-label="Зателефонувати"
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                    </svg>
+                  </a>
+                )}
+              </div>
+              <div className="text-xs text-gray-300 font-medium truncate mb-0.5">
+                {serviceDisplay}
+              </div>
+              <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
+                <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+                <span className="truncate">{apt.masterName || 'Невідомий спеціаліст'}</span>
+              </div>
+            </div>
           </div>
 
-          {/* Info */}
-          <div className="flex-1 min-w-0 py-0.5">
-            <div className="flex items-center gap-2 mb-0.5">
-              <h5 className="text-sm md:text-base font-bold text-white truncate leading-tight">
-                {apt.clientName}
-              </h5>
-              {apt.clientPhone && (
-                <a 
-                  href={`tel:${apt.clientPhone}`}
-                  onClick={(e) => e.stopPropagation()}
-                  className="text-gray-400 hover:text-white transition-colors p-1"
+          {/* Right: Status & Actions — завжди внизу на мобільному, справа на десктопі */}
+          <div className="flex items-center justify-between sm:justify-end gap-2 sm:flex-col sm:items-end sm:pl-0">
+            <div className={`px-2 py-1 rounded text-[10px] font-medium border flex-shrink-0 ${getStatusColor(apt.status)}`}>
+              {getStatusLabel(apt.status)}
+            </div>
+            <div className="flex items-center gap-1.5">
+              {(apt.status === 'Pending' || apt.status === 'Очікує') && (
+                <button
+                  onClick={(e) => handleConfirm(e, apt.id)}
+                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/50 hover:bg-green-500/30 transition-all active:scale-95 touch-manipulation min-h-[36px]"
+                  title="Підтвердити запис"
                 >
-                  <svg className="w-3 h-3 md:w-3.5 md:h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  Підтвердити
+                </button>
+              )}
+              {!isDone && (
+                <button
+                  onClick={(e) => handleMarkDone(e, apt.id)}
+                  className="p-2 bg-green-500/10 text-green-500 rounded-lg hover:bg-green-500/20 transition-all border border-green-500/20 touch-manipulation min-h-[36px] min-w-[36px] flex items-center justify-center"
+                  title="Виконано (в архів)"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
-                </a>
+                </button>
               )}
             </div>
-            
-            <div className="text-xs md:text-sm text-gray-300 font-medium truncate mb-0.5">
-              {serviceDisplay}
-            </div>
-            
-            <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-gray-500">
-              <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-              </svg>
-              <span className="truncate">{apt.masterName || 'Невідомий спеціаліст'}</span>
-            </div>
-          </div>
-
-          {/* Right Side: Status & Action */}
-          <div className="flex flex-col items-end gap-2 pl-2">
-             <div className={`px-2 py-0.5 rounded text-[10px] md:text-xs font-medium border flex-shrink-0 ${getStatusColor(apt.status)}`}>
-               {getStatusLabel(apt.status)}
-             </div>
-             <div className="flex items-center gap-1">
-               {(apt.status === 'Pending' || apt.status === 'Очікує') && (
-                 <button
-                   onClick={(e) => handleConfirm(e, apt.id)}
-                   className="px-2 py-1 rounded-lg text-[10px] md:text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/50 hover:bg-green-500/30 transition-all active:scale-95"
-                   title="Підтвердити запис"
-                 >
-                   Підтвердити
-                 </button>
-               )}
-               {!isDone && (
-                 <button
-                   onClick={(e) => handleMarkDone(e, apt.id)}
-                   className="p-1.5 md:p-2 bg-green-500/10 text-green-500 rounded-lg hover:bg-green-500/20 hover:scale-105 transition-all border border-green-500/20 group/btn"
-                   title="Виконано (в архів)"
-                 >
-                   <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                   </svg>
-                 </button>
-               )}
-             </div>
           </div>
         </div>
       </button>
@@ -489,7 +491,7 @@ export function MyDayCard({
           <button
             type="button"
             onClick={handleShare}
-            className="hidden md:flex p-2 hover:bg-white/10 rounded-lg transition-colors"
+            className="p-2 hover:bg-white/10 rounded-lg transition-colors touch-target"
             aria-label="Поділитися днем"
             title="Поділитися днем"
           >
