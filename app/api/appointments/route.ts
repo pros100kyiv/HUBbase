@@ -91,8 +91,8 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Спеціаліста не знайдено або він не належить цьому бізнесу' }, { status: 400 })
     }
 
-    const start = new Date(startTime)
-    const end = new Date(endTime)
+    const start = new Date(startTime as string | number | Date)
+    const end = new Date(endTime as string | number | Date)
 
     // Validate dates
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
