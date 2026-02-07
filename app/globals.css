@@ -422,6 +422,7 @@
   /* ========== СТАНДАРТ МОДАЛЬНИХ ВІКОН ==========
    * Єдиний стиль: overlay + modal-dialog + modal-content.
    * Адаптивність: mobile-first, safe-area, clamp для відступів.
+   * Мобільна: bottom sheet, вся інформація видима, без вильоту за межі.
    * z-index: 100 — базовий; вкладені модалки — z-[200].
    */
 
@@ -432,9 +433,13 @@
     -webkit-backdrop-filter: blur(4px);
     position: fixed;
     inset: 0;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
     z-index: 100;
     min-height: 100dvh;
-    min-height: 100vh;
+    min-height: -webkit-fill-available;
     display: flex;
     align-items: flex-end;
     justify-content: center;
@@ -443,45 +448,57 @@
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
-    padding: env(safe-area-inset-top, 0) max(clamp(0.5rem, 2.5vmin, 1rem), env(safe-area-inset-right, 0)) max(clamp(0.5rem, 2.5vmin, 1rem), env(safe-area-inset-bottom, 0)) max(clamp(0.5rem, 2.5vmin, 1rem), env(safe-area-inset-left, 0));
+    touch-action: manipulation;
+    padding: env(safe-area-inset-top, 0) max(0.5rem, env(safe-area-inset-right, 0)) max(0.5rem, env(safe-area-inset-bottom, 0)) max(0.5rem, env(safe-area-inset-left, 0));
     box-sizing: border-box;
   }
   @media (min-width: 640px) {
     .modal-overlay {
       align-items: center;
+      min-height: 100vh;
+      height: auto;
       padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
     }
   }
 
-  /* Контейнер контенту: ширина, max-height, скрол */
+  /* Контейнер контенту: ширина, max-height, скрол, без вильоту */
   .modal-content {
     width: 100%;
-    max-width: min(100%, calc(100vw - 2 * clamp(0.5rem, 2.5vmin, 1rem) - env(safe-area-inset-left, 0) - env(safe-area-inset-right, 0)));
-    max-height: min(90dvh, calc(100dvh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0) - 2 * clamp(0.5rem, 2.5vmin, 1rem)));
-    min-height: 0; /* для flex scroll */
+    max-width: min(100%, 100vw - 1rem - env(safe-area-inset-left, 0) - env(safe-area-inset-right, 0));
+    max-height: min(92dvh, calc(100dvh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0) - 1rem));
+    min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
+    overflow-wrap: break-word;
+    word-break: break-word;
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
+    overscroll-behavior: contain;
     box-sizing: border-box;
     flex-shrink: 0;
     align-self: flex-end;
+    margin-bottom: 0;
   }
   @media (min-width: 640px) {
     .modal-content {
+      max-width: min(100%, calc(100vw - 2rem - env(safe-area-inset-left, 0) - env(safe-area-inset-right, 0)));
       max-height: min(85vh, calc(100vh - 2 * max(1rem, env(safe-area-inset-top, 0)) - 2 * max(1rem, env(safe-area-inset-bottom, 0))));
       align-self: center;
     }
   }
 
-  /* Єдиний дизайн діалогу: фон, рамка, скруглення, тінь, padding */
+  /* Єдиний дизайн діалогу: фон, рамка, скруглення, тінь, padding, без вильоту */
   .modal-dialog {
     background-color: #1a1a1a;
     border: 1px solid rgba(255, 255, 255, 0.1);
     border-radius: 1rem 1rem 0 0;
     box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-    padding: 1rem;
-    padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    padding: clamp(0.75rem, 3vmin, 1rem);
+    padding-bottom: max(clamp(0.75rem, 3vmin, 1rem), env(safe-area-inset-bottom));
+    min-width: 0;
+    overflow-x: hidden;
+    overflow-wrap: break-word;
+    word-break: break-word;
   }
   @media (min-width: 640px) {
     .modal-dialog {
@@ -489,6 +506,14 @@
       padding: 1.5rem;
       padding-bottom: max(1rem, env(safe-area-inset-bottom));
     }
+  }
+
+  /* Запобігання вильоту форм та тексту на мобільних */
+  .modal-dialog input,
+  .modal-dialog textarea,
+  .modal-dialog select {
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   /* Варіант для світлої теми (ProfileSetup, DatePicker, MasterSchedule) */
