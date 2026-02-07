@@ -419,7 +419,7 @@
     display: none;
   }
 
-  /* Modal overlay: однаково на всіх пристроях (viewport + safe-area, bottom sheet на мобільному) */
+  /* Modal overlay: однаково на всіх пристроях; на мобільному — повноекранна модалка */
   .modal-overlay {
     position: fixed;
     inset: 0;
@@ -427,7 +427,7 @@
     min-height: 100dvh;
     min-height: 100vh;
     display: flex;
-    align-items: flex-end;
+    align-items: stretch;
     justify-content: center;
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -445,14 +445,16 @@
     }
   }
 
-  /* Контент модалки: не виходить за екран, враховує safe-area */
+  /* Контент модалки: на мобільному — повністю розгорнутий (повний екран), на десктопі — обмежена висота */
   .modal-content {
     width: 100%;
-    max-height: min(90dvh, calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)));
-    max-height: min(90vh, calc(100vh - 2rem));
+    min-height: 100%;
+    max-height: 100dvh;
+    max-height: calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px));
   }
   @media (min-width: 640px) {
     .modal-content {
+      min-height: auto;
       max-height: calc(100vh - 2rem);
     }
   }
