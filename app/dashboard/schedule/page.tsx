@@ -162,6 +162,21 @@ export default function SchedulePage() {
     setScheduleModalMaster(null)
   }
 
+  const handleDeleteMaster = async (master: Master) => {
+    if (!window.confirm('Видалити цього спеціаліста?')) return
+    try {
+      const response = await fetch(`/api/masters/${master.id}`, { method: 'DELETE' })
+      if (response.ok) {
+        loadMasters()
+        toast({ title: 'Успішно!', description: 'Спеціаліста видалено', type: 'success' })
+      } else {
+        toast({ title: 'Помилка', description: 'Не вдалося видалити спеціаліста', type: 'error' })
+      }
+    } catch {
+      toast({ title: 'Помилка', description: 'Помилка при видаленні', type: 'error' })
+    }
+  }
+
   if (!business || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
