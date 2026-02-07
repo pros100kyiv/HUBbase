@@ -139,8 +139,9 @@ model Master {
   bio                String?
   rating             Float               @default(0)
   isActive           Boolean             @default(true)
-  workingHours       String? // JSON: { "monday": { "start": "09:00", "end": "18:00", "enabled": true }, ... }
-  blockedPeriods     String? // JSON: [{ "start": "2024-01-15T10:00:00Z", "end": "2024-01-15T12:00:00Z" }]
+  workingHours           String? // JSON: { "monday": { "start": "09:00", "end": "18:00", "enabled": true }, ... }
+  scheduleDateOverrides  String? // JSON: { "2025-02-15": { "enabled": true, "start": "09:00", "end": "18:00" }, "2025-02-20": { "enabled": false } }
+  blockedPeriods         String? // JSON: [{ "start": "2024-01-15T10:00:00Z", "end": "2024-01-15T12:00:00Z" }]
   // Розширені метрики
   totalAppointments  Int                 @default(0) // Загальна кількість записів
   totalRevenue       BigInt              @default(0) // Загальний дохід (в копійках)

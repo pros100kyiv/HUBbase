@@ -10,7 +10,7 @@ export async function PATCH(
   try {
     const resolvedParams = await Promise.resolve(params)
     const body = await request.json()
-    let { businessId, name, photo, bio, rating, isActive, workingHours, blockedPeriods } = body
+    let { businessId, name, photo, bio, rating, isActive, workingHours, scheduleDateOverrides, blockedPeriods } = body
 
     // Якщо businessId не передано — отримуємо з запису майстра (для викликів з налаштувань)
     if (!businessId) {
@@ -40,6 +40,7 @@ export async function PATCH(
         ...(rating !== undefined && { rating }),
         ...(isActive !== undefined && { isActive }),
         ...(workingHours !== undefined && { workingHours }),
+        ...(scheduleDateOverrides !== undefined && { scheduleDateOverrides }),
         ...(blockedPeriods !== undefined && { blockedPeriods }),
       },
     })

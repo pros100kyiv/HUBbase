@@ -48,18 +48,63 @@ function parseWorkingHours(
 function getWindowForDay(
   wh: Record<string, { enabled: boolean; start: string; end: string }> | null,
   dayName: string
-): { start: number; end: number } {
-  if (!wh || !wh[dayName] || !wh[dayName].enabled) return { start: 9, end: 18 }
+): { start: number; end: number } | null {
+  if (!wh || !wh[dayName] || !wh[dayName].enabled) return null
   const d = wh[dayName]
   const [sh, sm] = d.start.split(':').map((x) => parseInt(x, 10) || 0)
   const [eh, em] = d.end.split(':').map((x) => parseInt(x, 10) || 0)
   const start = sh + sm / 60
   const end = eh + em / 60
-  if (start >= end) return { start: 9, end: 18 }
+  if (start >= end) return null
   return { start: Math.max(0, Math.floor(start)), end: Math.min(24, Math.ceil(end)) }
 }
 
-type MasterRow = { workingHours: string | null; blockedPeriods: string | null }
+/** Виключення за датами: { "YYYY-MM-DD": { enabled, start?, end? } }. Якщо enabled: false — вихідний. */
+function parseScheduleDateOverrides(
+  raw: string | null | undefined
+): Record<string, { enabled: boolean; start: string; end: string }> | null {
+  if (raw == null || typeof raw !== 'string' || !raw.trim()) return null
+  try {
+    const obj = JSON.parse(raw) as Record<string, unknown>
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null
+    const result: Record<string, { enabled: boolean; start: string; end: string }> = {}
+    for (const [dateKey, val] of Object.entries(obj)) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(dateKey) || !val || typeof val !== 'object' || Array.isArray(val)) continue
+      const v = val as { enabled?: unknown; start?: unknown; end?: unknown }
+      result[dateKey] = {
+        enabled: v.enabled === true,
+        start: typeof v.start === 'string' ? v.start : '09:00',
+        end: typeof v.end === 'string' ? v.end : '18:00',
+      }
+    }
+    return Object.keys(result).length > 0 ? result : null
+  } catch {
+    return null
+  }
+}
+
+/** Вікно для конкретної дати: спочатку перевіряємо dateOverrides, потім weekly workingHours. */
+function getWindowForDate(
+  dateNorm: string,
+  dateOverrides: Record<string, { enabled: boolean; start: string; end: string }> | null,
+  wh: Record<string, { enabled: boolean; start: string; end: string }> | null,
+  dayName: string
+): { start: number; end: number } | null {
+  const override = dateOverrides?.[dateNorm]
+  if (override !== undefined) {
+    if (!override.enabled) return null
+    const [sh, sm] = override.start.split(':').map((x) => parseInt(x, 10) || 0)
+    const [eh, em] = override.end.split(':').map((x) => parseInt(x, 10) || 0)
+    const start = sh + sm / 60
+    const end = eh + em / 60
+    if (start >= end) return null
+    return { start: Math.max(0, Math.floor(start)), end: Math.min(24, Math.ceil(end)) }
+  }
+  const w = getWindowForDay(wh, dayName)
+  return w ?? null
+}
+
+type MasterRow = { workingHours: string | null; scheduleDateOverrides: string | null; blockedPeriods: string | null }
 
 async function getAvailableSlotsForDate(
   master: MasterRow,
@@ -79,7 +124,9 @@ async function getAvailableSlotsForDate(
   const dayOfWeek = getDayOfWeekUTC(year, month, day)
   const dayName = DAY_NAMES[dayOfWeek]
   const wh = parseWorkingHours(master.workingHours)
-  const window = getWindowForDay(wh, dayName)
+  const dateOverrides = parseScheduleDateOverrides(master.scheduleDateOverrides)
+  const window = getWindowForDate(dateNorm, dateOverrides, wh, dayName)
+  if (!window) return []
   const dayStart = Math.max(0, window.start)
   const dayEnd = Math.min(24, Math.max(dayStart + 1, window.end))
 
@@ -184,10 +231,10 @@ export async function GET(request: Request) {
 
     let master: MasterRow | null = null
     try {
-      master = await prisma.master.findUnique({
-        where: { id: masterId },
-        select: { workingHours: true, blockedPeriods: true },
-      })
+    master = await prisma.master.findUnique({
+      where: { id: masterId },
+      select: { workingHours: true, scheduleDateOverrides: true, blockedPeriods: true },
+    })
     } catch (e) {
       console.error('[availability] master fetch error', e)
       return NextResponse.json(
@@ -282,8 +329,9 @@ export async function GET(request: Request) {
     const dayOfWeek = getDayOfWeekUTC(year, month, day)
     const dayName = DAY_NAMES[dayOfWeek]
     const wh = parseWorkingHours(master.workingHours)
-    const window = getWindowForDay(wh, dayName)
-    if (!wh || !wh[dayName] || !wh[dayName].enabled) {
+    const dateOverrides = parseScheduleDateOverrides(master.scheduleDateOverrides)
+    const window = getWindowForDate(dateNorm, dateOverrides, wh, dayName)
+    if (!window) {
       return NextResponse.json({
         availableSlots: [],
         scheduleNotConfigured: false,
