@@ -177,6 +177,12 @@ export default function SchedulePage() {
     }
   }
 
+  const handleQuickMasterSuccess = () => {
+    loadMasters()
+    setShowQuickMasterCard(false)
+    setEditingMaster(null)
+  }
+
   if (!business || loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
