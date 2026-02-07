@@ -152,11 +152,11 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
         </h4>
       </div>
 
-      {/* Calendar Grid */}
-      <div className="grid grid-cols-7 gap-0.5">
+      {/* Calendar Grid — той самий стиль, що на сторінці Записи */}
+      <div className="grid grid-cols-7 gap-1.5 md:gap-2">
         {/* Day headers */}
         {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
-          <div key={day} className="text-center text-[9px] font-semibold text-gray-400 py-0.5">
+          <div key={day} className="text-center text-xs font-semibold text-gray-400 py-1.5">
             {day}
           </div>
         ))}
@@ -165,6 +165,7 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
           const dayAppointments = getAppointmentsForDay(day)
           const isToday = isSameDay(day, new Date())
           const isCurrentMonth = isSameMonth(day, currentMonth)
+          const isSelected = selectedDay !== null && isSameDay(day, selectedDay)
           const appointmentCount = dayAppointments.length
 
           return (
@@ -172,31 +173,22 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
               key={day.toISOString()}
               onClick={() => handleDayClick(day)}
               className={cn(
-                'relative p-0.5 rounded-md border transition-all min-h-[24px] flex flex-col items-center justify-center',
+                'relative p-1.5 md:p-2 rounded-lg border transition-all min-h-[36px] md:min-h-[40px] flex flex-col items-center justify-start active:scale-[0.98]',
                 !isCurrentMonth && 'opacity-30',
-                isToday
-                  ? 'border-blue-500 bg-blue-500/20'
-                  : 'border-white/10 bg-white/5 hover:border-white/20 hover:bg-white/10',
-                isCurrentMonth && 'cursor-pointer active:scale-95'
+                isSelected
+                  ? 'border-white bg-white/25 text-white shadow-lg shadow-black/20'
+                  : 'border-white/10 bg-white/5 hover:border-white/25 hover:bg-white/10 text-white',
+                isToday && !isSelected && 'ring-1 ring-white/40 ring-offset-2 ring-offset-transparent',
+                isCurrentMonth && 'cursor-pointer'
               )}
             >
-              <div className={cn(
-                'text-[9px] font-semibold mb-0.5 leading-tight',
-                isToday ? 'text-blue-400' : isCurrentMonth ? 'text-white' : 'text-gray-500'
-              )}>
+              <span className={cn('text-xs md:text-sm font-semibold leading-tight', isToday && !isSelected && 'font-bold')}>
                 {format(day, 'd')}
-              </div>
+              </span>
               {appointmentCount > 0 && (
-                <div className="w-full mt-auto">
-                  <div className={cn(
-                    'text-[7px] font-semibold text-center rounded-full py-0.5 leading-tight',
-                    isToday 
-                      ? 'bg-blue-500 text-white' 
-                      : 'bg-white/20 text-white'
-                  )}>
-                    {appointmentCount}
-                  </div>
-                </div>
+                <span className={cn('mt-0.5 text-[9px] md:text-[10px] font-semibold rounded-full px-1.5 py-0.5 min-w-[16px]', getDayBadgeStyle(dayAppointments))}>
+                  {appointmentCount}
+                </span>
               )}
             </button>
           )
@@ -209,26 +201,36 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
         </div>
       )}
 
-      {/* Список записів для вибраного дня */}
+      {/* Розгорнутий блок вибраного дня — той самий стиль, що на сторінці Записи */}
       {selectedDay && (() => {
         const dayAppointments = getAppointmentsForDay(selectedDay)
-        if (dayAppointments.length === 0) return null
 
         return (
-          <div className="mt-4 pt-4 border-t border-white/10">
+          <div className="mt-4 pt-4 border-t border-white/10 rounded-xl overflow-hidden">
             <div className="flex items-center justify-between mb-3">
-              <h4 className="text-sm font-semibold text-white">
+              <h4 className="text-sm md:text-base font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
                 {format(selectedDay, 'd MMMM yyyy', { locale: uk })}
               </h4>
               <button
                 onClick={() => setSelectedDay(null)}
-                className="p-1 rounded-lg hover:bg-white/10 transition-colors"
+                className="px-3 py-1.5 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-xs font-medium transition-colors"
               >
-                <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                Закрити
               </button>
             </div>
+            {dayAppointments.length === 0 ? (
+              <div className="text-center py-6">
+                <p className="text-gray-300 text-sm font-medium mb-1">Немає записів на цей день</p>
+                <p className="text-xs text-gray-400">Оберіть іншу дату або створіть запис на сторінці Записи</p>
+                <button
+                  type="button"
+                  onClick={() => router.push('/dashboard/appointments')}
+                  className="mt-3 px-3 py-2 bg-white/10 border border-white/20 text-white rounded-lg text-sm font-medium hover:bg-white/20 transition-colors"
+                >
+                  Відкрити Записи
+                </button>
+              </div>
+            ) : (
             <div className="space-y-2 max-h-64 overflow-y-auto">
               {dayAppointments.map((apt) => {
                 const startTime = new Date(apt.startTime)
@@ -297,6 +299,7 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
                 )
               })}
             </div>
+            )}
           </div>
         )
       })()}
