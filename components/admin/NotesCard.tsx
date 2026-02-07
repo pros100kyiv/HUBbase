@@ -208,7 +208,7 @@ export function NotesCard({ businessId }: NotesCardProps) {
         <ModalPortal>
           <div className="modal-overlay sm:!p-4" onClick={() => setShowEditModal(false)}>
             <div
-              className="relative w-[95%] sm:w-full max-w-md modal-content modal-dialog text-white"
+              className="relative w-[95%] sm:w-full max-w-md modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0"
               onClick={(e) => e.stopPropagation()}
             >
               <button
@@ -227,7 +227,7 @@ export function NotesCard({ businessId }: NotesCardProps) {
                 </h3>
               </div>
 
-              <div className="space-y-4">
+              <div className="space-y-4 flex-1 min-h-0 overflow-y-auto">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Дата</label>
                   <input
@@ -285,20 +285,20 @@ export function NotesCard({ businessId }: NotesCardProps) {
         <ModalPortal>
           <div className="modal-overlay sm:!p-4" onClick={() => setShowDatePicker(false)}>
             <div
-              className="relative w-[95%] sm:w-full max-w-sm modal-content modal-dialog animate-in fade-in zoom-in-95 duration-200"
+              className="relative w-[95%] sm:w-full max-w-sm modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-white">Виберіть дату</h3>
-                <button
-                  onClick={() => setShowDatePicker(false)}
-                  className="p-1 hover:bg-white/10 rounded transition-colors"
-                >
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
-                </button>
-              </div>
+              <button
+                type="button"
+                onClick={() => setShowDatePicker(false)}
+                className="modal-close text-gray-400 hover:text-white rounded-xl"
+                aria-label="Закрити"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+              <h3 className="modal-title pr-10 mb-4">Виберіть дату</h3>
 
               <div className="space-y-2">
                 <input

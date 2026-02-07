@@ -173,26 +173,22 @@ export function EditAppointmentForm({
   return (
     <ModalPortal>
       <div ref={formRef} className="modal-overlay sm:!p-4">
-        <div className="relative w-[95%] sm:w-full sm:max-w-2xl sm:my-auto modal-content modal-dialog text-white">
-        {/* Close button */}
+        <div className="relative w-[95%] sm:w-full sm:max-w-2xl sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0">
         <button
+          type="button"
           onClick={onCancel}
-          className="absolute top-4 right-4 p-2 rounded-lg hover:bg-white/10 transition-colors"
+          className="modal-close text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded-xl"
+          aria-label="Закрити"
         >
-          <XIcon className="w-5 h-5 text-gray-400" />
+          <XIcon className="w-5 h-5" />
         </button>
 
-        {/* Header */}
-        <div className="mb-6">
-          <h2 className="text-lg md:text-2xl font-bold text-white mb-2" style={{ letterSpacing: '-0.02em' }}>
-            Редагувати запис
-          </h2>
-          <p className="text-sm text-gray-400">
-            Оновіть інформацію про запис
-          </p>
+        <div className="pr-10 mb-4 flex-shrink-0">
+          <h2 className="modal-title">Редагувати запис</h2>
+          <p className="modal-subtitle">Оновіть інформацію про запис</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4 flex-1 min-h-0 overflow-y-auto">
           {/* Master Selection */}
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-300">
@@ -295,21 +291,29 @@ export function EditAppointmentForm({
                 onClick={() => setShowServiceModal(false)}
               >
                 <div
-                  className="w-[95%] sm:w-full max-w-md modal-content modal-dialog flex flex-col"
+                  className="relative w-[95%] sm:w-full max-w-md modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  <div className="p-4 border-b border-white/10">
-                    <h3 className="text-lg font-semibold text-white">Обрати послуги</h3>
+                  <button
+                    type="button"
+                    onClick={() => setShowServiceModal(false)}
+                    className="modal-close text-gray-400 hover:text-white rounded-xl"
+                    aria-label="Закрити"
+                  >
+                    <XIcon className="w-5 h-5" />
+                  </button>
+                  <div className="pr-10 mb-2 flex-shrink-0">
+                    <h3 className="modal-title">Обрати послуги</h3>
                     <input
                       type="text"
                       value={serviceSearchQuery}
                       onChange={(e) => setServiceSearchQuery(e.target.value)}
                       placeholder="Пошук за назвою..."
-                      className="mt-3 w-full px-3 py-2 border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500/50"
+                      className="mt-2 w-full px-3 py-2 min-h-[44px] border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30"
                       autoFocus
                     />
                   </div>
-                  <div className="flex-1 p-2 min-h-0">
+                  <div className="flex-1 p-2 min-h-0 overflow-y-auto">
                     {services
                       .filter((s) =>
                         s.name.toLowerCase().includes(serviceSearchQuery.trim().toLowerCase())

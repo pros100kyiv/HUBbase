@@ -216,21 +216,19 @@ export default function PricePage() {
         <ModalPortal>
           <div className="modal-overlay sm:!p-4" onClick={() => !isSubmitting && setShowCreateModal(false)}>
             <div
-              className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog"
+              className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0"
               onClick={e => e.stopPropagation()}
             >
-              <div className="p-4 sm:p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-white">Додати до прайсу</h2>
-                  <button
-                    type="button"
-                    onClick={() => !isSubmitting && setShowCreateModal(false)}
-                    className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-                    aria-label="Закрити"
-                  >
-                    <span className="text-xl leading-none">×</span>
-                  </button>
-                </div>
+              <button
+                type="button"
+                onClick={() => !isSubmitting && setShowCreateModal(false)}
+                className="modal-close text-gray-400 hover:text-white rounded-xl"
+                aria-label="Закрити"
+              >
+                <span className="text-xl leading-none">×</span>
+              </button>
+              <div className="pr-10 flex-1 min-h-0 overflow-y-auto">
+                <h2 className="modal-title text-white mb-4">Додати до прайсу</h2>
                 <form onSubmit={handleCreateService} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-300 mb-1.5">Назва послуги *</label>

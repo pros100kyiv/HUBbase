@@ -162,28 +162,28 @@ export function QuickMasterCard({
   return (
     <ModalPortal>
       <div className="modal-overlay sm:!p-4">
-        <div className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white">
-        {/* Close Button */}
+        <div className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0">
         {onCancel && (
           <button
+            type="button"
             onClick={onCancel}
-            className="absolute top-4 right-4 p-2 rounded-lg hover:bg-white/10 transition-colors"
+            className="modal-close text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded-xl"
+            aria-label="Закрити"
           >
-            <XIcon className="w-5 h-5 text-gray-400" />
+            <XIcon className="w-5 h-5" />
           </button>
         )}
 
-        {/* Header */}
-        <div className="mb-4 sm:mb-6">
-          <h2 className="text-lg sm:text-2xl font-bold text-white mb-1 sm:mb-2" style={{ letterSpacing: '-0.02em' }}>
+        <div className="pr-10 mb-4 flex-shrink-0">
+          <h2 className="modal-title">
             {editingMaster ? 'Редагувати спеціаліста' : 'Додати спеціаліста'}
           </h2>
-          <p className="text-[10px] sm:text-sm text-gray-400">
+          <p className="modal-subtitle">
             {editingMaster ? 'Оновіть інформацію про спеціаліста' : 'Заповніть основну інформацію про спеціаліста'}
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-3 sm:space-y-4 flex-1 min-h-0 overflow-y-auto">
           {/* Photo Upload */}
           <div>
             <label className="block text-xs sm:text-sm font-medium mb-1.5 sm:mb-2 text-gray-400">

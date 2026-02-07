@@ -826,21 +826,19 @@ export default function AppointmentsPage() {
             onClick={() => setShowCreateForm(false)}
           >
             <div
-              className="relative w-[95%] sm:w-full sm:max-w-2xl sm:my-auto modal-content modal-dialog"
+              className="relative w-[95%] sm:w-full sm:max-w-2xl sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0"
               onClick={(e) => e.stopPropagation()}
             >
-              <div className="p-4 sm:p-6">
-                <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-xl font-bold text-white">Створити новий запис</h2>
-                  <button
-                    type="button"
-                    onClick={() => setShowCreateForm(false)}
-                    className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
-                    aria-label="Закрити"
-                  >
-                    <span className="text-xl leading-none">×</span>
-                  </button>
-                </div>
+              <button
+                type="button"
+                onClick={() => setShowCreateForm(false)}
+                className="modal-close text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded-xl"
+                aria-label="Закрити"
+              >
+                <span className="text-xl leading-none">×</span>
+              </button>
+              <div className="pr-10 flex-1 min-h-0 overflow-y-auto">
+                <h2 className="modal-title text-white mb-4">Створити новий запис</h2>
                 <CreateAppointmentForm
                   businessId={business.id}
                   masters={masters}

@@ -152,7 +152,7 @@ export function MonthProgressCard({ stats, loading }: MonthProgressCardProps) {
       {showModal && (
         <ModalPortal>
           <div className="modal-overlay sm:!p-4" onClick={() => setShowModal(false)}>
-            <div className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white" onClick={(e) => e.stopPropagation()}>
+            <div className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0" onClick={(e) => e.stopPropagation()}>
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
@@ -250,6 +250,7 @@ export function MonthProgressCard({ stats, loading }: MonthProgressCardProps) {
                 >
                   Перейти до повної аналітики
                 </button>
+              </div>
               </div>
             </div>
           </div>

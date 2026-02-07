@@ -268,12 +268,20 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
             <ModalPortal>
               <div className="modal-overlay sm:!p-4" onClick={() => setSelectedMessage(null)}>
                 <div
-                  className="relative w-[95%] sm:w-full max-w-md modal-content modal-dialog animate-in fade-in zoom-in-95 duration-200 flex flex-col"
+                  className="relative w-[95%] sm:w-full max-w-md modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
                   onClick={(e) => e.stopPropagation()}
                 >
-                {/* Header - Fixed */}
-                <div className="flex items-center justify-between p-4 sm:p-6 pb-3 sm:pb-4 flex-shrink-0 border-b border-white/10">
-                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedMessage(null)}
+                    className="modal-close text-gray-400 hover:text-white rounded-xl"
+                    aria-label="Закрити"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                  <div className="pr-10 mb-2 flex-shrink-0 flex items-center gap-3">
                     <div className={cn(
                       'w-10 h-10 rounded-full flex items-center justify-center text-white flex-shrink-0',
                       getPlatformBgColor(selectedMessage.platform)
@@ -281,22 +289,11 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
                       {getPlatformIcon(selectedMessage.platform)}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="text-sm font-semibold text-white truncate">{selectedMessage.senderName}</div>
-                      <div className="text-xs text-gray-400">{getPlatformShortName(selectedMessage.platform)}</div>
+                      <div className="modal-title truncate">{selectedMessage.senderName}</div>
+                      <div className="modal-subtitle">{getPlatformShortName(selectedMessage.platform)}</div>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setSelectedMessage(null)}
-                    className="p-1.5 hover:bg-white/10 rounded transition-colors flex-shrink-0 ml-2"
-                  >
-                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-
-                {/* Content — без перемотування всередині */}
-                <div className="flex-1 px-4 sm:px-6 py-4">
+                  <div className="flex-1 min-h-0 overflow-y-auto px-4 sm:px-6 py-4 pt-0">
                   {/* Original Message */}
                   <div className="bg-white/5 rounded-lg p-3 mb-4">
                     <p className="text-sm text-gray-300 whitespace-pre-wrap break-words">{selectedMessage.message}</p>

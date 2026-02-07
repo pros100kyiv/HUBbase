@@ -259,27 +259,25 @@ export function StatisticsDetailModal({
   return (
     <ModalPortal>
       <div className="modal-overlay sm:!p-4">
-        <div className="relative w-[95%] sm:w-full sm:max-w-2xl sm:my-auto modal-content modal-dialog text-white animate-in fade-in zoom-in-95 duration-200">
-          
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center gap-3">
-              <div className={cn('w-12 h-12 rounded-lg flex items-center justify-center', iconColor)}>
-                {icon}
-              </div>
-              <div>
-                <h2 className="text-xl font-bold">{title}</h2>
-                <p className="text-sm text-gray-400">
-                  {period === 'day' ? 'За сьогодні' : period === 'week' ? 'За тиждень' : 'За місяць'}
-                </p>
-              </div>
+        <div className="relative w-[95%] sm:w-full sm:max-w-2xl sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200">
+          <button
+            type="button"
+            onClick={onClose}
+            className="modal-close text-gray-400 hover:text-white rounded-xl"
+            aria-label="Закрити"
+          >
+            <XIcon className="w-5 h-5" />
+          </button>
+          <div className="pr-10 mb-4 flex-shrink-0 flex items-center gap-3">
+            <div className={cn('w-12 h-12 rounded-lg flex items-center justify-center flex-shrink-0', iconColor)}>
+              {icon}
             </div>
-            <button 
-              onClick={onClose}
-              className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-            >
-              <XIcon className="w-5 h-5 text-gray-400" />
-            </button>
+            <div>
+              <h2 className="modal-title">{title}</h2>
+              <p className="modal-subtitle">
+                {period === 'day' ? 'За сьогодні' : period === 'week' ? 'За тиждень' : 'За місяць'}
+              </p>
+            </div>
           </div>
 
           {loading ? (
@@ -288,7 +286,7 @@ export function StatisticsDetailModal({
               <p className="mt-4 text-gray-400">Завантаження...</p>
             </div>
           ) : (
-            <div className="space-y-6">
+            <div className="space-y-6 flex-1 min-h-0 overflow-y-auto">
               {/* Загальна статистика */}
               <div className="grid grid-cols-2 gap-4">
                 <div className="p-4 rounded-xl bg-white/5 border border-white/10">

@@ -241,24 +241,18 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
   return (
     <ModalPortal>
       <div className="modal-overlay sm:!p-4">
-        <div className="w-[95%] sm:w-full sm:max-w-2xl sm:my-auto modal-content modal-dialog flex flex-col">
-        {/* Header - base style */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10 shrink-0">
-          <h2 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
-            Нові бронювання ({appointments.length})
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            className="p-2 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors touch-target"
-            aria-label="Закрити"
-          >
-            <XIcon className="w-5 h-5" />
-          </button>
-        </div>
+        <div className="relative w-[95%] sm:w-full sm:max-w-2xl sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0">
+        <button
+          type="button"
+          onClick={onClose}
+          className="modal-close text-gray-400 hover:text-white rounded-xl"
+          aria-label="Закрити"
+        >
+          <XIcon className="w-5 h-5" />
+        </button>
+        <h2 className="modal-title pr-10 mb-4">Нові бронювання ({appointments.length})</h2>
 
-        {/* Content — без перемотування всередині */}
-        <div className="flex-1 min-h-0 p-4">
+        <div className="flex-1 min-h-0 overflow-y-auto p-4 pt-0">
           {loading ? (
             <div className="text-center py-8">
               <p className="text-gray-400">Завантаження...</p>
