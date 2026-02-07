@@ -59,8 +59,16 @@ function checkConflict(
 }
 
 export async function POST(request: Request) {
+  let body: Record<string, unknown>
   try {
-    const body = await request.json()
+    body = await request.json()
+  } catch {
+    return NextResponse.json(
+      { error: 'Невірний формат даних (очікується JSON)' },
+      { status: 400 }
+    )
+  }
+  try {
     const { businessId, masterId, clientName, clientPhone, clientEmail, startTime, endTime, services, notes, customPrice, customServiceName, customService } = body
 
     if (!businessId || !masterId || !clientName || !clientPhone || !startTime || !endTime) {
@@ -178,10 +186,12 @@ export async function POST(request: Request) {
 
     return NextResponse.json(appointment, { status: 201 })
   } catch (error) {
-    console.error('Error creating appointment:', error)
+    const message = error instanceof Error ? error.message : 'Unknown error'
+    const stack = error instanceof Error ? error.stack : undefined
+    console.error('Error creating appointment:', message, stack)
+
     let userMessage = 'Не вдалося створити запис. Спробуйте ще раз.'
     let status = 500
-    const message = error instanceof Error ? error.message : 'Unknown error'
 
     if (error instanceof Prisma.PrismaClientKnownRequestError) {
       if (error.code === 'P2002') {
@@ -204,7 +214,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       error: userMessage,
-      details: process.env.NODE_ENV === 'development' ? message : undefined,
+      details: (process.env.NODE_ENV === 'development' || status === 500) ? message : undefined,
     }, { status })
   }
 }
