@@ -419,7 +419,12 @@
     display: none;
   }
 
-  /* Modal overlay: скролу всередині модалки немає; при великому контенті скролиться оверлей */
+  /* ========== СТАНДАРТ МОДАЛЬНИХ ВІКОН ==========
+   * Один стандарт для всіх модалок: автоматично підлаштовуються під різні екрани,
+   * пристрої та масштаб (viewport, safe-area, clamp для відступів).
+   */
+
+  /* Оверлей: повний екран, safe-area, адаптивні відступи */
   .modal-overlay {
     position: fixed;
     inset: 0;
@@ -432,28 +437,32 @@
     overflow-y: auto;
     overscroll-behavior: contain;
     -webkit-overflow-scrolling: touch;
-    padding: 0;
-    padding-left: env(safe-area-inset-left, 0);
-    padding-right: env(safe-area-inset-right, 0);
     padding-top: env(safe-area-inset-top, 0);
     padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-left: max(env(safe-area-inset-left, 0), clamp(0.5rem, 2.5vmin, 1rem));
+    padding-right: max(env(safe-area-inset-right, 0), clamp(0.5rem, 2.5vmin, 1rem));
+    box-sizing: border-box;
   }
   @media (min-width: 640px) {
     .modal-overlay {
       align-items: center;
-      padding: 1rem;
+      padding: max(1rem, env(safe-area-inset-top)) max(1rem, env(safe-area-inset-right)) max(1rem, env(safe-area-inset-bottom)) max(1rem, env(safe-area-inset-left));
     }
   }
 
-  /* Контент модалки: без перемотування всередині — контент розгорнутий, скролу немає */
+  /* Контент модалки: ширина/висота під viewport і safe-area, без внутрішнього скролу.
+   * На sm+ max-width задають класи компонента (sm:max-w-md, sm:max-w-2xl тощо). */
   .modal-content {
     width: 100%;
-    max-height: min(90dvh, calc(100dvh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px)));
+    max-width: min(100%, calc(100vw - 2 * clamp(0.5rem, 2.5vmin, 1rem) - env(safe-area-inset-left, 0) - env(safe-area-inset-right, 0)));
+    max-height: min(90dvh, calc(100dvh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0) - 2 * clamp(0.25rem, 1.5vmin, 0.5rem)));
     overflow: visible;
+    box-sizing: border-box;
+    flex-shrink: 0;
   }
   @media (min-width: 640px) {
     .modal-content {
-      max-height: calc(100vh - 2rem);
+      max-height: min(80vh, calc(100vh - 2 * max(1rem, env(safe-area-inset-top, 0)) - 2 * max(1rem, env(safe-area-inset-bottom, 0))));
     }
   }
 
