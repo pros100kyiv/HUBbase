@@ -13,6 +13,8 @@ interface TimeStepProps {
 export function TimeStep({ businessId }: TimeStepProps) {
   const { state, setDate, setTime, setStep } = useBooking()
   const [availableSlots, setAvailableSlots] = useState<string[]>([])
+  const [scheduleNotConfigured, setScheduleNotConfigured] = useState(false)
+  const [slotsLoading, setSlotsLoading] = useState(false)
   const [calendarReady, setCalendarReady] = useState(false)
   const [currentMonth, setCurrentMonth] = useState<Date | null>(null)
   const [clientToday, setClientToday] = useState<Date | null>(null)
@@ -39,42 +41,17 @@ export function TimeStep({ businessId }: TimeStepProps) {
     return date
   }) : []
 
-  // Generate all time slots from 09:00 to 20:30 with 30-minute intervals
+  // Усі можливі слоти для відображення (від 8:00 до 21:00 — узгоджено з графіком)
   const generateTimeSlots = () => {
     const slots: string[] = []
-    for (let hour = 9; hour <= 20; hour++) {
+    for (let hour = 8; hour <= 21; hour++) {
       slots.push(`${hour.toString().padStart(2, '0')}:00`)
-      if (hour < 20) {
-        slots.push(`${hour.toString().padStart(2, '0')}:30`)
-      }
+      if (hour < 21) slots.push(`${hour.toString().padStart(2, '0')}:30`)
     }
     return slots
   }
 
   const allTimeSlots = generateTimeSlots()
-
-  useEffect(() => {
-    if (state.selectedDate && state.selectedMaster && businessId) {
-      // Format date as YYYY-MM-DD for API
-      const dateStr = format(state.selectedDate, 'yyyy-MM-dd')
-      fetch(
-        `/api/availability?masterId=${state.selectedMaster.id}&businessId=${businessId}&date=${dateStr}`
-      )
-        .then(res => {
-          if (!res.ok) {
-            throw new Error('Failed to fetch availability')
-          }
-          return res.json()
-        })
-        .then(data => setAvailableSlots(data.availableSlots || []))
-        .catch(error => {
-          console.error('Error fetching availability:', error)
-          setAvailableSlots([])
-        })
-    } else {
-      setAvailableSlots([])
-    }
-  }, [state.selectedDate, state.selectedMaster, businessId])
 
   const isSlotAvailable = (time: string) => {
     if (!state.selectedDate) return false
@@ -92,6 +69,33 @@ export function TimeStep({ businessId }: TimeStepProps) {
 
   const totalDurationFromServices = state.selectedServices.reduce((sum, s) => sum + s.duration, 0)
   const totalDuration = totalDurationFromServices > 0 ? totalDurationFromServices : 30
+
+  useEffect(() => {
+    if (state.selectedDate && state.selectedMaster && businessId) {
+      setSlotsLoading(true)
+      const dateStr = format(state.selectedDate, 'yyyy-MM-dd')
+      const url = `/api/availability?masterId=${state.selectedMaster.id}&businessId=${businessId}&date=${dateStr}&durationMinutes=${totalDuration}`
+      fetch(url)
+        .then(res => {
+          if (!res.ok) throw new Error('Failed to fetch availability')
+          return res.json()
+        })
+        .then(data => {
+          setAvailableSlots(data.availableSlots || [])
+          setScheduleNotConfigured(Boolean(data.scheduleNotConfigured))
+        })
+        .catch(error => {
+          console.error('Error fetching availability:', error)
+          setAvailableSlots([])
+          setScheduleNotConfigured(false)
+        })
+        .finally(() => setSlotsLoading(false))
+    } else {
+      setAvailableSlots([])
+      setScheduleNotConfigured(false)
+      setSlotsLoading(false)
+    }
+  }, [state.selectedDate, state.selectedMaster, businessId, totalDuration])
 
   return (
     <div className="min-h-screen py-4 sm:py-6 px-3 md:px-6 pb-[env(safe-area-inset-bottom)]">
@@ -152,23 +156,30 @@ export function TimeStep({ businessId }: TimeStepProps) {
 
         {state.selectedDate && (
           <div className="mb-3 sm:mb-4">
+            {scheduleNotConfigured && !slotsLoading && (
+              <div className="rounded-xl p-4 mb-4 card-glass border border-amber-500/30 bg-amber-500/10">
+                <p className="text-sm font-medium text-amber-200">Графік не налаштовано або на цей день немає робочого часу.</p>
+                <p className="text-xs text-gray-400 mt-1">Оберіть іншу дату або зверніться до закладу для уточнення графіка.</p>
+              </div>
+            )}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
               <h3 className="text-sm font-semibold text-white">Оберіть час:</h3>
               <div className="flex items-center gap-3 text-xs text-gray-400 flex-wrap">
+                {slotsLoading && <span className="text-gray-400">Завантаження слотів...</span>}
                 <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-green-500 flex-shrink-0" />Доступно</span>
                 <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-white/10 border border-white/20 flex-shrink-0" />Зайнято</span>
               </div>
             </div>
             <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5 sm:gap-2">
               {allTimeSlots.map((time) => {
-                const available = isSlotAvailable(time)
+                const available = !slotsLoading && isSlotAvailable(time)
                 const isSelected = state.selectedTime === time
                 return (
                   <button
                     key={time}
                     type="button"
                     onClick={() => handleTimeSelect(time)}
-                    disabled={!available}
+                    disabled={slotsLoading || !isSlotAvailable(time)}
                     className={cn(
                       'min-h-[44px] sm:min-h-0 px-2 sm:px-3 py-2.5 sm:py-2.5 rounded-lg transition-colors text-xs font-medium active:scale-[0.98]',
                       isSelected && 'bg-white text-black shadow-md ring-2 ring-white/50',

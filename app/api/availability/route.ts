@@ -12,7 +12,57 @@ interface WorkingHours {
   [key: string]: DaySchedule
 }
 
+// date-fns getDay: 0 = Sunday, 1 = Monday, ... 6 = Saturday
 const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
+
+function parseWorkingHours(json: string | null): WorkingHours | null {
+  if (!json || !json.trim()) return null
+  try {
+    const parsed = JSON.parse(json)
+    if (parsed && typeof parsed === 'object') return parsed
+  } catch (e) {
+    console.error('Error parsing working hours:', e)
+  }
+  return null
+}
+
+/** Повертає діапазон годин дня. Якщо графік не налаштований або день вимкнений — enabled: false (не підставляємо 9–21). */
+function getDayWindow(
+  workingHours: WorkingHours | null,
+  dayName: string
+): { start: number; end: number; enabled: boolean } {
+  if (!workingHours || !workingHours[dayName]) {
+    return { start: 0, end: 0, enabled: false }
+  }
+  const day = workingHours[dayName]
+  if (!day.enabled) {
+    return { start: 0, end: 0, enabled: false }
+  }
+  const [startH, startM] = (day.start || '09:00').split(':').map(Number)
+  const [endH, endM] = (day.end || '18:00').split(':').map(Number)
+  const start = startH + (startM || 0) / 60
+  const endExact = endH + (endM || 0) / 60
+  const startHour = Math.floor(start)
+  const endHour = endExact > Math.floor(endExact) ? Math.ceil(endExact) : Math.floor(endExact)
+  return { start: startHour, end: endHour, enabled: true }
+}
+
+/** Перетин двох діапазонів. Якщо бізнес не налаштований — використовуємо тільки графік майстра. */
+function intersectDay(
+  master: { start: number; end: number; enabled: boolean },
+  business: { start: number; end: number; enabled: boolean } | null
+): { start: number; end: number; enabled: boolean } {
+  if (!master.enabled) {
+    return { start: 0, end: 0, enabled: false }
+  }
+  if (!business || !business.enabled) {
+    return master
+  }
+  const start = Math.max(master.start, business.start)
+  const end = Math.min(master.end, business.end)
+  if (start >= end) return { start: master.start, end: master.end, enabled: false }
+  return { start, end, enabled: true }
+}
 
 export async function GET(request: Request) {
   try {
@@ -20,61 +70,75 @@ export async function GET(request: Request) {
     const masterId = searchParams.get('masterId')
     const businessId = searchParams.get('businessId')
     const dateParam = searchParams.get('date')
+    const durationParam = searchParams.get('durationMinutes')
 
     if (!masterId || !businessId || !dateParam) {
       return NextResponse.json({ error: 'Missing parameters' }, { status: 400 })
     }
 
-    // Parse date string (YYYY-MM-DD format)
+    const durationMinutes = durationParam ? Math.max(30, Math.min(480, parseInt(durationParam, 10) || 30)) : 30
+
     const dateParts = dateParam.split('-')
     if (dateParts.length !== 3) {
       return NextResponse.json({ error: 'Invalid date format' }, { status: 400 })
     }
-    
-    const date = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]))
+
+    const year = parseInt(dateParts[0], 10)
+    const month = parseInt(dateParts[1], 10) - 1
+    const day = parseInt(dateParts[2], 10)
+    const date = new Date(year, month, day)
     const startOfSelectedDay = startOfDay(date)
-    const endOfDay = new Date(startOfSelectedDay)
-    endOfDay.setHours(23, 59, 59, 999)
+    const endOfDayDate = new Date(startOfSelectedDay)
+    endOfDayDate.setHours(23, 59, 59, 999)
 
-    // Get master with working hours and check if active
-    const master = await prisma.master.findUnique({
-      where: { id: masterId },
-      select: { workingHours: true, blockedPeriods: true, isActive: true },
-    })
+    const [master, business] = await Promise.all([
+      prisma.master.findUnique({
+        where: { id: masterId },
+        select: { workingHours: true, blockedPeriods: true, isActive: true },
+      }),
+      prisma.business.findUnique({
+        where: { id: businessId },
+        select: { workingHours: true },
+      }),
+    ])
 
-    // If master is not active, return empty slots
     if (!master || master.isActive === false) {
-      return NextResponse.json({ availableSlots: [] })
+      return NextResponse.json({ availableSlots: [], scheduleNotConfigured: false })
     }
 
-    // Get existing appointments for this master on this day
     const appointments = await prisma.appointment.findMany({
       where: {
         businessId,
         masterId,
-        startTime: {
-          gte: startOfSelectedDay,
-          lte: endOfDay,
-        },
-        status: {
-          not: 'Cancelled',
-        },
+        startTime: { gte: startOfSelectedDay, lte: endOfDayDate },
+        status: { not: 'Cancelled' },
       },
     })
 
-    // Parse working hours
-    let workingHours: WorkingHours | null = null
-    if (master?.workingHours) {
-      try {
-        workingHours = JSON.parse(master.workingHours)
-      } catch (e) {
-        console.error('Error parsing working hours:', e)
-      }
+    const masterWH = parseWorkingHours(master.workingHours)
+    const businessWH = parseWorkingHours(business?.workingHours ?? null)
+
+    const dayOfWeek = getDay(date)
+    const dayName = dayNames[dayOfWeek]
+
+    const masterDay = getDayWindow(masterWH, dayName)
+    const businessDay = businessWH ? getDayWindow(businessWH, dayName) : null
+    const finalDay = intersectDay(masterDay, businessDay)
+
+    if (!masterDay.enabled) {
+      return NextResponse.json({
+        availableSlots: [],
+        scheduleNotConfigured: true,
+        message: 'Графік майстра не налаштовано або на цей день немає робочого часу.',
+      })
     }
 
-    // Parse blocked periods
+    let dayStart = finalDay.start
+    let dayEnd = finalDay.end
+    const isWorkingDay = finalDay.enabled
+
     let blockedPeriods: Array<{ start: string; end: string }> = []
-    if (master?.blockedPeriods) {
+    if (master.blockedPeriods) {
       try {
         blockedPeriods = JSON.parse(master.blockedPeriods)
       } catch (e) {
@@ -82,34 +146,12 @@ export async function GET(request: Request) {
       }
     }
 
-    // Get day of week (0 = Sunday, 1 = Monday, etc.)
-    const dayOfWeek = getDay(date)
-    const dayName = dayNames[dayOfWeek]
-
-    // Determine working hours for this day
-    let dayStart = 9
-    let dayEnd = 21
-    let isWorkingDay = true
-
-    if (workingHours && workingHours[dayName]) {
-      const daySchedule = workingHours[dayName]
-      isWorkingDay = daySchedule.enabled
-      if (daySchedule.enabled) {
-        const [startHour, startMinute] = daySchedule.start.split(':').map(Number)
-        const [endHour, endMinute] = daySchedule.end.split(':').map(Number)
-        dayStart = startHour
-        dayEnd = endHour + (endMinute > 0 ? 1 : 0)
-      }
-    }
-
-    // Generate all possible 30-minute slots
     const slots: string[] = []
     if (isWorkingDay) {
       for (let hour = dayStart; hour < dayEnd; hour++) {
         for (let minute = 0; minute < 60; minute += 30) {
           const slotTime = new Date(startOfSelectedDay)
           slotTime.setHours(hour, minute, 0, 0)
-          // Only add slots that are not in the past
           if (slotTime >= new Date()) {
             slots.push(format(slotTime, "yyyy-MM-dd'T'HH:mm"))
           }
@@ -117,7 +159,6 @@ export async function GET(request: Request) {
       }
     }
 
-    // Filter out occupied slots
     const occupiedSlots = new Set<string>()
     appointments.forEach((apt) => {
       let current = new Date(apt.startTime)
@@ -128,24 +169,36 @@ export async function GET(request: Request) {
       }
     })
 
-    // Filter out blocked periods
     blockedPeriods.forEach((blocked) => {
       const blockStart = new Date(blocked.start)
       const blockEnd = new Date(blocked.end)
       let current = new Date(blockStart)
       while (current < blockEnd) {
-        const slotStr = format(current, "yyyy-MM-dd'T'HH:mm")
-        occupiedSlots.add(slotStr)
+        occupiedSlots.add(format(current, "yyyy-MM-dd'T'HH:mm"))
         current = addMinutes(current, 30)
       }
     })
 
-    const availableSlots = slots.filter((slot) => !occupiedSlots.has(slot))
+    const slotStepMinutes = 30
+    const stepsNeeded = Math.ceil(durationMinutes / slotStepMinutes)
 
-    return NextResponse.json({ availableSlots })
+    const availableSlots = slots.filter((slotStr) => {
+      const slotDate = new Date(slotStr)
+      for (let i = 0; i < stepsNeeded; i++) {
+        const checkTime = addMinutes(slotDate, i * slotStepMinutes)
+        const checkStr = format(checkTime, "yyyy-MM-dd'T'HH:mm")
+        if (occupiedSlots.has(checkStr)) return false
+        const checkHour = checkTime.getHours()
+        const checkMin = checkTime.getMinutes()
+        const checkValue = checkHour + checkMin / 60
+        if (checkValue < dayStart || checkValue >= dayEnd) return false
+      }
+      return true
+    })
+
+    return NextResponse.json({ availableSlots, scheduleNotConfigured: false })
   } catch (error) {
     console.error('Error fetching availability:', error)
     return NextResponse.json({ error: 'Failed to fetch availability' }, { status: 500 })
   }
 }
-
