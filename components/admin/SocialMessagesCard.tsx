@@ -266,41 +266,15 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
           {/* Reply Modal */}
           {selectedMessage && (
             <ModalPortal>
-              <div 
-                className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4" 
-                style={{ 
-                  WebkitOverflowScrolling: 'touch',
-                  overscrollBehavior: 'contain',
-                  position: 'fixed',
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0
-                }}
-              >
-                {/* Backdrop */}
-                <div 
-                  className="fixed inset-0 bg-black/70 backdrop-blur-sm" 
+              <div className="modal-overlay z-[9999] sm:!p-4">
+                <div
+                  className="fixed inset-0 min-h-[100dvh] bg-black/70 backdrop-blur-sm"
                   onClick={() => setSelectedMessage(null)}
-                  style={{ 
-                    position: 'fixed',
-                    top: 0,
-                    left: 0,
-                    right: 0,
-                    bottom: 0
-                  }}
+                  aria-hidden
                 />
-                
-                {/* Modal Content */}
-                <div 
-                  className="relative w-[95%] sm:w-full max-w-md bg-[#2A2A2A] rounded-xl border border-white/10 shadow-2xl animate-in fade-in zoom-in-95 duration-200 flex flex-col"
-                  style={{ 
-                    maxHeight: 'calc(100vh - 1.5rem)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    position: 'relative',
-                    zIndex: 10000
-                  }}
+                <div
+                  className="relative w-[95%] sm:w-full max-w-md bg-[#2A2A2A] rounded-xl border border-white/10 shadow-2xl modal-content animate-in fade-in zoom-in-95 duration-200 flex flex-col pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+                  style={{ position: 'relative', zIndex: 10000 }}
                   onClick={(e) => e.stopPropagation()}
                 >
                 {/* Header - Fixed */}

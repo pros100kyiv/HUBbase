@@ -215,11 +215,11 @@ export function CreateAppointmentForm({
             {showServiceModal && (
               <ModalPortal>
                 <div
-                  className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+                  className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4"
                   onClick={() => setShowServiceModal(false)}
                 >
                   <div
-                    className="w-full max-w-md max-h-[85vh] flex flex-col rounded-xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-white/10 shadow-xl"
+                    className="w-full max-w-md modal-content flex flex-col rounded-xl bg-white dark:bg-[#1A1A1A] border border-gray-200 dark:border-white/10 shadow-xl pb-[max(0.5rem,env(safe-area-inset-bottom))]"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <div className="p-4 border-b border-gray-200 dark:border-white/10">

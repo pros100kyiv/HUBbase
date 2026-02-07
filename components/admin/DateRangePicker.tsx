@@ -116,9 +116,9 @@ export function DateRangePicker({
   }
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 overflow-y-auto" onClick={onClose}>
-      <div 
-        className="relative w-full sm:max-w-sm bg-white dark:bg-gray-800 border-t sm:border border-gray-200 dark:border-gray-700 rounded-t-xl sm:rounded-candy-lg shadow-soft-xl p-3 sm:p-4 sm:my-auto max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-y-auto"
+    <div className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4" onClick={onClose}>
+      <div
+        className="relative w-full sm:max-w-sm bg-white dark:bg-gray-800 border-t sm:border border-gray-200 dark:border-gray-700 rounded-t-xl sm:rounded-candy-lg shadow-soft-xl p-3 sm:p-4 sm:my-auto modal-content overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom))]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button */}

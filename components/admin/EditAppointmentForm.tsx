@@ -166,8 +166,8 @@ export function EditAppointmentForm({
   }
 
   return (
-    <div ref={formRef} className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
-      <div className="relative w-full sm:max-w-2xl bg-[#1A1A1A] border border-white/10 rounded-t-xl sm:rounded-xl p-4 sm:p-6 sm:my-auto max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-y-auto text-white shadow-xl">
+    <div ref={formRef} className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4">
+      <div className="relative w-full sm:max-w-2xl bg-[#1A1A1A] border border-white/10 rounded-t-xl sm:rounded-xl p-4 sm:p-6 sm:my-auto modal-content overflow-y-auto text-white shadow-xl pb-[max(1rem,env(safe-area-inset-bottom))]">
         {/* Close button */}
         <button
           onClick={onCancel}
@@ -285,11 +285,11 @@ export function EditAppointmentForm({
           {showServiceModal && (
             <ModalPortal>
               <div
-                className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-black/70 backdrop-blur-sm"
+                className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4 z-[110]"
                 onClick={() => setShowServiceModal(false)}
               >
                 <div
-                  className="w-full max-w-md max-h-[85vh] flex flex-col rounded-xl bg-[#1A1A1A] border border-white/10 shadow-xl"
+                  className="w-full max-w-md modal-content flex flex-col rounded-xl bg-[#1A1A1A] border border-white/10 shadow-xl pb-[max(0.5rem,env(safe-area-inset-bottom))]"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <div className="p-4 border-b border-white/10">

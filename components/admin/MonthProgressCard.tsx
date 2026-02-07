@@ -156,8 +156,8 @@ export function MonthProgressCard({ stats, loading }: MonthProgressCardProps) {
       {/* Модальне вікно з деталями */}
       {showModal && (
         <ModalPortal>
-          <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4 bg-black/70 backdrop-blur-sm overflow-y-auto">
-            <div className="relative w-full sm:max-w-md bg-[#1A1A1A] border border-white/10 rounded-t-xl sm:rounded-xl p-4 sm:p-6 sm:my-auto max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-y-auto text-white shadow-xl animate-in fade-in zoom-in-95 duration-200">
+          <div className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4">
+            <div className="relative w-full sm:max-w-md bg-[#1A1A1A] border border-white/10 rounded-t-xl sm:rounded-xl p-4 sm:p-6 sm:my-auto modal-content overflow-y-auto text-white shadow-xl animate-in fade-in zoom-in-95 duration-200 pb-[max(1rem,env(safe-area-inset-bottom))]">
               
               <div className="flex items-center justify-between mb-6">
                 <h2 className="text-xl font-bold">Статистика місяця</h2>

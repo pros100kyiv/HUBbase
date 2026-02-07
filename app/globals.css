@@ -419,6 +419,40 @@
     display: none;
   }
 
+  /* Modal overlay: коректно на всіх пристроях (viewport + safe-area) */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    min-height: 100dvh;
+    min-height: 100vh;
+    display: flex;
+    align-items: flex-end;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    -webkit-overflow-scrolling: touch;
+    padding: 0;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+  @media (min-width: 640px) {
+    .modal-overlay {
+      align-items: center;
+      padding: 1rem;
+    }
+  }
+
+  /* Контент модалки: не виходить за екран */
+  .modal-content {
+    max-height: 90dvh;
+    max-height: calc(100vh - 2rem);
+  }
+  @media (min-width: 640px) {
+    .modal-content {
+      max-height: calc(100vh - 2rem);
+    }
+  }
+
   /* Mobile: touch targets min 44px, safe area */
   .touch-target {
     min-height: 44px;

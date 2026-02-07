@@ -633,31 +633,14 @@ export function MyDayCard({
       {/* Status Details Modal */}
       {selectedStatus && (
         <ModalPortal>
-          <div 
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4"
-            style={{ 
-              WebkitOverflowScrolling: 'touch',
-              overscrollBehavior: 'contain',
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0
-            }}
-          >
-            <div 
-              className="fixed inset-0 bg-black/70 backdrop-blur-sm" 
+          <div className="modal-overlay z-[9999] sm:!p-4">
+            <div
+              className="fixed inset-0 min-h-[100dvh] bg-black/70 backdrop-blur-sm"
               onClick={() => setSelectedStatus(null)}
-              style={{ 
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0
-              }}
+              aria-hidden
             />
-            <div 
-              className="relative w-[95%] sm:w-full max-w-lg bg-[#2A2A2A] rounded-xl flex flex-col border border-white/10 shadow-2xl max-h-[85vh] animate-in fade-in zoom-in-95 duration-200"
+            <div
+              className="relative w-[95%] sm:w-full max-w-lg bg-[#2A2A2A] rounded-xl flex flex-col border border-white/10 shadow-2xl modal-content animate-in fade-in zoom-in-95 duration-200 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
               onClick={(e) => e.stopPropagation()}
               onTouchStart={handleTouchStart}
               onTouchEnd={(e) => handleTouchEnd(e, () => setSelectedStatus(null))}
@@ -702,31 +685,14 @@ export function MyDayCard({
       {/* Appointment Details Modal */}
       {selectedAppointment && (
         <ModalPortal>
-          <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4"
-            style={{
-              WebkitOverflowScrolling: 'touch',
-              overscrollBehavior: 'contain',
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-            }}
-          >
+          <div className="modal-overlay z-[9999] sm:!p-4">
             <div
-              className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+              className="fixed inset-0 min-h-[100dvh] bg-black/70 backdrop-blur-sm"
               onClick={() => setSelectedAppointment(null)}
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-              }}
+              aria-hidden
             />
             <div
-              className="relative w-[95%] sm:w-full max-w-lg bg-[#2A2A2A] rounded-xl flex flex-col border border-white/10 shadow-2xl max-h-[85vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+              className="relative w-[95%] sm:w-full max-w-lg bg-[#2A2A2A] rounded-xl flex flex-col border border-white/10 shadow-2xl modal-content overflow-hidden animate-in fade-in zoom-in-95 duration-200 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
               onClick={(e) => e.stopPropagation()}
               onTouchStart={handleTouchStart}
               onTouchEnd={(e) => handleTouchEnd(e, () => setSelectedAppointment(null))}
@@ -838,31 +804,14 @@ export function MyDayCard({
       {/* Client History Modal */}
       {historyPhone && (
         <ModalPortal>
-          <div
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4"
-            style={{
-              WebkitOverflowScrolling: 'touch',
-              overscrollBehavior: 'contain',
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-            }}
-          >
+          <div className="modal-overlay z-[9999] sm:!p-4">
             <div
-              className="fixed inset-0 bg-black/70 backdrop-blur-sm"
+              className="fixed inset-0 min-h-[100dvh] bg-black/70 backdrop-blur-sm"
               onClick={() => setHistoryPhone(null)}
-              style={{
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0,
-              }}
+              aria-hidden
             />
             <div
-              className="relative w-[95%] sm:w-full max-w-xl bg-[#2A2A2A] rounded-xl flex flex-col border border-white/10 shadow-2xl max-h-[85vh] overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+              className="relative w-[95%] sm:w-full max-w-xl bg-[#2A2A2A] rounded-xl flex flex-col border border-white/10 shadow-2xl modal-content overflow-hidden animate-in fade-in zoom-in-95 duration-200 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
               onClick={(e) => e.stopPropagation()}
               onTouchStart={handleTouchStart}
               onTouchEnd={(e) => handleTouchEnd(e, () => setHistoryPhone(null))}
@@ -930,31 +879,14 @@ export function MyDayCard({
       {/* Date Picker Modal */}
       {showDatePicker && (
         <ModalPortal>
-          <div 
-            className="fixed inset-0 z-[9999] flex items-center justify-center p-3 sm:p-4" 
-            style={{ 
-              WebkitOverflowScrolling: 'touch',
-              overscrollBehavior: 'contain',
-              position: 'fixed',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0
-            }}
-          >
-            <div 
-              className="fixed inset-0 bg-black/70 backdrop-blur-sm" 
+          <div className="modal-overlay z-[9999] sm:!p-4">
+            <div
+              className="fixed inset-0 min-h-[100dvh] bg-black/70 backdrop-blur-sm"
               onClick={() => setShowDatePicker(false)}
-              style={{ 
-                position: 'fixed',
-                top: 0,
-                left: 0,
-                right: 0,
-                bottom: 0
-              }}
+              aria-hidden
             />
             <div 
-              className="relative w-[95%] sm:w-full max-w-sm bg-[#2A2A2A] rounded-xl p-4 sm:p-6 border border-white/10 shadow-2xl max-h-[90vh] sm:max-h-[calc(100vh-2rem)] overflow-y-auto animate-in fade-in zoom-in-95 duration-200"
+              className="relative w-[95%] sm:w-full max-w-sm bg-[#2A2A2A] rounded-xl p-4 sm:p-6 border border-white/10 shadow-2xl modal-content overflow-y-auto animate-in fade-in zoom-in-95 duration-200 pb-[max(1rem,env(safe-area-inset-bottom))]"
               style={{ 
                 position: 'relative',
                 zIndex: 10000
