@@ -81,7 +81,10 @@ export function TimeStep({ businessId }: TimeStepProps) {
           return res.json()
         })
         .then(data => {
-          setAvailableSlots(data.availableSlots || [])
+          const raw = data.availableSlots || []
+          const now = new Date()
+          const futureOnly = raw.filter((slotStr: string) => new Date(slotStr) > now)
+          setAvailableSlots(futureOnly)
           setScheduleNotConfigured(Boolean(data.scheduleNotConfigured))
         })
         .catch(error => {

@@ -146,15 +146,16 @@ export async function GET(request: Request) {
       }
     }
 
+    // Ключі слотів у форматі YYYY-MM-DDTHH:mm — той самий формат, що й у клієнта (dateStr + 'T' + time).
+    // Генеруємо по даті з запиту та годинах робочого вікна, без прив'язки до "минулого" (минулі фільтрує клієнт).
     const slots: string[] = []
     if (isWorkingDay) {
+      const dateStr = dateParam
       for (let hour = dayStart; hour < dayEnd; hour++) {
         for (let minute = 0; minute < 60; minute += 30) {
-          const slotTime = new Date(startOfSelectedDay)
-          slotTime.setHours(hour, minute, 0, 0)
-          if (slotTime >= new Date()) {
-            slots.push(format(slotTime, "yyyy-MM-dd'T'HH:mm"))
-          }
+          const h = String(hour).padStart(2, '0')
+          const m = String(minute).padStart(2, '0')
+          slots.push(`${dateStr}T${h}:${m}`)
         }
       }
     }
