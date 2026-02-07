@@ -163,14 +163,12 @@
     color: #FFFFFF;
   }
   
-  /* Xbase: світла тема — чистий читабельний фон */
+  /* Xbase: світла тема — читабельний фон, чіткий контраст */
   .light body {
-    background: #F7F8FA;
+    background: #EFF1F4;
     background-image:
-      radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
-      radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.03) 0%, transparent 50%),
-      radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
-    color: #1a1a1a;
+      radial-gradient(circle at 20% 30%, rgba(0, 0, 0, 0.02) 0%, transparent 50%);
+    color: #111827;
   }
 
   /* Xbase: темна тема — глибокий читабельний фон */
@@ -218,34 +216,38 @@
     background-color: #050506;
   }
 
-  /* ========== Xbase: світла тема — картки, модалки, текст ========== */
+  /* ========== Xbase: світла тема — картки, модалки, текст (сильний контраст) ========== */
   .light .card-glass {
-    background-color: rgba(0, 0, 0, 0.04);
-    border: 1px solid rgba(0, 0, 0, 0.08);
-    color: #1a1a1a;
+    background-color: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    color: #111827;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
   }
   .light .card-glass-subtle {
-    background-color: rgba(0, 0, 0, 0.02);
-    border: 1px solid rgba(0, 0, 0, 0.06);
-    color: #1a1a1a;
+    background-color: #FAFAFA;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: #111827;
   }
   .light .card-glass-elevated {
-    background-color: rgba(0, 0, 0, 0.06);
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    color: #1a1a1a;
+    background-color: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.14);
+    color: #111827;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
   }
   .light .card-floating {
     background-color: #FFFFFF;
-    color: #1a1a1a;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06);
+    color: #111827;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.04);
   }
   .light .bg-gray-100 {
-    background-color: #F0F1F3;
-    color: #1a1a1a;
+    background-color: #F3F4F6;
+    color: #111827;
+    border: 1px solid rgba(0, 0, 0, 0.08);
   }
   .light .bg-gray-800 {
     background-color: #E5E7EB;
-    color: #1a1a1a;
+    color: #111827;
   }
   .light .panel-bg {
     background-color: rgba(255, 255, 255, 0.9);
@@ -256,27 +258,28 @@
   .light .card-glass-subtle .text-white,
   .light .card-glass-elevated .text-white,
   .light .card-floating .text-white {
-    color: #1a1a1a !important;
+    color: #111827 !important;
   }
   .light main .text-white,
   .light [class*="min-h-screen"].text-white {
-    color: #1a1a1a !important;
+    color: #111827 !important;
   }
-  /* Градієнтні кнопки (nav, sidebar) — залишаємо білий текст */
+  /* Градієнтні та primary кнопки — залишаємо білий текст */
   .light button[class*="from-blue"] .text-white,
   .light button[class*="from-purple"] .text-white,
   .light [class*="bg-gradient"][class*="from-blue"] .text-white,
-  .light [class*="bg-gradient"][class*="from-purple"] .text-white {
+  .light [class*="bg-gradient"][class*="from-purple"] .text-white,
+  .light .candy-purple .text-white {
     color: #FFFFFF !important;
   }
   .light .text-gray-400,
   .light .card-glass .text-gray-400,
   .light .card-floating .text-gray-400 {
-    color: #6b7280 !important;
+    color: #4b5563 !important;
   }
   .light .text-gray-300,
   .light .text-gray-500 {
-    color: #6b7280 !important;
+    color: #4b5563 !important;
   }
   .light .dashboard-page-title,
   .light .dashboard-card-title,
@@ -302,29 +305,51 @@
   .light .modal-dialog input::placeholder,
   .light .modal-dialog textarea::placeholder { color: #9ca3af !important; }
 
-  /* Xbase: Navbar і Sidebar адаптуються під тему */
+  /* Xbase: Navbar і Sidebar — виділяються в усіх темах */
   .navbar-theme {
-    background-color: rgba(20, 20, 20, 0.85);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
+    background-color: rgba(18, 18, 20, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.06), 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+  .dark .navbar-theme {
+    background-color: rgba(15, 23, 42, 0.95);
     border-color: rgba(255, 255, 255, 0.1);
   }
+  .oled .navbar-theme {
+    background-color: rgba(8, 8, 10, 0.98);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.04);
+  }
   .light .navbar-theme {
-    background-color: rgba(255, 255, 255, 0.9);
-    border-color: rgba(0, 0, 0, 0.08);
+    background-color: #FFFFFF;
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 0 1px 0 0 rgba(0, 0, 0, 0.05), 0 2px 8px rgba(0, 0, 0, 0.06);
   }
   .light .navbar-theme .text-white { color: #1a1a1a !important; }
   .light .navbar-theme .text-gray-300,
-  .light .navbar-theme .text-gray-400 { color: #6b7280 !important; }
+  .light .navbar-theme .text-gray-400 { color: #4b5563 !important; }
   .sidebar-theme {
-    background-color: rgba(20, 20, 20, 0.85);
-    backdrop-filter: blur(25px);
-    -webkit-backdrop-filter: blur(25px);
+    background-color: rgba(18, 18, 20, 0.95);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-color: rgba(255, 255, 255, 0.12);
+    box-shadow: 4px 0 12px rgba(0, 0, 0, 0.2);
+  }
+  .dark .sidebar-theme {
+    background-color: rgba(15, 23, 42, 0.95);
     border-color: rgba(255, 255, 255, 0.1);
   }
+  .oled .sidebar-theme {
+    background-color: rgba(8, 8, 10, 0.98);
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.4);
+  }
   .light .sidebar-theme {
-    background-color: rgba(255, 255, 255, 0.95);
-    border-color: rgba(0, 0, 0, 0.08);
+    background-color: #FFFFFF;
+    border-color: rgba(0, 0, 0, 0.1);
+    box-shadow: 2px 0 8px rgba(0, 0, 0, 0.05);
   }
   .light .sidebar-theme .text-white { color: #1a1a1a !important; }
   .light .sidebar-theme .text-gray-400,
@@ -333,6 +358,30 @@
   .sidebar-theme .border-t { border-color: rgba(255, 255, 255, 0.1); }
   .light .sidebar-theme .border-b,
   .light .sidebar-theme .border-t { border-color: rgba(0, 0, 0, 0.08); }
+
+  /* Xbase: активний пункт сайдбару — без Candy, в стилі проекту */
+  .nav-item-active {
+    background-color: rgba(255, 255, 255, 0.12) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    color: #FFFFFF !important;
+  }
+  .oled .nav-item-active {
+    background-color: rgba(255, 255, 255, 0.1) !important;
+    border-color: rgba(255, 255, 255, 0.12);
+  }
+  .light .nav-item-active {
+    background-color: #E5E7EB !important;
+    border: 1px solid rgba(0, 0, 0, 0.12);
+    color: #111827 !important;
+  }
+  .light .nav-item-active .text-white,
+  .light .nav-item-active .text-gray-300,
+  .light .nav-item-active .text-gray-400 {
+    color: #111827 !important;
+  }
+  .light .nav-item-active [class*="bg-white/20"] {
+    background-color: rgba(0, 0, 0, 0.12) !important;
+  }
   
   /* Читабельність кнопок: темний текст на світлому фоні в усіх темах */
   button[class*="bg-white"]:not([class*="bg-white/"]):hover,
@@ -353,6 +402,17 @@
   .dark a[class*="bg-white/"]:hover,
   .oled button[class*="bg-white/"]:hover,
   .oled a[class*="bg-white/"]:hover {
+    color: #FFFFFF !important;
+  }
+  /* OLED: підсилена читабельність при hover — сильніший фон, білий текст */
+  .oled .navbar-theme button:hover,
+  .oled .sidebar-theme button:hover {
+    background-color: rgba(255, 255, 255, 0.18) !important;
+  }
+  .oled .navbar-theme button:hover .text-gray-300,
+  .oled .navbar-theme button:hover .text-gray-400,
+  .oled .sidebar-theme button:hover .text-gray-300,
+  .oled .sidebar-theme button:hover .text-gray-400 {
     color: #FFFFFF !important;
   }
 

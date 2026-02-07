@@ -96,10 +96,9 @@ export function Sidebar({ className }: SidebarProps) {
         className={cn(
           'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-all duration-200 relative group',
           isActive
-            ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+            ? 'nav-item-active'
             : 'text-gray-300 hover:bg-white/10 hover:text-white'
         )}
-        style={isActive ? { boxShadow: '0 1px 2px 0 rgba(0, 0, 0, 0.05)' } : {}}
         title={item.label}
       >
         <div className={cn('w-5 h-5 flex-shrink-0', isActive ? 'text-white' : 'text-gray-400 group-hover:text-white')}>
@@ -143,7 +142,7 @@ export function Sidebar({ className }: SidebarProps) {
               className={cn(
                 'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-all duration-200',
                 pathname === '/dashboard/settings'
-                  ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white shadow-sm'
+                  ? 'nav-item-active'
                   : 'text-gray-300 hover:bg-white/10 hover:text-white'
               )}
             >
