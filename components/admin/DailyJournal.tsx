@@ -106,7 +106,7 @@ export function DailyJournal({ businessId }: DailyJournalProps) {
       const response = await fetch(`/api/appointments/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status }),
+        body: JSON.stringify({ businessId, status }),
       })
 
       if (response.ok) {

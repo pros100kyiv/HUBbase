@@ -61,8 +61,17 @@ export async function PATCH(
       return NextResponse.json({ error: 'Appointment not found or access denied' }, { status: 404 })
     }
 
+    const ALLOWED_STATUSES = ['Pending', 'Confirmed', 'Done', 'Cancelled'] as const
     const updateData: any = {}
-    if (status !== undefined) updateData.status = status
+    if (status !== undefined) {
+      if (!ALLOWED_STATUSES.includes(status)) {
+        return NextResponse.json(
+          { error: `Invalid status. Allowed: ${ALLOWED_STATUSES.join(', ')}` },
+          { status: 400 }
+        )
+      }
+      updateData.status = status
+    }
     if (startTime) updateData.startTime = new Date(startTime)
     if (endTime) updateData.endTime = new Date(endTime)
     if (masterId) updateData.masterId = masterId

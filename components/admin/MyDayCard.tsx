@@ -262,7 +262,8 @@ export function MyDayCard({
           return status === 'Confirmed' || status === 'Підтверджено'
         case 'done':
           return status === 'Done' || status === 'Виконано'
-        return false
+        default:
+          return false
       }
     })
   }
@@ -296,6 +297,30 @@ export function MyDayCard({
       }
     } catch (error) {
       console.error('Failed to mark appointment as done:', error)
+    }
+  }
+
+  const handleConfirm = async (e: React.MouseEvent, id: string) => {
+    e.stopPropagation()
+    if (!businessId) return
+
+    try {
+      const res = await fetch(`/api/appointments/${id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          businessId,
+          status: 'Confirmed',
+        }),
+      })
+
+      if (res.ok && onRefresh) {
+        onRefresh()
+      }
+    } catch (error) {
+      console.error('Failed to confirm appointment:', error)
     }
   }
 
@@ -364,18 +389,28 @@ export function MyDayCard({
              <div className={`px-2 py-0.5 rounded text-[10px] md:text-xs font-medium border flex-shrink-0 ${getStatusColor(apt.status)}`}>
                {getStatusLabel(apt.status)}
              </div>
-             
-             {!isDone && (
-               <button
-                 onClick={(e) => handleMarkDone(e, apt.id)}
-                 className="p-1.5 md:p-2 bg-green-500/10 text-green-500 rounded-lg hover:bg-green-500/20 hover:scale-105 transition-all border border-green-500/20 group/btn"
-                 title="Виконано (в архів)"
-               >
-                 <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                 </svg>
-               </button>
-             )}
+             <div className="flex items-center gap-1">
+               {(apt.status === 'Pending' || apt.status === 'Очікує') && (
+                 <button
+                   onClick={(e) => handleConfirm(e, apt.id)}
+                   className="px-2 py-1 rounded-lg text-[10px] md:text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/50 hover:bg-green-500/30 transition-all active:scale-95"
+                   title="Підтвердити запис"
+                 >
+                   Підтвердити
+                 </button>
+               )}
+               {!isDone && (
+                 <button
+                   onClick={(e) => handleMarkDone(e, apt.id)}
+                   className="p-1.5 md:p-2 bg-green-500/10 text-green-500 rounded-lg hover:bg-green-500/20 hover:scale-105 transition-all border border-green-500/20 group/btn"
+                   title="Виконано (в архів)"
+                 >
+                   <svg className="w-4 h-4 md:w-5 md:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                   </svg>
+                 </button>
+               )}
+             </div>
           </div>
         </div>
       </button>
