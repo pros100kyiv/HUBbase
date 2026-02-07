@@ -163,22 +163,10 @@ export function TimeStep({ businessId }: TimeStepProps) {
 
         {state.selectedDate && (
           <div className="mb-3 sm:mb-4">
-            {slotsLoadError && !slotsLoading && (
-              <div className="rounded-xl p-4 mb-4 card-glass border border-red-500/30 bg-red-500/10">
-                <p className="text-sm font-medium text-red-200">Не вдалося завантажити доступні години.</p>
-                <p className="text-xs text-gray-400 mt-1">Перевірте з&apos;єднання та оновіть сторінку або спробуйте іншу дату.</p>
-              </div>
-            )}
-            {scheduleNotConfigured && !slotsLoading && !slotsLoadError && (
-              <div className="rounded-xl p-4 mb-4 card-glass border border-amber-500/30 bg-amber-500/10">
-                <p className="text-sm font-medium text-amber-200">Графік не налаштовано або на цей день немає робочого часу.</p>
-                <p className="text-xs text-gray-400 mt-1">Оберіть іншу дату або зверніться до закладу для уточнення графіка.</p>
-              </div>
-            )}
-            {!scheduleNotConfigured && !slotsLoading && !slotsLoadError && availableSlots.length === 0 && state.selectedDate && state.selectedMaster && businessId && (
+            {!slotsLoading && (slotsLoadError || scheduleNotConfigured || (availableSlots.length === 0 && state.selectedMaster && businessId)) && (
               <div className="rounded-xl p-4 mb-4 card-glass border border-white/20 bg-white/5">
-                <p className="text-sm font-medium text-gray-300">На цей день немає вільних годин.</p>
-                <p className="text-xs text-gray-400 mt-1">Усі години зайняті або обрана тривалість не вміщується у графік. Спробуйте іншу дату або коротшу послугу.</p>
+                <p className="text-sm font-medium text-gray-300">Місць немає на цей день.</p>
+                <p className="text-xs text-gray-400 mt-1">Спробуйте іншу дату або оновіть сторінку.</p>
               </div>
             )}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
