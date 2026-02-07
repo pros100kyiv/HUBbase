@@ -78,14 +78,16 @@ export async function POST(request: Request) {
       )
     }
 
+    const bid = String(businessId)
+    const mid = String(masterId)
     const [business, master] = await Promise.all([
-      prisma.business.findUnique({ where: { id: businessId }, select: { id: true } }),
-      prisma.master.findUnique({ where: { id: masterId }, select: { id: true, businessId: true } }),
+      prisma.business.findUnique({ where: { id: bid }, select: { id: true } }),
+      prisma.master.findUnique({ where: { id: mid }, select: { id: true, businessId: true } }),
     ])
     if (!business) {
       return NextResponse.json({ error: 'Бізнес не знайдено' }, { status: 400 })
     }
-    if (!master || master.businessId !== businessId) {
+    if (!master || master.businessId !== bid) {
       return NextResponse.json({ error: 'Спеціаліста не знайдено або він не належить цьому бізнесу' }, { status: 400 })
     }
 
@@ -98,7 +100,7 @@ export async function POST(request: Request) {
     }
 
     // Check for conflicts
-    const hasConflict = await checkConflict(businessId, masterId, start, end)
+    const hasConflict = await checkConflict(bid, mid, start, end)
     if (hasConflict) {
       return NextResponse.json(
         { error: 'This time slot is already booked' },
@@ -133,12 +135,12 @@ export async function POST(request: Request) {
       const ensuredClient = await tx.client.upsert({
         where: {
           businessId_phone: {
-            businessId,
+            businessId: bid,
             phone: normalizedPhone,
           },
         },
         create: {
-          businessId,
+          businessId: bid,
           name: normalizedClientName,
           phone: normalizedPhone,
           email: normalizedClientEmail,
@@ -151,8 +153,8 @@ export async function POST(request: Request) {
 
       const createdAppointment = await tx.appointment.create({
         data: {
-          businessId,
-          masterId,
+          businessId: bid,
+          masterId: mid,
           clientId: ensuredClient.id,
           clientName: normalizedClientName,
           clientPhone: normalizedPhone,
@@ -175,7 +177,7 @@ export async function POST(request: Request) {
       const { addClientPhoneToDirectory } = await import('@/lib/services/management-center')
       await addClientPhoneToDirectory(
         normalizedPhone,
-        businessId,
+        bid,
         client.id,
         normalizedClientName
       )
