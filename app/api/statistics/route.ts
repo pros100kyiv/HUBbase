@@ -38,7 +38,13 @@ export async function GET(request: Request) {
         where: {
           businessId,
           startTime: { gte: startDate, lte: endDate }
-        }
+        },
+        select: {
+          status: true,
+          services: true,
+          customPrice: true,
+          clientId: true,
+        },
       }),
       prisma.client.findMany({
         where: { businessId }

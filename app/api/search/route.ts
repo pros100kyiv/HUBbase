@@ -23,7 +23,7 @@ export async function GET(request: Request) {
       })
     }
 
-    // Search appointments
+    // Search appointments (select без procedureDone — працює до застосування міграції)
     const appointments = await prisma.appointment.findMany({
       where: {
         businessId,
@@ -34,18 +34,35 @@ export async function GET(request: Request) {
           { notes: { contains: searchTerm, mode: 'insensitive' } },
         ],
       },
-      include: {
-        master: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
+      select: {
+        id: true,
+        businessId: true,
+        masterId: true,
+        clientId: true,
+        clientName: true,
+        clientPhone: true,
+        clientEmail: true,
+        startTime: true,
+        endTime: true,
+        status: true,
+        services: true,
+        customServiceName: true,
+        customPrice: true,
+        notes: true,
+        reminderSent: true,
+        isRecurring: true,
+        recurrencePattern: true,
+        recurrenceEndDate: true,
+        parentAppointmentId: true,
+        isFromBooking: true,
+        source: true,
+        campaignId: true,
+        createdAt: true,
+        updatedAt: true,
+        master: { select: { id: true, name: true } },
       },
       take: 10,
-      orderBy: {
-        startTime: 'desc',
-      },
+      orderBy: { startTime: 'desc' },
     })
 
     // Search clients

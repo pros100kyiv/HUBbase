@@ -43,17 +43,12 @@ function checkConflict(
       where: {
         businessId,
         masterId,
-        startTime: {
-          lt: endTime,
-        },
-        endTime: {
-          gt: startTime,
-        },
-        status: {
-          not: 'Cancelled',
-        },
+        startTime: { lt: endTime },
+        endTime: { gt: startTime },
+        status: { not: 'Cancelled' },
         ...(excludeId && { id: { not: excludeId } }),
       },
+      select: { id: true },
     })
     .then((conflict) => !!conflict)
 }
@@ -276,20 +271,54 @@ export async function GET(request: Request) {
       where.clientPhone = normalizeUaPhone(clientPhone)
     }
 
-    const appointments = await prisma.appointment.findMany({
-      where,
-      include: {
-        master: {
-          select: {
-            id: true,
-            name: true,
-          },
-        },
-      },
-      orderBy: {
-        startTime: 'asc',
-      },
-    })
+    const baseSelect = {
+      id: true,
+      businessId: true,
+      masterId: true,
+      clientId: true,
+      clientName: true,
+      clientPhone: true,
+      clientEmail: true,
+      startTime: true,
+      endTime: true,
+      status: true,
+      services: true,
+      customServiceName: true,
+      customPrice: true,
+      notes: true,
+      reminderSent: true,
+      isRecurring: true,
+      recurrencePattern: true,
+      recurrenceEndDate: true,
+      parentAppointmentId: true,
+      isFromBooking: true,
+      source: true,
+      campaignId: true,
+      createdAt: true,
+      updatedAt: true,
+      master: { select: { id: true, name: true } as const },
+    } as const
+
+    let appointments: Array<Record<string, unknown>>
+    try {
+      appointments = await prisma.appointment.findMany({
+        where,
+        select: { ...baseSelect, procedureDone: true },
+        orderBy: { startTime: 'asc' },
+      })
+    } catch (err) {
+      const msg = String(err instanceof Error ? err.message : err)
+      if (msg.includes('procedureDone') || msg.includes('column') || msg.includes('does not exist')) {
+        appointments = await prisma.appointment.findMany({
+          where,
+          select: baseSelect,
+          orderBy: { startTime: 'asc' },
+        }) as Array<Record<string, unknown>>
+        appointments.forEach((a) => { a.procedureDone = null })
+      } else {
+        throw err
+      }
+    }
 
     return NextResponse.json(appointments)
   } catch (error) {

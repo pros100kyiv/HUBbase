@@ -60,7 +60,19 @@ export async function GET(request: Request) {
           businessId,
           startTime: { gte: startDate, lte: endDate }
         },
-        include: { client: true, master: true }
+        select: {
+          id: true,
+          status: true,
+          services: true,
+          customPrice: true,
+          clientId: true,
+          masterId: true,
+          startTime: true,
+          endTime: true,
+          source: true,
+          client: true,
+          master: true,
+        },
       }),
       prisma.client.findMany({
         where: { businessId },
