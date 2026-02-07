@@ -163,13 +163,30 @@
     color: #FFFFFF;
   }
   
+  /* Xbase: світла тема — чистий читабельний фон */
+  .light body {
+    background: #F7F8FA;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(139, 92, 246, 0.04) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(59, 130, 246, 0.03) 0%, transparent 50%),
+      radial-gradient(circle at 50% 80%, rgba(16, 185, 129, 0.03) 0%, transparent 50%);
+    color: #1a1a1a;
+  }
+
+  /* Xbase: темна тема — глибокий читабельний фон */
   .dark body {
     background: #0F172A;
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
+      radial-gradient(circle at 50% 70%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
     color: #F8FAFC;
   }
 
+  /* Xbase: OLED — справжній чорний */
   .oled body {
     background: #000000;
+    background-image: none;
     color: #F8FAFC;
   }
 
@@ -200,12 +217,143 @@
   .oled .bg-gray-800 {
     background-color: #050506;
   }
+
+  /* ========== Xbase: світла тема — картки, модалки, текст ========== */
+  .light .card-glass {
+    background-color: rgba(0, 0, 0, 0.04);
+    border: 1px solid rgba(0, 0, 0, 0.08);
+    color: #1a1a1a;
+  }
+  .light .card-glass-subtle {
+    background-color: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    color: #1a1a1a;
+  }
+  .light .card-glass-elevated {
+    background-color: rgba(0, 0, 0, 0.06);
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: #1a1a1a;
+  }
+  .light .card-floating {
+    background-color: #FFFFFF;
+    color: #1a1a1a;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 1px rgba(0, 0, 0, 0.06);
+  }
+  .light .bg-gray-100 {
+    background-color: #F0F1F3;
+    color: #1a1a1a;
+  }
+  .light .bg-gray-800 {
+    background-color: #E5E7EB;
+    color: #1a1a1a;
+  }
+  .light .panel-bg {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+  /* Світла тема: текст у картках та на сторінках — темний для читабельності */
+  .light .card-glass .text-white,
+  .light .card-glass-subtle .text-white,
+  .light .card-glass-elevated .text-white,
+  .light .card-floating .text-white {
+    color: #1a1a1a !important;
+  }
+  .light main .text-white,
+  .light [class*="min-h-screen"].text-white {
+    color: #1a1a1a !important;
+  }
+  /* Градієнтні кнопки (nav, sidebar) — залишаємо білий текст */
+  .light button[class*="from-blue"] .text-white,
+  .light button[class*="from-purple"] .text-white,
+  .light [class*="bg-gradient"][class*="from-blue"] .text-white,
+  .light [class*="bg-gradient"][class*="from-purple"] .text-white {
+    color: #FFFFFF !important;
+  }
+  .light .text-gray-400,
+  .light .card-glass .text-gray-400,
+  .light .card-floating .text-gray-400 {
+    color: #6b7280 !important;
+  }
+  .light .text-gray-300,
+  .light .text-gray-500 {
+    color: #6b7280 !important;
+  }
+  .light .dashboard-page-title,
+  .light .dashboard-card-title,
+  .light .dashboard-card-title-lg {
+    color: #1a1a1a !important;
+  }
+  /* Світла тема: модальні вікна */
+  .light .modal-dialog {
+    background-color: #FFFFFF;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+    color: #1a1a1a;
+  }
+  .light .modal-dialog .text-white { color: #1a1a1a !important; }
+  .light .modal-dialog .text-gray-400,
+  .light .modal-dialog .text-gray-300 { color: #6b7280 !important; }
+  .light .modal-dialog input,
+  .light .modal-dialog textarea,
+  .light .modal-dialog select {
+    background-color: rgba(0, 0, 0, 0.05) !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+    color: #1a1a1a !important;
+  }
+  .light .modal-dialog input::placeholder,
+  .light .modal-dialog textarea::placeholder { color: #9ca3af !important; }
+
+  /* Xbase: Navbar і Sidebar адаптуються під тему */
+  .navbar-theme {
+    background-color: rgba(20, 20, 20, 0.85);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  .light .navbar-theme {
+    background-color: rgba(255, 255, 255, 0.9);
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+  .light .navbar-theme .text-white { color: #1a1a1a !important; }
+  .light .navbar-theme .text-gray-300,
+  .light .navbar-theme .text-gray-400 { color: #6b7280 !important; }
+  .sidebar-theme {
+    background-color: rgba(20, 20, 20, 0.85);
+    backdrop-filter: blur(25px);
+    -webkit-backdrop-filter: blur(25px);
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  .light .sidebar-theme {
+    background-color: rgba(255, 255, 255, 0.95);
+    border-color: rgba(0, 0, 0, 0.08);
+  }
+  .light .sidebar-theme .text-white { color: #1a1a1a !important; }
+  .light .sidebar-theme .text-gray-400,
+  .light .sidebar-theme .text-gray-500 { color: #6b7280 !important; }
+  .sidebar-theme .border-b,
+  .sidebar-theme .border-t { border-color: rgba(255, 255, 255, 0.1); }
+  .light .sidebar-theme .border-b,
+  .light .sidebar-theme .border-t { border-color: rgba(0, 0, 0, 0.08); }
   
-  /* White primary buttons: force dark text on hover so font doesn't blend with background */
-  button[class*="bg-white"]:hover,
-  a[class*="bg-white"]:hover,
-  [role="button"][class*="bg-white"]:hover {
+  /* Читабельність кнопок: темний текст на світлому фоні в усіх темах */
+  button[class*="bg-white"]:not([class*="bg-white/"]):hover,
+  a[class*="bg-white"]:not([class*="bg-white/"]):hover,
+  [role="button"][class*="bg-white"]:not([class*="bg-white/"]):hover {
     color: #111827 !important;
+  }
+  /* Світла тема: читабельність на hover для secondary кнопок (bg-white/10 тощо) */
+  .light button[class*="bg-white/"]:hover,
+  .light a[class*="bg-white/"]:hover,
+  .light [role="button"][class*="bg-white/"]:hover,
+  .light button[class*="hover:bg-white/"]:hover,
+  .light a[class*="hover:bg-white/"]:hover {
+    color: #111827 !important;
+  }
+  /* Темна/OLED: світлий текст на secondary кнопках при hover */
+  .dark button[class*="bg-white/"]:hover,
+  .dark a[class*="bg-white/"]:hover,
+  .oled button[class*="bg-white/"]:hover,
+  .oled a[class*="bg-white/"]:hover {
+    color: #FFFFFF !important;
   }
 
   /* Ensure all text elements use Inter */
@@ -243,6 +391,14 @@
   }
   .dashboard-btn-secondary {
     @apply px-4 py-2 text-sm font-medium rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors;
+  }
+  .light .dashboard-btn-secondary {
+    border-color: rgba(0, 0, 0, 0.2);
+    background-color: #f3f4f6;
+    color: #111827;
+  }
+  .light .dashboard-btn-secondary:hover {
+    background-color: #e5e7eb;
   }
   .dashboard-card {
     @apply rounded-xl p-4 md:p-6 card-glass;
@@ -464,10 +620,6 @@
     -webkit-backdrop-filter: blur(4px);
     position: fixed;
     inset: 0;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
     z-index: 100;
     min-height: 100dvh;
     min-height: -webkit-fill-available;
@@ -476,7 +628,7 @@
     justify-content: center;
     overflow-y: auto;
     overflow-x: hidden;
-    overscroll-behavior: contain;
+    overscroll-behavior-y: contain;
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
     touch-action: manipulation;
@@ -504,11 +656,16 @@
     word-break: break-word;
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
-    overscroll-behavior: contain;
+    overscroll-behavior-y: contain;
+    overscroll-behavior-x: none;
     box-sizing: border-box;
     flex-shrink: 0;
     align-self: flex-end;
     margin-bottom: 0;
+    position: relative;
+    z-index: 1;
+    touch-action: pan-y;
+    scroll-padding-bottom: env(safe-area-inset-bottom, 0);
   }
   @media (min-width: 640px) {
     .modal-content {
@@ -527,6 +684,7 @@
     padding: clamp(0.75rem, 3vmin, 1rem);
     padding-bottom: max(clamp(0.75rem, 3vmin, 1rem), env(safe-area-inset-bottom));
     min-width: 0;
+    min-height: 0;
     overflow-x: hidden;
     overflow-wrap: break-word;
     word-break: break-word;

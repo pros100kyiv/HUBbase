@@ -266,12 +266,7 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
           {/* Reply Modal */}
           {selectedMessage && (
             <ModalPortal>
-              <div className="modal-overlay sm:!p-4">
-                <div
-                  className="fixed inset-0 min-h-[100dvh] bg-black/70 backdrop-blur-sm"
-                  onClick={() => setSelectedMessage(null)}
-                  aria-hidden
-                />
+              <div className="modal-overlay sm:!p-4" onClick={() => setSelectedMessage(null)}>
                 <div
                   className="relative w-[95%] sm:w-full max-w-md modal-content modal-dialog animate-in fade-in zoom-in-95 duration-200 flex flex-col"
                   onClick={(e) => e.stopPropagation()}

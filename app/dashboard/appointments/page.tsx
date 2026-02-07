@@ -403,6 +403,18 @@ export default function AppointmentsPage() {
     })
   }
 
+  /** Колір бейджа кількості записів за домінантним статусом дня */
+  const getDayBadgeStyle = (dayAppointments: Appointment[]) => {
+    if (dayAppointments.length === 0) return ''
+    const hasPending = dayAppointments.some(a => a.status === 'Pending' || a.status === 'Очікує')
+    const hasConfirmed = dayAppointments.some(a => a.status === 'Confirmed' || a.status === 'Підтверджено')
+    const hasDone = dayAppointments.some(a => a.status === 'Done' || a.status === 'Виконано')
+    if (hasPending) return 'bg-orange-500/90 text-white'
+    if (hasConfirmed) return 'bg-green-500/90 text-white'
+    if (hasDone) return 'bg-blue-500/90 text-white'
+    return 'bg-white/25 text-white'
+  }
+
   const getAppointmentsByHour = (date: Date) => {
     if (!isValid(date)) return {}
     const dayAppointments = filteredAppointments.filter((apt) => {
@@ -618,7 +630,7 @@ export default function AppointmentsPage() {
                           {format(day, 'd')}
                         </span>
                         {dayAppointments.length > 0 && (
-                          <span className="mt-1 text-[10px] font-semibold text-white bg-white/25 rounded-full px-1.5 py-0.5 min-w-[18px]">
+                          <span className={cn("mt-1 text-[10px] font-semibold rounded-full px-1.5 py-0.5 min-w-[18px]", getDayBadgeStyle(dayAppointments))}>
                             {dayAppointments.length}
                           </span>
                         )}
@@ -630,9 +642,9 @@ export default function AppointmentsPage() {
             )}
           </div>
 
-          {/* Selected Date Details — дата + компактні фільтри */}
+          {/* Selected Date Details — дата + компактні фільтри (той самий стиль, що й картка календаря) */}
           {selectedDate && (
-            <div className="rounded-xl p-4 md:p-6 bg-[#1A1A1A] border border-white/10 text-white">
+            <div className="rounded-xl p-4 md:p-6 card-glass text-white">
               <div className="flex flex-col gap-3 mb-4">
                 <div className="flex flex-wrap items-center justify-between gap-2">
                   <h3 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.02em' }}>

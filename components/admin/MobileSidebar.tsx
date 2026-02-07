@@ -93,13 +93,6 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     onClose()
   }
 
-  const sidebarStyle = {
-    backgroundColor: 'rgba(20, 20, 20, 0.85)',
-    backdropFilter: 'blur(25px)',
-    WebkitBackdropFilter: 'blur(25px)' as const,
-    borderColor: 'rgba(255, 255, 255, 0.1)',
-  }
-
   return (
     <>
       {/* Mobile Sidebar Overlay */}
@@ -113,13 +106,12 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       {/* Mobile Sidebar — у стилі Dashboard (темний glass) */}
       <aside
         className={cn(
-          'fixed top-0 left-0 h-full w-72 border-r z-50 transform transition-transform duration-300 ease-in-out md:hidden',
+          'fixed top-0 left-0 h-full w-72 border-r z-50 transform transition-transform duration-300 ease-in-out md:hidden sidebar-theme backdrop-blur-xl',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
-        style={sidebarStyle}
       >
         {/* Header — як у десктопному Sidebar */}
-        <div className="flex items-center justify-between p-6 border-b" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+        <div className="flex items-center justify-between p-6 border-b">
           <XbaseLogo size="sm" />
           <button
             onClick={onClose}

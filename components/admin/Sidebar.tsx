@@ -124,9 +124,9 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <>
-      <aside className={cn('border-r w-0 md:w-64 min-h-screen fixed left-0 top-0 z-40 hidden md:block', className)} style={{ backgroundColor: 'rgba(20, 20, 20, 0.85)', backdropFilter: 'blur(25px)', WebkitBackdropFilter: 'blur(25px)', borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+      <aside className={cn('border-r w-0 md:w-64 min-h-screen fixed left-0 top-0 z-40 hidden md:block sidebar-theme backdrop-blur-xl', className)}>
         {/* Logo Section */}
-        <div className="p-6 border-b" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+        <div className="p-6 border-b">
           <XbaseLogo size="sm" />
         </div>
         
@@ -137,7 +137,7 @@ export function Sidebar({ className }: SidebarProps) {
           </div>
 
           {/* Settings */}
-          <div className="space-y-1 pt-4 border-t" style={{ borderColor: 'rgba(255, 255, 255, 0.1)' }}>
+          <div className="space-y-1 pt-4 border-t">
             <button
               onClick={() => { startNavigation(); router.push('/dashboard/settings') }}
               className={cn(

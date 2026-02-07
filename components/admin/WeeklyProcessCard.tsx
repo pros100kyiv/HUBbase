@@ -81,17 +81,24 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
     return appointments.filter((apt) => isSameDay(new Date(apt.startTime), day))
   }
 
+  /** Колір бейджа кількості записів за домінантним статусом дня (як на сторінці Записи) */
+  const getDayBadgeStyle = (dayAppointments: Appointment[]) => {
+    if (dayAppointments.length === 0) return ''
+    const hasPending = dayAppointments.some(a => a.status === 'Pending' || a.status === 'Очікує')
+    const hasConfirmed = dayAppointments.some(a => a.status === 'Confirmed' || a.status === 'Підтверджено')
+    const hasDone = dayAppointments.some(a => a.status === 'Done' || a.status === 'Виконано')
+    if (hasPending) return 'bg-orange-500/90 text-white'
+    if (hasConfirmed) return 'bg-green-500/90 text-white'
+    if (hasDone) return 'bg-blue-500/90 text-white'
+    return 'bg-white/25 text-white'
+  }
+
   const handleDayClick = (day: Date) => {
-    if (isSameMonth(day, currentMonth)) {
-      const dayAppointments = getAppointmentsForDay(day)
-      if (dayAppointments.length > 0) {
-        // Якщо вже вибрано цей день, закриваємо список
-        if (selectedDay && isSameDay(selectedDay, day)) {
-          setSelectedDay(null)
-        } else {
-          setSelectedDay(day)
-        }
-      }
+    if (!isSameMonth(day, currentMonth)) return
+    if (selectedDay && isSameDay(selectedDay, day)) {
+      setSelectedDay(null)
+    } else {
+      setSelectedDay(day)
     }
   }
 

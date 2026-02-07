@@ -12,7 +12,12 @@ export function ModalPortal({ children }: ModalPortalProps) {
 
   useEffect(() => {
     setMounted(true)
-    return () => setMounted(false)
+    const prevOverflow = document.body.style.overflow
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.body.style.overflow = prevOverflow
+      setMounted(false)
+    }
   }, [])
 
   if (!mounted) return null
