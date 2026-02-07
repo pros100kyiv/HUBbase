@@ -14,6 +14,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
   const { state, setDate, setTime, setStep } = useBooking()
   const [availableSlots, setAvailableSlots] = useState<string[]>([])
   const [scheduleNotConfigured, setScheduleNotConfigured] = useState(false)
+  const [slotsReason, setSlotsReason] = useState<string | null>(null)
   const [slotsLoadError, setSlotsLoadError] = useState(false)
   const [slotsLoading, setSlotsLoading] = useState(false)
   const [calendarReady, setCalendarReady] = useState(false)
@@ -88,6 +89,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
           const futureOnly = raw.filter((slotStr: string) => new Date(slotStr) > now)
           setAvailableSlots(futureOnly)
           setScheduleNotConfigured(Boolean(data.scheduleNotConfigured))
+          setSlotsReason(data.reason || null)
           if (futureOnly.length > 0) {
             const nearestSlot = futureOnly[0]
             const nearestTime = nearestSlot.slice(11, 16)
@@ -112,6 +114,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
     } else {
       setAvailableSlots([])
       setScheduleNotConfigured(false)
+      setSlotsReason(null)
       setSlotsLoadError(false)
       setSlotsLoading(false)
     }
@@ -179,39 +182,51 @@ export function TimeStep({ businessId }: TimeStepProps) {
             {!slotsLoading && (slotsLoadError || scheduleNotConfigured || (availableSlots.length === 0 && state.selectedMaster && businessId)) && (
               <div className="rounded-xl p-4 mb-4 card-glass border border-white/20 bg-white/5">
                 <p className="text-sm font-medium text-gray-300">Місць немає на цей день.</p>
-                <p className="text-xs text-gray-400 mt-1">Спробуйте іншу дату або оновіть сторінку.</p>
+                <p className="text-xs text-gray-400 mt-1">
+                  {slotsReason === 'all_occupied'
+                    ? 'Усі години на цей день зайняті записами. Оберіть іншу дату в календарі вище.'
+                    : 'Графік майстра на цей день не налаштовано або немає робочого часу. Увімкніть день і години в кабінеті (Графік роботи та спеціалісти). Оберіть іншу дату.'}
+                </p>
               </div>
             )}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
-              <h3 className="text-sm font-semibold text-white">Оберіть час:</h3>
-              <div className="flex items-center gap-3 text-xs text-gray-400 flex-wrap">
-                {slotsLoading && <span className="text-gray-400">Завантаження слотів...</span>}
-                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-green-500 flex-shrink-0" />Доступно</span>
-                <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-white/10 border border-white/20 flex-shrink-0" />Зайнято</span>
+            {!slotsLoading && availableSlots.length > 0 && (
+              <>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
+                  <h3 className="text-sm font-semibold text-white">Оберіть час:</h3>
+                  <div className="flex items-center gap-3 text-xs text-gray-400 flex-wrap">
+                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-green-500 flex-shrink-0" />Доступно</span>
+                    <span className="flex items-center gap-1"><span className="w-2.5 h-2.5 rounded bg-white/10 border border-white/20 flex-shrink-0" />Зайнято</span>
+                  </div>
+                </div>
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5 sm:gap-2">
+                  {allTimeSlots.map((time) => {
+                    const available = isSlotAvailable(time)
+                    const isSelected = state.selectedTime === time
+                    return (
+                      <button
+                        key={time}
+                        type="button"
+                        onClick={() => handleTimeSelect(time)}
+                        disabled={!isSlotAvailable(time)}
+                        className={cn(
+                          'min-h-[44px] sm:min-h-0 px-2 sm:px-3 py-2.5 sm:py-2.5 rounded-lg transition-colors text-xs font-medium active:scale-[0.98]',
+                          isSelected && 'bg-white text-black shadow-md ring-2 ring-white/50',
+                          available && !isSelected && 'bg-white/10 border border-white/10 text-white hover:bg-white/20',
+                          !available && 'bg-white/5 border border-white/10 text-gray-500 cursor-not-allowed opacity-60'
+                        )}
+                      >
+                        {time}
+                      </button>
+                    )
+                  })}
+                </div>
+              </>
+            )}
+            {slotsLoading && (
+              <div className="rounded-xl p-4 mb-4 card-glass border border-white/10 text-center text-gray-400 text-sm">
+                Завантаження слотів...
               </div>
-            </div>
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5 sm:gap-2">
-              {allTimeSlots.map((time) => {
-                const available = !slotsLoading && isSlotAvailable(time)
-                const isSelected = state.selectedTime === time
-                return (
-                  <button
-                    key={time}
-                    type="button"
-                    onClick={() => handleTimeSelect(time)}
-                    disabled={slotsLoading || !isSlotAvailable(time)}
-                    className={cn(
-                      'min-h-[44px] sm:min-h-0 px-2 sm:px-3 py-2.5 sm:py-2.5 rounded-lg transition-colors text-xs font-medium active:scale-[0.98]',
-                      isSelected && 'bg-white text-black shadow-md ring-2 ring-white/50',
-                      available && !isSelected && 'bg-white/10 border border-white/10 text-white hover:bg-white/20',
-                      !available && 'bg-white/5 border border-white/10 text-gray-500 cursor-not-allowed opacity-60'
-                    )}
-                  >
-                    {time}
-                  </button>
-                )
-              })}
-            </div>
+            )}
             {state.selectedTime && (
               <div className="mt-3 p-3 rounded-xl card-glass">
                 <p className="text-sm font-medium text-white">Обрано: <span className="text-white">{state.selectedTime}</span></p>

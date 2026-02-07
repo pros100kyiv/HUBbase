@@ -15,6 +15,14 @@ interface WorkingHours {
 // date-fns getDay: 0 = Sunday, 1 = Monday, ... 6 = Saturday. Ключі збігаються з MasterScheduleModal (monday..sunday).
 const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 
+// Чому слоти можуть бути порожні (заблоковані):
+// 1. Майстер не знайдений або isActive === false → scheduleNotConfigured: true
+// 2. master.workingHours порожній/null або для цього дня тижня немає ключа (напр. wednesday) → finalDay.enabled = false → scheduleNotConfigured: true
+// 3. Для дня вимкнено (day.enabled === false) у графіку майстра → scheduleNotConfigured: true
+// 4. dayStart >= dayEnd (крайній випадок) → scheduleNotConfigured: true
+// 5. Графік є, але всі згенеровані слоти зайняті записами або в blockedPeriods → availableSlots: [], reason: 'all_occupied'
+// 6. На клієнті: слоти відфільтровані як минулі (futureOnly) — якщо обрано сьогодні і зараз пізно, усі слоти можуть бути в минулому
+
 function parseWorkingHours(json: string | null): WorkingHours | null {
   if (!json || !json.trim()) return null
   try {
@@ -184,7 +192,13 @@ export async function GET(request: Request) {
       return true
     })
 
-    return NextResponse.json({ availableSlots, scheduleNotConfigured: false })
+    // Якщо графік є, але всі слоти зайняті — повертаємо reason для зрозумілого повідомлення
+    const reason = availableSlots.length === 0 ? 'all_occupied' : undefined
+    return NextResponse.json({
+      availableSlots,
+      scheduleNotConfigured: false,
+      ...(reason && { reason }),
+    })
   } catch (error) {
     console.error('Error fetching availability:', error)
     return NextResponse.json({ error: 'Failed to fetch availability' }, { status: 500 })
