@@ -692,7 +692,7 @@ export function MyDayCard({
               aria-hidden
             />
             <div
-              className="relative w-[95%] sm:w-full max-w-lg bg-[#2A2A2A] rounded-xl flex flex-col border border-white/10 shadow-2xl modal-content overflow-hidden animate-in fade-in zoom-in-95 duration-200 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+              className="relative w-[95%] sm:w-full max-w-lg bg-[#2A2A2A] rounded-xl flex flex-col border border-white/10 shadow-2xl modal-content overflow-y-auto animate-in fade-in zoom-in-95 duration-200 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
               onClick={(e) => e.stopPropagation()}
               onTouchStart={handleTouchStart}
               onTouchEnd={(e) => handleTouchEnd(e, () => setSelectedAppointment(null))}
@@ -811,7 +811,7 @@ export function MyDayCard({
               aria-hidden
             />
             <div
-              className="relative w-[95%] sm:w-full max-w-xl bg-[#2A2A2A] rounded-xl flex flex-col border border-white/10 shadow-2xl modal-content overflow-hidden animate-in fade-in zoom-in-95 duration-200 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
+              className="relative w-[95%] sm:w-full max-w-xl bg-[#2A2A2A] rounded-xl flex flex-col border border-white/10 shadow-2xl modal-content overflow-y-auto animate-in fade-in zoom-in-95 duration-200 pb-[max(0.5rem,env(safe-area-inset-bottom))]"
               onClick={(e) => e.stopPropagation()}
               onTouchStart={handleTouchStart}
               onTouchEnd={(e) => handleTouchEnd(e, () => setHistoryPhone(null))}

@@ -425,13 +425,12 @@
    * z-index: 100 — базовий модал; вкладені модалки використовують z-[200].
    */
 
-  /* Оверлей: повний екран, safe-area, адаптивні відступи */
+  /* Оверлей: повний екран, safe-area, фон розширюється разом з контентом при скролі */
   .modal-overlay {
     position: fixed;
     inset: 0;
     z-index: 100;
-    min-height: 100dvh;
-    min-height: 100vh;
+    min-height: max(100dvh, min-content); /* фон покриває всю висоту контенту при довгому тексті */
     display: flex;
     align-items: flex-end;
     justify-content: center;
@@ -451,13 +450,14 @@
     }
   }
 
-  /* Контент модалки: ширина/висота під viewport і safe-area, без внутрішнього скролу.
+  /* Контент модалки: ширина/висота під viewport і safe-area, розширюється з текстом.
    * На sm+ max-width задають класи компонента (sm:max-w-md, sm:max-w-2xl тощо). */
   .modal-content {
     width: 100%;
     max-width: min(100%, calc(100vw - 2 * clamp(0.5rem, 2.5vmin, 1rem) - env(safe-area-inset-left, 0) - env(safe-area-inset-right, 0)));
     max-height: min(90dvh, calc(100dvh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0) - 2 * clamp(0.25rem, 1.5vmin, 0.5rem)));
-    overflow: visible;
+    min-height: min-content; /* висота підлаштовується під контент */
+    overflow-y: auto; /* скрол при довгому тексті замість обрізання */
     box-sizing: border-box;
     flex-shrink: 0;
   }
