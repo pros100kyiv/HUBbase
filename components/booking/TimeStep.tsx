@@ -73,8 +73,8 @@ export function TimeStep({ businessId }: TimeStepProps) {
       onlySchedule: '1',
     })
     fetch(`/api/availability?${params.toString()}`)
-      .then((res) => (res.ok ? res.json() : {}))
-      .then((data) => {
+      .then((res) => (res.ok ? res.json() : Promise.resolve(null)))
+      .then((data: { workingWeekdays?: number[] } | null) => {
         const w = data?.workingWeekdays
         setWorkingWeekdays(Array.isArray(w) && w.length > 0 ? w : [])
       })
@@ -97,8 +97,8 @@ export function TimeStep({ businessId }: TimeStepProps) {
       durationMinutes: String(totalDuration),
     })
     fetch(`/api/availability?${params.toString()}`)
-      .then((res) => (res.ok ? res.json() : {}))
-      .then((data) => {
+      .then((res) => (res.ok ? res.json() : Promise.resolve(null)))
+      .then((data: { recommendedSlots?: RecommendedSlot[] } | null) => {
         const list = data?.recommendedSlots
         setRecommendedSlots(Array.isArray(list) ? list : [])
       })
