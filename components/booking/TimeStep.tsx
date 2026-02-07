@@ -51,6 +51,8 @@ export function TimeStep({ businessId }: TimeStepProps) {
     setCalendarReady(true)
   }, [])
 
+  const requestIdRef = useRef<string>('')
+
   useEffect(() => {
     if (!calendarReady || !state.selectedDate) return
     if (!state.selectedMaster || !masterId || !effectiveBusinessId) return
@@ -60,6 +62,8 @@ export function TimeStep({ businessId }: TimeStepProps) {
 
     const date = state.selectedDate
     const dateStr = format(date, 'yyyy-MM-dd')
+    const id = `${dateStr}|${masterId}|${bid}`
+    requestIdRef.current = id
     setLoading(true)
     setLoadError(false)
     setScheduleNotConfigured(false)
@@ -72,19 +76,25 @@ export function TimeStep({ businessId }: TimeStepProps) {
       durationMinutes: String(totalDuration),
     })
     const url = `/api/availability?${params.toString()}`
+    const controller = new AbortController()
 
-    fetch(url)
+    fetch(url, { signal: controller.signal })
       .then((res) => {
         if (!res.ok) {
-          setLoadError(true)
-          setSlots([])
-          setScheduleNotConfigured(false)
-          return
+          return res.text().then((text) => {
+            throw new Error(text || `HTTP ${res.status}`)
+          })
         }
         return res.json()
       })
       .then((data) => {
+        if (requestIdRef.current !== id) return
         if (!data || typeof data !== 'object') {
+          setLoadError(true)
+          setSlots([])
+          return
+        }
+        if (data.error) {
           setLoadError(true)
           setSlots([])
           return
@@ -112,7 +122,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
         if (futureOnly.length > 0) {
           const first = futureOnly[0]
           const timeStr = String(first).slice(11, 16)
-          const currentKey = `${format(state.selectedDate!, 'yyyy-MM-dd')}T${state.selectedTime || ''}`
+          const currentKey = `${dateStr}T${state.selectedTime || ''}`
           if (!state.selectedTime || !futureOnly.includes(currentKey)) {
             setTime(timeStr)
           }
@@ -120,14 +130,20 @@ export function TimeStep({ businessId }: TimeStepProps) {
           setTime('')
         }
       })
-      .catch(() => {
+      .catch((err) => {
+        if (err?.name === 'AbortError') return
+        if (requestIdRef.current !== id) return
         setLoadError(true)
         setSlots([])
         setScheduleNotConfigured(false)
         setReason(null)
         setTime('')
       })
-      .finally(() => setLoading(false))
+      .finally(() => {
+        if (requestIdRef.current === id) setLoading(false)
+      })
+
+    return () => controller.abort()
   }, [
     state.selectedDate,
     state.selectedMaster,

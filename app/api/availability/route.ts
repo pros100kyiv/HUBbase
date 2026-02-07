@@ -192,18 +192,21 @@ export async function GET(request: Request) {
   }
 
   const steps = Math.ceil(durationMinutes / 30)
-  const availableSlots = slots.filter((slotStr) => {
-    const slotDate = new Date(slotStr)
-    if (isNaN(slotDate.getTime())) return false
-    for (let i = 0; i < steps; i++) {
-      const t = addMinutes(slotDate, i * 30)
-      const key = format(t, "yyyy-MM-dd'T'HH:mm")
-      if (occupied.has(key)) return false
-      const v = t.getHours() + t.getMinutes() / 60
-      if (v < dayStart || v >= dayEnd) return false
-    }
-    return true
-  })
+  const availableSlots = slots
+    .filter((slotStr) => {
+      if (typeof slotStr !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(slotStr)) return false
+      const slotDate = new Date(slotStr)
+      if (isNaN(slotDate.getTime())) return false
+      for (let i = 0; i < steps; i++) {
+        const t = addMinutes(slotDate, i * 30)
+        const key = format(t, "yyyy-MM-dd'T'HH:mm")
+        if (occupied.has(key)) return false
+        const v = t.getHours() + t.getMinutes() / 60
+        if (v < dayStart || v >= dayEnd) return false
+      }
+      return true
+    })
+    .filter((s) => s.startsWith(dateNorm))
 
   return NextResponse.json({
     availableSlots,
