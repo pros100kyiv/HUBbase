@@ -17,6 +17,7 @@ interface Appointment {
   services?: string
   customServiceName?: string | null
   customPrice?: number | null
+  procedureDone?: string | null
   notes?: string | null
 }
 
@@ -61,6 +62,20 @@ export function MyDayCard({
   const [servicesList, setServicesList] = useState<Array<{ id: string; name: string }>>([])
   const [touchStart, setTouchStart] = useState<{x: number, y: number} | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
+  const [postVisitProcedureDone, setPostVisitProcedureDone] = useState('')
+  const [postVisitCustomPriceGrn, setPostVisitCustomPriceGrn] = useState<number | ''>('')
+  const [postVisitSaving, setPostVisitSaving] = useState(false)
+
+  useEffect(() => {
+    if (selectedAppointment) {
+      setPostVisitProcedureDone(selectedAppointment.procedureDone ?? '')
+      setPostVisitCustomPriceGrn(
+        selectedAppointment.customPrice != null && selectedAppointment.customPrice > 0
+          ? Math.round(selectedAppointment.customPrice / 100)
+          : ''
+      )
+    }
+  }, [selectedAppointment?.id, selectedAppointment?.procedureDone, selectedAppointment?.customPrice])
 
   useEffect(() => {
     if (!businessId) return
@@ -349,6 +364,46 @@ export function MyDayCard({
       }
     } catch (error) {
       console.error('Failed to confirm appointment:', error)
+    }
+  }
+
+  const isCostAfterProcedure = (apt: Appointment) => {
+    const hasPrice = apt.customPrice != null && apt.customPrice > 0
+    if (hasPrice) return false
+    const hasCustom = apt.customServiceName?.trim()
+    try {
+      const ids = apt.services ? JSON.parse(apt.services) : []
+      const noServices = Array.isArray(ids) && ids.length === 0
+      return Boolean(hasCustom || noServices)
+    } catch {
+      return Boolean(hasCustom)
+    }
+  }
+
+  const handleSavePostVisit = async () => {
+    if (!businessId || !selectedAppointment) return
+    setPostVisitSaving(true)
+    try {
+      const res = await fetch(`/api/appointments/${selectedAppointment.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId,
+          procedureDone: postVisitProcedureDone.trim() || null,
+          customPrice:
+            postVisitCustomPriceGrn !== '' && Number(postVisitCustomPriceGrn) >= 0
+              ? Number(postVisitCustomPriceGrn) * 100
+              : null,
+        }),
+      })
+      if (!res.ok) throw new Error('Failed to save')
+      const updated = await res.json()
+      setSelectedAppointment({ ...selectedAppointment, ...updated, masterName: updated.master?.name ?? selectedAppointment.masterName })
+      if (onRefresh) onRefresh()
+    } catch (e) {
+      console.error('Save post-visit failed:', e)
+    } finally {
+      setPostVisitSaving(false)
     }
   }
 
@@ -776,6 +831,53 @@ export function MyDayCard({
                     </div>
                   )
                 })()}
+
+                {selectedAppointment.procedureDone && (
+                  <div className="p-3 bg-white/5 border border-white/10 rounded-lg">
+                    <div className="text-xs text-gray-400 mb-1">Що зроблено після візиту</div>
+                    <div className="text-sm text-gray-200 whitespace-pre-wrap">{selectedAppointment.procedureDone}</div>
+                  </div>
+                )}
+
+                {isCostAfterProcedure(selectedAppointment) && (
+                  <div className="p-3 bg-white/5 border border-white/10 rounded-lg space-y-3">
+                    <div className="text-xs font-medium text-gray-300">Після візиту</div>
+                    <div>
+                      <label className="block text-[10px] text-gray-500 mb-1">Що зроблено</label>
+                      <textarea
+                        value={postVisitProcedureDone}
+                        onChange={(e) => setPostVisitProcedureDone(e.target.value)}
+                        placeholder="Опишіть виконані послуги..."
+                        rows={2}
+                        className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-white/30 resize-none"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-[10px] text-gray-500 mb-1">Сума, грн</label>
+                      <input
+                        type="number"
+                        min={0}
+                        value={postVisitCustomPriceGrn}
+                        onChange={(e) => {
+                          const v = e.target.value
+                          setPostVisitCustomPriceGrn(v === '' ? '' : Math.max(0, Number(v)))
+                        }}
+                        placeholder="0"
+                        className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-white/30 max-w-[120px]"
+                        onClick={(e) => e.stopPropagation()}
+                      />
+                    </div>
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); handleSavePostVisit() }}
+                      disabled={postVisitSaving}
+                      className="px-3 py-2 rounded-lg text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/50 hover:bg-green-500/30 transition-all disabled:opacity-50"
+                    >
+                      {postVisitSaving ? 'Збереження…' : 'Зберегти'}
+                    </button>
+                  </div>
+                )}
 
                 {selectedAppointment.notes && (
                   <div className="p-3 bg-white/5 border border-white/10 rounded-lg">

@@ -229,6 +229,7 @@ model Appointment {
   services            String // JSON array of service IDs (може бути [])
   customServiceName   String? // Текст послуги від клієнта (вартість після процедури)
   customPrice         Int? // Індивідуальна ціна для клієнта (в копійках), вказується після процедури
+  procedureDone       String? // Що зроблено після візиту (опис виконаних послуг)
   notes               String?
   reminderSent        Boolean   @default(false)
   // Циклічні записи

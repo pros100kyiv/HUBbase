@@ -50,6 +50,7 @@ export async function PATCH(
       customPrice,
       customServiceName,
       customService,
+      procedureDone,
     } = body
 
     // КРИТИЧНО: Перевірка businessId для ізоляції даних
@@ -102,6 +103,7 @@ export async function PATCH(
       }
     }
     if (notes !== undefined) updateData.notes = notes?.trim() || null
+    if (procedureDone !== undefined) updateData.procedureDone = typeof procedureDone === 'string' && procedureDone.trim() ? procedureDone.trim() : null
     if (customPrice !== undefined) updateData.customPrice = customPrice || null
     if (customServiceName !== undefined) {
       updateData.customServiceName = typeof customServiceName === 'string' && customServiceName.trim() ? customServiceName.trim() : null

@@ -22,6 +22,7 @@ interface EditAppointmentFormProps {
     services?: string
     customServiceName?: string | null
     customPrice?: number | null
+    procedureDone?: string | null
     notes?: string
   }
   businessId: string
@@ -60,6 +61,7 @@ export function EditAppointmentForm({
     date: format(safeStartTimeDate, 'yyyy-MM-dd'),
     startTime: format(safeStartTimeDate, 'HH:mm'),
     notes: appointment.notes || '',
+    procedureDone: appointment.procedureDone || '',
     customService: appointment.customServiceName || '',
     customPrice: appointment.customPrice != null && appointment.customPrice > 0 ? Math.round(appointment.customPrice / 100) : 0,
   })
@@ -105,6 +107,7 @@ export function EditAppointmentForm({
         endTime: endDateTime.toISOString(),
         services: JSON.stringify(formData.serviceIds),
         notes: formData.notes?.trim() || null,
+        procedureDone: formData.procedureDone?.trim() || null,
       }
 
       if (formData.customService.trim()) {
@@ -407,6 +410,20 @@ export function EditAppointmentForm({
               onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
               required
               className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+            />
+          </div>
+
+          {/* Що зроблено після візиту */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-300">
+              Що зроблено після візиту
+            </label>
+            <textarea
+              value={formData.procedureDone}
+              onChange={(e) => setFormData({ ...formData, procedureDone: e.target.value })}
+              placeholder="Опишіть виконані послуги та суму після візиту..."
+              rows={2}
+              className="w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15 resize-none"
             />
           </div>
 
