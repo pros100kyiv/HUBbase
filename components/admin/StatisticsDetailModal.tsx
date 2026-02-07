@@ -258,7 +258,7 @@ export function StatisticsDetailModal({
   return (
     <ModalPortal>
       <div className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4">
-        <div className="relative w-full sm:max-w-2xl bg-[#1A1A1A] border border-white/10 rounded-t-xl sm:rounded-xl p-4 sm:p-6 sm:my-auto modal-content overflow-y-auto text-white shadow-xl animate-in fade-in zoom-in-95 duration-200 pb-[max(1rem,env(safe-area-inset-bottom))]">
+        <div className="relative w-full sm:max-w-2xl bg-[#1A1A1A] border border-white/10 rounded-t-xl sm:rounded-xl p-4 sm:p-6 sm:my-auto modal-content text-white shadow-xl animate-in fade-in zoom-in-95 duration-200 pb-[max(1rem,env(safe-area-inset-bottom))]">
           
           {/* Header */}
           <div className="flex items-center justify-between mb-6">
@@ -325,7 +325,7 @@ export function StatisticsDetailModal({
               {metricType !== 'clients' && dailyStats.length > 0 && (
                 <div>
                   <h3 className="text-sm font-semibold text-gray-300 mb-3">Розподіл по днях</h3>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                  <div className="space-y-2">
                     {dailyStats.map((day) => (
                       <div key={day.date} className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
                         <div className="flex items-center gap-3">
@@ -350,7 +350,7 @@ export function StatisticsDetailModal({
               {metricType !== 'clients' && masterStats.length > 0 && (
                 <div>
                   <h3 className="text-sm font-semibold text-gray-300 mb-3">Розподіл по спеціалістах</h3>
-                  <div className="space-y-2 max-h-48 overflow-y-auto">
+                  <div className="space-y-2">
                     {masterStats.map((stat) => {
                       const master = masters.find(m => m.id === stat.masterId)
                       return (
@@ -376,7 +376,7 @@ export function StatisticsDetailModal({
               {metricType === 'clients' ? (
                 <div>
                   <h3 className="text-sm font-semibold text-gray-300 mb-3">Список клієнтів</h3>
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                  <div className="space-y-2">
                     {clients.length === 0 ? (
                       <div className="text-center py-8 text-gray-400">
                         <p>Немає клієнтів</p>
@@ -410,7 +410,7 @@ export function StatisticsDetailModal({
                 /* Список записів */
                 <div>
                   <h3 className="text-sm font-semibold text-gray-300 mb-3">Список записів</h3>
-                  <div className="space-y-2 max-h-96 overflow-y-auto">
+                  <div className="space-y-2">
                     {appointments.length === 0 ? (
                       <div className="text-center py-8 text-gray-400">
                         <p>Немає записів за вибраний період</p>

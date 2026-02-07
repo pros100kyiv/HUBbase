@@ -240,24 +240,25 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
 
   return (
     <ModalPortal>
-      <div className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4">
-        <div className="w-full max-w-2xl modal-content overflow-hidden flex flex-col rounded-xl card-floating border border-white/10 shadow-2xl pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+      <div className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4 z-[100]">
+        <div className="w-[95%] sm:w-full sm:max-w-2xl modal-content overflow-hidden flex flex-col rounded-t-xl sm:rounded-xl card-floating border border-white/10 shadow-2xl sm:my-auto pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {/* Header - base style */}
-        <div className="flex items-center justify-between p-4 border-b border-white/10">
+        <div className="flex items-center justify-between p-4 border-b border-white/10 shrink-0">
           <h2 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
             Нові бронювання ({appointments.length})
           </h2>
           <button
             type="button"
             onClick={onClose}
-            className="p-2 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors"
+            className="p-2 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors touch-target"
+            aria-label="Закрити"
           >
             <XIcon className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-y-auto p-4">
+        {/* Content — без перемотування всередині */}
+        <div className="flex-1 min-h-0 p-4">
           {loading ? (
             <div className="text-center py-8">
               <p className="text-gray-400">Завантаження...</p>

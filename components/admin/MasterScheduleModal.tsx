@@ -179,7 +179,7 @@ export function MasterScheduleModal({
 
   return (
     <div className="modal-overlay bg-black/70 backdrop-blur-sm sm:!p-4">
-      <div className="relative w-full sm:max-w-lg bg-white dark:bg-gray-800 border-t sm:border border-gray-200 dark:border-gray-700 rounded-t-xl sm:rounded-candy-lg shadow-soft-xl p-3 sm:p-4 sm:my-auto modal-content overflow-y-auto pb-[max(1rem,env(safe-area-inset-bottom))]">
+      <div className="relative w-full sm:max-w-lg bg-white dark:bg-gray-800 border-t sm:border border-gray-200 dark:border-gray-700 rounded-t-xl sm:rounded-candy-lg shadow-soft-xl p-3 sm:p-4 sm:my-auto modal-content pb-[max(1rem,env(safe-area-inset-bottom))]">
         {/* Close Button */}
         <button
           onClick={onClose}
@@ -282,7 +282,7 @@ export function MasterScheduleModal({
 
               {/* Blocked Periods List */}
               {blockedPeriods.length > 0 && (
-                <div className="space-y-1 sm:space-y-1.5 max-h-24 sm:max-h-32 overflow-y-auto">
+                <div className="space-y-1 sm:space-y-1.5">
                   {blockedPeriods.map((period, index) => (
                     <div
                       key={index}

@@ -850,7 +850,7 @@ export default function AppointmentsPage() {
             onClick={() => setShowCreateForm(false)}
           >
             <div
-              className="relative w-[95%] sm:w-full sm:max-w-2xl bg-[#1A1A1A] border border-white/10 rounded-t-xl sm:rounded-xl shadow-xl modal-content overflow-y-auto sm:my-auto pb-[max(1rem,env(safe-area-inset-bottom))]"
+              className="relative w-[95%] sm:w-full sm:max-w-2xl bg-[#1A1A1A] border border-white/10 rounded-t-xl sm:rounded-xl shadow-xl modal-content sm:my-auto pb-[max(1rem,env(safe-area-inset-bottom))]"
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4 sm:p-6">

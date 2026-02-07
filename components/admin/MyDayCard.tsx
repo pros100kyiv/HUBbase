@@ -657,7 +657,7 @@ export function MyDayCard({
                 </button>
               </div>
 
-              <div className="p-4 overflow-y-auto">
+              <div className="p-4">
                 <div className="space-y-2">
                   {getFilteredAppointments(selectedStatus).length > 0 ? (
                     getFilteredAppointments(selectedStatus).map((apt) => (
@@ -716,7 +716,7 @@ export function MyDayCard({
                 </button>
               </div>
 
-              <div className="p-4 overflow-y-auto space-y-3">
+              <div className="p-4 space-y-3">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-400">Статус</span>
                   <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(selectedAppointment.status)}`}>
@@ -832,7 +832,7 @@ export function MyDayCard({
                 </button>
               </div>
 
-              <div className="p-4 overflow-y-auto">
+              <div className="p-4">
                 {historyLoading ? (
                   <div className="text-center py-10 text-sm text-gray-400">Завантаження…</div>
                 ) : historyAppointments.length === 0 ? (
@@ -886,7 +886,7 @@ export function MyDayCard({
               aria-hidden
             />
             <div 
-              className="relative w-[95%] sm:w-full max-w-sm bg-[#2A2A2A] rounded-xl p-4 sm:p-6 border border-white/10 shadow-2xl modal-content overflow-y-auto animate-in fade-in zoom-in-95 duration-200 pb-[max(1rem,env(safe-area-inset-bottom))]"
+              className="relative w-[95%] sm:w-full max-w-sm bg-[#2A2A2A] rounded-xl p-4 sm:p-6 border border-white/10 shadow-2xl modal-content animate-in fade-in zoom-in-95 duration-200 pb-[max(1rem,env(safe-area-inset-bottom))]"
               style={{ 
                 position: 'relative',
                 zIndex: 10000

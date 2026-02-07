@@ -405,7 +405,7 @@ export function NotesCard({ businessId }: NotesCardProps) {
               aria-hidden
             />
             <div
-              className="relative w-[95%] sm:w-full max-w-md bg-[#2A2A2A] rounded-xl p-4 sm:p-6 border border-white/10 shadow-2xl modal-content overflow-y-auto animate-in fade-in zoom-in-95 duration-200 pb-[max(1rem,env(safe-area-inset-bottom))]"
+              className="relative w-[95%] sm:w-full max-w-md bg-[#2A2A2A] rounded-xl p-4 sm:p-6 border border-white/10 shadow-2xl modal-content animate-in fade-in zoom-in-95 duration-200 pb-[max(1rem,env(safe-area-inset-bottom))]"
               style={{ position: 'relative', zIndex: 10000 }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -490,7 +490,7 @@ export function NotesCard({ businessId }: NotesCardProps) {
               aria-hidden
             />
             <div
-              className="relative w-[95%] sm:w-full max-w-sm bg-[#2A2A2A] rounded-xl p-4 sm:p-6 border border-white/10 shadow-2xl modal-content overflow-y-auto animate-in fade-in zoom-in-95 duration-200 pb-[max(1rem,env(safe-area-inset-bottom))]"
+              className="relative w-[95%] sm:w-full max-w-sm bg-[#2A2A2A] rounded-xl p-4 sm:p-6 border border-white/10 shadow-2xl modal-content animate-in fade-in zoom-in-95 duration-200 pb-[max(1rem,env(safe-area-inset-bottom))]"
               style={{ position: 'relative', zIndex: 10000 }}
               onClick={(e) => e.stopPropagation()}
             >

@@ -301,14 +301,8 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
                   </button>
                 </div>
 
-                {/* Scrollable Content */}
-                <div 
-                  className="flex-1 overflow-y-auto px-4 sm:px-6 py-4"
-                  style={{ 
-                    WebkitOverflowScrolling: 'touch',
-                    overscrollBehavior: 'contain'
-                  }}
-                >
+                {/* Content — без перемотування всередині */}
+                <div className="flex-1 px-4 sm:px-6 py-4">
                   {/* Original Message */}
                   <div className="bg-white/5 rounded-lg p-3 mb-4">
                     <p className="text-sm text-gray-300 whitespace-pre-wrap break-words">{selectedMessage.message}</p>

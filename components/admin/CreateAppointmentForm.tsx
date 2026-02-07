@@ -230,7 +230,7 @@ export function CreateAppointmentForm({
                         autoFocus
                       />
                     </div>
-                    <div className="flex-1 overflow-y-auto p-2 min-h-0">
+                    <div className="flex-1 p-2 min-h-0">
                       {services
                         .filter((s) =>
                           s.name.toLowerCase().includes(serviceSearchQuery.trim().toLowerCase())

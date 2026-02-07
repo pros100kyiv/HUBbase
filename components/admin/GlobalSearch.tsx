@@ -116,7 +116,7 @@ export function GlobalSearch({ businessId, isOpen, onClose }: GlobalSearchProps)
         aria-hidden
       />
       {/* Search Modal */}
-      <div className="relative w-full sm:max-w-2xl bg-[#2A2A2A] rounded-xl shadow-2xl border border-white/10 sm:my-auto modal-content overflow-y-auto pb-[max(0.5rem,env(safe-area-inset-bottom))]">
+      <div className="relative w-full sm:max-w-2xl bg-[#2A2A2A] rounded-xl shadow-2xl border border-white/10 sm:my-auto modal-content pb-[max(0.5rem,env(safe-area-inset-bottom))]">
         {/* Search Input */}
         <div className="p-4 border-b border-white/10">
           <div className="flex items-center gap-3">
@@ -146,7 +146,7 @@ export function GlobalSearch({ businessId, isOpen, onClose }: GlobalSearchProps)
         </div>
 
         {/* Results */}
-        <div className="max-h-96 overflow-y-auto">
+        <div>
           {loading ? (
             <div className="p-8 text-center text-gray-400">Завантаження...</div>
           ) : !query || query.length < 2 ? (
