@@ -165,6 +165,12 @@ export function TimeStep({ businessId }: TimeStepProps) {
                 <p className="text-xs text-gray-400 mt-1">Оберіть іншу дату або зверніться до закладу для уточнення графіка.</p>
               </div>
             )}
+            {!scheduleNotConfigured && !slotsLoading && availableSlots.length === 0 && state.selectedDate && state.selectedMaster && businessId && (
+              <div className="rounded-xl p-4 mb-4 card-glass border border-white/20 bg-white/5">
+                <p className="text-sm font-medium text-gray-300">На цей день немає вільних годин або не вдалося їх завантажити.</p>
+                <p className="text-xs text-gray-400 mt-1">Спробуйте іншу дату або оновіть сторінку. Якщо графік майстра не налаштовано — налаштуйте його в кабінеті.</p>
+              </div>
+            )}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-2">
               <h3 className="text-sm font-semibold text-white">Оберіть час:</h3>
               <div className="flex items-center gap-3 text-xs text-gray-400 flex-wrap">

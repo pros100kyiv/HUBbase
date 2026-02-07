@@ -86,6 +86,7 @@ export async function GET(request: Request) {
     const year = parseInt(dateParts[0], 10)
     const month = parseInt(dateParts[1], 10) - 1
     const day = parseInt(dateParts[2], 10)
+    const dateNorm = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
     const date = new Date(year, month, day)
     const startOfSelectedDay = startOfDay(date)
     const endOfDayDate = new Date(startOfSelectedDay)
@@ -133,6 +134,14 @@ export async function GET(request: Request) {
       })
     }
 
+    if (dayStart >= dayEnd) {
+      return NextResponse.json({
+        availableSlots: [],
+        scheduleNotConfigured: true,
+        message: 'На цей день немає робочого вікна.',
+      })
+    }
+
     let dayStart = finalDay.start
     let dayEnd = finalDay.end
     const isWorkingDay = finalDay.enabled
@@ -150,7 +159,7 @@ export async function GET(request: Request) {
     // Генеруємо по даті з запиту та годинах робочого вікна, без прив'язки до "минулого" (минулі фільтрує клієнт).
     const slots: string[] = []
     if (isWorkingDay) {
-      const dateStr = dateParam
+      const dateStr = dateNorm
       for (let hour = dayStart; hour < dayEnd; hour++) {
         for (let minute = 0; minute < 60; minute += 30) {
           const h = String(hour).padStart(2, '0')
