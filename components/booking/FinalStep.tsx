@@ -40,6 +40,15 @@ export function FinalStep({ businessId }: FinalStepProps) {
       alert('Оберіть дату та час запису.')
       return
     }
+    const bid = businessId || state.businessId
+    if (!bid) {
+      alert('Помилка: бізнес не визначено. Оновіть сторінку та спробуйте знову.')
+      return
+    }
+    if (!state.selectedMaster?.id) {
+      alert('Помилка: спеціаліст не обрано. Поверніться назад та оберіть спеціаліста.')
+      return
+    }
 
     setIsSubmitting(true)
 
