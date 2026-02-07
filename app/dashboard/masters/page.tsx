@@ -407,13 +407,13 @@ export default function MastersPage() {
           comparison = a.name.localeCompare(b.name)
           break
         case 'visits':
-          comparison = a.totalAppointments - b.totalAppointments
+          comparison = (a.totalAppointments ?? 0) - (b.totalAppointments ?? 0)
           break
         case 'earned':
-          comparison = a.totalRevenue - b.totalRevenue
+          comparison = (a.totalRevenue ?? 0) - (b.totalRevenue ?? 0)
           break
         case 'rating':
-          comparison = a.averageRating - b.averageRating
+          comparison = (a.averageRating ?? 0) - (b.averageRating ?? 0)
           break
         default:
           comparison = 0
@@ -433,9 +433,9 @@ export default function MastersPage() {
       }
       return [
         master.name,
-        master.averageRating.toFixed(1),
+        (master.averageRating ?? 0).toFixed(1),
         master.isActive ? 'Активний' : 'Неактивний',
-        master.totalAppointments,
+        master.totalAppointments ?? 0,
         Math.round(stats.earned),
         stats.clients,
         stats.services,
@@ -484,9 +484,9 @@ export default function MastersPage() {
       const masterStatsData = masterStats[m.id]
       return sum + (masterStatsData?.earned || 0)
     }, 0),
-    totalAppointments: filteredMasters.reduce((sum, m) => sum + m.totalAppointments, 0),
-    avgRating: filteredMasters.length > 0 
-      ? filteredMasters.reduce((sum, m) => sum + m.averageRating, 0) / filteredMasters.length 
+    totalAppointments: filteredMasters.reduce((sum, m) => sum + (m.totalAppointments ?? 0), 0),
+    avgRating: filteredMasters.length > 0
+      ? filteredMasters.reduce((sum, m) => sum + (m.averageRating ?? 0), 0) / filteredMasters.length
       : 0,
   }
 
@@ -782,7 +782,7 @@ export default function MastersPage() {
                         <td className="p-3 text-center">
                           <div className="flex items-center justify-center gap-1">
                             <StarIcon className="w-3 h-3 text-yellow-400" />
-                            <span className="text-white">{master.averageRating.toFixed(1)}</span>
+                            <span className="text-white">{(master.averageRating ?? 0).toFixed(1)}</span>
                           </div>
                         </td>
                         <td className="p-3 text-center">
@@ -795,7 +795,7 @@ export default function MastersPage() {
                             {master.isActive ? 'Активний' : 'Неактивний'}
                           </span>
                         </td>
-                        <td className="p-3 text-center text-white">{master.totalAppointments}</td>
+                        <td className="p-3 text-center text-white">{master.totalAppointments ?? 0}</td>
                         <td className="p-3 text-right font-semibold text-purple-400">
                           {Math.round(stats.earned)} грн
                         </td>
@@ -910,7 +910,7 @@ export default function MastersPage() {
                           <div className="flex items-center gap-1">
                             <StarIcon className="w-3 h-3 text-yellow-400" />
                             <span className="text-xs font-medium text-gray-400">
-                              {master.averageRating.toFixed(1)}
+                              {(master.averageRating ?? 0).toFixed(1)}
                             </span>
                           </div>
                         </div>
