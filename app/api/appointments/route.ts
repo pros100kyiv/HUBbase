@@ -108,8 +108,8 @@ export async function POST(request: Request) {
       )
     }
 
-    const normalizedPhone = normalizeUaPhone(clientPhone)
-    const normalizedClientName = String(clientName || '').trim()
+    const normalizedPhone = normalizeUaPhone(String(clientPhone))
+    const normalizedClientName = String(clientName ?? '').trim()
     const normalizedClientEmail =
       typeof clientEmail === 'string' && clientEmail.trim() ? clientEmail.trim() : null
 
