@@ -92,6 +92,25 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
     }
   }
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'Pending':
+      case 'Очікує':
+        return 'bg-orange-500/20 text-orange-400 border-orange-500/50'
+      case 'Confirmed':
+      case 'Підтверджено':
+        return 'bg-green-500/20 text-green-400 border-green-500/50'
+      case 'Done':
+      case 'Виконано':
+        return 'bg-blue-500/20 text-blue-400 border-blue-500/50'
+      case 'Cancelled':
+      case 'Скасовано':
+        return 'bg-red-500/20 text-red-400 border-red-500/50'
+      default:
+        return 'bg-gray-500/20 text-gray-400 border-gray-500/50'
+    }
+  }
+
   /** Колір бейджа кількості записів за домінантним статусом дня (як на сторінці Записи) */
   const getDayBadgeStyle = (dayAppointments: Appointment[]) => {
     if (dayAppointments.length === 0) return ''
