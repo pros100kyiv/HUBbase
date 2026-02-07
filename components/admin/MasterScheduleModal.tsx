@@ -27,11 +27,10 @@ interface MasterScheduleModalProps {
     name: string
     workingHours?: string | null
     scheduleDateOverrides?: string | null
-    blockedPeriods?: string | null
   }
   businessId: string
   onClose: () => void
-  onSave: (workingHours?: string, blockedPeriods?: string, scheduleDateOverrides?: string) => void
+  onSave: (workingHours?: string, scheduleDateOverrides?: string) => void
 }
 
 interface WorkingHours {
@@ -64,12 +63,9 @@ export function MasterScheduleModal({
   const [activeTab, setActiveTab] = useState<'week' | 'month'>('week')
   const [workingHours, setWorkingHours] = useState<WorkingHours>({})
   const [scheduleDateOverrides, setScheduleDateOverrides] = useState<DateOverridesMap>({})
-  const [blockedPeriods, setBlockedPeriods] = useState<Array<{ start: string; end: string }>>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showErrorToast, setShowErrorToast] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
-  const [newBlockedStart, setNewBlockedStart] = useState('')
-  const [newBlockedEnd, setNewBlockedEnd] = useState('')
   const [monthDate, setMonthDate] = useState(() => new Date())
   const [editingDate, setEditingDate] = useState<string | null>(null)
   const [editOverride, setEditOverride] = useState<DateOverride>({ enabled: true, start: '09:00', end: '18:00' })
@@ -100,13 +96,6 @@ export function MasterScheduleModal({
         setScheduleDateOverrides(parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})
       } else {
         setScheduleDateOverrides({})
-      }
-
-      if (master.blockedPeriods) {
-        const parsed = typeof master.blockedPeriods === 'string'
-          ? JSON.parse(master.blockedPeriods)
-          : master.blockedPeriods
-        setBlockedPeriods(Array.isArray(parsed) ? parsed : [])
       }
     } catch (e) {
       console.error('Error parsing schedule:', e)
@@ -211,7 +200,6 @@ export function MasterScheduleModal({
     setShowErrorToast(false)
     try {
       const workingHoursJson = JSON.stringify(workingHours)
-      const blockedPeriodsJson = JSON.stringify(blockedPeriods)
       const scheduleDateOverridesJson = JSON.stringify(scheduleDateOverrides)
 
       const response = await fetch(`/api/masters/${master.id}`, {
@@ -221,7 +209,6 @@ export function MasterScheduleModal({
           businessId,
           workingHours: workingHoursJson,
           scheduleDateOverrides: scheduleDateOverridesJson,
-          blockedPeriods: blockedPeriodsJson,
         }),
       })
 
@@ -231,7 +218,7 @@ export function MasterScheduleModal({
       }
 
       toast({ title: 'Успішно!', description: 'Графік роботи оновлено', type: 'success' })
-      onSave(workingHoursJson, blockedPeriodsJson, scheduleDateOverridesJson)
+      onSave(workingHoursJson, scheduleDateOverridesJson)
       onClose()
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : 'Не вдалося зберегти графік'
@@ -494,70 +481,6 @@ export function MasterScheduleModal({
                 </div>
               </div>
             )}
-
-            <div>
-              <h3 className="text-sm font-semibold text-white mb-2">Заблоковані періоди</h3>
-              <div className="space-y-2">
-                <div className="flex flex-col sm:flex-row gap-2 p-3 rounded-xl bg-white/5 border border-white/10">
-                  <input
-                    type="datetime-local"
-                    value={newBlockedStart}
-                    onChange={(e) => setNewBlockedStart(e.target.value)}
-                    className="flex-1 px-2 py-1.5 text-xs rounded-lg border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-1 focus:ring-white/30"
-                  />
-                  <input
-                    type="datetime-local"
-                    value={newBlockedEnd}
-                    onChange={(e) => setNewBlockedEnd(e.target.value)}
-                    className="flex-1 px-2 py-1.5 text-xs rounded-lg border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-1 focus:ring-white/30"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleAddBlockedPeriod}
-                    className="px-3 py-1.5 text-xs font-medium rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors whitespace-nowrap"
-                  >
-                    Додати
-                  </button>
-                </div>
-                {blockedPeriods.length > 0 && (
-                  <div className="space-y-2">
-                    {blockedPeriods.map((period, index) => (
-                      <div
-                        key={index}
-                        className="flex items-center justify-between p-3 rounded-xl bg-red-500/10 border border-red-500/20"
-                      >
-                        <div className="text-xs text-white flex-1 min-w-0">
-                          <div className="font-medium truncate">
-                            {new Date(period.start).toLocaleString('uk-UA', {
-                              day: '2-digit',
-                              month: '2-digit',
-                              year: 'numeric',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </div>
-                          <div className="text-gray-400 truncate">
-                            до {new Date(period.end).toLocaleString('uk-UA', {
-                              day: '2-digit',
-                              month: '2-digit',
-                              hour: '2-digit',
-                              minute: '2-digit',
-                            })}
-                          </div>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => handleRemoveBlockedPeriod(index)}
-                          className="p-2 rounded-lg text-red-400 hover:bg-red-500/20 transition-colors"
-                        >
-                          <XIcon className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ))}
-                  </div>
-                )}
-              </div>
-            </div>
 
             <div className="flex gap-2 pt-2">
               <button

@@ -1127,12 +1127,11 @@ export default function MastersPage() {
             setShowScheduleModal(false)
             setSelectedMasterForSchedule(null)
           }}
-          onSave={(workingHours, blockedPeriods) => {
-            // Оновлюємо дані спеціаліста
+          onSave={(workingHours, scheduleDateOverrides) => {
             setMasters((prev) =>
               prev.map((m) =>
                 m.id === selectedMasterForSchedule.id
-                  ? { ...m, workingHours, blockedPeriods }
+                  ? { ...m, workingHours, scheduleDateOverrides }
                   : m
               )
             )

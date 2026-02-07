@@ -19,7 +19,6 @@ interface Master {
   isActive?: boolean
   workingHours?: string | null
   scheduleDateOverrides?: string | null
-  blockedPeriods?: string | null
 }
 
 interface DaySchedule {

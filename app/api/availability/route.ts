@@ -104,7 +104,7 @@ function getWindowForDate(
   return w ?? null
 }
 
-type MasterRow = { workingHours: string | null; scheduleDateOverrides: string | null; blockedPeriods: string | null }
+type MasterRow = { workingHours: string | null; scheduleDateOverrides: string | null }
 
 async function getAvailableSlotsForDate(
   master: MasterRow,
@@ -165,29 +165,6 @@ async function getAvailableSlotsForDate(
     }
   }
 
-  let blocked: Array<{ start: string; end: string }> = []
-  if (master.blockedPeriods) {
-    try {
-      blocked = JSON.parse(master.blockedPeriods)
-      if (!Array.isArray(blocked)) blocked = []
-    } catch {
-      blocked = []
-    }
-  }
-  for (const b of blocked) {
-    try {
-      let t = new Date(b.start)
-      const end = new Date(b.end)
-      while (t < end) {
-        const key = format(t, "yyyy-MM-dd'T'HH:mm")
-        if (key.startsWith(dateNorm)) occupied.add(key)
-        t = addMinutes(t, 30)
-      }
-    } catch {
-      // skip
-    }
-  }
-
   const steps = Math.ceil(durationMinutes / 30)
   return slots
     .filter((slotStr) => {
@@ -233,7 +210,7 @@ export async function GET(request: Request) {
     try {
     master = await prisma.master.findUnique({
       where: { id: masterId },
-      select: { workingHours: true, scheduleDateOverrides: true, blockedPeriods: true },
+      select: { workingHours: true, scheduleDateOverrides: true },
     })
     } catch (e) {
       console.error('[availability] master fetch error', e)
