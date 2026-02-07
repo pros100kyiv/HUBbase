@@ -122,26 +122,6 @@ export function MasterScheduleModal({
     }))
   }
 
-  const handleAddBlockedPeriod = () => {
-    if (!newBlockedStart || !newBlockedEnd) {
-      setErrorMessage('Введіть дату початку та кінця')
-      setShowErrorToast(true)
-      return
-    }
-    if (new Date(newBlockedStart) >= new Date(newBlockedEnd)) {
-      setErrorMessage('Дата початку повинна бути раніше дати кінця')
-      setShowErrorToast(true)
-      return
-    }
-    setBlockedPeriods((prev) => [...prev, { start: newBlockedStart, end: newBlockedEnd }])
-    setNewBlockedStart('')
-    setNewBlockedEnd('')
-  }
-
-  const handleRemoveBlockedPeriod = (index: number) => {
-    setBlockedPeriods((prev) => prev.filter((_, i) => i !== index))
-  }
-
   const getWeekdayKey = (date: Date): string => {
     const d = date.getDay()
     const keys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
