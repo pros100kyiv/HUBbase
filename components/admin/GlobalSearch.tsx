@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import { ModalPortal } from '@/components/ui/modal-portal'
@@ -36,14 +36,32 @@ interface GlobalSearchProps {
   businessId: string
   isOpen: boolean
   onClose: () => void
+  /** Якщо передано — модалка позиціонується біля елемента (під кнопкою пошука) */
+  anchorRef?: React.RefObject<HTMLElement | null>
 }
 
-export function GlobalSearch({ businessId, isOpen, onClose }: GlobalSearchProps) {
+const MODAL_WIDTH = 512 // max-w-2xl = 32rem
+
+export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalSearchProps) {
   const router = useRouter()
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<SearchResult | null>(null)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [anchorPosition, setAnchorPosition] = useState<{ top: number; right: number } | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+
+  const updateAnchorPosition = useCallback(() => {
+    if (!anchorRef?.current) {
+      setAnchorPosition(null)
+      return
+    }
+    const rect = anchorRef.current.getBoundingClientRect()
+    const gap = 8
+    const top = rect.bottom + gap
+    const right = Math.max(8, window.innerWidth - rect.right)
+    setAnchorPosition({ top, right })
+  }, [anchorRef])
 
   useEffect(() => {
     if (isOpen && inputRef.current) {
@@ -52,20 +70,47 @@ export function GlobalSearch({ businessId, isOpen, onClose }: GlobalSearchProps)
   }, [isOpen])
 
   useEffect(() => {
+    if (!isOpen) {
+      setAnchorPosition(null)
+      return
+    }
+    if (anchorRef?.current) {
+      updateAnchorPosition()
+      window.addEventListener('resize', updateAnchorPosition)
+      window.addEventListener('scroll', updateAnchorPosition, true)
+      return () => {
+        window.removeEventListener('resize', updateAnchorPosition)
+        window.removeEventListener('scroll', updateAnchorPosition, true)
+      }
+    } else {
+      setAnchorPosition(null)
+    }
+  }, [isOpen, anchorRef, updateAnchorPosition])
+
+  useEffect(() => {
     if (!query || query.length < 2) {
       setResults(null)
+      setError(null)
       return
     }
 
     const timeoutId = setTimeout(() => {
       setLoading(true)
+      setError(null)
       fetch(`/api/search?q=${encodeURIComponent(query)}&businessId=${businessId}`)
-        .then((res) => res.json())
-        .then((data) => {
-          setResults(data)
+        .then((res) => res.json().then((data) => ({ ok: res.ok, data })))
+        .then(({ ok, data }) => {
+          if (!ok || data?.error) {
+            setResults(null)
+            setError(data?.error || 'Помилка пошуку')
+          } else {
+            setResults(data)
+          }
           setLoading(false)
         })
         .catch(() => {
+          setResults(null)
+          setError('Помилка з\'єднання')
           setLoading(false)
         })
     }, 300)
@@ -108,6 +153,8 @@ export function GlobalSearch({ businessId, isOpen, onClose }: GlobalSearchProps)
     onClose()
   }
 
+  const useAnchorPosition = Boolean(anchorRef && anchorPosition)
+
   return (
     <ModalPortal>
       <div className="modal-overlay sm:!items-center sm:!p-4">
@@ -117,8 +164,22 @@ export function GlobalSearch({ businessId, isOpen, onClose }: GlobalSearchProps)
           onClick={onClose}
           aria-hidden
         />
-        {/* Search Modal */}
-        <div className="relative w-[95%] sm:w-full sm:max-w-2xl sm:my-auto modal-content modal-dialog">
+        {/* Search Modal — біля кнопки пошука (anchor) або по центру */}
+        <div
+          className="relative w-[95%] sm:w-full sm:max-w-2xl sm:my-auto modal-content modal-dialog"
+          style={
+            useAnchorPosition && anchorPosition
+              ? {
+                  position: 'fixed',
+                  top: anchorPosition.top,
+                  right: anchorPosition.right,
+                  left: 'auto',
+                  width: `min(95vw, ${MODAL_WIDTH}px)`,
+                  maxHeight: 'min(70vh, 480px)',
+                }
+              : undefined
+          }
+        >
         {/* Search Input */}
         <div className="p-4 border-b border-white/10">
           <div className="flex items-center gap-3">
@@ -149,7 +210,9 @@ export function GlobalSearch({ businessId, isOpen, onClose }: GlobalSearchProps)
 
         {/* Results */}
         <div>
-          {loading ? (
+          {error ? (
+            <div className="p-8 text-center text-red-400">{error}</div>
+          ) : loading ? (
             <div className="p-8 text-center text-gray-400">Завантаження...</div>
           ) : !query || query.length < 2 ? (
             <div className="p-8 text-center text-gray-400">
