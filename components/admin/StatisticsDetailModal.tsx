@@ -218,8 +218,9 @@ export function StatisticsDetailModal({
     return new Intl.NumberFormat('uk-UA', {
       style: 'currency',
       currency: 'UAH',
+      minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount)
+    }).format(Math.round(amount))
   }
 
   const getStatusColor = (status: string) => {

@@ -480,7 +480,7 @@ export default function SettingsPage() {
     
     setServiceForm({
       name: service.name,
-      price: (service.price / 100).toString(), // Конвертуємо з копійок в гривні для відображення
+      price: service.price.toString(), // Вартість у гривнях (ціле число, без копійок)
       duration: service.duration.toString(),
       category: category,
       subcategory: subcategory,
@@ -1019,7 +1019,7 @@ export default function SettingsPage() {
                     currency: 'UAH',
                     minimumFractionDigits: 0,
                     maximumFractionDigits: 0,
-                  }).format(amount / 100)
+                  }).format(Math.round(amount))
                 }
 
                 const formatDuration = (minutes: number) => {

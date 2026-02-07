@@ -53,7 +53,7 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
                   {service.category && <p className="text-xs text-gray-400 truncate">{service.category}</p>}
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-sm sm:text-base font-semibold text-white">{service.price} ₴</p>
+                  <p className="text-sm sm:text-base font-semibold text-white">{Math.round(service.price)} ₴</p>
                   <p className="text-xs text-gray-400">{service.duration} хв</p>
                 </div>
               </div>
@@ -66,7 +66,7 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
             <div className="flex justify-between items-center mb-3">
               <span className="text-sm font-medium text-gray-300">Всього:</span>
               <div className="text-right">
-                <p className="text-lg font-bold text-white">{totalPrice} ₴</p>
+                <p className="text-lg font-bold text-white">{Math.round(totalPrice)} ₴</p>
                 <p className="text-xs text-gray-400">{totalDuration} хв</p>
               </div>
             </div>
@@ -74,7 +74,7 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
               {state.selectedServices.map((service) => (
                 <div key={service.id} className="flex justify-between text-sm">
                   <span className="text-gray-300">{service.name}</span>
-                  <span className="text-white font-medium">{service.price} ₴</span>
+                  <span className="text-white font-medium">{Math.round(service.price)} ₴</span>
                 </div>
               ))}
             </div>

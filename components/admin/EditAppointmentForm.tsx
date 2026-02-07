@@ -323,7 +323,7 @@ export function EditAppointmentForm({
                             {service.name}
                           </span>
                           <span className="text-xs text-gray-400">
-                            {service.price} грн · {service.duration} хв
+                            {Math.round(service.price)} грн · {service.duration} хв
                           </span>
                         </label>
                       ))}

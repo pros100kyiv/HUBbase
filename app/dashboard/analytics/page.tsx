@@ -119,7 +119,8 @@ export default function AnalyticsPage() {
       style: 'currency',
       currency: 'UAH',
       minimumFractionDigits: 0,
-    }).format(amount)
+      maximumFractionDigits: 0,
+    }).format(Math.round(amount))
   }
 
   if (!business || loading) {

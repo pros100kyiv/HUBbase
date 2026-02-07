@@ -59,8 +59,9 @@ export function MonthProgressCard({ stats, loading }: MonthProgressCardProps) {
     return new Intl.NumberFormat('uk-UA', {
       style: 'currency',
       currency: 'UAH',
+      minimumFractionDigits: 0,
       maximumFractionDigits: 0,
-    }).format(amount)
+    }).format(Math.round(amount))
   }
 
   // Розрахунок довжини кола для svg (r=26 -> l=2*pi*26 ≈ 163.36)

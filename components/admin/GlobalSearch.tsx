@@ -207,7 +207,7 @@ export function GlobalSearch({ businessId, isOpen, onClose }: GlobalSearchProps)
                         className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/10 transition-colors"
                       >
                         <div className="text-sm font-medium text-white">{service.name}</div>
-                        <div className="text-xs text-gray-400">{service.price} грн</div>
+                        <div className="text-xs text-gray-400">{Math.round(service.price)} грн</div>
                       </button>
                     ))}
                   </div>

@@ -129,7 +129,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
             <div className="flex justify-between"><span className="text-gray-400">Майстер:</span><span className="font-medium text-white">{state.selectedMaster?.name}</span></div>
             <div className="flex justify-between"><span className="text-gray-400">Дата та час:</span><span className="font-medium text-white">{state.selectedDate && format(state.selectedDate, 'd MMMM yyyy', { locale: uk })}, {state.selectedTime}</span></div>
             <div className="flex justify-between"><span className="text-gray-400">Послуги:</span><span className="font-medium text-white text-right max-w-[60%]">{state.selectedServices.map(s => s.name).join(', ')}</span></div>
-            <div className="flex justify-between pt-2 border-t border-white/10"><span className="font-semibold text-white">Всього:</span><span className="text-lg font-bold text-white">{totalPrice} ₴</span></div>
+            <div className="flex justify-between pt-2 border-t border-white/10"><span className="font-semibold text-white">Всього:</span><span className="text-lg font-bold text-white">{Math.round(totalPrice)} ₴</span></div>
           </div>
         </div>
 

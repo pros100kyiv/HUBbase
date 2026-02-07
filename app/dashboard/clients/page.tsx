@@ -884,7 +884,7 @@ export default function ClientsPage() {
                           <div className="p-3 bg-white/5 rounded-lg border border-white/10">
                             <div className="text-[10px] text-gray-400 font-medium mb-0.5">Зароблено</div>
                             <div className="text-sm font-semibold text-purple-400">
-                              {new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH', minimumFractionDigits: 0 }).format(details.totalSpent)}
+                              {new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.round(details.totalSpent))}
                             </div>
                           </div>
                           <div className="p-3 bg-white/5 rounded-lg border border-white/10">
@@ -1080,7 +1080,7 @@ export default function ClientsPage() {
                                                   className="px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-white/10 text-pink-400 border border-white/10"
                                                 >
                                                   {service?.name || serviceId}{' '}
-                                                  {service ? `(${service.price} грн)` : ''}
+                                                  {service ? `(${Math.round(service.price)} грн)` : ''}
                                                 </span>
                                               )
                                             })}

@@ -189,7 +189,7 @@ export default function PricePage() {
                   {service.duration} хв
                 </div>
                 <div className="text-lg font-bold text-white">
-                  {service.price} ₴
+                  {Math.round(service.price)} ₴
                 </div>
               </div>
             </div>
@@ -227,7 +227,7 @@ export default function PricePage() {
           <div className="flex items-center gap-4">
             <div className="text-right">
               <div className="text-sm text-gray-400">Загальна вартість</div>
-              <div className="text-2xl font-bold text-white leading-none">{totalPrice} ₴</div>
+              <div className="text-2xl font-bold text-white leading-none">{Math.round(totalPrice)} ₴</div>
             </div>
             <button
               onClick={() => setSelectedServices([])}
