@@ -240,32 +240,32 @@ export default function AppointmentsPage() {
     if (selectedAppointments.size === 0 || !business) return
     
     try {
-      const promises = Array.from(selectedAppointments).map(id =>
-        fetch(`/api/appointments/${id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ status, businessId: business.id }),
+      const ids = Array.from(selectedAppointments)
+      const results = await Promise.all(
+        ids.map(async (id) => {
+          const res = await fetch(`/api/appointments/${id}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status, businessId: business.id }),
+          })
+          return { id, ok: res.ok }
         })
       )
-      
-      const results = await Promise.allSettled(promises)
-      const failed = results.filter(r => r.status === 'rejected')
-      
-      if (failed.length > 0) {
+      const succeeded = results.filter(r => r.ok).length
+      const failed = results.filter(r => !r.ok).length
+      if (failed > 0) {
         toast({
-          title: 'Помилка',
-          description: `Не вдалося оновити ${failed.length} записів`,
-          type: 'error',
+          title: failed === ids.length ? 'Помилка' : 'Частково оновлено',
+          description: failed === ids.length
+            ? 'Не вдалося оновити записи'
+            : `Оновлено ${succeeded}, не вдалося ${failed}`,
+          type: failed === ids.length ? 'error' : 'success',
         })
       } else {
-        setAppointments((prev) =>
-          prev.map((apt) => 
-            selectedAppointments.has(apt.id) ? { ...apt, status } : apt
-          )
-        )
-        setSelectedAppointments(new Set())
         toast({ title: 'Статуси оновлено', type: 'success' })
       }
+      setSelectedAppointments(new Set())
+      reloadAppointments()
     } catch (error) {
       console.error('Error updating appointments:', error)
       toast({

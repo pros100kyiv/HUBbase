@@ -114,6 +114,12 @@ export function DailyJournal({ businessId }: DailyJournalProps) {
       const data = await response.json().catch(() => ({}))
       if (response.ok) {
         toast({ title: 'Статус оновлено', type: 'success' })
+        const dateStr = format(selectedDate, 'yyyy-MM-dd')
+        const res = await fetch(`/api/appointments?date=${dateStr}&businessId=${businessId}`)
+        if (res.ok) {
+          const list = await res.json()
+          setAppointments(Array.isArray(list) ? list : [])
+        }
       } else {
         setAppointments(prev)
         toast({ title: 'Помилка', description: data?.error || 'Не вдалося оновити статус', type: 'error' })
