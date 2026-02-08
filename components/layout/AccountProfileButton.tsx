@@ -69,9 +69,9 @@ export function AccountProfileButton({ business, router }: AccountProfileButtonP
         </div>
       </button>
 
-      {/* Dropdown Menu */}
+      {/* Dropdown Menu — не вилітає за екран, скрол при потребі */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-env(safe-area-inset-left)-env(safe-area-inset-right)-1rem)] bg-[#2A2A2A] border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-72 max-w-[min(288px,calc(100vw-2rem))] max-h-[min(70vh,calc(100dvh-6rem))] overflow-y-auto dropdown-theme rounded-xl shadow-xl z-[150] overflow-hidden">
           {/* Header */}
           <div className="p-4 bg-white/5 border-b border-white/10">
             <div className="flex items-center gap-3">

@@ -17,6 +17,11 @@ interface CreateAppointmentFormProps {
   onCancel: () => void
   /** У модальному вікні — без Card і заголовка */
   embedded?: boolean
+  /** Початкові дані клієнта (наприклад після пошуку за телефоном або створення картки) */
+  initialClientName?: string
+  initialClientPhone?: string
+  /** Уникнути модалки в модалці: вибір послуг показувати inline у тій самій модалці */
+  inlineServicePicker?: boolean
 }
 
 export function CreateAppointmentForm({
@@ -27,13 +32,16 @@ export function CreateAppointmentForm({
   onSuccess,
   onCancel,
   embedded = false,
+  initialClientName = '',
+  initialClientPhone = '',
+  inlineServicePicker = false,
 }: CreateAppointmentFormProps) {
   const formRef = useRef<HTMLDivElement>(null)
   const initialDate = selectedDate && isValid(selectedDate) ? selectedDate : new Date()
   const [formData, setFormData] = useState({
     masterId: masters[0]?.id || '',
-    clientName: '',
-    clientPhone: '',
+    clientName: initialClientName,
+    clientPhone: initialClientPhone,
     serviceIds: [] as string[],
     date: format(initialDate, 'yyyy-MM-dd'),
     startTime: '09:00',
@@ -43,6 +51,17 @@ export function CreateAppointmentForm({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showServiceModal, setShowServiceModal] = useState(false)
   const [serviceSearchQuery, setServiceSearchQuery] = useState('')
+  const [clientLookupStatus, setClientLookupStatus] = useState<'idle' | 'loading' | 'found' | 'not_found'>('idle')
+  const lookupAbortRef = useRef<AbortController | null>(null)
+
+  /** Нормалізація телефону як у API (GET/POST clients) — для точного пошуку в базі */
+  const normalizePhone = (phone: string): string => {
+    let n = String(phone || '').replace(/\s/g, '').replace(/[()-]/g, '').trim()
+    if (n.startsWith('0')) n = `+380${n.slice(1)}`
+    else if (n.startsWith('380')) n = `+${n}`
+    else if (!n.startsWith('+380') && n.length > 0) n = `+380${n}`
+    return n
+  }
 
   useEffect(() => {
     if (formRef.current) {
@@ -56,6 +75,61 @@ export function CreateAppointmentForm({
       setFormData((prev) => ({ ...prev, masterId: masters[0].id }))
     }
   }, [masters])
+
+  // Пошук клієнта за телефоном: якщо є в базі — підтягнути ім'я; якщо немає — залишити поле для вводу (при створенні запису клієнт створиться через API)
+  useEffect(() => {
+    const raw = formData.clientPhone.trim()
+    const digitsOnly = raw.replace(/\D/g, '')
+    if (digitsOnly.length < 9 || !businessId) {
+      setClientLookupStatus('idle')
+      return
+    }
+
+    const normalized = normalizePhone(raw)
+    if (normalized.length < 12) return
+
+    const t = setTimeout(async () => {
+      if (lookupAbortRef.current) lookupAbortRef.current.abort()
+      lookupAbortRef.current = new AbortController()
+      setClientLookupStatus('loading')
+      try {
+        const res = await fetch(
+          `/api/clients?businessId=${encodeURIComponent(businessId)}&phone=${encodeURIComponent(normalized)}`,
+          { signal: lookupAbortRef.current.signal }
+        )
+        if (!res.ok) {
+          setClientLookupStatus('not_found')
+          return
+        }
+        const data = await res.json()
+        const list = Array.isArray(data) ? data : []
+        if (list.length > 0 && list[0].name) {
+          setFormData((prev) => ({ ...prev, clientName: list[0].name }))
+          setClientLookupStatus('found')
+        } else {
+          setClientLookupStatus('not_found')
+        }
+      } catch (err: any) {
+        if (err?.name === 'AbortError') return
+        setClientLookupStatus('not_found')
+      } finally {
+        lookupAbortRef.current = null
+      }
+    }, 500)
+
+    return () => {
+      clearTimeout(t)
+      if (lookupAbortRef.current) {
+        lookupAbortRef.current.abort()
+        lookupAbortRef.current = null
+      }
+    }
+  }, [formData.clientPhone, businessId])
+
+  /* Єдиний вигляд полів у модалці: одна форма, розмір, компактні (32px висота, rounded-md) */
+  const embeddedFieldBase =
+    'min-h-[32px] h-[32px] py-1.5 px-2.5 text-sm rounded-md border border-white/20 bg-white/5 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/30'
+  const embeddedFieldClass = `w-full ${embeddedFieldBase}`
 
   const handleServiceToggle = (serviceId: string) => {
     setFormData((prev) => ({
@@ -126,17 +200,17 @@ export function CreateAppointmentForm({
   }
 
   const formContent = (
-    <form onSubmit={handleSubmit} className={embedded ? 'space-y-2.5' : 'space-y-4'}>
+    <form onSubmit={handleSubmit} className={embedded ? 'space-y-1.5' : 'space-y-4'}>
             {/* Master Selection */}
             <div>
-              <label className={`block text-sm font-medium text-foreground ${embedded ? 'mb-1' : 'mb-2'}`}>
+              <label className={`block font-medium text-foreground ${embedded ? 'text-xs mb-0.5' : 'text-sm mb-2'}`}>
                 Спеціаліст *
               </label>
               <select
                 value={formData.masterId}
                 onChange={(e) => setFormData({ ...formData, masterId: e.target.value })}
                 required
-                className={embedded ? 'w-full px-3 py-2 rounded-lg min-h-[40px] border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-white/30' : 'w-full px-3 py-2.5 sm:py-2 min-h-[48px] sm:min-h-0 border border-gray-300 dark:border-gray-700 rounded-candy-sm bg-white dark:bg-gray-800 text-foreground'}
+                className={embedded ? embeddedFieldClass : 'w-full px-3 py-2.5 sm:py-2 min-h-[48px] sm:min-h-0 border border-gray-300 dark:border-gray-700 rounded-candy-sm bg-white dark:bg-gray-800 text-foreground'}
               >
                 <option value="">Оберіть спеціаліста</option>
                 {masters.map((master) => (
@@ -149,7 +223,7 @@ export function CreateAppointmentForm({
 
             {/* Client Name */}
             <div>
-              <label className="block text-sm font-medium mb-2 text-foreground">
+              <label className={`block font-medium text-foreground ${embedded ? 'text-xs mb-0.5' : 'text-sm mb-2'}`}>
                 Ім'я клієнта *
               </label>
               <Input
@@ -157,26 +231,27 @@ export function CreateAppointmentForm({
                 onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
                 placeholder="Введіть ім'я клієнта"
                 required
+                className={embedded ? embeddedFieldClass : undefined}
               />
             </div>
 
             {/* Client Phone */}
             <div>
-              <label className="block text-sm font-medium mb-2 text-foreground">
+              <label className={`block font-medium text-foreground ${embedded ? 'text-xs mb-0.5' : 'text-sm mb-2'}`}>
                 Телефон клієнта *
               </label>
               <div className="flex gap-2 items-center">
                 <Input
                   type="tel"
                   value={formData.clientPhone}
-                  onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, clientPhone: e.target.value }))}
                   placeholder="+380XXXXXXXXX"
                   required
-                  className="flex-1 min-w-0"
+                  className={embedded ? `flex-1 min-w-0 ${embeddedFieldClass}` : 'flex-1 min-w-0'}
                 />
                 {formData.clientPhone.replace(/\D/g, '').length >= 9 && (
                   <a
-                    href={`/dashboard/clients?phone=${encodeURIComponent(formData.clientPhone.trim())}`}
+                    href={`/dashboard/clients?phone=${encodeURIComponent(normalizePhone(formData.clientPhone))}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="text-xs font-medium text-primary hover:underline whitespace-nowrap"
@@ -185,42 +260,116 @@ export function CreateAppointmentForm({
                   </a>
                 )}
               </div>
+              {clientLookupStatus === 'loading' && (
+                <p className="text-xs text-muted-foreground mt-0.5">Пошук клієнта…</p>
+              )}
+              {clientLookupStatus === 'found' && (
+                <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">Клієнт знайдено в базі</p>
+              )}
+              {clientLookupStatus === 'not_found' && formData.clientPhone.replace(/\D/g, '').length >= 9 && (
+                <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Новий клієнт — введіть ім'я</p>
+              )}
             </div>
 
             {/* Services */}
             <div>
-              <label className="block text-sm font-medium mb-2 text-foreground">
+              <label className={`block font-medium text-foreground ${embedded ? 'text-xs mb-0.5' : 'text-sm mb-2'}`}>
                 Послуги (опціонально)
               </label>
-              <div className="flex flex-col gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    setServiceSearchQuery('')
-                    setShowServiceModal(true)
-                  }}
-                  className="w-full justify-center border-gray-300 dark:border-gray-600 text-foreground"
-                >
-                  Обрати послуги
-                  {formData.serviceIds.length > 0 && (
-                    <span className="ml-2 text-xs opacity-80">({formData.serviceIds.length})</span>
-                  )}
-                </Button>
+              <div className={`flex flex-col ${embedded ? 'gap-1' : 'gap-2'}`}>
+                {embedded ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setServiceSearchQuery('')
+                        setShowServiceModal(!showServiceModal)
+                      }}
+                      className="inline-flex items-center justify-center gap-1 min-h-[32px] h-[32px] px-2.5 py-1.5 text-xs font-medium rounded-md border border-white/20 bg-white/5 text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-white/30 touch-manipulation w-full sm:w-auto sm:max-w-[160px]"
+                    >
+                      {showServiceModal ? 'Приховати послуги' : 'Обрати послуги'}
+                      {formData.serviceIds.length > 0 && (
+                        <span className="text-xs opacity-80">({formData.serviceIds.length})</span>
+                      )}
+                    </button>
+                    {inlineServicePicker && showServiceModal && (
+                      <div className="rounded-xl border border-white/15 bg-white/5 p-2 mt-1 max-h-[min(50vh,280px)] overflow-y-auto scrollbar-hide space-y-2">
+                        <input
+                          type="text"
+                          value={serviceSearchQuery}
+                          onChange={(e) => setServiceSearchQuery(e.target.value)}
+                          placeholder="Пошук за назвою..."
+                          className="w-full px-2.5 py-2 min-h-[36px] text-sm border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30"
+                        />
+                        <div className="space-y-1">
+                          {services
+                            .filter((s) =>
+                              s.name.toLowerCase().includes(serviceSearchQuery.trim().toLowerCase())
+                            )
+                            .map((service) => (
+                              <label
+                                key={service.id}
+                                className="flex items-center gap-2 p-2 rounded-lg cursor-pointer hover:bg-white/[0.06] min-h-[44px] touch-target"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={formData.serviceIds.includes(service.id)}
+                                  onChange={() => handleServiceToggle(service.id)}
+                                  className="rounded border-white/30 bg-white/10 text-primary focus:ring-primary"
+                                />
+                                <span className="flex-1 text-sm font-medium text-white">{service.name}</span>
+                                <span className="text-xs text-gray-400">
+                                  {Math.round(service.price)} грн · {service.duration} хв
+                                </span>
+                              </label>
+                            ))}
+                          {services.filter((s) =>
+                            s.name.toLowerCase().includes(serviceSearchQuery.trim().toLowerCase())
+                          ).length === 0 && (
+                            <p className="p-3 text-center text-xs text-gray-400">
+                              {serviceSearchQuery.trim() ? 'Нічого не знайдено' : 'Немає послуг'}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      setServiceSearchQuery('')
+                      setShowServiceModal(true)
+                    }}
+                    className="w-full justify-center border-gray-300 dark:border-gray-600 text-foreground"
+                  >
+                    Обрати послуги
+                    {formData.serviceIds.length > 0 && (
+                      <span className="ml-2 text-xs opacity-80">({formData.serviceIds.length})</span>
+                    )}
+                  </Button>
+                )}
                 {formData.serviceIds.length > 0 && (
-                  <div className="flex flex-wrap gap-1.5 p-2 border border-gray-200 dark:border-gray-700 rounded-candy-sm bg-gray-50 dark:bg-gray-800/50 min-h-[44px]">
+                  <div className={embedded
+                    ? 'flex flex-wrap gap-1 rounded-md border border-white/10 bg-white/5 p-1'
+                    : 'flex flex-wrap gap-1.5 p-2 border border-gray-200 dark:border-gray-700 rounded-candy-sm bg-gray-50 dark:bg-gray-800/50 min-h-[44px]'
+                  }>
                     {formData.serviceIds.map((id) => {
                       const s = services.find((x) => x.id === id)
                       return s ? (
                         <span
                           key={id}
-                          className="inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs bg-primary/10 text-primary dark:bg-primary/20 border border-primary/30"
+                          className={embedded
+                            ? 'inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[11px] bg-primary/10 text-primary dark:bg-primary/20 border border-primary/30'
+                            : 'inline-flex items-center gap-1 px-2 py-1 rounded-md text-xs bg-primary/10 text-primary dark:bg-primary/20 border border-primary/30'
+                          }
                         >
                           {s.name}
                           <button
                             type="button"
                             onClick={() => handleServiceToggle(id)}
-                            className="ml-0.5 p-0.5 rounded hover:bg-primary/20"
+                            className={embedded ? 'p-0.5 rounded hover:bg-primary/20 -m-0.5' : 'ml-0.5 p-0.5 rounded hover:bg-primary/20'}
                             aria-label="Прибрати"
                           >
                             ×
@@ -233,8 +382,8 @@ export function CreateAppointmentForm({
               </div>
             </div>
 
-            {/* Modal вибору послуг — стиль Dashboard (modal-dialog, dark) */}
-            {showServiceModal && (
+            {/* Modal вибору послуг — тільки якщо не inline (уникнути модалки в модалці) */}
+            {showServiceModal && !inlineServicePicker && (
               <ModalPortal>
                 <div
                   className="modal-overlay modal-overlay-nested sm:!p-4"
@@ -313,7 +462,7 @@ export function CreateAppointmentForm({
 
             {/* Custom Service */}
             <div>
-              <label className={`block text-sm font-medium text-foreground ${embedded ? 'mb-1' : 'mb-2'}`}>
+              <label className={`block font-medium text-foreground ${embedded ? 'text-xs mb-0.5' : 'text-sm mb-2'}`}>
                 Додаткова послуга (опціонально)
               </label>
               <div className="flex gap-2">
@@ -321,7 +470,7 @@ export function CreateAppointmentForm({
                   value={formData.customService}
                   onChange={(e) => setFormData({ ...formData, customService: e.target.value })}
                   placeholder="Назва послуги"
-                  className={embedded ? 'flex-1 min-h-[40px] py-2' : 'flex-1'}
+                  className={embedded ? `flex-1 min-w-0 ${embeddedFieldClass}` : 'flex-1'}
                 />
                 <Input
                   type="number"
@@ -329,14 +478,14 @@ export function CreateAppointmentForm({
                   onChange={(e) => setFormData({ ...formData, customPrice: Number(e.target.value) })}
                   placeholder="Ціна"
                   min="0"
-                  className={embedded ? 'w-20 min-h-[40px] py-2' : 'w-24'}
+                  className={embedded ? `w-16 min-w-[4rem] shrink-0 ${embeddedFieldBase}` : 'w-24'}
                 />
               </div>
             </div>
 
             {/* Date */}
             <div>
-              <label className={`block text-sm font-medium text-foreground ${embedded ? 'mb-1' : 'mb-2'}`}>
+              <label className={`block font-medium text-foreground ${embedded ? 'text-xs mb-0.5' : 'text-sm mb-2'}`}>
                 Дата *
               </label>
               <Input
@@ -345,13 +494,13 @@ export function CreateAppointmentForm({
                 onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                 required
                 min={format(new Date(), 'yyyy-MM-dd')}
-                className={embedded ? 'min-h-[40px] py-2' : undefined}
+                className={embedded ? embeddedFieldClass : undefined}
               />
             </div>
 
             {/* Start Time */}
             <div>
-              <label className={`block text-sm font-medium text-foreground ${embedded ? 'mb-1' : 'mb-2'}`}>
+              <label className={`block font-medium text-foreground ${embedded ? 'text-xs mb-0.5' : 'text-sm mb-2'}`}>
                 Час початку *
               </label>
               <Input
@@ -359,23 +508,23 @@ export function CreateAppointmentForm({
                 value={formData.startTime}
                 onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
                 required
-                className={embedded ? 'min-h-[40px] py-2' : undefined}
+                className={embedded ? embeddedFieldClass : undefined}
               />
             </div>
 
             {/* Actions */}
-            <div className={`flex flex-col sm:flex-row gap-2 ${embedded ? 'pt-1' : 'pt-2'}`}>
+            <div className={`flex flex-col sm:flex-row gap-1.5 sm:gap-2 ${embedded ? 'pt-0.5' : 'pt-2'}`}>
               <button
                 type="submit"
                 disabled={isSubmitting || !formData.masterId || !formData.clientName || !formData.clientPhone}
-                className={embedded ? 'dashboard-btn-primary flex-1 min-h-[40px] py-2' : 'dashboard-btn-primary flex-1 min-h-[48px] touch-target'}
+                className={embedded ? 'dashboard-btn-primary flex-1 min-h-[34px] py-1.5 text-sm rounded-md' : 'dashboard-btn-primary flex-1 min-h-[48px] touch-target'}
               >
                 {isSubmitting ? 'Створення...' : 'Створити запис'}
               </button>
               <button
                 type="button"
                 onClick={onCancel}
-                className={embedded ? 'dashboard-btn-secondary min-h-[40px] py-2' : 'dashboard-btn-secondary min-h-[48px] touch-target'}
+                className={embedded ? 'dashboard-btn-secondary min-h-[32px] h-[32px] py-1.5 text-sm rounded-md' : 'dashboard-btn-secondary min-h-[48px] touch-target'}
               >
                 Скасувати
               </button>

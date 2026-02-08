@@ -95,18 +95,20 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
 
   return (
     <>
-      {/* Mobile Sidebar Overlay */}
+      {/* Mobile Sidebar Overlay — клік закриває */}
       {isOpen && (
         <div
           className="fixed inset-0 bg-black/50 z-40 md:hidden backdrop-blur-sm"
+          style={{ padding: 'env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)' }}
           onClick={onClose}
+          aria-hidden
         />
       )}
 
-      {/* Mobile Sidebar — у стилі Dashboard (темний glass) */}
+      {/* Mobile Sidebar — safe-area, не вилітає за екран */}
       <aside
         className={cn(
-          'fixed top-0 left-0 h-full w-[min(288px,85vw)] border-r z-50 transform transition-transform duration-300 ease-in-out md:hidden sidebar-theme backdrop-blur-xl pl-[env(safe-area-inset-left)]',
+          'fixed top-0 left-0 h-full w-[min(288px,calc(100vw-env(safe-area-inset-left)-env(safe-area-inset-right)))] max-w-[85vw] border-r z-50 transform transition-transform duration-300 ease-in-out md:hidden sidebar-theme backdrop-blur-xl pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] pb-[env(safe-area-inset-bottom)] box-border',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >

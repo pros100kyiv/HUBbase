@@ -83,14 +83,15 @@ export function AccountInfo({ business }: AccountInfoProps) {
         )} />
       </button>
 
-      {/* Dropdown Menu */}
+      {/* Dropdown Menu — не вилітає за екран */}
       {isOpen && (
         <>
           <div
-            className="fixed inset-0 z-40"
+            className="fixed inset-0 z-[140]"
             onClick={() => setIsOpen(false)}
+            aria-hidden
           />
-          <div className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-candy-sm shadow-soft-xl z-50 overflow-hidden">
+          <div className="absolute right-0 top-full mt-2 w-64 max-h-[min(70vh,calc(100dvh-6rem))] overflow-y-auto dropdown-theme rounded-candy-sm shadow-soft-xl z-[150] overflow-hidden">
             {/* Header */}
             <div className="p-4 bg-gradient-to-r from-candy-blue/10 to-candy-purple/10 border-b border-gray-200 dark:border-gray-700">
               <div className="flex items-center gap-3">

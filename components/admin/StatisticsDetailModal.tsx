@@ -258,8 +258,8 @@ export function StatisticsDetailModal({
 
   return (
     <ModalPortal>
-      <div className="modal-overlay sm:!p-4">
-        <div className="relative w-[95%] sm:w-full sm:max-w-2xl sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200">
+      <div className="modal-overlay sm:!p-4" onClick={onClose} role="presentation">
+        <div className="relative w-[95%] sm:w-full sm:max-w-2xl sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200" onClick={(e) => e.stopPropagation()}>
           <button
             type="button"
             onClick={onClose}

@@ -12,10 +12,22 @@ export function ModalPortal({ children }: ModalPortalProps) {
 
   useEffect(() => {
     setMounted(true)
-    const prevOverflow = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
+    const html = document.documentElement
+    const body = document.body
+    const prevOverflow = body.style.overflow
+    const prevTouchAction = body.style.touchAction
+    const prevOverscrollBehavior = body.style.overscrollBehavior
+
+    body.style.overflow = 'hidden'
+    body.style.touchAction = 'none'
+    body.style.overscrollBehavior = 'none'
+    html.style.overflow = 'hidden'
+
     return () => {
-      document.body.style.overflow = prevOverflow
+      body.style.overflow = prevOverflow
+      body.style.touchAction = prevTouchAction
+      body.style.overscrollBehavior = prevOverscrollBehavior
+      html.style.overflow = ''
       setMounted(false)
     }
   }, [])

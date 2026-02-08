@@ -102,7 +102,7 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-4 md:bottom-4 w-14 h-14 rounded-full bg-gradient-to-r from-candy-blue to-candy-purple text-white shadow-soft-xl hover:shadow-soft-2xl transition-all z-50 flex items-center justify-center touch-manipulation"
+          className="fixed bottom-[max(1rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] md:bottom-4 md:right-4 w-14 h-14 min-w-[56px] min-h-[56px] rounded-full bg-gradient-to-r from-candy-blue to-candy-purple text-white shadow-soft-xl hover:shadow-soft-2xl transition-all z-[50] flex items-center justify-center touch-manipulation"
           title="AI Помічник"
         >
           <BotIcon className="w-6 h-6" />
@@ -110,7 +110,7 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
       )}
       
       {isOpen && (
-        <div className={`fixed inset-0 md:inset-auto md:bottom-4 md:right-4 md:w-96 md:h-[500px] md:max-h-[85vh] w-full h-full md:rounded-xl bg-white dark:bg-gray-800 shadow-soft-2xl flex flex-col z-50 ${className}`}>
+        <div className={`fixed inset-0 md:inset-auto md:bottom-4 md:right-[max(1rem,env(safe-area-inset-right))] md:w-96 md:h-[500px] md:max-h-[85vh] w-full h-full md:rounded-xl bg-white dark:bg-gray-800 shadow-soft-2xl flex flex-col z-[50] ${className}`}>
           <div className="p-4 pt-[max(1rem,env(safe-area-inset-top))] border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <BotIcon className="w-5 h-5 text-candy-purple" />
@@ -178,7 +178,7 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
             <div ref={messagesEndRef} />
           </div>
           
-          <div className="p-4 border-t border-gray-200 dark:border-gray-700">
+          <div className="p-4 pb-[max(0.75rem,env(safe-area-inset-bottom))] border-t border-gray-200 dark:border-gray-700">
             <div className="flex gap-2">
               <input
                 type="text"

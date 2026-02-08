@@ -234,8 +234,8 @@ export function ProfileSetupModal({ business, onComplete, onClose }: ProfileSetu
 
   return (
     <ModalPortal>
-      <div className="modal-overlay sm:!p-4">
-        <div className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog modal-dialog-light flex flex-col">
+      <div className="modal-overlay sm:!p-4" onClick={onClose ?? undefined} role="presentation">
+        <div className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog modal-dialog-light flex flex-col min-h-0" onClick={(e) => e.stopPropagation()}>
         {/* Close button - завжди доступний */}
         <button
           onClick={() => {

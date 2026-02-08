@@ -193,6 +193,8 @@ model Client {
   lastAppointmentDate  DateTime? // Дата останнього запису
   retentionRate        Float              @default(0) // Коефіцієнт утримання (0-100%)
   isActive             Boolean            @default(true) // Чи є активним клієнтом
+  // Статус клієнта: new (новий), regular (постійний), vip (VIP), inactive (неактивний)
+  status               String             @default("new")
   // Додаткові дані
   notes                String?
   tags                 String? // JSON: масив тегів

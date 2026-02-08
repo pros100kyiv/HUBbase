@@ -160,15 +160,16 @@ export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalS
     <ModalPortal>
       {/* Клік поза панеллю закриває (прозорий оверлей) */}
       <div
-        className="fixed inset-0 z-[99] min-h-[100dvh] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]"
+        className="fixed inset-0 z-[99] min-h-[100dvh] min-h-[100vh]"
+        style={{ padding: 'env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)' }}
         onClick={onClose}
         aria-hidden
       />
-      {/* На мобільному — bottom sheet на весь екран; на десктопі — popover під кнопкою */}
+      {/* На мобільному — bottom sheet; на десктопі — popover під кнопкою. Не вилітає за екран. */}
       <div
         role="dialog"
         aria-label="Пошук"
-        className="global-search-sheet fixed z-[100] rounded-t-2xl sm:rounded-xl border border-white/10 border-b-0 sm:border-b card-glass-elevated shadow-xl overflow-hidden flex flex-col"
+        className="global-search-sheet fixed z-[100] rounded-t-2xl sm:rounded-xl border border-b-0 sm:border-b shadow-xl overflow-hidden flex flex-col max-h-[85dvh]"
         style={
           hasPosition && anchorPosition
             ? {

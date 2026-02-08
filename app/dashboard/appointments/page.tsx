@@ -8,6 +8,7 @@ import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
 import { CreateAppointmentForm } from '@/components/admin/CreateAppointmentForm'
 import { EditAppointmentForm } from '@/components/admin/EditAppointmentForm'
 import { QuickClientCard } from '@/components/admin/QuickClientCard'
+import { QuickRecordByPhoneModal } from '@/components/admin/QuickRecordByPhoneModal'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon, FilterIcon, DownloadIcon, CheckIcon, UserIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
@@ -976,40 +977,17 @@ export default function AppointmentsPage() {
         </div>
       </div>
 
-      {/* Create Appointment Modal */}
+      {/* Записати — спочатку телефон: якщо клієнт є в базі → швидкий запис, якщо немає → картка клієнта */}
       {showCreateForm && business && (
-        <ModalPortal>
-          <div
-            className="modal-overlay sm:!p-4"
-            onClick={() => setShowCreateForm(false)}
-          >
-            <div
-              className="relative w-[95%] sm:w-full sm:max-w-2xl sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                type="button"
-                onClick={() => setShowCreateForm(false)}
-                className="modal-close text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded-xl"
-                aria-label="Закрити"
-              >
-                <span className="text-xl leading-none">×</span>
-              </button>
-              <div className="px-10 flex-1 min-h-0 overflow-y-auto scrollbar-hide max-w-xl mx-auto w-full">
-                <h2 className="modal-title text-white mb-2">Створити новий запис</h2>
-                <CreateAppointmentForm
-                  businessId={business.id}
-                  masters={masters}
-                  services={services}
-                  selectedDate={selectedDate || undefined}
-                  onSuccess={handleAppointmentCreated}
-                  onCancel={() => setShowCreateForm(false)}
-                  embedded
-                />
-              </div>
-            </div>
-          </div>
-        </ModalPortal>
+        <QuickRecordByPhoneModal
+          isOpen={showCreateForm}
+          onClose={() => setShowCreateForm(false)}
+          businessId={business.id}
+          masters={masters}
+          services={services}
+          selectedDate={selectedDate || undefined}
+          onAppointmentCreated={handleAppointmentCreated}
+        />
       )}
 
       {/* Quick Client Card Modal */}

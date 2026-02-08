@@ -38,6 +38,15 @@ function normalizeMetadata(metadata: unknown): string | null {
   }
 }
 
+const CLIENT_STATUS_VALUES = ['new', 'regular', 'vip', 'inactive'] as const
+function normalizeStatus(status: unknown): string {
+  if (typeof status === 'string' && status.trim()) {
+    const s = status.trim().toLowerCase()
+    if (CLIENT_STATUS_VALUES.includes(s as any)) return s
+  }
+  return 'new'
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -101,7 +110,7 @@ export async function POST(request: Request) {
   let body: any = null
   try {
     body = await request.json()
-    const { businessId, name, phone, email, notes, tags, metadata } = body
+    const { businessId, name, phone, email, notes, tags, metadata, status } = body
 
     if (!businessId || !name || !phone) {
       return NextResponse.json(
@@ -154,6 +163,7 @@ export async function POST(request: Request) {
         notes: notes?.trim() || null,
         tags: normalizeTags(tags),
         metadata: normalizeMetadata(metadata),
+        status: normalizeStatus(status),
       },
     })
 

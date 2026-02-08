@@ -599,7 +599,7 @@ export function MyDayCard({
           </button>
           {showMenu && (
             <div
-              className="absolute right-0 top-full mt-1 py-1 min-w-[180px] bg-[#2A2A2A] border border-white/10 rounded-lg shadow-xl z-50"
+              className="absolute right-0 top-full mt-1 py-1 min-w-[180px] max-h-[min(70vh,calc(100dvh-6rem))] overflow-y-auto dropdown-theme rounded-lg shadow-xl z-[150]"
               onClick={(e) => e.stopPropagation()}
             >
               <button

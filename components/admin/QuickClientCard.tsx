@@ -7,6 +7,13 @@ import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui/toast'
 import { ErrorToast } from '@/components/ui/error-toast'
 
+export const CLIENT_STATUS_OPTIONS = [
+  { value: 'new', label: 'Новий' },
+  { value: 'regular', label: 'Постійний' },
+  { value: 'vip', label: 'VIP' },
+  { value: 'inactive', label: 'Неактивний' },
+] as const
+
 interface QuickClientCardProps {
   businessId: string
   onSuccess?: (client: any) => void
@@ -21,6 +28,7 @@ interface QuickClientCardProps {
     notes?: string | null
     tags?: string | null
     metadata?: string | null
+    status?: string | null
   } | null
 }
 
@@ -98,6 +106,7 @@ export function QuickClientCard({
             name: formData.name.trim(),
             phone: normalizedPhone,
             email: formData.email.trim() || null,
+            status: formData.status,
             notes: formData.notes.trim() || null,
             tags: formData.tags.trim() || null,
             metadata: formData.metadata.trim() || null,
@@ -150,6 +159,7 @@ export function QuickClientCard({
               name: formData.name.trim(),
               phone: normalizedPhone,
               email: formData.email.trim() || null,
+              status: formData.status,
               notes: formData.notes.trim() || null,
               tags: formData.tags.trim() || null,
               metadata: formData.metadata.trim() || null,
@@ -188,8 +198,8 @@ export function QuickClientCard({
 
   return (
     <ModalPortal>
-      <div className="modal-overlay sm:!p-4">
-        <div className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0">
+      <div className="modal-overlay sm:!p-4" onClick={onCancel ?? undefined} role="presentation">
+        <div className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0" onClick={(e) => e.stopPropagation()}>
         {onCancel && (
           <button
             type="button"
@@ -262,6 +272,36 @@ export function QuickClientCard({
               placeholder="client@example.com"
               className="w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
             />
+          </div>
+
+          {/* Статус клієнта */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-300">
+              Статус
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {CLIENT_STATUS_OPTIONS.map((opt) => (
+                <button
+                  key={opt.value}
+                  type="button"
+                  onClick={() => setFormData({ ...formData, status: opt.value })}
+                  className={cn(
+                    'px-3 py-2 rounded-lg text-sm font-medium transition-colors touch-target min-h-[44px]',
+                    formData.status === opt.value
+                      ? opt.value === 'vip'
+                        ? 'bg-amber-500/30 text-amber-200 border border-amber-400/50'
+                        : opt.value === 'regular'
+                          ? 'bg-emerald-500/25 text-emerald-200 border border-emerald-400/50'
+                          : opt.value === 'inactive'
+                            ? 'bg-gray-500/25 text-gray-300 border border-gray-400/50'
+                            : 'bg-white/20 text-white border border-white/30'
+                      : 'bg-white/5 text-gray-400 border border-white/15 hover:bg-white/10 hover:text-gray-300'
+                  )}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           {/* Примітки */}

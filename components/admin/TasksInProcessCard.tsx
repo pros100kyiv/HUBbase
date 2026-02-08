@@ -65,7 +65,7 @@ export function TasksInProcessCard({ tasks, onAddNote, onEdit, onDelete }: Tasks
             </div>
 
             {openMenuId === task.id && (
-              <div className="absolute top-10 md:top-12 right-2 bg-[#2A2A2A] border border-white/20 rounded-lg shadow-lg z-10 min-w-[140px]">
+              <div className="absolute top-10 md:top-12 right-2 dropdown-theme rounded-lg shadow-lg z-[150] min-w-[140px] max-h-[min(70vh,calc(100dvh-6rem))] overflow-y-auto">
                 <button
                   onClick={(e) => {
                     e.stopPropagation()

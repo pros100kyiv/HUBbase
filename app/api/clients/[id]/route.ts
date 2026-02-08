@@ -49,7 +49,7 @@ export async function PATCH(
     const resolvedParams = await Promise.resolve(params)
     const { id } = resolvedParams
     const body = await request.json()
-    const { name, phone, email, notes, tags, metadata, businessId } = body
+    const { name, phone, email, notes, tags, metadata, businessId, status } = body
 
     // КРИТИЧНО: Перевірка businessId для ізоляції даних
     if (!businessId) {
@@ -69,10 +69,20 @@ export async function PATCH(
       return NextResponse.json({ error: 'Access denied' }, { status: 403 })
     }
 
+    const CLIENT_STATUS_VALUES = ['new', 'regular', 'vip', 'inactive'] as const
+    const normalizeStatus = (s: unknown): string => {
+      if (typeof s === 'string' && s.trim()) {
+        const v = s.trim().toLowerCase()
+        if (CLIENT_STATUS_VALUES.includes(v as any)) return v
+      }
+      return 'new'
+    }
+
     const updateData: any = {}
     if (name !== undefined) updateData.name = name.trim()
     if (email !== undefined) updateData.email = email?.trim() || null
     if (notes !== undefined) updateData.notes = notes?.trim() || null
+    if (status !== undefined) updateData.status = normalizeStatus(status)
     if (tags !== undefined) {
       if (Array.isArray(tags)) {
         const cleaned = tags

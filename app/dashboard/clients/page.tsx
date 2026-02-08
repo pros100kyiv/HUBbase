@@ -31,11 +31,31 @@ interface Client {
   notes?: string | null
   tags?: string | null
   metadata?: string | null
+  status?: string | null
   totalAppointments: number
   totalSpent: number
   firstAppointmentDate?: string | null
   lastAppointmentDate?: string | null
   appointments: any[]
+}
+
+const CLIENT_STATUS_LABELS: Record<string, string> = {
+  new: 'Новий',
+  regular: 'Постійний',
+  vip: 'VIP',
+  inactive: 'Неактивний',
+}
+function getClientStatusLabel(status?: string | null): string {
+  if (!status) return CLIENT_STATUS_LABELS.new
+  return CLIENT_STATUS_LABELS[status] || status
+}
+function getClientStatusBadgeClass(status?: string | null): string {
+  switch (status || 'new') {
+    case 'vip': return 'bg-amber-500/25 text-amber-200 border-amber-400/50'
+    case 'regular': return 'bg-emerald-500/25 text-emerald-200 border-emerald-400/50'
+    case 'inactive': return 'bg-gray-500/25 text-gray-300 border-gray-400/50'
+    default: return 'bg-white/15 text-gray-300 border-white/20'
+  }
 }
 
 interface ClientDetails {
@@ -63,6 +83,7 @@ export default function ClientsPage() {
   const [historySearchQuery, setHistorySearchQuery] = useState('')
   const [historyStatus, setHistoryStatus] = useState<string>('all') // all, Pending, Confirmed, Done, Cancelled
   const [filterSegment, setFilterSegment] = useState<string>('all') // all, vip, active, inactive
+  const [filterClientStatus, setFilterClientStatus] = useState<string>('all') // all, new, regular, vip, inactive
   const [sortBy, setSortBy] = useState<string>('name') // name, visits, spent, lastVisit
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set())
@@ -588,7 +609,7 @@ export default function ClientsPage() {
     visibleClients.length > 0 && visibleClients.every((c) => selectedClients.has(c.id))
 
   const handleExportCSV = () => {
-    const csvHeaders = ['Ім\'я', 'Телефон', 'Email', 'Кількість візитів', 'Зароблено', 'Останній візит', 'Наступний візит', 'Послуги', 'Примітки']
+    const csvHeaders = ['Ім\'я', 'Телефон', 'Email', 'Статус', 'Кількість візитів', 'Зароблено', 'Останній візит', 'Наступний візит', 'Послуги', 'Примітки']
     const csvRows = filteredClients.map(client => {
       const details = clientDetails[client.id] || calculateClientDetails(client)
       const servicesList = details.servicesUsed.map(s => `${s.name} (${s.count})`).join('; ')
@@ -596,6 +617,7 @@ export default function ClientsPage() {
         client.name,
         client.phone,
         client.email || '',
+        getClientStatusLabel(client.status),
         client.totalAppointments,
         Math.round(client.totalSpent),
         client.lastAppointmentDate ? format(new Date(client.lastAppointmentDate), 'dd.MM.yyyy HH:mm') : 'Немає',
@@ -707,12 +729,23 @@ export default function ClientsPage() {
                 />
               </div>
               <select
+                value={filterClientStatus}
+                onChange={(e) => setFilterClientStatus(e.target.value)}
+                className="px-3 py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+              >
+                <option value="all">Всі статуси</option>
+                <option value="new">Новий</option>
+                <option value="regular">Постійний</option>
+                <option value="vip">VIP</option>
+                <option value="inactive">Неактивний</option>
+              </select>
+              <select
                 value={filterSegment}
                 onChange={(e) => setFilterSegment(e.target.value)}
                 className="px-3 py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
               >
                 <option value="all">Всі клієнти</option>
-                <option value="vip">VIP</option>
+                <option value="vip">VIP (по витратах)</option>
                 <option value="active">Активні</option>
                 <option value="inactive">Неактивні</option>
               </select>
@@ -849,6 +882,7 @@ export default function ClientsPage() {
                       </button>
                     </th>
                     <th className="text-left p-3 font-semibold text-white">Ім'я</th>
+                    <th className="text-left p-3 font-semibold text-white">Статус</th>
                     <th className="text-left p-3 font-semibold text-white">Телефон</th>
                     <th className="text-left p-3 font-semibold text-white">Email</th>
                     <th className="text-center p-3 font-semibold text-white">Візити</th>
@@ -880,6 +914,11 @@ export default function ClientsPage() {
                           </button>
                         </td>
                         <td className="p-3 font-medium text-white">{client.name}</td>
+                        <td className="p-3">
+                          <span className={cn('px-2 py-0.5 rounded-full text-xs font-medium border', getClientStatusBadgeClass(client.status))}>
+                            {getClientStatusLabel(client.status)}
+                          </span>
+                        </td>
                         <td className="p-3 text-gray-300">{client.phone}</td>
                         <td className="p-3 text-gray-400">{client.email || '-'}</td>
                         <td className="p-3 text-center text-white">{client.totalAppointments}</td>
@@ -935,9 +974,14 @@ export default function ClientsPage() {
                         {client.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="text-sm font-semibold text-white truncate mb-0.5">
-                          {client.name}
-                        </h3>
+                        <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                          <h3 className="text-sm font-semibold text-white truncate">
+                            {client.name}
+                          </h3>
+                          <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium border shrink-0', getClientStatusBadgeClass(client.status))}>
+                            {getClientStatusLabel(client.status)}
+                          </span>
+                        </div>
                         <p className="text-xs text-gray-300 truncate">{client.phone}</p>
                         {client.email && (
                           <p className="text-[10px] text-gray-400 truncate">{client.email}</p>

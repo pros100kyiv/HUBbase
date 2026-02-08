@@ -161,8 +161,8 @@ export function QuickMasterCard({
 
   return (
     <ModalPortal>
-      <div className="modal-overlay sm:!p-4">
-        <div className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0">
+      <div className="modal-overlay sm:!p-4" onClick={onCancel ?? undefined} role="presentation">
+        <div className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0" onClick={(e) => e.stopPropagation()}>
         {onCancel && (
           <button
             type="button"

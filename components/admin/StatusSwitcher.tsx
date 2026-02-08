@@ -66,12 +66,21 @@ export function StatusSwitcher({
     if (open && buttonRef.current && options.length > 0) {
       const rect = buttonRef.current.getBoundingClientRect()
       const dropdownWidth = 160
-      const dropdownHeight = options.length * 44 + 48
-      const spaceBelow = window.innerHeight - rect.bottom
-      const openUp = spaceBelow < dropdownHeight && rect.top > spaceBelow
-      const left = Math.max(8, Math.min(rect.right - dropdownWidth, window.innerWidth - dropdownWidth - 8))
+      const dropdownHeight = Math.min(options.length * 44 + 48, 280)
+      const inset = 12
+      const vw = typeof window !== 'undefined' ? window.innerWidth : 320
+      const vh = typeof window !== 'undefined' ? window.innerHeight : 568
+      const spaceBelow = vh - rect.bottom - inset
+      const spaceAbove = rect.top - inset
+      const openUp = spaceBelow < dropdownHeight && spaceAbove >= dropdownHeight
+      const left = Math.max(inset, Math.min(rect.right - dropdownWidth, vw - dropdownWidth - inset))
+      const topDown = rect.bottom + 4
+      const topUp = rect.top - dropdownHeight - 4
+      const top = openUp
+        ? Math.max(inset, topUp)
+        : Math.min(vh - dropdownHeight - inset, topDown)
       setPosition({
-        top: openUp ? rect.top - dropdownHeight - 4 : rect.bottom + 4,
+        top,
         left,
         openUp,
       })
@@ -105,11 +114,15 @@ export function StatusSwitcher({
     createPortal(
       <div
         id={`status-dropdown-${appointmentId}`}
-        className="fixed z-[9999] min-w-[160px] animate-in fade-in zoom-in-95 duration-150"
-        style={{ top: position.top, left: position.left }}
+        className="dropdown-fixed dropdown-theme fixed min-w-[160px] max-h-[70vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150 rounded-xl py-2"
+        style={{
+          top: position.top,
+          left: position.left,
+          zIndex: 150,
+        }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="rounded-xl border border-white/20 bg-[#1E1E1E] shadow-2xl shadow-black/50 py-2">
+        <div>
           <div className="px-3 py-1.5 mb-1 border-b border-white/10">
             <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500">Змінити статус</span>
           </div>
@@ -121,7 +134,7 @@ export function StatusSwitcher({
                 e.stopPropagation()
                 handleSelect(opt.value)
               }}
-              className="w-full px-4 py-2.5 text-left text-sm font-medium text-white hover:bg-white/10 flex items-center gap-3 transition-colors first:rounded-t-lg last:rounded-b-lg"
+              className="w-full px-4 py-2.5 min-h-[44px] text-left text-sm font-medium text-white hover:bg-white/10 flex items-center gap-3 transition-colors first:rounded-t-lg last:rounded-b-lg touch-manipulation"
             >
               <span className={cn('w-2.5 h-2.5 rounded-full flex-shrink-0', STATUS_CONFIG[opt.value].dotClass)} />
               {opt.label}
