@@ -144,21 +144,23 @@ export async function PATCH(
 
     const appointment = await prisma.$transaction(async (tx) => {
       if (shouldEnsureClient) {
+        const phone = updateData.clientPhone as string
+        const name = updateData.clientName as string
         const ensuredClient = await tx.client.upsert({
           where: {
             businessId_phone: {
               businessId,
-              phone: updateData.clientPhone,
+              phone,
             },
           },
           create: {
             businessId,
-            name: updateData.clientName,
-            phone: updateData.clientPhone,
-            email: updateData.clientEmail ?? null,
+            name,
+            phone,
+            email: (updateData.clientEmail ?? null) as string | null,
           },
           update: {
-            name: updateData.clientName,
+            name,
             ...(updateData.clientEmail !== undefined ? { email: updateData.clientEmail } : {}),
           },
         })
@@ -168,10 +170,10 @@ export async function PATCH(
         try {
           const { addClientPhoneToDirectory } = await import('@/lib/services/management-center')
           await addClientPhoneToDirectory(
-            updateData.clientPhone,
+            phone,
             businessId,
             ensuredClient.id,
-            updateData.clientName
+            name
           )
         } catch (e) {
           console.error('Error adding client phone to directory:', e)
