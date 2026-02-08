@@ -110,7 +110,8 @@ export async function PATCH(
 
   if (Object.keys(updateData).length === 0) {
     const current = await prisma.appointment.findUnique({ where: { id: appointmentId } })
-    return NextResponse.json(current ?? { error: 'Not found' }, current ? 200 : 404)
+    if (!current) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    return NextResponse.json(current)
   }
 
   const needClient = updateData.clientPhone && updateData.clientName
