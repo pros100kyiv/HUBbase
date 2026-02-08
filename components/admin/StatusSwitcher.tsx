@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 
 export type StatusValue = 'Pending' | 'Confirmed' | 'Done' | 'Cancelled'
@@ -45,7 +46,8 @@ export function StatusSwitcher({
   size = 'md',
 }: StatusSwitcherProps) {
   const [open, setOpen] = useState(false)
-  const ref = useRef<HTMLDivElement>(null)
+  const [position, setPosition] = useState<{ top: number; left: number; openUp: boolean } | null>(null)
+  const buttonRef = useRef<HTMLButtonElement>(null)
 
   const rawStatus = normalizeStatus(status)
   const currentStatus: StatusValue =
@@ -61,14 +63,36 @@ export function StatusSwitcher({
   const options = allOptions.filter((o) => o.show && o.value !== currentStatus)
 
   useEffect(() => {
+    if (open && buttonRef.current && options.length > 0) {
+      const rect = buttonRef.current.getBoundingClientRect()
+      const dropdownWidth = 160
+      const dropdownHeight = options.length * 44 + 48
+      const spaceBelow = window.innerHeight - rect.bottom
+      const openUp = spaceBelow < dropdownHeight && rect.top > spaceBelow
+      const left = Math.max(8, Math.min(rect.right - dropdownWidth, window.innerWidth - dropdownWidth - 8))
+      setPosition({
+        top: openUp ? rect.top - dropdownHeight - 4 : rect.bottom + 4,
+        left,
+        openUp,
+      })
+    } else {
+      setPosition(null)
+    }
+  }, [open, options.length])
+
+  useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false)
+      const target = e.target as Node
+      if (buttonRef.current?.contains(target)) return
+      const dropdown = document.getElementById(`status-dropdown-${appointmentId}`)
+      if (dropdown?.contains(target)) return
+      setOpen(false)
     }
     if (open) {
       document.addEventListener('click', handleClickOutside)
       return () => document.removeEventListener('click', handleClickOutside)
     }
-  }, [open])
+  }, [open, appointmentId])
 
   const handleSelect = (value: StatusValue) => {
     onStatusChange(appointmentId, value)
@@ -77,9 +101,42 @@ export function StatusSwitcher({
 
   const cfg = STATUS_CONFIG[currentStatus] ?? { label: status, dotClass: 'bg-gray-400', chipClass: 'bg-white/10 text-gray-400 border-white/10' }
 
+  const dropdownContent = open && options.length > 0 && position && typeof document !== 'undefined' && (
+    createPortal(
+      <div
+        id={`status-dropdown-${appointmentId}`}
+        className="fixed z-[9999] min-w-[160px] animate-in fade-in zoom-in-95 duration-150"
+        style={{ top: position.top, left: position.left }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="rounded-xl border border-white/20 bg-[#1E1E1E] shadow-2xl shadow-black/50 py-2">
+          <div className="px-3 py-1.5 mb-1 border-b border-white/10">
+            <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500">Змінити статус</span>
+          </div>
+          {options.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation()
+                handleSelect(opt.value)
+              }}
+              className="w-full px-4 py-2.5 text-left text-sm font-medium text-white hover:bg-white/10 flex items-center gap-3 transition-colors first:rounded-t-lg last:rounded-b-lg"
+            >
+              <span className={cn('w-2.5 h-2.5 rounded-full flex-shrink-0', STATUS_CONFIG[opt.value].dotClass)} />
+              {opt.label}
+            </button>
+          ))}
+        </div>
+      </div>,
+      document.body
+    )
+  )
+
   return (
-    <div ref={ref} className="relative flex-shrink-0">
+    <div className="relative flex-shrink-0">
       <button
+        ref={buttonRef}
         type="button"
         onClick={(e) => {
           e.stopPropagation()
@@ -104,30 +161,7 @@ export function StatusSwitcher({
           </svg>
         )}
       </button>
-
-      {open && options.length > 0 && (
-        <div
-          className="absolute right-0 top-full mt-1 z-50 min-w-[140px] animate-in fade-in slide-in-from-top-1 duration-150"
-          onClick={(e) => e.stopPropagation()}
-        >
-          <div className="rounded-xl border border-white/10 bg-[#252525] shadow-xl shadow-black/30 py-1 overflow-hidden">
-            {options.map((opt) => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  handleSelect(opt.value)
-                }}
-                className="w-full px-3 py-2.5 text-left text-sm font-medium text-white/90 hover:bg-white/10 hover:text-white flex items-center gap-2.5 transition-colors"
-              >
-                <span className={cn('w-2 h-2 rounded-full flex-shrink-0', STATUS_CONFIG[opt.value].dotClass)} />
-                {opt.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
+      {dropdownContent}
     </div>
   )
 }
