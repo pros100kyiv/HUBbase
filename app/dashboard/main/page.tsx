@@ -51,11 +51,12 @@ export default function MainPage() {
   }, [router])
 
   useEffect(() => {
-    if (!business || !selectedDate) return
+    const date = selectedDate
+    if (!business || !date) return
 
     // Load appointments for selected date
     setLoading(true)
-    const dateStr = format(selectedDate, 'yyyy-MM-dd')
+    const dateStr = format(date, 'yyyy-MM-dd')
     
     fetch(`/api/appointments?date=${dateStr}&businessId=${business.id}`)
       .then((res) => {
