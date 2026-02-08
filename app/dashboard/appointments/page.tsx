@@ -209,25 +209,24 @@ export default function AppointmentsPage() {
 
   const handleStatusChange = async (id: string, status: string) => {
     if (!business) return
-    
+    const prevAppointments = appointments
+    setAppointments((prev) => prev.map((apt) => (apt.id === id ? { ...apt, status } : apt)))
     try {
       const response = await fetch(`/api/appointments/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status, businessId: business.id }),
       })
-
+      const data = await response.json().catch(() => ({}))
       if (response.ok) {
-        setAppointments((prev) =>
-          prev.map((apt) => (apt.id === id ? { ...apt, status } : apt))
-        )
         toast({ title: 'Статус оновлено', type: 'success' })
         reloadAppointments()
       } else {
-        const error = await response.json()
-        throw new Error(error.error || 'Failed to update status')
+        setAppointments(prevAppointments)
+        toast({ title: 'Помилка', description: data?.error || 'Не вдалося оновити статус', type: 'error' })
       }
     } catch (error) {
+      setAppointments(prevAppointments)
       console.error('Error updating appointment:', error)
       toast({
         title: 'Помилка',

@@ -115,6 +115,16 @@ export async function PATCH(
       updateData.customServiceName = typeof customService === 'string' && customService.trim() ? customService.trim() : null
     }
 
+    // Якщо змінюємо тільки статус — просте оновлення без транзакції
+    const isStatusOnlyUpdate = Object.keys(updateData).length === 1 && updateData.status !== undefined
+    if (isStatusOnlyUpdate) {
+      const appointment = await prisma.appointment.update({
+        where: { id: appointmentId },
+        data: { status: updateData.status },
+      })
+      return NextResponse.json(appointment)
+    }
+
     // Якщо змінюємо дані клієнта — оновлюємо/створюємо клієнта і прив'язуємо appointment.clientId
     const shouldEnsureClient = Boolean(updateData.clientPhone && updateData.clientName)
 
@@ -141,7 +151,6 @@ export async function PATCH(
 
         updateData.clientId = ensuredClient.id
 
-        // Оновлюємо телефон в Реєстрі телефонів (не блокуємо PATCH)
         try {
           const { addClientPhoneToDirectory } = await import('@/lib/services/management-center')
           await addClientPhoneToDirectory(

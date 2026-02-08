@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import { format, startOfDay, addMinutes, isSameDay } from 'date-fns'
 import { MobileAppointmentCard } from './MobileAppointmentCard'
+import { toast } from '@/components/ui/toast'
 
 interface Master {
   id: string
@@ -102,20 +103,25 @@ export function DailyJournal({ businessId }: DailyJournalProps) {
   )
 
   const handleStatusChange = async (id: string, status: string) => {
+    const prev = appointments
+    setAppointments((p) => p.map((apt) => (apt.id === id ? { ...apt, status } : apt)))
     try {
       const response = await fetch(`/api/appointments/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ businessId, status }),
       })
-
+      const data = await response.json().catch(() => ({}))
       if (response.ok) {
-        setAppointments((prev) =>
-          prev.map((apt) => (apt.id === id ? { ...apt, status } : apt))
-        )
+        toast({ title: 'Статус оновлено', type: 'success' })
+      } else {
+        setAppointments(prev)
+        toast({ title: 'Помилка', description: data?.error || 'Не вдалося оновити статус', type: 'error' })
       }
     } catch (error) {
+      setAppointments(prev)
       console.error('Error updating appointment:', error)
+      toast({ title: 'Помилка', description: 'Не вдалося оновити статус', type: 'error' })
     }
   }
 

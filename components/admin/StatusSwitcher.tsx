@@ -55,7 +55,7 @@ export function StatusSwitcher({
   const isDone = currentStatus === 'Done'
 
   const allOptions: StatusOption[] = [
-    { value: 'Pending', label: 'Очікує', dotClass: STATUS_CONFIG.Pending.dotClass, show: isFromBooking },
+    { value: 'Pending', label: 'Очікує', dotClass: STATUS_CONFIG.Pending.dotClass, show: true },
     { value: 'Confirmed', label: 'Підтверджено', dotClass: STATUS_CONFIG.Confirmed.dotClass, show: true },
     { value: 'Done', label: 'Виконано', dotClass: STATUS_CONFIG.Done.dotClass, show: true },
     { value: 'Cancelled', label: 'Скасувати', dotClass: STATUS_CONFIG.Cancelled.dotClass, show: !isDone },

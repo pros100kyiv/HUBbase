@@ -6,6 +6,7 @@ import { uk } from 'date-fns/locale'
 import { useRouter } from 'next/navigation'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { StatusSwitcher, type StatusValue } from './StatusSwitcher'
+import { toast } from '@/components/ui/toast'
 
 interface Appointment {
   id: string
@@ -386,14 +387,19 @@ export function MyDayCard({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ businessId, status }),
       })
+      const data = await res.json().catch(() => ({}))
       if (res.ok) {
         if (selectedAppointment?.id === id) {
           setSelectedAppointment((prev) => prev ? { ...prev, status } : null)
         }
         onRefresh?.()
+        toast({ title: 'Статус оновлено', type: 'success' })
+      } else {
+        toast({ title: 'Помилка', description: data?.error || 'Не вдалося оновити статус', type: 'error' })
       }
     } catch (error) {
       console.error('Failed to update status:', error)
+      toast({ title: 'Помилка', description: 'Не вдалося оновити статус', type: 'error' })
     }
   }
 
