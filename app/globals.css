@@ -883,7 +883,7 @@
    * Обов'язково: modal-overlay-nested для z-index, ті самі класи діалогу (фон і розмиття змінні застосовуються однаково).
    */
 
-  /* Оверлей: темний фон + розмиття — для всіх модалок і вкладених. На мобільному — bottom sheet. */
+  /* Оверлей: темний фон + розмиття. На мобільному — bottom sheet, контент притиснутий до низу, safe-area знизу щоб не обрізало. */
   .modal-overlay {
     background-color: var(--modal-overlay-bg);
     backdrop-filter: blur(var(--modal-overlay-blur, 12px));
@@ -902,7 +902,7 @@
     padding-left: env(safe-area-inset-left, 0);
     padding-right: env(safe-area-inset-right, 0);
     padding-top: env(safe-area-inset-top, 0);
-    padding-bottom: 0;
+    padding-bottom: env(safe-area-inset-bottom, 0);
     box-sizing: border-box;
     animation: modal-overlay-in 0.22s ease-out;
   }
@@ -922,11 +922,11 @@
     z-index: 200 !important;
   }
 
-  /* Контейнер контенту: скрол тут. На мобільному — повна ширина, bottom sheet до 92dvh. */
+  /* Контейнер контенту: скрол тут. На мобільному — bottom sheet на всю ширину, висота до низу оверлею (без обрізання). */
   .modal-content {
     width: 100%;
     max-width: min(100%, 100vw - env(safe-area-inset-left, 0) - env(safe-area-inset-right, 0));
-    max-height: min(92dvh, calc(100dvh - env(safe-area-inset-top, 0)));
+    max-height: 100%;
     min-height: 0;
     overflow-y: auto;
     overflow-x: hidden;
@@ -944,6 +944,11 @@
     z-index: 1;
     touch-action: pan-y;
     scroll-padding-bottom: env(safe-area-inset-bottom, 0);
+  }
+  @media (max-width: 639px) {
+    .modal-content {
+      max-height: 100% !important;
+    }
   }
   @media (min-width: 640px) {
     .modal-content {
