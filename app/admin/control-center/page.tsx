@@ -138,13 +138,13 @@ export default function ControlCenterPage() {
 
   const handleRefresh = () => {
     loadData()
-    setRefreshTrigger((t) => t + 1)
+    setRefreshTrigger((t: number) => t + 1)
   }
 
   // Оновлює дані + Live Stats Bar + статистику після блок/видалення
   const handleDataChanged = async () => {
     await loadData()
-    setRefreshTrigger((t) => t + 1)
+    setRefreshTrigger((t: number) => t + 1)
   }
 
   const handleSync = async () => {
@@ -706,7 +706,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
         setStatusFilter('inactive')
         setPage(1)
         loadData({ status: 'inactive', page: 1 })
-        setRefreshTrigger((t) => t + 1)
+        setRefreshTrigger((t: number) => t + 1)
         toast({ title: 'Акаунт заблоковано', description: 'Показано список неактивних (заблокованих) — можна розблокувати тут.', type: 'success' })
       } else {
         const data = await response.json()
