@@ -216,6 +216,30 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
     }
   }
 
+  const handleStatusChange = async (id: string, status: StatusValue) => {
+    setProcessing(id)
+    try {
+      const response = await fetch(`/api/appointments/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessId, status }),
+      })
+      const data = await response.json().catch(() => ({}))
+      if (response.ok) {
+        toast({ title: 'Статус оновлено', type: 'success' })
+        await loadPendingAppointments()
+        onUpdate()
+      } else {
+        toast({ title: 'Помилка', description: data?.error || 'Не вдалося оновити статус', type: 'error' })
+      }
+    } catch (error) {
+      console.error('Error updating status:', error)
+      toast({ title: 'Помилка', description: 'Не вдалося оновити статус', type: 'error' })
+    } finally {
+      setProcessing(null)
+    }
+  }
+
   const handleReschedule = async (appointmentId: string, newStartTime: string, newEndTime: string) => {
     setProcessing(appointmentId)
     try {
