@@ -1,12 +1,18 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-
-export const dynamic = 'force-dynamic'
 import { verifyAdminToken } from '@/lib/middleware/admin-auth'
 import { jsonSafe } from '@/lib/utils/json'
 
+export const dynamic = 'force-dynamic'
+
+/** Джерело правди: Business. ManagementCenter — додаткові поля (lastSeenAt, lastLoginAt). */
+function getRegistrationType(b: { telegramId: bigint | null; googleId: string | null }) {
+  if (b.telegramId) return 'telegram' as const
+  if (b.googleId) return 'google' as const
+  return 'standard' as const
+}
+
 export async function GET(request: Request) {
-  // Перевірка доступу
   const auth = verifyAdminToken(request as any)
   if (!auth.valid) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -22,9 +28,8 @@ export async function GET(request: Request) {
     const niche = searchParams.get('niche') // 'all' | конкретна ніша
 
     const skip = (page - 1) * limit
-
     const where: any = {}
-    
+
     if (search) {
       where.OR = [
         { name: { contains: search, mode: 'insensitive' } },
@@ -34,43 +39,72 @@ export async function GET(request: Request) {
       ]
     }
 
-    if (status === 'active') {
-      where.isActive = true
-    } else if (status === 'inactive') {
-      where.isActive = false
-    }
+    if (status === 'active') where.isActive = true
+    else if (status === 'inactive') where.isActive = false
+
+    if (niche && niche !== 'all') where.niche = niche
 
     if (registrationType && registrationType !== 'all') {
-      where.registrationType = registrationType
+      if (registrationType === 'telegram') where.telegramId = { not: null }
+      else if (registrationType === 'google') where.googleId = { not: null }
+      else if (registrationType === 'standard') {
+        where.telegramId = null
+        where.googleId = null
+      }
     }
 
-    if (niche && niche !== 'all') {
-      where.niche = niche
-    }
-
-    const [businesses, total] = await Promise.all([
-      prisma.managementCenter.findMany({
+    const [businessesRaw, total] = await Promise.all([
+      prisma.business.findMany({
         where,
         skip,
         take: limit,
-        orderBy: { registeredAt: 'desc' },
+        orderBy: { createdAt: 'desc' },
       }),
-      prisma.managementCenter.count({ where }),
+      prisma.business.count({ where }),
     ])
 
+    const mcMap = new Map<string, { lastLoginAt: Date | null; lastSeenAt: Date | null; registrationType: string }>()
+    if (businessesRaw.length > 0) {
+      const mcList = await prisma.managementCenter.findMany({
+        where: { businessId: { in: businessesRaw.map((b) => b.id) } },
+        select: { businessId: true, lastLoginAt: true, lastSeenAt: true, registrationType: true },
+      })
+      for (const mc of mcList) {
+        mcMap.set(mc.businessId, mc)
+      }
+    }
+
+    const businesses = businessesRaw.map((b) => {
+      const mc = mcMap.get(b.id)
+      const regType = (mc?.registrationType as 'telegram' | 'google' | 'standard') || getRegistrationType(b)
+
+      return {
+        id: mc ? `mc-${b.id}` : b.id,
+        businessId: b.id,
+        name: b.name,
+        email: b.email,
+        phone: b.phone,
+        isActive: b.isActive,
+        registeredAt: b.createdAt,
+        lastLoginAt: mc?.lastLoginAt ?? null,
+        lastSeenAt: mc?.lastSeenAt ?? null,
+        registrationType: regType,
+        businessIdentifier: b.businessIdentifier,
+        niche: b.niche,
+      }
+    })
+
+
     const stats = {
-      total: await prisma.managementCenter.count(),
-      active: await prisma.managementCenter.count({ where: { isActive: true } }),
-      inactive: await prisma.managementCenter.count({ where: { isActive: false } }),
-      telegram: await prisma.managementCenter.count({ where: { telegramId: { not: null } } }),
-      google: await prisma.managementCenter.count({ where: { googleId: { not: null } } }),
-      standard: await prisma.managementCenter.count({ 
-        where: { 
-          telegramId: null, 
-          googleId: null 
-        } 
+      total: await prisma.business.count(),
+      active: await prisma.business.count({ where: { isActive: true } }),
+      inactive: await prisma.business.count({ where: { isActive: false } }),
+      telegram: await prisma.business.count({ where: { telegramId: { not: null } } }),
+      google: await prisma.business.count({ where: { googleId: { not: null } } }),
+      standard: await prisma.business.count({
+        where: { telegramId: null, googleId: null },
       }),
-      byNiche: await prisma.managementCenter.groupBy({
+      byNiche: await prisma.business.groupBy({
         by: ['niche'],
         _count: true,
       }),
@@ -82,7 +116,7 @@ export async function GET(request: Request) {
         page,
         limit,
         total,
-        totalPages: Math.ceil(total / limit),
+        totalPages: Math.ceil(total / limit) || 1,
       },
       stats,
     }))

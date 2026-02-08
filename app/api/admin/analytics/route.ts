@@ -36,50 +36,40 @@ export async function GET(request: Request) {
         startDate = new Date(now.getFullYear(), now.getMonth(), 1)
     }
 
-    // Загальна статистика
-    const totalBusinesses = await prisma.managementCenter.count()
-    const activeBusinesses = await prisma.managementCenter.count({ where: { isActive: true } })
-    
-    // Реєстрації за період
-    const registrations = await prisma.managementCenter.findMany({
-      where: {
-        registeredAt: { gte: startDate },
-      },
-      orderBy: { registeredAt: 'asc' },
+    const totalBusinesses = await prisma.business.count()
+    const activeBusinesses = await prisma.business.count({ where: { isActive: true } })
+
+    const registrations = await prisma.business.findMany({
+      where: { createdAt: { gte: startDate } },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true, name: true, createdAt: true, telegramId: true, googleId: true },
     })
 
-    // Статистика по нішах
-    const byNiche = await prisma.managementCenter.groupBy({
+    const byNiche = await prisma.business.groupBy({
       by: ['niche'],
       _count: true,
     })
 
-    // Статистика по типах реєстрації
-    const byRegistrationType = await prisma.managementCenter.groupBy({
-      by: ['registrationType'],
-      _count: true,
+    const telegramCount = await prisma.business.count({ where: { telegramId: { not: null } } })
+    const googleCount = await prisma.business.count({ where: { googleId: { not: null } } })
+    const standardCount = await prisma.business.count({
+      where: { telegramId: null, googleId: null },
     })
 
-    // Топ бізнеси (по останньому входу)
-    const topBusinesses = await prisma.managementCenter.findMany({
-      where: {
-        lastLoginAt: { not: null },
-      },
-      orderBy: { lastLoginAt: 'desc' },
+    const topBusinesses = await prisma.business.findMany({
+      orderBy: { updatedAt: 'desc' },
       take: 10,
+      select: { id: true, name: true, email: true, updatedAt: true },
     })
 
-    // Динаміка реєстрацій
-    const registrationTrend = await prisma.$queryRawUnsafe(
-      `SELECT 
-        DATE(registered_at) as date,
-        COUNT(*)::int as count
-      FROM "ManagementCenter"
-      WHERE registered_at >= $1
-      GROUP BY DATE(registered_at)
-      ORDER BY date ASC`,
-      startDate
-    )
+    const dateCounts = new Map<string, number>()
+    for (const r of registrations) {
+      const d = r.createdAt.toISOString().split('T')[0]
+      dateCounts.set(d, (dateCounts.get(d) || 0) + 1)
+    }
+    const registrationTrend = Array.from(dateCounts.entries())
+      .sort((a, b) => a[0].localeCompare(b[0]))
+      .map(([date, count]) => ({ date: new Date(date), count }))
 
     return NextResponse.json(jsonSafe({
       overview: {
@@ -90,7 +80,11 @@ export async function GET(request: Request) {
       registrations: {
         total: registrations.length,
         trend: registrationTrend,
-        byType: byRegistrationType,
+        byType: [
+          { registrationType: 'telegram', _count: telegramCount },
+          { registrationType: 'google', _count: googleCount },
+          { registrationType: 'standard', _count: standardCount },
+        ],
       },
       byNiche,
       topBusinesses,

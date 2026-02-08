@@ -28,15 +28,13 @@ export async function GET(request: Request) {
       newToday,
       blocked,
     ] = await Promise.all([
-      prisma.managementCenter.count(),
-      // Онлайн = сторінка дашборду відкрита (lastSeenAt за останні 2 хв)
+      prisma.business.count(),
       prisma.managementCenter.count({
         where: {
           lastSeenAt: { gte: pageOnlineThreshold },
           isActive: true,
         },
       }),
-      // В простої = був на сторінці 2–60 хв тому
       prisma.managementCenter.count({
         where: {
           lastSeenAt: {
@@ -46,7 +44,6 @@ export async function GET(request: Request) {
           isActive: true,
         },
       }),
-      // Офлайн = lastSeenAt > 60 хв або null
       prisma.managementCenter.count({
         where: {
           OR: [
@@ -56,10 +53,10 @@ export async function GET(request: Request) {
           isActive: true,
         },
       }),
-      prisma.managementCenter.count({
-        where: { registeredAt: { gte: todayStart } },
+      prisma.business.count({
+        where: { createdAt: { gte: todayStart } },
       }),
-      prisma.managementCenter.count({
+      prisma.business.count({
         where: { isActive: false },
       }),
     ])

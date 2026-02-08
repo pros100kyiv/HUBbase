@@ -177,30 +177,6 @@ export default function ControlCenterPage() {
         setBusinesses(data.businesses || [])
         setStats(data.stats || {})
         setTotalPages(data.pagination?.totalPages || 1)
-        // Авто-синхронізація якщо нічого не відображається
-        const total = data.stats?.total ?? 0
-        if (total === 0 && !search && statusFilter === 'all') {
-          const syncRes = await fetch('/api/admin/sync-management', {
-            method: 'POST',
-            headers: getAuthHeaders(),
-            cache: 'no-store',
-          })
-          const syncData = await syncRes.json()
-          if (syncRes.ok && syncData.synced > 0) {
-            // Перезавантажуємо після синхронізації
-            const recheck = await fetch(`/api/admin/control-center?page=1&limit=20&_t=${Date.now()}`, {
-              headers: getAuthHeaders(),
-              cache: 'no-store',
-            })
-            const recheckData = await recheck.json()
-            if (recheck.ok) {
-              setBusinesses(recheckData.businesses || [])
-              setStats(recheckData.stats || {})
-              setTotalPages(recheckData.pagination?.totalPages || 1)
-              setRefreshTrigger((t) => t + 1)
-            }
-          }
-        }
       }
     } catch (error) {
       console.error('Error loading data:', error)
