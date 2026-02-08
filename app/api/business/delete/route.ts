@@ -110,38 +110,3 @@ export async function DELETE(request: Request) {
     )
   }
 }
-/**
- * DELETE /api/business/delete?businessIdentifier=56836 — видалення за query-параметром
- */
-export async function DELETE(request: Request) {
-  try {
-    const { searchParams } = new URL(request.url)
-    const businessIdentifier = searchParams.get('businessIdentifier')
-
-    if (!businessIdentifier) {
-      return NextResponse.json(
-        { error: 'Потрібен businessIdentifier у query' },
-        { status: 400 }
-      )
-    }
-
-    const result = await deleteBusiness(businessIdentifier)
-
-    if (result.error) {
-      return NextResponse.json({ error: result.error }, { status: result.status as number })
-    }
-
-    return NextResponse.json({
-      success: result.success,
-      message: result.message,
-      deletedBusiness: result.deletedBusiness,
-    })
-  } catch (error) {
-    console.error('Error deleting business (DELETE):', error)
-    return NextResponse.json(
-      { error: 'Помилка при видаленні акаунту' },
-      { status: 500 }
-    )
-  }
-}
-
