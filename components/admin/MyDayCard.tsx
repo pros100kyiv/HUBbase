@@ -25,7 +25,7 @@ interface Appointment {
 }
 
 export interface MyDayCardProps {
-  businessId?: string
+  businessId: string | undefined
   appointments: Appointment[]
   totalAppointments: number
   completedAppointments: number

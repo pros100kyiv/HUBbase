@@ -117,8 +117,10 @@ export async function PATCH(
         data: { status: newStatus },
       })
       return NextResponse.json(updated)
-    } catch {
-      return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
+    } catch (err: unknown) {
+      const code = (err as { code?: string })?.code
+      if (code === 'P2025') return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
+      return NextResponse.json({ error: 'Update failed', details: process.env.NODE_ENV === 'development' ? String(err) : undefined }, { status: 400 })
     }
   }
 
@@ -190,9 +192,33 @@ export async function PATCH(
       data,
     })
     return NextResponse.json(updated)
-  } catch {
-    return NextResponse.json({ error: 'Appointment not found or invalid data' }, { status: 404 })
+  } catch (err: unknown) {
+    const code = (err as { code?: string })?.code
+    if (code === 'P2025') return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
+    return NextResponse.json({ error: 'Update failed', details: process.env.NODE_ENV === 'development' ? String(err) : undefined }, { status: 400 })
   }
+}
+
+export async function GET(
+  request: Request,
+  context: { params: Promise<{ id: string }> | { id: string } }
+) {
+  const params = await resolveParams(context)
+  if (!params?.id) {
+    return NextResponse.json({ error: 'Appointment ID is required' }, { status: 400 })
+  }
+  const businessId = new URL(request.url).searchParams.get('businessId')
+  if (!businessId?.trim()) {
+    return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
+  }
+  const appointment = await prisma.appointment.findFirst({
+    where: { id: params.id, businessId: businessId.trim() },
+    include: { master: { select: { id: true, name: true } }, client: { select: { id: true, name: true, phone: true } } },
+  })
+  if (!appointment) {
+    return NextResponse.json({ error: 'Appointment not found or access denied' }, { status: 404 })
+  }
+  return NextResponse.json(appointment)
 }
 
 export async function DELETE(
@@ -225,7 +251,9 @@ export async function DELETE(
   try {
     await prisma.appointment.delete({ where: { id } })
     return NextResponse.json({ success: true })
-  } catch {
-    return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
+  } catch (err: unknown) {
+    const code = (err as { code?: string })?.code
+    if (code === 'P2025') return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
+    return NextResponse.json({ error: 'Delete failed' }, { status: 400 })
   }
 }
