@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { z } from 'zod'
+
+export const dynamic = 'force-dynamic'
 import { hash } from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
 import { verifyAdminToken } from '@/lib/middleware/admin-auth'

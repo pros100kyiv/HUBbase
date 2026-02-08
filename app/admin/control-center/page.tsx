@@ -139,12 +139,14 @@ export default function ControlCenterPage() {
       const params = new URLSearchParams({
         page: page.toString(),
         limit: '20',
+        _t: Date.now().toString(),
         ...(search && { search }),
         ...(statusFilter !== 'all' && { status: statusFilter }),
       })
 
       const response = await fetch(`/api/admin/control-center?${params}`, {
         headers: getAuthHeaders(),
+        cache: 'no-store',
       })
       const data = await response.json()
 
@@ -331,8 +333,9 @@ function LiveStatsBar({ refreshTrigger }: { refreshTrigger?: number }) {
   useEffect(() => {
     const fetchStats = async () => {
       try {
-        const res = await fetch('/api/admin/stats/realtime', {
+        const res = await fetch(`/api/admin/stats/realtime?_t=${Date.now()}`, {
           headers: getAuthHeaders(),
+          cache: 'no-store',
         })
         if (res.ok) {
           const data = await res.json()
@@ -1155,11 +1158,13 @@ function PhonesTab({ refreshTrigger }: { refreshTrigger?: number }) {
     setLoading(true)
     try {
       const params = new URLSearchParams({
+        _t: Date.now().toString(),
         ...(category !== 'all' && { category }),
         ...(search && { search }),
       })
       const response = await fetch(`/api/admin/phone-directory?${params}`, {
         headers: getAuthHeaders(),
+        cache: 'no-store',
       })
       const data = await response.json()
       if (response.ok) {
@@ -1260,10 +1265,12 @@ function ActivityTab({ refreshTrigger }: { refreshTrigger?: number }) {
     setLoading(true)
     try {
       const params = new URLSearchParams({
+        _t: Date.now().toString(),
         ...(actionType !== 'all' && { actionType }),
       })
       const response = await fetch(`/api/admin/activity-log?${params}`, {
         headers: getAuthHeaders(),
+        cache: 'no-store',
       })
       const data = await response.json()
       if (response.ok) {
@@ -1430,8 +1437,9 @@ function IntegrationsTab({ refreshTrigger }: { refreshTrigger?: number }) {
   const loadIntegrations = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/admin/integrations', {
+      const response = await fetch(`/api/admin/integrations?_t=${Date.now()}`, {
         headers: getAuthHeaders(),
+        cache: 'no-store',
       })
       const data = await response.json()
       if (response.ok) {
@@ -1521,8 +1529,9 @@ function FinancesTab({ refreshTrigger }: { refreshTrigger?: number }) {
   const loadFinances = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/admin/finances?period=${period}`, {
+      const response = await fetch(`/api/admin/finances?period=${period}&_t=${Date.now()}`, {
         headers: getAuthHeaders(),
+        cache: 'no-store',
       })
       const data = await response.json()
       if (response.ok) {
@@ -1614,10 +1623,12 @@ function ClientsTab({ refreshTrigger }: { refreshTrigger?: number }) {
     setLoading(true)
     try {
       const params = new URLSearchParams({
+        _t: Date.now().toString(),
         ...(search && { search }),
       })
       const response = await fetch(`/api/admin/clients?${params}`, {
         headers: getAuthHeaders(),
+        cache: 'no-store',
       })
       const data = await response.json()
       if (response.ok) {
@@ -2117,8 +2128,9 @@ function ExportTab() {
   const handleExport = async () => {
     setExporting(true)
     try {
-      const response = await fetch(`/api/admin/export?format=${exportFormat}&type=${exportType}`, {
+      const response = await fetch(`/api/admin/export?format=${exportFormat}&type=${exportType}&_t=${Date.now()}`, {
         headers: getAuthHeaders(),
+        cache: 'no-store',
       })
       const blob = await response.blob()
       const url = window.URL.createObjectURL(blob)

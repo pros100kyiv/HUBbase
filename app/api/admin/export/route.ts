@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+
+export const dynamic = 'force-dynamic'
 import { verifyAdminToken } from '@/lib/middleware/admin-auth'
 import { jsonSafe } from '@/lib/utils/json'
 
