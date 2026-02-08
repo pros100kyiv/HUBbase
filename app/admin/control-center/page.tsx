@@ -261,7 +261,7 @@ export default function ControlCenterPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-6 bg-[#0F172A]" style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}>
+    <div className="min-h-screen p-3 sm:p-4 md:p-6 pb-[max(1rem,env(safe-area-inset-bottom))] bg-[#0F172A]" style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}>
       <div className="max-w-7xl mx-auto w-full">
       {loadError && (
         <div className="mb-4 rounded-xl p-4 bg-red-500/20 border border-red-500/50 flex items-center justify-between gap-4">
@@ -278,32 +278,32 @@ export default function ControlCenterPage() {
       <LiveStatsBar refreshTrigger={refreshTrigger} onManualRefresh={handleRefresh} />
 
       {/* Header */}
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
+      <div className="mb-4 md:mb-6 flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-3 sm:gap-4">
         <div>
-          <h1 className="text-3xl md:text-4xl font-black text-white mb-2" style={{ letterSpacing: '-0.02em' }}>
+          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-1 sm:mb-2" style={{ letterSpacing: '-0.02em' }}>
             🎯 Центр управління
           </h1>
-          <p className="text-gray-300">
+          <p className="text-gray-300 text-sm sm:text-base hidden sm:block">
             Управління всіма бізнесами та процесами системи · дані оновлюються в реальному часі
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex gap-2 shrink-0">
           <button
             type="button"
             onClick={handleSync}
             disabled={syncing}
-            className="px-4 py-2 rounded-lg border border-blue-500/50 bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 disabled:opacity-50 transition-colors font-medium"
+            className="flex-1 sm:flex-none px-3 sm:px-4 py-2.5 min-h-[44px] rounded-lg border border-blue-500/50 bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 disabled:opacity-50 transition-colors font-medium text-sm sm:text-base"
             title="Синхронізувати всі акаунти з центром управління"
           >
-            {syncing ? 'Синхронізація...' : 'Синхронізувати'}
+            {syncing ? 'Синхр...' : 'Синхронізувати'}
           </button>
           <button
             type="button"
             onClick={handleRefresh}
             disabled={loading}
-            className="px-4 py-2 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 transition-colors font-medium"
+            className="flex-1 sm:flex-none px-3 sm:px-4 py-2.5 min-h-[44px] rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 transition-colors font-medium text-sm sm:text-base"
           >
-            {loading ? 'Оновлення...' : 'Оновити'}
+            {loading ? 'Оновл...' : 'Оновити'}
           </button>
         </div>
       </div>
@@ -331,7 +331,7 @@ export default function ControlCenterPage() {
       </div>
 
       {/* Tab Content */}
-      <div className="card-glass rounded-xl p-6">
+      <div className="card-glass rounded-xl p-4 sm:p-6">
         {activeTab === 'overview' && (
           <OverviewTab stats={stats ?? defaultStats} loading={loading} />
         )}
@@ -448,9 +448,9 @@ function LiveStatsBar({ refreshTrigger, onManualRefresh }: { refreshTrigger?: nu
   const s = realtimeStats || { total: 0, online: 0, idle: 0, offline: 0, newToday: 0, blocked: 0 }
 
   return (
-    <div className="mb-4 rounded-xl p-4 card-glass">
-      <div className="flex flex-wrap items-center justify-between gap-4 md:gap-6">
-        <div className="flex flex-wrap items-center gap-4 md:gap-6">
+    <div className="mb-4 rounded-xl p-3 sm:p-4 card-glass">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-3 sm:gap-4">
+        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
@@ -459,21 +459,21 @@ function LiveStatsBar({ refreshTrigger, onManualRefresh }: { refreshTrigger?: nu
           <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Live</span>
         </div>
 
-        <div className="flex flex-wrap gap-4 md:gap-6">
+        <div className="flex flex-wrap gap-2 sm:gap-4 md:gap-6">
           <div className="flex items-center gap-2">
-            <span className="text-lg md:text-xl font-bold text-white">{s.total}</span>
+            <span className="text-base sm:text-lg md:text-xl font-bold text-white">{s.total}</span>
             <span className="text-sm text-gray-400">всього</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-lg md:text-xl font-bold text-green-400">{s.online}</span>
-            <span className="text-sm text-gray-400">онлайн</span>
+            <span className="text-xs sm:text-sm text-gray-400">онлайн</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-lg md:text-xl font-bold text-orange-400">{s.idle}</span>
-            <span className="text-sm text-gray-400">в простої</span>
+            <span className="text-base sm:text-lg md:text-xl font-bold text-orange-400">{s.idle}</span>
+            <span className="text-xs sm:text-sm text-gray-400">в простої</span>
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-lg md:text-xl font-bold text-gray-400">{s.offline}</span>
+            <span className="text-base sm:text-lg md:text-xl font-bold text-gray-400">{s.offline}</span>
             <span className="text-sm text-gray-400">офлайн</span>
           </div>
           {s.newToday > 0 && (
@@ -483,13 +483,13 @@ function LiveStatsBar({ refreshTrigger, onManualRefresh }: { refreshTrigger?: nu
             </div>
           )}
           <div className="flex items-center gap-2">
-            <span className="text-lg md:text-xl font-bold text-red-400">{s.blocked}</span>
-            <span className="text-sm text-gray-400">заблоковано</span>
+            <span className="text-base sm:text-lg md:text-xl font-bold text-red-400">{s.blocked}</span>
+            <span className="text-xs sm:text-sm text-gray-400">заблок.</span>
           </div>
         </div>
         </div>
 
-        <div className="flex items-center gap-3 shrink-0">
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0 mt-2 sm:mt-0">
           {s.updatedAt && (
             <span className="text-xs text-gray-500">
               Оновлено: {new Date(s.updatedAt).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
@@ -500,7 +500,7 @@ function LiveStatsBar({ refreshTrigger, onManualRefresh }: { refreshTrigger?: nu
               type="button"
               onClick={() => onManualRefresh()}
               disabled={loading}
-              className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+              className="p-2 min-w-[44px] min-h-[44px] sm:p-1.5 sm:min-w-0 sm:min-h-0 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors flex items-center justify-center"
               title="Оновити всі дані та статистику"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -862,29 +862,29 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
   return (
     <div>
       {/* Швидкий пошук за ID — Ctrl+K */}
-      <div className="mb-4 p-4 rounded-xl bg-white/5 border border-white/10 flex flex-col sm:flex-row gap-3">
-        <div className="flex-1 flex gap-2">
+      <div className="mb-4 p-3 sm:p-4 rounded-xl bg-white/5 border border-white/10 flex flex-col sm:flex-row gap-3">
+        <div className="flex-1 flex flex-col sm:flex-row gap-2">
           <input
             ref={quickSearchInputRef}
             type="text"
-            placeholder="Швидкий пошук за ID (56836 або UUID) — Ctrl+K"
+            placeholder="Пошук за ID (56836) — Ctrl+K"
             value={quickIdSearch}
             onChange={(e) => setQuickIdSearch(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleQuickIdSearch()}
-            className="flex-1 px-4 py-2.5 border border-white/10 rounded-lg bg-white/5 text-white placeholder-gray-500 font-mono text-sm focus:outline-none focus:border-blue-500/50"
+            className="flex-1 min-h-[44px] px-4 py-2.5 border border-white/10 rounded-lg bg-white/5 text-white placeholder-gray-500 font-mono text-sm focus:outline-none focus:border-blue-500/50"
           />
           <button
             type="button"
             onClick={handleQuickIdSearch}
-            className="px-4 py-2.5 bg-blue-500/30 text-blue-300 rounded-lg hover:bg-blue-500/50 font-medium shrink-0"
+            className="min-h-[44px] px-4 py-2.5 bg-blue-500/30 text-blue-300 rounded-lg hover:bg-blue-500/50 font-medium shrink-0"
           >
             Знайти
           </button>
         </div>
-        <span className="text-xs text-gray-500 self-center">Ctrl+K — фокус</span>
+        <span className="text-xs text-gray-500 self-center hidden sm:inline">Ctrl+K — фокус</span>
       </div>
 
-      <div className="mb-6 flex flex-col md:flex-row gap-4">
+      <div className="mb-4 md:mb-6 flex flex-col gap-3 sm:flex-row sm:flex-wrap sm:items-center">
         <div className="flex-1 relative">
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
@@ -897,14 +897,15 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
             }
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white"
+            className="w-full min-h-[44px] pl-10 pr-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white"
           />
         </div>
         
+        <div className="flex gap-2 flex-wrap">
         <select
           value={searchBy}
           onChange={(e) => setSearchBy(e.target.value as any)}
-          className="px-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white"
+          className="min-h-[44px] px-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white flex-1 sm:flex-none min-w-0"
           title="Тип пошуку"
         >
           <option value="all">Всюди</option>
@@ -924,11 +925,11 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
         </select>
 
         {selectedBusinesses.length > 0 && (
-          <div className="flex gap-2">
+          <div className="flex gap-2 flex-wrap w-full sm:w-auto">
             <select
               value={bulkAction}
               onChange={(e) => setBulkAction(e.target.value)}
-              className="px-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white focus:outline-none focus:border-white/20"
+              className="min-h-[44px] px-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white focus:outline-none focus:border-white/20 flex-1 sm:flex-none min-w-0"
             >
               <option value="" className="bg-[#2A2A2A]">Оберіть дію</option>
               <option value="activate" className="bg-[#2A2A2A]">Активувати</option>
@@ -937,7 +938,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
             </select>
             <button
               onClick={handleBulkAction}
-              className="px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-colors font-semibold"
+              className="min-h-[44px] px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-colors font-semibold shrink-0"
               style={{ letterSpacing: '-0.01em', boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
             >
               Застосувати ({selectedBusinesses.length})
@@ -976,19 +977,80 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
             link.download = `businesses-${new Date().toISOString().split('T')[0]}.csv`
             link.click()
           }}
-          className="px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 hover:text-gray-900 flex items-center gap-2 font-semibold transition-colors"
+          className="min-h-[44px] px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 hover:text-gray-900 flex items-center justify-center gap-2 font-semibold transition-colors shrink-0 w-full sm:w-auto"
           style={{ letterSpacing: '-0.01em', boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
         >
-          <DownloadIcon className="w-5 h-5" />
-          Експорт CSV
+          <DownloadIcon className="w-5 h-5 shrink-0" />
+          <span>Експорт CSV</span>
         </button>
+        </div>
       </div>
 
       {loading ? (
         <div className="text-center py-12">Завантаження...</div>
       ) : (
         <>
-          <div className="overflow-x-auto">
+          {/* Мобільний вигляд — картки */}
+          <div className="block md:hidden space-y-3">
+            {(search ? filteredBusinesses : businesses).map((business: Business) => {
+              const { isOnline, label } = getOnlineStatus(business.lastSeenAt)
+              return (
+                <div
+                  key={business.id}
+                  ref={(el) => { rowRefsMap.current[business.id] = el as unknown as HTMLTableRowElement }}
+                  className="rounded-xl p-4 card-glass border border-white/10 space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="min-w-0 flex-1">
+                      <div className="font-semibold text-white truncate cursor-pointer" onClick={() => setDetailModalBusiness(business)}>
+                        {business.name}
+                      </div>
+                      <div className="text-xs text-gray-400 mt-0.5">ID: {business.businessIdentifier || '-'}</div>
+                    </div>
+                    <input
+                      type="checkbox"
+                      checked={selectedBusinesses.includes(business.businessId)}
+                      onChange={(e) => {
+                        if (e.target.checked) setSelectedBusinesses([...selectedBusinesses, business.businessId])
+                        else setSelectedBusinesses(selectedBusinesses.filter(id => id !== business.businessId))
+                      }}
+                      className="mt-1 shrink-0 w-5 h-5"
+                    />
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <span className={`px-2 py-0.5 rounded text-xs ${business.isActive ? 'bg-green-500/20 text-green-400' : 'bg-red-500/20 text-red-400'}`}>
+                      {business.isActive ? 'Активний' : 'Неактивний'}
+                    </span>
+                    <span className={`px-2 py-0.5 rounded text-xs flex items-center gap-1 ${isOnline ? 'text-green-400' : 'text-gray-400'}`}>
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isOnline ? 'bg-green-500 animate-pulse' : 'bg-gray-500'}`} />
+                      {label}
+                    </span>
+                    <span className="px-2 py-0.5 rounded text-xs bg-white/10 text-gray-300">
+                      {business.registrationType === 'telegram' ? 'TG' : business.registrationType === 'google' ? 'Google' : 'Стандарт'}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-400 truncate">{business.email}</div>
+                  <div className="flex flex-wrap gap-2 pt-1">
+                    <button onClick={() => setDetailModalBusiness(business)} className="px-3 py-1.5 text-xs bg-blue-500/20 text-blue-400 rounded-lg">Деталі</button>
+                    {business.isActive ? (
+                      <>
+                        <button onClick={() => handleBlockClick(business)} className="px-3 py-1.5 text-xs bg-red-500/20 text-red-400 rounded-lg">Заблокувати</button>
+                        <button onClick={() => handleDeleteClick(business)} className="px-3 py-1.5 text-xs bg-gray-500/20 text-gray-300 rounded-lg">Видалити</button>
+                      </>
+                    ) : (
+                      <>
+                        <button onClick={() => handleUnblock(business)} className="px-3 py-1.5 text-xs bg-green-500/20 text-green-400 rounded-lg">Розблокувати</button>
+                        <button onClick={() => handleDeleteClick(business)} className="px-3 py-1.5 text-xs bg-gray-500/20 text-gray-300 rounded-lg">Видалити</button>
+                      </>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+
+          {/* Десктоп — таблиця */}
+          <div className="hidden md:block overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-white/10">
@@ -1161,7 +1223,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
             </table>
           </div>
           
-          {/* Статистика */}
+          {/* Статистика — адаптивна сітка */}
           <div className="mt-6 grid grid-cols-1 md:grid-cols-4 gap-4">
             <div className="bg-blue-50 dark:bg-blue-900/20 rounded-lg p-4 border border-blue-200 dark:border-blue-800">
               <div className="text-sm text-blue-400 mb-1">Всього {search ? '(знайдено)' : ''}</div>
@@ -1291,8 +1353,8 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
       {/* Modal деталей бізнесу */}
       {detailModalBusiness && (
         <ModalPortal>
-          <div className="modal-overlay bg-black/70 sm:!p-4" onClick={() => setDetailModalBusiness(null)}>
-            <div className="w-[95%] sm:w-full sm:max-w-lg sm:my-auto modal-content modal-dialog" onClick={(e) => e.stopPropagation()}>
+          <div className="modal-overlay bg-black/70 sm:!p-4 p-3" onClick={() => setDetailModalBusiness(null)}>
+            <div className="w-full max-w-[calc(100vw-1.5rem)] sm:max-w-lg sm:my-auto modal-content modal-dialog max-h-[85dvh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
             <div className="flex justify-between items-start mb-4">
               <h3 className="text-xl font-bold text-white">{detailModalBusiness.name}</h3>
               <button onClick={() => setDetailModalBusiness(null)} className="p-2 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white">
@@ -1309,13 +1371,13 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
               <div className="flex justify-between"><span className="text-gray-400">Дата реєстрації:</span><span className="text-white">{formatDate(detailModalBusiness.registeredAt)}</span></div>
               <div className="flex justify-between"><span className="text-gray-400">Останній вхід:</span><span className="text-white">{formatDate(detailModalBusiness.lastLoginAt)}</span></div>
             </div>
-            <div className="mt-4 flex gap-2">
+            <div className="mt-4 flex flex-wrap gap-2">
               {detailModalBusiness.isActive ? (
-                <button onClick={() => { setDetailModalBusiness(null); handleBlockClick(detailModalBusiness) }} className="px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30">Заблокувати</button>
+                <button onClick={() => { setDetailModalBusiness(null); handleBlockClick(detailModalBusiness) }} className="min-h-[44px] px-4 py-2 bg-red-500/20 text-red-400 rounded-lg hover:bg-red-500/30">Заблокувати</button>
               ) : (
-                <button onClick={async () => { await handleUnblock(detailModalBusiness); setDetailModalBusiness(null); onDataChanged?.(); }} className="px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30">Розблокувати</button>
+                <button onClick={async () => { await handleUnblock(detailModalBusiness); setDetailModalBusiness(null); onDataChanged?.(); }} className="min-h-[44px] px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30">Розблокувати</button>
               )}
-              <button onClick={() => { navigator.clipboard.writeText(detailModalBusiness.businessIdentifier || ''); }} className="px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20">Копіювати ID</button>
+              <button onClick={() => { navigator.clipboard.writeText(detailModalBusiness.businessIdentifier || ''); }} className="min-h-[44px] px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20">Копіювати ID</button>
             </div>
             </div>
           </div>

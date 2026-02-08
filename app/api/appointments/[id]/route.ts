@@ -31,19 +31,33 @@ function normalizeServicesToJsonArrayString(services: unknown): string | null {
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  context: { params: Promise<{ id: string }> | { id: string } }
 ) {
   try {
-    const resolvedParams = await Promise.resolve(params)
+    const params = context.params
+    const resolvedParams = typeof (params as Promise<unknown>)?.then === 'function'
+      ? await (params as Promise<{ id?: string }>)
+      : (params as { id?: string })
     const appointmentId = resolvedParams?.id
     if (!appointmentId || typeof appointmentId !== 'string') {
       return NextResponse.json({ error: 'Appointment ID is required' }, { status: 400 })
     }
-    const body = await request.json()
-    const { 
-      businessId, 
-      status, 
-      startTime, 
+
+    let body: Record<string, unknown>
+    try {
+      body = await request.json()
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+    }
+    if (!body || typeof body !== 'object') {
+      body = {}
+    }
+
+    const { searchParams } = new URL(request.url)
+    const businessId = (body.businessId ?? searchParams.get('businessId')) as string | undefined
+    const {
+      status,
+      startTime,
       endTime,
       masterId,
       clientName,
@@ -55,10 +69,9 @@ export async function PATCH(
       customServiceName,
       customService,
       procedureDone,
-    } = body
+    } = body as Record<string, unknown>
 
-    // КРИТИЧНО: Перевірка businessId для ізоляції даних
-    if (!businessId) {
+    if (!businessId || typeof businessId !== 'string') {
       return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
     }
 
@@ -69,21 +82,22 @@ export async function PATCH(
     }
 
     const ALLOWED_STATUSES = ['Pending', 'Confirmed', 'Done', 'Cancelled'] as const
-    const updateData: any = {}
-    if (status !== undefined) {
-      if (!ALLOWED_STATUSES.includes(status)) {
+    const updateData: Record<string, unknown> = {}
+    if (status !== undefined && status !== null) {
+      const statusStr = String(status)
+      if (!ALLOWED_STATUSES.includes(statusStr as typeof ALLOWED_STATUSES[number])) {
         return NextResponse.json(
           { error: `Invalid status. Allowed: ${ALLOWED_STATUSES.join(', ')}` },
           { status: 400 }
         )
       }
-      updateData.status = status
+      updateData.status = statusStr
     }
-    if (startTime) updateData.startTime = new Date(startTime)
-    if (endTime) updateData.endTime = new Date(endTime)
+    if (startTime) updateData.startTime = new Date(startTime as string | number)
+    if (endTime) updateData.endTime = new Date(endTime as string | number)
     if (masterId) updateData.masterId = masterId
-    if (clientName) updateData.clientName = clientName.trim()
-    if (clientPhone) updateData.clientPhone = normalizeUaPhone(clientPhone)
+    if (clientName != null && String(clientName).trim()) updateData.clientName = String(clientName).trim()
+    if (clientPhone != null && String(clientPhone).trim()) updateData.clientPhone = normalizeUaPhone(String(clientPhone))
     if (clientEmail !== undefined) {
       updateData.clientEmail =
         typeof clientEmail === 'string' && clientEmail.trim() ? clientEmail.trim() : null
@@ -120,7 +134,7 @@ export async function PATCH(
     if (isStatusOnlyUpdate) {
       const appointment = await prisma.appointment.update({
         where: { id: appointmentId },
-        data: { status: updateData.status },
+        data: { status: updateData.status as 'Pending' | 'Confirmed' | 'Done' | 'Cancelled' },
       })
       return NextResponse.json(appointment)
     }
@@ -166,7 +180,7 @@ export async function PATCH(
 
       return tx.appointment.update({
         where: { id: appointmentId },
-        data: updateData,
+        data: updateData as Record<string, unknown>,
       })
     })
 

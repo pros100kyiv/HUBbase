@@ -105,24 +105,24 @@ export async function POST(request: Request) {
 /**
  * Отримати інформацію про статус блокування
  * GET /api/business/block?businessIdentifier=56836
+ * GET /api/business/block?businessId=clxxx (UUID — для перевірки з dashboard)
  */
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const businessIdentifier = searchParams.get('businessIdentifier')
+    const identifier = searchParams.get('businessIdentifier') || searchParams.get('businessId')
 
-    if (!businessIdentifier) {
+    if (!identifier) {
       return NextResponse.json({ 
-        error: 'businessIdentifier is required' 
+        error: 'businessIdentifier або businessId обов\'язковий' 
       }, { status: 400 })
     }
 
-    // Конвертуємо 5-значний ID в внутрішній ID
-    const businessId = await resolveBusinessId(businessIdentifier)
+    const businessId = await resolveBusinessId(identifier)
     
     if (!businessId) {
       return NextResponse.json({ 
-        error: 'Бізнес не знайдено за вказаним ідентифікатором' 
+        error: 'Бізнес не знайдено' 
       }, { status: 404 })
     }
 
@@ -145,20 +145,24 @@ export async function GET(request: Request) {
     }
 
     // Парсимо settings для отримання причини блокування
-    let blockInfo = null
-    if (business.settings) {
-      try {
-        const settings = JSON.parse(business.settings)
-        if (settings.blockReason) {
-          blockInfo = {
-            reason: settings.blockReason,
-            blockedAt: settings.blockedAt,
-            blockedBy: settings.blockedBy,
-            unblockedAt: settings.unblockedAt,
+    let blockInfo: { reason?: string; blockedAt?: string; blockedBy?: string } | null = null
+    if (business.isActive === false) {
+      if (business.settings) {
+        try {
+          const settings = JSON.parse(business.settings)
+          if (settings.blockReason || settings.blockedAt) {
+            blockInfo = {
+              reason: settings.blockReason || 'Акаунт заблоковано адміністратором',
+              blockedAt: settings.blockedAt,
+              blockedBy: settings.blockedBy,
+            }
           }
+        } catch (e) {
+          // Settings не є валідним JSON
         }
-      } catch (e) {
-        // Settings не є валідним JSON
+      }
+      if (!blockInfo) {
+        blockInfo = { reason: 'Акаунт заблоковано адміністратором' }
       }
     }
 

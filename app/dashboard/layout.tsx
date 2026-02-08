@@ -6,6 +6,7 @@ import { Sidebar } from '@/components/admin/Sidebar'
 import { MobileSidebar } from '@/components/admin/MobileSidebar'
 import { AIChatWidget } from '@/components/ai/AIChatWidget'
 import { ProfileSetupModal } from '@/components/admin/ProfileSetupModal'
+import { BlockedOverlay } from '@/components/admin/BlockedOverlay'
 
 // Global state for mobile menu
 let globalMobileMenuState = { isOpen: false, setIsOpen: (open: boolean) => {} }
@@ -25,6 +26,8 @@ export default function DashboardLayout({
   const [business, setBusiness] = useState<any>(null)
   const [showProfileModal, setShowProfileModal] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [isBlocked, setIsBlocked] = useState<boolean | null>(null)
+  const [blockInfo, setBlockInfo] = useState<{ reason?: string; blockedAt?: string } | null>(null)
 
   useEffect(() => {
     setMounted(true)
@@ -112,6 +115,14 @@ export default function DashboardLayout({
 
   return (
     <div className="relative min-h-screen" style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}>
+      {/* Оверлей «Доступ заблоковано» — показується, коли акаунт заблоковано в центрі управління */}
+      {mounted && isBlocked === true && (
+        <BlockedOverlay
+          blockReason={blockInfo?.reason}
+          blockedAt={blockInfo?.blockedAt}
+        />
+      )}
+
       {/* Top Navbar */}
       <Navbar />
       
@@ -128,17 +139,17 @@ export default function DashboardLayout({
         </div>
       </main>
 
-      {/* AI Chat Widget */}
-      {typeof window !== 'undefined' && (() => {
-        const businessData = localStorage.getItem('business')
-        if (businessData) {
-          try {
+      {/* AI Chat Widget — тільки після mount (уникнення hydration #418) */}
+      {mounted && (() => {
+        try {
+          const businessData = localStorage.getItem('business')
+          if (businessData) {
             const business = JSON.parse(businessData)
             if (business?.id) {
               return <AIChatWidget businessId={business.id} />
             }
-          } catch {}
-        }
+          }
+        } catch {}
         return null
       })()}
 

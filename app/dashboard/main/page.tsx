@@ -51,7 +51,7 @@ export default function MainPage() {
   }, [router])
 
   useEffect(() => {
-    if (!business) return
+    if (!business || !selectedDate) return
 
     // Load appointments for selected date
     setLoading(true)
