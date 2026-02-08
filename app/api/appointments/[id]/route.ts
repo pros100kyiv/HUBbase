@@ -171,9 +171,16 @@ export async function PATCH(
     })
 
     return NextResponse.json(appointment)
-  } catch (error) {
+  } catch (error: unknown) {
     const msg = error instanceof Error ? error.message : 'Unknown error'
+    const prismaCode = (error as { code?: string })?.code
     console.error('Error updating appointment:', error)
+
+    // Prisma P2025 = Record not found
+    if (prismaCode === 'P2025') {
+      return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
+    }
+
     return NextResponse.json(
       { error: 'Failed to update appointment', details: process.env.NODE_ENV === 'development' ? msg : undefined },
       { status: 500 }

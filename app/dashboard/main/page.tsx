@@ -28,7 +28,10 @@ interface Appointment {
 export default function MainPage() {
   const router = useRouter()
   const [business, setBusiness] = useState<any>(null)
-  const [selectedDate, setSelectedDate] = useState(() => startOfDay(new Date()))
+  const [selectedDate, setSelectedDate] = useState<Date | null>(null)
+  useEffect(() => {
+    setSelectedDate(startOfDay(new Date()))
+  }, [])
   const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
@@ -124,8 +127,8 @@ export default function MainPage() {
             </button>
           </div>
 
-          {/* My Day Card */}
-          {loading ? (
+          {/* My Day Card — не рендеримо до отримання дати (уникнення hydration #418) */}
+          {!selectedDate || loading ? (
             <div className="h-64 rounded-xl bg-white/5 border border-white/10 animate-pulse" />
           ) : (
             <MyDayCard

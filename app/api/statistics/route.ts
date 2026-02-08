@@ -89,7 +89,7 @@ export async function GET(request: Request) {
 
     const masterStats = masters.map(m => ({
       masterId: m.id,
-      count: appointments.filter(a => a.masterId === m.id && a.status !== 'Cancelled').length
+      count: appointments.filter(a => (a as { masterId: string }).masterId === m.id && a.status !== 'Cancelled').length
     }))
 
     // Оновлюємо дату останнього входу в Центрі управління (як heartbeat)

@@ -33,18 +33,26 @@ export async function POST(request: Request) {
     const now = new Date()
 
     // Оновлюємо lastSeenAt в ManagementCenter
-    await prisma.managementCenter.update({
-      where: { businessId },
-      data: { lastSeenAt: now },
-    }).catch(async () => {
-      // Якщо запис не існує, синхронізуємо й оновлюємо
-      const { syncBusinessToManagementCenter } = await import('@/lib/services/management-center')
-      await syncBusinessToManagementCenter(businessId)
+    try {
       await prisma.managementCenter.update({
         where: { businessId },
         data: { lastSeenAt: now },
       })
-    })
+    } catch (updateErr: unknown) {
+      // Якщо запис не існує — синхронізуємо й повторюємо
+      try {
+        const { syncBusinessToManagementCenter } = await import('@/lib/services/management-center')
+        await syncBusinessToManagementCenter(businessId)
+        await prisma.managementCenter.update({
+          where: { businessId },
+          data: { lastSeenAt: now },
+        })
+      } catch (retryErr: unknown) {
+        console.warn('Presence: ManagementCenter sync/update failed, returning success anyway', { businessId, retryErr })
+        // Не повертаємо 500 — presence не критичний для UI
+        return NextResponse.json({ success: true, lastSeenAt: now.toISOString() })
+      }
+    }
 
     return NextResponse.json({
       success: true,
@@ -52,9 +60,7 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     console.error('Presence heartbeat error:', error)
-    return NextResponse.json(
-      { error: 'Помилка оновлення статусу' },
-      { status: 500 }
-    )
+    // Не ламаємо UI — presence тільки для статусу онлайн
+    return NextResponse.json({ success: false, error: 'Помилка оновлення' })
   }
 }

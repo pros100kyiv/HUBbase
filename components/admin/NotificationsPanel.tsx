@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { XIcon, CheckIcon, ClockIcon } from '@/components/icons'
+import { StatusSwitcher, type StatusValue } from './StatusSwitcher'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { toast } from '@/components/ui/toast'
 
@@ -25,10 +26,11 @@ interface AppointmentCardProps {
   appointment: Appointment
   onConfirm: (id: string) => void
   onReschedule: (id: string, newStartTime: string, newEndTime: string) => void
+  onStatusChange: (id: string, status: StatusValue) => void
   processing: string | null
 }
 
-function AppointmentCard({ appointment, onConfirm, onReschedule, processing }: AppointmentCardProps) {
+function AppointmentCard({ appointment, onConfirm, onReschedule, onStatusChange, processing }: AppointmentCardProps) {
   const startTime = new Date(appointment.startTime)
   const endTime = new Date(appointment.endTime)
   let servicesList: string[] = []
@@ -115,12 +117,18 @@ function AppointmentCard({ appointment, onConfirm, onReschedule, processing }: A
           </div>
         </div>
       ) : (
-        <div className="flex gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <StatusSwitcher
+            status={appointment.status}
+            isFromBooking={true}
+            appointmentId={appointment.id}
+            onStatusChange={onStatusChange}
+          />
           <button
             type="button"
             onClick={() => onConfirm(appointment.id)}
             disabled={processing === appointment.id}
-            className="flex-1 px-2 py-1.5 rounded-lg text-xs font-semibold bg-white text-black hover:bg-gray-100 hover:text-gray-900 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
+            className="flex-1 min-w-[100px] px-2 py-1.5 rounded-lg text-xs font-semibold bg-white text-black hover:bg-gray-100 hover:text-gray-900 transition-colors disabled:opacity-50 flex items-center justify-center gap-1"
             style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
           >
             <CheckIcon className="w-3 h-3" />
@@ -269,6 +277,7 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
                   appointment={appointment}
                   onConfirm={handleConfirm}
                   onReschedule={handleReschedule}
+                  onStatusChange={handleStatusChange}
                   processing={processing}
                 />
               ))}
