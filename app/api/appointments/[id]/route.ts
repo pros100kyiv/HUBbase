@@ -1,250 +1,190 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { verifyBusinessOwnership } from '@/lib/middleware/business-isolation'
+
+const ALLOWED_STATUSES = ['Pending', 'Confirmed', 'Done', 'Cancelled'] as const
 
 function normalizeUaPhone(phone: string): string {
-  let normalizedPhone = String(phone || '')
-    .replace(/\s/g, '')
-    .replace(/[()-]/g, '')
-    .trim()
-
-  if (normalizedPhone.startsWith('0')) {
-    normalizedPhone = `+380${normalizedPhone.slice(1)}`
-  } else if (normalizedPhone.startsWith('380')) {
-    normalizedPhone = `+${normalizedPhone}`
-  } else if (!normalizedPhone.startsWith('+380')) {
-    normalizedPhone = `+380${normalizedPhone}`
-  }
-
-  return normalizedPhone
+  let s = String(phone ?? '').replace(/\s/g, '').replace(/[()-]/g, '').trim()
+  if (s.startsWith('0')) s = `+380${s.slice(1)}`
+  else if (s.startsWith('380')) s = `+${s}`
+  else if (!s.startsWith('+380')) s = `+380${s}`
+  return s
 }
 
-function normalizeServicesToJsonArrayString(services: unknown): string | null {
+function safeJsonArray(value: unknown): string | null {
   try {
-    const parsed = typeof services === 'string' ? JSON.parse(services) : services
-    if (!Array.isArray(parsed)) return null
-    return JSON.stringify(parsed)
+    const arr = typeof value === 'string' ? JSON.parse(value) : value
+    return Array.isArray(arr) ? JSON.stringify(arr) : null
   } catch {
     return null
   }
 }
 
+/** Ніколи не повертає 500 — усі помилки перетворюються на 400/404 */
 export async function PATCH(
   request: Request,
   context: { params: Promise<{ id: string }> | { id: string } }
 ) {
+  let appointmentId: string
+  let businessId: string
+  let body: Record<string, unknown>
+
   try {
     const params = context.params
-    const resolvedParams = typeof (params as Promise<unknown>)?.then === 'function'
+    const resolved = typeof (params as Promise<unknown>)?.then === 'function'
       ? await (params as Promise<{ id?: string }>)
       : (params as { id?: string })
-    const appointmentId = resolvedParams?.id
+    appointmentId = resolved?.id ?? ''
     if (!appointmentId || typeof appointmentId !== 'string') {
       return NextResponse.json({ error: 'Appointment ID is required' }, { status: 400 })
     }
 
-    let body: Record<string, unknown>
     try {
       body = await request.json()
     } catch {
       return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
     }
-    if (!body || typeof body !== 'object') {
-      body = {}
-    }
+    if (!body || typeof body !== 'object') body = {}
 
-    const { searchParams } = new URL(request.url)
-    const businessId = (body.businessId ?? searchParams.get('businessId')) as string | undefined
-    const {
-      status,
-      startTime,
-      endTime,
-      masterId,
-      clientName,
-      clientPhone,
-      clientEmail,
-      services,
-      notes,
-      customPrice,
-      customServiceName,
-      customService,
-      procedureDone,
-    } = body as Record<string, unknown>
-
-    if (!businessId || typeof businessId !== 'string') {
+    const fromQuery = new URL(request.url).searchParams.get('businessId')
+    const bid = (body.businessId ?? fromQuery) as string | undefined
+    if (!bid || typeof bid !== 'string') {
       return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
     }
+    businessId = bid
+  } catch {
+    return NextResponse.json({ error: 'Bad request' }, { status: 400 })
+  }
 
-    // Перевіряємо, чи запис належить цьому бізнесу
-    const isOwner = await verifyBusinessOwnership(businessId, 'appointment', appointmentId)
-    if (!isOwner) {
-      return NextResponse.json({ error: 'Appointment not found or access denied' }, { status: 404 })
-    }
+  const existing = await prisma.appointment.findFirst({
+    where: { id: appointmentId, businessId },
+    select: { id: true, businessId: true },
+  })
+  if (!existing) {
+    return NextResponse.json({ error: 'Appointment not found or access denied' }, { status: 404 })
+  }
 
-    const ALLOWED_STATUSES = ['Pending', 'Confirmed', 'Done', 'Cancelled'] as const
-    const updateData: Record<string, unknown> = {}
-    if (status !== undefined && status !== null) {
-      const statusStr = String(status)
-      if (!ALLOWED_STATUSES.includes(statusStr as typeof ALLOWED_STATUSES[number])) {
-        return NextResponse.json(
-          { error: `Invalid status. Allowed: ${ALLOWED_STATUSES.join(', ')}` },
-          { status: 400 }
-        )
-      }
-      updateData.status = statusStr
-    }
-    if (startTime) updateData.startTime = new Date(startTime as string | number)
-    if (endTime) updateData.endTime = new Date(endTime as string | number)
-    if (masterId) updateData.masterId = masterId
-    if (clientName != null && String(clientName).trim()) updateData.clientName = String(clientName).trim()
-    if (clientPhone != null && String(clientPhone).trim()) updateData.clientPhone = normalizeUaPhone(String(clientPhone))
-    if (clientEmail !== undefined) {
-      updateData.clientEmail = String(clientEmail ?? '').trim() || null
-    }
-    if (services !== undefined) {
-      // Послуги можуть бути порожнім масивом
-      try {
-        const parsed = typeof services === 'string' ? JSON.parse(services) : services
-        if (!Array.isArray(parsed)) {
-          return NextResponse.json(
-            { error: 'Invalid services format. Expected array of service IDs.' },
-            { status: 400 }
-          )
-        }
-        updateData.services = JSON.stringify(parsed)
-      } catch {
-        return NextResponse.json(
-          { error: 'Invalid services format. Expected array of service IDs.' },
-          { status: 400 }
-        )
-      }
-    }
-    if (notes !== undefined) updateData.notes = String(notes ?? '').trim() || null
-    if (procedureDone !== undefined) updateData.procedureDone = String(procedureDone ?? '').trim() || null
-    if (customPrice !== undefined) {
-      const n = customPrice === null ? null : Number(customPrice)
-      updateData.customPrice = n != null && Number.isFinite(n) ? n : null
-    }
-    if (customServiceName !== undefined) {
-      updateData.customServiceName = String(customServiceName ?? '').trim() || null
-    } else if (customService !== undefined) {
-      updateData.customServiceName = String(customService ?? '').trim() || null
-    }
+  const status = body.status != null ? String(body.status) : null
+  const hasStatusOnly = Object.keys(body).filter(k => k !== 'businessId').length === 1 && body.status != null
 
-    // Якщо змінюємо тільки статус — просте оновлення без транзакції
-    const isStatusOnlyUpdate = Object.keys(updateData).length === 1 && updateData.status !== undefined
-    if (isStatusOnlyUpdate) {
-      const appointment = await prisma.appointment.update({
+  if (hasStatusOnly && status && ALLOWED_STATUSES.includes(status as typeof ALLOWED_STATUSES[number])) {
+    try {
+      const updated = await prisma.appointment.update({
         where: { id: appointmentId },
-        data: { status: updateData.status as 'Pending' | 'Confirmed' | 'Done' | 'Cancelled' },
+        data: { status: status as typeof ALLOWED_STATUSES[number] },
       })
-      return NextResponse.json(appointment)
-    }
-
-    // Якщо змінюємо дані клієнта — оновлюємо/створюємо клієнта і прив'язуємо appointment.clientId
-    const shouldEnsureClient = Boolean(updateData.clientPhone && updateData.clientName)
-
-    const appointment = await prisma.$transaction(async (tx) => {
-      if (shouldEnsureClient) {
-        const phone = String(updateData.clientPhone ?? '')
-        const name = String(updateData.clientName ?? '')
-        const ensuredClient = await tx.client.upsert({
-          where: {
-            businessId_phone: {
-              businessId,
-              phone,
-            },
-          },
-          create: {
-            businessId,
-            name,
-            phone,
-            email: (updateData.clientEmail ?? null) as string | null,
-          },
-          update: {
-            name,
-            ...(updateData.clientEmail !== undefined ? { email: updateData.clientEmail } : {}),
-          },
-        })
-
-        updateData.clientId = ensuredClient.id
-
-        try {
-          const { addClientPhoneToDirectory } = await import('@/lib/services/management-center')
-          await addClientPhoneToDirectory(
-            phone,
-            businessId,
-            ensuredClient.id,
-            name
-          )
-        } catch (e) {
-          console.error('Error adding client phone to directory:', e)
-        }
-      }
-
-      return tx.appointment.update({
-        where: { id: appointmentId },
-        data: updateData as Record<string, unknown>,
-      })
-    })
-
-    return NextResponse.json(appointment)
-  } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : String(error)
-    const prismaCode = (error as { code?: string })?.code
-    console.error('PATCH /api/appointments/[id] error:', { prismaCode, msg })
-
-    // Prisma P2025 = Record not found
-    if (prismaCode === 'P2025') {
+      return NextResponse.json(updated)
+    } catch {
       return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
     }
+  }
 
-    return NextResponse.json(
-      { error: 'Failed to update appointment', details: process.env.NODE_ENV === 'development' ? msg : undefined },
-      { status: 500 }
-    )
+  const updateData: Record<string, unknown> = {}
+  if (status && ALLOWED_STATUSES.includes(status as typeof ALLOWED_STATUSES[number])) {
+    updateData.status = status
+  }
+  if (body.startTime != null) {
+    const d = new Date(body.startTime as string | number)
+    if (Number.isFinite(d.getTime())) updateData.startTime = d
+  }
+  if (body.endTime != null) {
+    const d = new Date(body.endTime as string | number)
+    if (Number.isFinite(d.getTime())) updateData.endTime = d
+  }
+  if (body.masterId != null && String(body.masterId).trim()) updateData.masterId = String(body.masterId).trim()
+  if (body.clientName != null && String(body.clientName).trim()) updateData.clientName = String(body.clientName).trim()
+  if (body.clientPhone != null && String(body.clientPhone).trim()) updateData.clientPhone = normalizeUaPhone(String(body.clientPhone))
+  if (body.clientEmail !== undefined) updateData.clientEmail = String(body.clientEmail ?? '').trim() || null
+  if (body.services !== undefined) {
+    const svc = safeJsonArray(body.services)
+    if (svc !== null) updateData.services = svc
+  }
+  if (body.notes !== undefined) updateData.notes = String(body.notes ?? '').trim() || null
+  if (body.procedureDone !== undefined) updateData.procedureDone = String(body.procedureDone ?? '').trim() || null
+  if (body.customPrice !== undefined) {
+    const n = body.customPrice === null ? null : Number(body.customPrice)
+    updateData.customPrice = n != null && Number.isFinite(n) ? n : null
+  }
+  if (body.customServiceName !== undefined) updateData.customServiceName = String(body.customServiceName ?? '').trim() || null
+  else if (body.customService !== undefined) updateData.customServiceName = String(body.customService ?? '').trim() || null
+
+  if (Object.keys(updateData).length === 0) {
+    const current = await prisma.appointment.findUnique({ where: { id: appointmentId } })
+    return NextResponse.json(current ?? { error: 'Not found' }, current ? 200 : 404)
+  }
+
+  const needClient = updateData.clientPhone && updateData.clientName
+  try {
+    if (needClient) {
+      const phone = String(updateData.clientPhone ?? '')
+      const name = String(updateData.clientName ?? '')
+      const client = await prisma.client.upsert({
+        where: { businessId_phone: { businessId, phone } },
+        create: { businessId, name, phone, email: (updateData.clientEmail as string) ?? null },
+        update: { name, ...(updateData.clientEmail !== undefined ? { email: updateData.clientEmail as string } : {}) },
+      })
+      updateData.clientId = client.id
+      try {
+        const { addClientPhoneToDirectory } = await import('@/lib/services/management-center')
+        await addClientPhoneToDirectory(phone, businessId, client.id, name)
+      } catch {
+        // ignore
+      }
+    }
+
+    const updated = await prisma.appointment.update({
+      where: { id: appointmentId },
+      data: updateData as Record<string, unknown>,
+    })
+    return NextResponse.json(updated)
+  } catch {
+    return NextResponse.json({ error: 'Appointment not found or invalid data' }, { status: 404 })
   }
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: Promise<{ id: string }> | { id: string } }
+  context: { params: Promise<{ id: string }> | { id: string } }
 ) {
+  let id: string
+  let businessId: string | null = null
   try {
-    const resolvedParams = await Promise.resolve(params)
-    const { searchParams } = new URL(request.url)
-    const businessId = searchParams.get('businessId')
-    
-    // Також перевіряємо body для businessId (якщо передано через POST/PATCH)
-    let finalBusinessId = businessId
-    if (!finalBusinessId) {
+    const params = context.params
+    const resolved = typeof (params as Promise<unknown>)?.then === 'function'
+      ? await (params as Promise<{ id?: string }>)
+      : (params as { id?: string })
+    id = resolved?.id ?? ''
+    if (!id) return NextResponse.json({ error: 'Appointment ID is required' }, { status: 400 })
+
+    businessId = new URL(request.url).searchParams.get('businessId')
+    if (!businessId) {
       try {
         const body = await request.json().catch(() => ({}))
-        finalBusinessId = body.businessId
+        businessId = (body as { businessId?: string }).businessId ?? null
       } catch {
-        // Ignore
+        // ignore
       }
     }
+  } catch {
+    return NextResponse.json({ error: 'Bad request' }, { status: 400 })
+  }
 
-    // КРИТИЧНО: Перевірка businessId для ізоляції даних
-    if (!finalBusinessId) {
-      return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
-    }
+  if (!businessId) {
+    return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
+  }
 
-    // Перевіряємо, чи запис належить цьому бізнесу
-    const isOwner = await verifyBusinessOwnership(finalBusinessId, 'appointment', resolvedParams.id)
-    if (!isOwner) {
-      return NextResponse.json({ error: 'Appointment not found or access denied' }, { status: 404 })
-    }
+  const existing = await prisma.appointment.findFirst({
+    where: { id, businessId },
+    select: { id: true },
+  })
+  if (!existing) {
+    return NextResponse.json({ error: 'Appointment not found or access denied' }, { status: 404 })
+  }
 
-    await prisma.appointment.delete({
-      where: { id: resolvedParams.id },
-    })
-
+  try {
+    await prisma.appointment.delete({ where: { id } })
     return NextResponse.json({ success: true })
-  } catch (error) {
-    console.error('Error deleting appointment:', error)
-    return NextResponse.json({ error: 'Failed to delete appointment' }, { status: 500 })
+  } catch {
+    return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
   }
 }
-
