@@ -35,6 +35,10 @@ export async function PATCH(
 ) {
   try {
     const resolvedParams = await Promise.resolve(params)
+    const appointmentId = resolvedParams?.id
+    if (!appointmentId || typeof appointmentId !== 'string') {
+      return NextResponse.json({ error: 'Appointment ID is required' }, { status: 400 })
+    }
     const body = await request.json()
     const { 
       businessId, 
@@ -59,7 +63,7 @@ export async function PATCH(
     }
 
     // Перевіряємо, чи запис належить цьому бізнесу
-    const isOwner = await verifyBusinessOwnership(businessId, 'appointment', resolvedParams.id)
+    const isOwner = await verifyBusinessOwnership(businessId, 'appointment', appointmentId)
     if (!isOwner) {
       return NextResponse.json({ error: 'Appointment not found or access denied' }, { status: 404 })
     }
@@ -152,15 +156,19 @@ export async function PATCH(
       }
 
       return tx.appointment.update({
-        where: { id: resolvedParams.id },
+        where: { id: appointmentId },
         data: updateData,
       })
     })
 
     return NextResponse.json(appointment)
   } catch (error) {
+    const msg = error instanceof Error ? error.message : 'Unknown error'
     console.error('Error updating appointment:', error)
-    return NextResponse.json({ error: 'Failed to update appointment' }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Failed to update appointment', details: process.env.NODE_ENV === 'development' ? msg : undefined },
+      { status: 500 }
+    )
   }
 }
 
