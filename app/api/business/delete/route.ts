@@ -1,38 +1,43 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { resolveBusinessId } from '@/lib/utils/business-identifier'
-import { z } from 'zod'
-
-const deleteSchema = z.object({
-  businessIdentifier: z.string().min(1, 'businessIdentifier is required'),
-  confirmDelete: z.boolean().optional().default(false),
-})
 
 /**
- * Видалення акаунту бізнесу
- * DELETE /api/business/delete
+ * Видалення акаунту бізнесу з усіма пов'язаними даними.
+ * При видаленні Business (User/Account) автоматично видаляються:
+ * - Prisma Cascade: masters, services, appointments, clients, BusinessUser,
+ *   TelegramUser, TelegramBroadcast, TelegramReminder, AIChatMessage,
+ *   Broadcast, Payment, ClientSegment, SMSMessage, SocialIntegration,
+ *   Note, BusinessModule, AnalyticsReport, DataImport, DataExport
+ * - Вручну: ManagementCenter, TelegramLog, PhoneDirectory, GraphNode,
+ *   GraphRelationship, TelegramVerification
+ *
+ * POST /api/business/delete — приймає { businessId } у body для підтвердження
  */
-export async function DELETE(request: Request) {
+export async function POST(request: Request) {
   try {
-    const { searchParams } = new URL(request.url)
-    const businessIdentifier = searchParams.get('businessIdentifier')
-
-    if (!businessIdentifier) {
-      return NextResponse.json({ 
-        error: 'businessIdentifier is required' 
-      }, { status: 400 })
+    const body = await request.json().catch(() => ({}))
+    const { businessId: paramBusinessId, businessIdentifier } = body as {
+      businessId?: string
+      businessIdentifier?: string
     }
 
-    // Конвертуємо 5-значний ID в внутрішній ID
-    const businessId = await resolveBusinessId(businessIdentifier)
-    
+    const identifier = paramBusinessId || businessIdentifier
+    if (!identifier) {
+      return NextResponse.json(
+        { error: 'Потрібен businessId або businessIdentifier' },
+        { status: 400 }
+      )
+    }
+
+    const businessId = await resolveBusinessId(identifier)
     if (!businessId) {
-      return NextResponse.json({ 
-        error: 'Бізнес не знайдено за вказаним ідентифікатором' 
-      }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Бізнес не знайдено за вказаним ідентифікатором' },
+        { status: 404 }
+      )
     }
 
-    // Отримуємо інформацію про бізнес перед видаленням
     const business = await prisma.business.findUnique({
       where: { id: businessId },
       select: {
@@ -40,20 +45,39 @@ export async function DELETE(request: Request) {
         name: true,
         email: true,
         businessIdentifier: true,
-        createdAt: true,
-      }
+      },
     })
 
     if (!business) {
-      return NextResponse.json({ 
-        error: 'Бізнес не знайдено' 
-      }, { status: 404 })
+      return NextResponse.json({ error: 'Бізнес не знайдено' }, { status: 404 })
     }
 
-    // Видаляємо бізнес (каскадне видалення через Prisma)
-    // Всі пов'язані дані (masters, services, appointments, clients, тощо) будуть видалені автоматично
-    await prisma.business.delete({
-      where: { id: businessId },
+    // Транзакція: спочатку видаляємо дані без FK до Business
+    await prisma.$transaction(async (tx) => {
+      // 1. ManagementCenter (дублікат бізнесу в центрі управління)
+      await tx.managementCenter.deleteMany({ where: { businessId } })
+
+      // 2. TelegramLog (логи бота, немає FK до Business)
+      await tx.telegramLog.deleteMany({ where: { businessId } })
+
+      // 3. TelegramVerification (коди підтвердження)
+      await tx.telegramVerification.deleteMany({ where: { businessId } })
+
+      // 4. PhoneDirectory (номери телефонів)
+      await tx.phoneDirectory.deleteMany({ where: { businessId } })
+
+      // 5. GraphRelationship (зв'язки графу, before GraphNode)
+      await tx.graphRelationship.deleteMany({ where: { businessId } })
+
+      // 6. GraphNode (вузли графу)
+      await tx.graphNode.deleteMany({ where: { businessId } })
+
+      // 7. Business — каскад видалить: Master, Service, Client, Appointment,
+      //    BusinessUser, TelegramUser, TelegramBroadcast, TelegramReminder,
+      //    AIChatMessage, Broadcast, Payment, ClientSegment, SMSMessage,
+      //    SocialIntegration, Note, BusinessModule, AnalyticsReport,
+      //    DataImport, DataExport
+      await tx.business.delete({ where: { id: businessId } })
     })
 
     return NextResponse.json({
@@ -68,9 +92,10 @@ export async function DELETE(request: Request) {
     })
   } catch (error) {
     console.error('Error deleting business:', error)
-    return NextResponse.json({ 
-      error: 'Помилка при видаленні акаунту' 
-    }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Помилка при видаленні акаунту' },
+      { status: 500 }
+    )
   }
 }
 

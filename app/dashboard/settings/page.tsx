@@ -14,6 +14,7 @@ import {
   UserIcon,
   UsersIcon,
   ChartIcon,
+  TrashIcon,
 } from '@/components/icons'
 import { toast } from '@/components/ui/toast'
 import { Confetti, triggerConfetti } from '@/components/ui/confetti'
@@ -226,8 +227,13 @@ export default function SettingsPage() {
   const [showServiceForm, setShowServiceForm] = useState(false)
   const [editingService, setEditingService] = useState<Service | null>(null)
   const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set())
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const serviceFormRef = useRef<HTMLDivElement>(null)
   const businessCardRef = useRef<HTMLDivElement>(null)
+
+  const CONFIRM_DELETE_PHRASE = 'ВИДАЛИТИ'
 
   // Service form
   const [serviceForm, setServiceForm] = useState({
@@ -471,6 +477,37 @@ export default function SettingsPage() {
       }
     } catch (error) {
       toast({ title: 'Помилка', description: 'Помилка при видаленні', type: 'error' })
+    }
+  }
+
+  const handleDeleteAccount = async () => {
+    if (!business) return
+    if (deleteConfirmText !== CONFIRM_DELETE_PHRASE) {
+      toast({ title: 'Помилка', description: `Введіть "${CONFIRM_DELETE_PHRASE}" для підтвердження`, type: 'error' })
+      return
+    }
+
+    setIsDeleting(true)
+    try {
+      const res = await fetch('/api/business/delete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessId: business.id }),
+      })
+      const data = await res.json().catch(() => ({}))
+
+      if (res.ok && data.success) {
+        localStorage.removeItem('business')
+        toast({ title: 'Акаунт видалено', type: 'success' })
+        router.push('/login')
+      } else {
+        toast({ title: 'Помилка', description: data.error || 'Не вдалося видалити акаунт', type: 'error' })
+      }
+    } catch (err) {
+      console.error('Delete account error:', err)
+      toast({ title: 'Помилка', description: 'Помилка при видаленні акаунту', type: 'error' })
+    } finally {
+      setIsDeleting(false)
     }
   }
 
@@ -1223,6 +1260,59 @@ export default function SettingsPage() {
             />
             </div>
           )}
+
+          {/* Секція видалення акаунта */}
+          <div className="rounded-xl p-4 md:p-6 card-glass border border-red-500/30">
+            <div className="flex items-center gap-2 mb-2">
+              <TrashIcon className="w-5 h-5 text-red-400" />
+              <h2 className="text-lg font-bold text-red-400" style={{ letterSpacing: '-0.02em' }}>
+                Видалити акаунт
+              </h2>
+            </div>
+            <p className="text-sm text-gray-400 mb-4">
+              Видалення акаунта є незворотним. Будуть видалені всі повʼязані дані: записи, клієнти, спеціалісти, послуги, налаштування, фінансові транзакції, інтеграції.
+            </p>
+            {!showDeleteConfirm ? (
+              <Button
+                variant="outline"
+                onClick={() => setShowDeleteConfirm(true)}
+                className="border-red-400/50 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-lg"
+              >
+                Видалити акаунт
+              </Button>
+            ) : (
+              <div className="space-y-3 max-w-md">
+                <p className="text-sm text-gray-300">
+                  Введіть <span className="font-bold text-red-400">{CONFIRM_DELETE_PHRASE}</span> для підтвердження:
+                </p>
+                <Input
+                  value={deleteConfirmText}
+                  onChange={(e) => setDeleteConfirmText(e.target.value)}
+                  placeholder={CONFIRM_DELETE_PHRASE}
+                  className="border border-red-500/50 bg-red-500/10 text-white placeholder-gray-500 focus:ring-2 focus:ring-red-500/50"
+                />
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleDeleteAccount}
+                    disabled={deleteConfirmText !== CONFIRM_DELETE_PHRASE || isDeleting}
+                    className="bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50"
+                  >
+                    {isDeleting ? 'Видалення...' : 'Підтвердити видалення'}
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setShowDeleteConfirm(false)
+                      setDeleteConfirmText('')
+                    }}
+                    className="border-white/20 text-gray-300 hover:bg-white/10 rounded-lg"
+                  >
+                    Скасувати
+                  </Button>
+                </div>
+              </div>
+            )}
+          </div>
 
         </div>
       </div>
