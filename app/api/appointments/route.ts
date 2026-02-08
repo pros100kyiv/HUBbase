@@ -64,7 +64,7 @@ export async function POST(request: Request) {
     )
   }
   try {
-    const { businessId, masterId, clientName, clientPhone, clientEmail, startTime, endTime, services, notes, customPrice, customServiceName, customService } = body
+    const { businessId, masterId, clientName, clientPhone, clientEmail, startTime, endTime, services, notes, customPrice, customServiceName, customService, isFromBooking } = body
 
     if (!businessId || !masterId || !clientName || !clientPhone || !startTime || !endTime) {
       return NextResponse.json(
@@ -124,6 +124,10 @@ export async function POST(request: Request) {
         ? customServiceName.trim()
         : (typeof customService === 'string' && customService.trim() ? customService.trim() : null)
 
+    // Очікує — тільки для записів від клієнта (публічне бронювання). Записи з акаунту створюються вже підтвердженими.
+    const fromBooking = isFromBooking === true
+    const initialStatus = fromBooking ? 'Pending' : 'Confirmed'
+
     // КРИТИЧНО: гарантуємо, що клієнт з’явиться у вкладці "Клієнти"
     // Робимо upsert по @@unique([businessId, phone]) — без race condition та без дублікатів.
     const { client, appointment } = await prisma.$transaction(async (tx) => {
@@ -160,7 +164,8 @@ export async function POST(request: Request) {
           customServiceName: customServiceNameValue,
           notes: typeof notes === 'string' && notes.trim() ? notes.trim() : null,
           customPrice: typeof customPrice === 'number' && customPrice > 0 ? customPrice : null,
-          status: 'Pending',
+          status: initialStatus,
+          isFromBooking: fromBooking,
         },
       })
 

@@ -27,6 +27,7 @@ interface Appointment {
   endTime: string
   status: string
   services?: string
+  isFromBooking?: boolean
 }
 
 export default function AppointmentsPage() {
@@ -339,7 +340,14 @@ export default function AppointmentsPage() {
   }
 
   const filteredAppointments = appointments.filter((apt) => {
-    if (filterStatus !== 'all' && apt.status !== filterStatus) return false
+    if (filterStatus !== 'all') {
+      const isPending = apt.status === 'Pending' || apt.status === 'Очікує'
+      if (filterStatus === 'Pending') {
+        if (!isPending || apt.isFromBooking !== true) return false
+      } else if (filterStatus === 'Confirmed') {
+        if (apt.status !== 'Confirmed' && apt.status !== 'Підтверджено' && !(isPending && apt.isFromBooking !== true)) return false
+      } else if (apt.status !== filterStatus) return false
+    }
     if (filterMaster !== 'all' && apt.masterId !== filterMaster) return false
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
@@ -363,11 +371,11 @@ export default function AppointmentsPage() {
     return true
   })
 
-  // Calculate statistics
+  // Calculate statistics (Очікує тільки для записів від клієнта — isFromBooking)
   const stats = {
     total: filteredAppointments.length,
-    pending: filteredAppointments.filter(a => a.status === 'Pending').length,
-    confirmed: filteredAppointments.filter(a => a.status === 'Confirmed').length,
+    pending: filteredAppointments.filter(a => (a.status === 'Pending' || a.status === 'Очікує') && a.isFromBooking === true).length,
+    confirmed: filteredAppointments.filter(a => a.status === 'Confirmed' || a.status === 'Підтверджено' || ((a.status === 'Pending' || a.status === 'Очікує') && a.isFromBooking !== true)).length,
     done: filteredAppointments.filter(a => a.status === 'Done').length,
     cancelled: filteredAppointments.filter(a => a.status === 'Cancelled').length,
     revenue: filteredAppointments
@@ -407,7 +415,7 @@ export default function AppointmentsPage() {
   /** Колір бейджа кількості записів за домінантним статусом дня */
   const getDayBadgeStyle = (dayAppointments: Appointment[]) => {
     if (dayAppointments.length === 0) return ''
-    const hasPending = dayAppointments.some(a => a.status === 'Pending' || a.status === 'Очікує')
+    const hasPending = dayAppointments.some(a => (a.status === 'Pending' || a.status === 'Очікує') && (a as { isFromBooking?: boolean }).isFromBooking === true)
     const hasConfirmed = dayAppointments.some(a => a.status === 'Confirmed' || a.status === 'Підтверджено')
     const hasDone = dayAppointments.some(a => a.status === 'Done' || a.status === 'Виконано')
     if (hasPending) return 'bg-orange-500/90 text-white'

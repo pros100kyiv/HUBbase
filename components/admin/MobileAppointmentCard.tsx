@@ -1,9 +1,9 @@
 'use client'
 
 import { format, isValid } from 'date-fns'
-import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
-import { CheckIcon, XIcon, UserIcon, PhoneIcon, EditIcon } from '@/components/icons'
+import { UserIcon, PhoneIcon, EditIcon } from '@/components/icons'
+import { StatusSwitcher } from './StatusSwitcher'
 
 interface Appointment {
   id: string
@@ -17,6 +17,7 @@ interface Appointment {
   services?: string
   customServiceName?: string | null
   customPrice?: number | null
+  isFromBooking?: boolean
 }
 
 interface MobileAppointmentCardProps {
@@ -36,36 +37,6 @@ export function MobileAppointmentCard({
   const endTimeDate = new Date(appointment.endTime)
   const startTime = isValid(startTimeDate) ? startTimeDate : new Date()
   const endTime = isValid(endTimeDate) ? endTimeDate : new Date()
-  const isDone = appointment.status === 'Done' || appointment.status === 'Виконано'
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'Pending': return 'Очікує'
-      case 'Confirmed': return 'Підтверджено'
-      case 'Done': return 'Виконано'
-      case 'Cancelled': return 'Скасовано'
-      default: return status
-    }
-  }
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Pending':
-      case 'Очікує':
-        return 'bg-orange-500/20 text-orange-400 border-orange-500/50'
-      case 'Confirmed':
-      case 'Підтверджено':
-        return 'bg-green-500/20 text-green-400 border-green-500/50'
-      case 'Done':
-      case 'Виконано':
-        return 'bg-blue-500/20 text-blue-400 border-blue-500/50'
-      case 'Cancelled':
-      case 'Скасовано':
-        return 'bg-red-500/20 text-red-400 border-red-500/50'
-      default:
-        return 'bg-gray-500/20 text-gray-400 border-gray-500/50'
-    }
-  }
 
   let serviceIds: string[] = []
   try {
@@ -123,65 +94,23 @@ export function MobileAppointmentCard({
         </div>
 
         {/* Статус і дії */}
-        <div className="flex flex-row sm:flex-col items-center sm:items-end justify-between sm:justify-start gap-1.5 sm:pl-1 flex-shrink-0 w-full sm:w-auto">
-          <div className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium border', getStatusColor(appointment.status))}>
-            {getStatusLabel(appointment.status)}
-          </div>
-          <div className="flex items-center gap-1">
-            {onStatusChange && (
-              <>
-                {(appointment.status === 'Pending' || appointment.status === 'Очікує') && (
-                  <>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onStatusChange(appointment.id, 'Confirmed') }}
-                      className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/50 hover:bg-green-500/30 transition-all active:scale-95 touch-manipulation min-h-[36px]"
-                      title="Підтвердити"
-                    >
-                      <CheckIcon className="w-3 h-3 inline mr-0.5" />
-                      Підтвердити
-                    </button>
-                    <button
-                      onClick={(e) => { e.stopPropagation(); onStatusChange(appointment.id, 'Done') }}
-                      className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/50 hover:bg-blue-500/30 transition-all active:scale-95 touch-manipulation min-h-[36px]"
-                      title="В роботі"
-                    >
-                      <CheckIcon className="w-3 h-3 inline mr-0.5" />
-                      В роботі
-                    </button>
-                  </>
-                )}
-                {(appointment.status === 'Confirmed' || appointment.status === 'Підтверджено') && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onStatusChange(appointment.id, 'Done') }}
-                    className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-500/20 text-blue-400 border border-blue-500/50 hover:bg-blue-500/30 transition-all active:scale-95 touch-manipulation min-h-[36px]"
-                    title="Виконано"
-                  >
-                    <CheckIcon className="w-3 h-3 inline mr-0.5" />
-                    Виконано
-                  </button>
-                )}
-                {!isDone && (
-                  <button
-                    onClick={(e) => { e.stopPropagation(); onStatusChange(appointment.id, 'Cancelled') }}
-                    className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-red-500/20 text-red-400 border border-red-500/50 hover:bg-red-500/30 transition-all active:scale-95 touch-manipulation min-h-[36px]"
-                    title="Скасувати"
-                  >
-                    <XIcon className="w-3 h-3 inline mr-0.5" />
-                    Скасувати
-                  </button>
-                )}
-              </>
-            )}
-            {onEdit && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onEdit(appointment) }}
-                className="p-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 hover:text-white transition-all border border-white/10 touch-manipulation min-h-[36px] min-w-[36px] flex items-center justify-center"
-                title="Редагувати"
-              >
-                <EditIcon className="w-4 h-4 md:w-5 md:h-5" />
-              </button>
-            )}
-          </div>
+        <div className="flex flex-row items-center justify-end sm:justify-start gap-1.5 sm:pl-1 flex-shrink-0 w-full sm:w-auto">
+          <StatusSwitcher
+            status={appointment.status}
+            isFromBooking={appointment.isFromBooking === true}
+            onStatusChange={onStatusChange ?? (() => {})}
+            appointmentId={appointment.id}
+            disabled={!onStatusChange}
+          />
+          {onEdit && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onEdit(appointment) }}
+              className="p-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 hover:text-white transition-all border border-white/10 touch-manipulation min-h-[36px] min-w-[36px] flex items-center justify-center"
+              title="Редагувати"
+            >
+              <EditIcon className="w-4 h-4 md:w-5 md:h-5" />
+            </button>
+          )}
         </div>
       </div>
     </div>

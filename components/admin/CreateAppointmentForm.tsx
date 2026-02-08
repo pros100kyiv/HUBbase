@@ -85,7 +85,6 @@ export function CreateAppointmentForm({
         clientPhone: formData.clientPhone,
         startTime: startDateTime.toISOString(),
         endTime: endDateTime.toISOString(),
-        status: 'Pending',
         services: formData.serviceIds.length > 0 ? JSON.stringify(formData.serviceIds) : JSON.stringify([]),
         isFromBooking: false,
       }

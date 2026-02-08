@@ -76,6 +76,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
           endTime: endTime.toISOString(),
           services: servicesPayload,
           ...(customServiceNamePayload && { customServiceName: customServiceNamePayload }),
+          isFromBooking: true,
         }),
       })
 

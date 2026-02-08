@@ -5,6 +5,7 @@ import { format, addDays, subDays, isSameDay, startOfDay } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { useRouter } from 'next/navigation'
 import { ModalPortal } from '@/components/ui/modal-portal'
+import { StatusSwitcher, type StatusValue } from './StatusSwitcher'
 
 interface Appointment {
   id: string
@@ -19,6 +20,7 @@ interface Appointment {
   customPrice?: number | null
   procedureDone?: string | null
   notes?: string | null
+  isFromBooking?: boolean
 }
 
 export interface MyDayCardProps {
@@ -128,10 +130,13 @@ export function MyDayCard({
     (apt) => apt.status === 'Done' || apt.status === 'Виконано'
   ).length
   const pendingForDay = appointmentsForSelectedDay.filter(
-    (apt) => apt.status === 'Pending' || apt.status === 'Очікує'
+    (apt) => (apt.status === 'Pending' || apt.status === 'Очікує') && apt.isFromBooking === true
   ).length
   const confirmedForDay = appointmentsForSelectedDay.filter(
-    (apt) => apt.status === 'Confirmed' || apt.status === 'Підтверджено'
+    (apt) =>
+      apt.status === 'Confirmed' ||
+      apt.status === 'Підтверджено' ||
+      ((apt.status === 'Pending' || apt.status === 'Очікує') && apt.isFromBooking !== true)
   ).length
   
   const handleDateChange = (newDate: Date) => {
@@ -273,7 +278,8 @@ export function MyDayCard({
     }
   }, [showMenu])
 
-  const getStatusLabel = (status: string) => {
+  const getStatusLabel = (status: string, isFromBooking?: boolean) => {
+    if ((status === 'Pending' || status === 'Очікує') && !isFromBooking) return 'Підтверджено'
     switch (status) {
       case 'Done': return 'Виконано'
       case 'Pending': return 'Очікує'
@@ -283,7 +289,8 @@ export function MyDayCard({
     }
   }
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string, isFromBooking?: boolean) => {
+    if ((status === 'Pending' || status === 'Очікує') && !isFromBooking) return 'bg-green-500/20 text-green-400 border-green-500/50'
     switch (status) {
       case 'Confirmed':
       case 'Підтверджено':
@@ -305,11 +312,12 @@ export function MyDayCard({
   const getFilteredAppointments = (type: 'pending' | 'confirmed' | 'done') => {
     return appointmentsForSelectedDay.filter(apt => {
       const status = apt.status
+      const isPending = status === 'Pending' || status === 'Очікує'
       switch (type) {
         case 'pending':
-          return status === 'Pending' || status === 'Очікує'
+          return isPending && apt.isFromBooking === true
         case 'confirmed':
-          return status === 'Confirmed' || status === 'Підтверджено'
+          return status === 'Confirmed' || status === 'Підтверджено' || (isPending && apt.isFromBooking !== true)
         case 'done':
           return status === 'Done' || status === 'Виконано'
         default:
@@ -371,6 +379,20 @@ export function MyDayCard({
       }
     } catch (error) {
       console.error('Failed to confirm appointment:', error)
+    }
+  }
+
+  const handleStatusChange = async (id: string, status: StatusValue) => {
+    if (!businessId) return
+    try {
+      const res = await fetch(`/api/appointments/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessId, status }),
+      })
+      if (res.ok && onRefresh) onRefresh()
+    } catch (error) {
+      console.error('Failed to update status:', error)
     }
   }
 
@@ -467,33 +489,18 @@ export function MyDayCard({
             </div>
           </div>
 
-          {/* Права колонка: статус зверху, кнопки дій знизу — однаково в списку та в архіві (модалці) */}
-          <div className="flex flex-col items-end justify-center gap-1.5 flex-shrink-0">
-            <div className={`px-2 py-1 rounded text-[10px] font-medium border ${getStatusColor(apt.status)}`}>
-              {getStatusLabel(apt.status)}
-            </div>
-            <div className="flex items-center gap-1.5">
-              {(apt.status === 'Pending' || apt.status === 'Очікує') && (
-                <button
-                  onClick={(e) => handleConfirm(e, apt.id)}
-                  className="px-2.5 py-1.5 rounded-lg text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/50 hover:bg-green-500/30 transition-all active:scale-95 touch-manipulation min-h-[36px]"
-                  title="Підтвердити запис"
-                >
-                  Підтвердити
-                </button>
-              )}
-              {!isDone && (
-                <button
-                  onClick={(e) => handleMarkDone(e, apt.id)}
-                  className="p-2 bg-green-500/10 text-green-500 rounded-lg hover:bg-green-500/20 transition-all border border-green-500/20 touch-manipulation min-h-[36px] min-w-[36px] flex items-center justify-center"
-                  title="Виконано (в архів)"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
-                  </svg>
-                </button>
-              )}
-            </div>
+          {/* Права колонка: один круглий перемикач статусів */}
+          <div
+            className="flex items-center justify-center flex-shrink-0"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <StatusSwitcher
+              status={apt.status}
+              isFromBooking={apt.isFromBooking === true}
+              onStatusChange={handleStatusChange}
+              appointmentId={apt.id}
+              size="sm"
+            />
           </div>
         </div>
       </button>
@@ -774,8 +781,8 @@ export function MyDayCard({
               <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide p-2 pt-0 sm:p-3 sm:pt-0 space-y-1.5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs text-gray-400">Статус</span>
-                  <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(selectedAppointment.status)}`}>
-                    {getStatusLabel(selectedAppointment.status)}
+                  <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(selectedAppointment.status, selectedAppointment.isFromBooking)}`}>
+                    {getStatusLabel(selectedAppointment.status, selectedAppointment.isFromBooking)}
                   </span>
                 </div>
 
@@ -971,8 +978,8 @@ export function MyDayCard({
                                 {apt.masterName ? ` • ${apt.masterName}` : ''}
                               </div>
                             </div>
-                            <div className={`px-2 py-1 rounded text-xs font-medium border flex-shrink-0 ${getStatusColor(apt.status)}`}>
-                              {getStatusLabel(apt.status)}
+                            <div className={`px-2 py-1 rounded text-xs font-medium border flex-shrink-0 ${getStatusColor(apt.status, apt.isFromBooking)}`}>
+                              {getStatusLabel(apt.status, apt.isFromBooking)}
                             </div>
                           </div>
                         </button>
