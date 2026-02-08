@@ -658,7 +658,7 @@ export function MyDayCard({
             }`}
           >
             {appointmentsForSelectedDay
-              .filter(apt => apt.status !== 'Done' && apt.status !== 'Виконано' && apt.status !== 'Cancelled' && apt.status !== 'Скасовано')
+              .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
               .map((apt) => (
               <AppointmentItem 
                 key={apt.id} 
