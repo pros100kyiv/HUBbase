@@ -1,77 +1,120 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import type { Prisma } from '@prisma/client'
 
-const ALLOWED_STATUSES = ['Pending', 'Confirmed', 'Done', 'Cancelled'] as const
+const STATUSES = ['Pending', 'Confirmed', 'Done', 'Cancelled'] as const
+type Status = (typeof STATUSES)[number]
 
-function normalizeUaPhone(phone: string): string {
+function toStatus(s: unknown): Status | null {
+  if (s == null) return null
+  const v = String(s)
+  return STATUSES.includes(v as Status) ? (v as Status) : null
+}
+
+function toPhone(phone: string): string {
   let s = String(phone ?? '').replace(/\s/g, '').replace(/[()-]/g, '').trim()
-  if (s.startsWith('0')) s = `+380${s.slice(1)}`
-  else if (s.startsWith('380')) s = `+${s}`
-  else if (!s.startsWith('+380')) s = `+380${s}`
+  if (s.startsWith('0')) return `+380${s.slice(1)}`
+  if (s.startsWith('380')) return `+${s}`
+  if (!s.startsWith('+380')) return `+380${s}`
   return s
 }
 
-function safeJsonArray(value: unknown): string | null {
+function toServicesJson(value: unknown): string | null {
+  if (value == null) return null
   try {
     const arr = typeof value === 'string' ? JSON.parse(value) : value
-    return Array.isArray(arr) ? JSON.stringify(arr) : null
+    if (!Array.isArray(arr)) return null
+    return JSON.stringify(arr)
   } catch {
     return null
   }
 }
 
-/** Ніколи не повертає 500 — усі помилки перетворюються на 400/404 */
+function toStrOrNull(value: unknown): string | null {
+  if (value == null) return null
+  const s = String(value).trim()
+  return s === '' ? null : s
+}
+
+function toIntOrNull(value: unknown): number | null {
+  if (value == null) return null
+  const n = Number(value)
+  return Number.isFinite(n) ? n : null
+}
+
+function toDateOrNull(value: unknown): Date | null {
+  if (value == null) return null
+  const d = new Date(value as string | number)
+  return Number.isFinite(d.getTime()) ? d : null
+}
+
+async function resolveParams(
+  context: { params: Promise<{ id: string }> | { id: string } }
+): Promise<{ id: string } | null> {
+  try {
+    const p = context.params
+    if (p && typeof (p as Promise<unknown>).then === 'function') {
+      return await (p as Promise<{ id: string }>)
+    }
+    return p as { id: string }
+  } catch {
+    return null
+  }
+}
+
+function getBusinessId(request: Request, body: Record<string, unknown>): string | null {
+  const fromUrl = new URL(request.url).searchParams.get('businessId')
+  const fromBody = body?.businessId
+  const v = fromBody ?? fromUrl
+  return v != null && typeof v === 'string' && v.trim() ? v.trim() : null
+}
+
+async function getBody(request: Request): Promise<Record<string, unknown> | null> {
+  try {
+    const b = await request.json()
+    return b && typeof b === 'object' ? (b as Record<string, unknown>) : {}
+  } catch {
+    return null
+  }
+}
+
 export async function PATCH(
   request: Request,
   context: { params: Promise<{ id: string }> | { id: string } }
 ) {
-  let appointmentId: string
-  let businessId: string
-  let body: Record<string, unknown>
+  const params = await resolveParams(context)
+  if (!params?.id) {
+    return NextResponse.json({ error: 'Appointment ID is required' }, { status: 400 })
+  }
+  const appointmentId = params.id
 
-  try {
-    const params = context.params
-    const resolved = typeof (params as Promise<unknown>)?.then === 'function'
-      ? await (params as Promise<{ id?: string }>)
-      : (params as { id?: string })
-    appointmentId = resolved?.id ?? ''
-    if (!appointmentId || typeof appointmentId !== 'string') {
-      return NextResponse.json({ error: 'Appointment ID is required' }, { status: 400 })
-    }
-
-    try {
-      body = await request.json()
-    } catch {
-      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
-    }
-    if (!body || typeof body !== 'object') body = {}
-
-    const fromQuery = new URL(request.url).searchParams.get('businessId')
-    const bid = (body.businessId ?? fromQuery) as string | undefined
-    if (!bid || typeof bid !== 'string') {
-      return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
-    }
-    businessId = bid
-  } catch {
-    return NextResponse.json({ error: 'Bad request' }, { status: 400 })
+  const body = await getBody(request)
+  if (body === null) {
+    return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
   }
 
-  const existing = await prisma.appointment.findFirst({
+  const businessId = getBusinessId(request, body)
+  if (!businessId) {
+    return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
+  }
+
+  const exists = await prisma.appointment.findFirst({
     where: { id: appointmentId, businessId },
-    select: { id: true, businessId: true },
+    select: { id: true },
   })
-  if (!existing) {
+  if (!exists) {
     return NextResponse.json({ error: 'Appointment not found or access denied' }, { status: 404 })
   }
 
-  const status = body.status != null ? String(body.status) : null
-  const hasStatusOnly = Object.keys(body).filter(k => k !== 'businessId').length === 1 && body.status != null
+  const bodyKeys = Object.keys(body).filter(k => k !== 'businessId')
+  const statusOnly = bodyKeys.length === 1 && body.status != null
+  const newStatus = toStatus(body.status)
 
-  if (hasStatusOnly && status && ALLOWED_STATUSES.includes(status as typeof ALLOWED_STATUSES[number])) {
+  if (statusOnly && newStatus) {
     try {
       const updated = await prisma.appointment.update({
         where: { id: appointmentId },
-        data: { status: status as typeof ALLOWED_STATUSES[number] },
+        data: { status: newStatus },
       })
       return NextResponse.json(updated)
     } catch {
@@ -79,63 +122,72 @@ export async function PATCH(
     }
   }
 
-  const updateData: Record<string, unknown> = {}
-  if (status && ALLOWED_STATUSES.includes(status as typeof ALLOWED_STATUSES[number])) {
-    updateData.status = status
-  }
-  if (body.startTime != null) {
-    const d = new Date(body.startTime as string | number)
-    if (Number.isFinite(d.getTime())) updateData.startTime = d
-  }
-  if (body.endTime != null) {
-    const d = new Date(body.endTime as string | number)
-    if (Number.isFinite(d.getTime())) updateData.endTime = d
-  }
-  if (body.masterId != null && String(body.masterId).trim()) updateData.masterId = String(body.masterId).trim()
-  if (body.clientName != null && String(body.clientName).trim()) updateData.clientName = String(body.clientName).trim()
-  if (body.clientPhone != null && String(body.clientPhone).trim()) updateData.clientPhone = normalizeUaPhone(String(body.clientPhone))
-  if (body.clientEmail !== undefined) updateData.clientEmail = String(body.clientEmail ?? '').trim() || null
-  if (body.services !== undefined) {
-    const svc = safeJsonArray(body.services)
-    if (svc !== null) updateData.services = svc
-  }
-  if (body.notes !== undefined) updateData.notes = String(body.notes ?? '').trim() || null
-  if (body.procedureDone !== undefined) updateData.procedureDone = String(body.procedureDone ?? '').trim() || null
-  if (body.customPrice !== undefined) {
-    const n = body.customPrice === null ? null : Number(body.customPrice)
-    updateData.customPrice = n != null && Number.isFinite(n) ? n : null
-  }
-  if (body.customServiceName !== undefined) updateData.customServiceName = String(body.customServiceName ?? '').trim() || null
-  else if (body.customService !== undefined) updateData.customServiceName = String(body.customService ?? '').trim() || null
+  const data: Prisma.AppointmentUpdateInput = {}
 
-  if (Object.keys(updateData).length === 0) {
-    const current = await prisma.appointment.findUnique({ where: { id: appointmentId } })
-    if (!current) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+  if (newStatus) data.status = newStatus
+  const startTime = toDateOrNull(body.startTime)
+  if (startTime) data.startTime = startTime
+  const endTime = toDateOrNull(body.endTime)
+  if (endTime) data.endTime = endTime
+  const masterId = toStrOrNull(body.masterId)
+  if (masterId) data.masterId = masterId
+  const clientName = toStrOrNull(body.clientName)
+  if (clientName) data.clientName = clientName
+  if (body.clientPhone != null && String(body.clientPhone).trim()) {
+    data.clientPhone = toPhone(String(body.clientPhone))
+  }
+  if (body.clientEmail !== undefined) data.clientEmail = toStrOrNull(body.clientEmail)
+  const servicesJson = toServicesJson(body.services)
+  if (servicesJson !== null) data.services = servicesJson
+  if (body.notes !== undefined) data.notes = toStrOrNull(body.notes)
+  if (body.procedureDone !== undefined) data.procedureDone = toStrOrNull(body.procedureDone)
+  if (body.customPrice !== undefined) data.customPrice = toIntOrNull(body.customPrice)
+  if (body.customServiceName !== undefined) data.customServiceName = toStrOrNull(body.customServiceName)
+  else if (body.customService !== undefined) data.customServiceName = toStrOrNull(body.customService)
+
+  if (Object.keys(data).length === 0) {
+    const current = await prisma.appointment.findUnique({
+      where: { id: appointmentId },
+    })
+    if (!current) {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
     return NextResponse.json(current)
   }
 
-  const needClient = updateData.clientPhone && updateData.clientName
-  try {
-    if (needClient) {
-      const phone = String(updateData.clientPhone ?? '')
-      const name = String(updateData.clientName ?? '')
+  if (data.clientPhone && data.clientName) {
+    const phone = data.clientPhone as string
+    const name = data.clientName as string
+    try {
       const client = await prisma.client.upsert({
         where: { businessId_phone: { businessId, phone } },
-        create: { businessId, name, phone, email: (updateData.clientEmail as string) ?? null },
-        update: { name, ...(updateData.clientEmail !== undefined ? { email: updateData.clientEmail as string } : {}) },
+        create: {
+          businessId,
+          name,
+          phone,
+          email: (data.clientEmail as string) ?? null,
+        },
+        update: {
+          name,
+          ...(data.clientEmail !== undefined ? { email: data.clientEmail } : {}),
+        },
       })
-      updateData.clientId = client.id
+      data.clientId = client.id
       try {
         const { addClientPhoneToDirectory } = await import('@/lib/services/management-center')
         await addClientPhoneToDirectory(phone, businessId, client.id, name)
       } catch {
-        // ignore
+        // non-blocking
       }
+    } catch {
+      return NextResponse.json({ error: 'Invalid client data' }, { status: 400 })
     }
+  }
 
+  try {
     const updated = await prisma.appointment.update({
       where: { id: appointmentId },
-      data: updateData as Record<string, unknown>,
+      data,
     })
     return NextResponse.json(updated)
   } catch {
@@ -147,38 +199,26 @@ export async function DELETE(
   request: Request,
   context: { params: Promise<{ id: string }> | { id: string } }
 ) {
-  let id: string
-  let businessId: string | null = null
-  try {
-    const params = context.params
-    const resolved = typeof (params as Promise<unknown>)?.then === 'function'
-      ? await (params as Promise<{ id?: string }>)
-      : (params as { id?: string })
-    id = resolved?.id ?? ''
-    if (!id) return NextResponse.json({ error: 'Appointment ID is required' }, { status: 400 })
-
-    businessId = new URL(request.url).searchParams.get('businessId')
-    if (!businessId) {
-      try {
-        const body = await request.json().catch(() => ({}))
-        businessId = (body as { businessId?: string }).businessId ?? null
-      } catch {
-        // ignore
-      }
-    }
-  } catch {
-    return NextResponse.json({ error: 'Bad request' }, { status: 400 })
+  const params = await resolveParams(context)
+  if (!params?.id) {
+    return NextResponse.json({ error: 'Appointment ID is required' }, { status: 400 })
   }
+  const id = params.id
 
+  let businessId: string | null = new URL(request.url).searchParams.get('businessId')
+  if (!businessId) {
+    const body = await getBody(request)
+    businessId = body ? getBusinessId(request, body) : null
+  }
   if (!businessId) {
     return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
   }
 
-  const existing = await prisma.appointment.findFirst({
+  const exists = await prisma.appointment.findFirst({
     where: { id, businessId },
     select: { id: true },
   })
-  if (!existing) {
+  if (!exists) {
     return NextResponse.json({ error: 'Appointment not found or access denied' }, { status: 404 })
   }
 
