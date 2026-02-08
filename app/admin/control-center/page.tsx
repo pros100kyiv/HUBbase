@@ -76,6 +76,7 @@ export default function ControlCenterPage() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'inactive'>('all')
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
+  const [refreshTrigger, setRefreshTrigger] = useState(0)
 
   // Перевірка авторизації
   useEffect(() => {
@@ -121,24 +122,10 @@ export default function ControlCenterPage() {
     }
   }, [page, search, statusFilter, isAuthorized])
 
-  // Оновлення даних у реальному часі: інтервал + при поверненні на вкладку
-  useEffect(() => {
-    if (!isAuthorized) return
-
-    const REFRESH_INTERVAL_MS = 15_000 // 15 секунд
-
-    const intervalId = setInterval(loadData, REFRESH_INTERVAL_MS)
-
-    const onVisibilityChange = () => {
-      if (document.visibilityState === 'visible') loadData()
-    }
-    document.addEventListener('visibilitychange', onVisibilityChange)
-
-    return () => {
-      clearInterval(intervalId)
-      document.removeEventListener('visibilitychange', onVisibilityChange)
-    }
-  }, [isAuthorized, page, search, statusFilter])
+  const handleRefresh = () => {
+    loadData()
+    setRefreshTrigger((t) => t + 1)
+  }
 
   const loadData = async () => {
     setLoading(true)
@@ -211,8 +198,9 @@ export default function ControlCenterPage() {
 
   return (
     <div className="min-h-screen p-4 md:p-6" style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}>
+      <div className="max-w-7xl mx-auto w-full">
       {/* Live Stats Bar */}
-      <LiveStatsBar />
+      <LiveStatsBar refreshTrigger={refreshTrigger} />
 
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -226,7 +214,7 @@ export default function ControlCenterPage() {
         </div>
         <button
           type="button"
-          onClick={() => loadData()}
+          onClick={handleRefresh}
           disabled={loading}
           className="px-4 py-2 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 transition-colors font-medium"
         >
@@ -283,7 +271,7 @@ export default function ControlCenterPage() {
         )}
 
         {activeTab === 'activity' && (
-          <ActivityTab />
+          <ActivityTab refreshTrigger={refreshTrigger} />
         )}
 
         {activeTab === 'graph' && (
@@ -295,7 +283,7 @@ export default function ControlCenterPage() {
         )}
 
         {activeTab === 'integrations' && (
-          <IntegrationsTab />
+          <IntegrationsTab refreshTrigger={refreshTrigger} />
         )}
 
         {activeTab === 'security' && (
@@ -303,7 +291,7 @@ export default function ControlCenterPage() {
         )}
 
         {activeTab === 'finances' && (
-          <FinancesTab />
+          <FinancesTab refreshTrigger={refreshTrigger} />
         )}
 
         {activeTab === 'clients' && (
@@ -311,7 +299,7 @@ export default function ControlCenterPage() {
         )}
 
         {activeTab === 'admins' && (
-          <AdminsTab />
+          <AdminsTab refreshTrigger={refreshTrigger} />
         )}
 
         {activeTab === 'settings' && (
@@ -322,12 +310,13 @@ export default function ControlCenterPage() {
           <ExportTab />
         )}
       </div>
+      </div>
     </div>
   )
 }
 
-// Live Stats Bar - реальний час
-function LiveStatsBar() {
+// Live Stats Bar — оновлюється при натисканні кнопки «Оновити»
+function LiveStatsBar({ refreshTrigger }: { refreshTrigger?: number }) {
   const [realtimeStats, setRealtimeStats] = useState<{
     total: number
     online: number
@@ -355,11 +344,8 @@ function LiveStatsBar() {
         setLoading(false)
       }
     }
-
     fetchStats()
-    const interval = setInterval(fetchStats, 3000) // кожні 3 сек
-    return () => clearInterval(interval)
-  }, [])
+  }, [refreshTrigger])
 
   if (loading && !realtimeStats) {
     return (
@@ -418,7 +404,7 @@ function LiveStatsBar() {
 // Overview Tab Component
 function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
   if (loading) {
-    return <div className="text-center py-12">Завантаження...</div>
+    return <div className="text-center py-12 text-white">Завантаження...</div>
   }
 
   const cards = [
@@ -426,43 +412,45 @@ function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
       title: 'Всього бізнесів',
       value: stats?.total || 0,
       icon: BuildingIcon,
-      color: 'blue',
+      colorClass: 'text-blue-400',
     },
     {
       title: 'Активні',
       value: stats?.active || 0,
       icon: CheckIcon,
-      color: 'green',
+      colorClass: 'text-green-400',
     },
     {
       title: 'Неактивні',
       value: stats?.inactive || 0,
       icon: XIcon,
-      color: 'red',
+      colorClass: 'text-red-400',
     },
     {
       title: 'Через Telegram',
       value: stats?.telegram || 0,
       icon: PhoneIcon,
-      color: 'purple',
+      colorClass: 'text-purple-400',
     },
     {
       title: 'Через Google',
       value: stats?.google || 0,
       icon: UsersIcon,
-      color: 'orange',
+      colorClass: 'text-orange-400',
     },
     {
       title: 'Стандартна реєстрація',
       value: stats?.standard || 0,
       icon: BuildingIcon,
-      color: 'gray',
+      colorClass: 'text-gray-400',
     },
   ]
 
+  const byNiche = (stats?.byNiche || []) as Array<{ niche: string; _count: number }>
+
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6 text-white">
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-white">
         Статистика системи
       </h2>
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -474,7 +462,7 @@ function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
               className="card-glass rounded-xl p-6"
             >
               <div className="flex items-center justify-between mb-4">
-                <Icon className={`w-8 h-8 text-${card.color}-500`} />
+                <Icon className={`w-8 h-8 ${card.colorClass}`} />
                 <span className="text-3xl font-black text-white">
                   {card.value}
                 </span>
@@ -486,6 +474,19 @@ function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
           )
         })}
       </div>
+      {byNiche.length > 0 && (
+        <div>
+          <h3 className="text-lg font-semibold text-white mb-4">За нішею</h3>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+            {byNiche.map((n: { niche: string; _count: number }) => (
+              <div key={n.niche || 'empty'} className="card-glass rounded-lg p-4">
+                <div className="text-lg font-bold text-white">{n._count}</div>
+                <div className="text-sm text-gray-400">{n.niche || 'Інше'}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -1139,10 +1140,8 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
   )
 }
 
-const TAB_REFRESH_INTERVAL_MS = 15_000
-
 // Phones Tab Component
-function PhonesTab() {
+function PhonesTab({ refreshTrigger }: { refreshTrigger?: number }) {
   const [phones, setPhones] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [category, setCategory] = useState<'all' | 'BUSINESS' | 'CLIENT'>('all')
@@ -1150,17 +1149,7 @@ function PhonesTab() {
 
   useEffect(() => {
     loadPhones()
-  }, [category, search])
-
-  useEffect(() => {
-    const intervalId = setInterval(loadPhones, TAB_REFRESH_INTERVAL_MS)
-    const onVisibility = () => { if (document.visibilityState === 'visible') loadPhones() }
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => {
-      clearInterval(intervalId)
-      document.removeEventListener('visibilitychange', onVisibility)
-    }
-  }, [category, search])
+  }, [category, search, refreshTrigger])
 
   const loadPhones = async () => {
     setLoading(true)
@@ -1184,16 +1173,16 @@ function PhonesTab() {
   }
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6 text-white">
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-white">
         Телефонний довідник
       </h2>
       
-      <div className="mb-6 flex gap-4">
+      <div className="mb-6 flex flex-wrap gap-4">
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value as any)}
-          className="px-4 py-2 border border-white/10 rounded-lg"
+          className="px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white"
         >
           <option value="all">Всі категорії</option>
           <option value="BUSINESS">Бізнеси</option>
@@ -1205,44 +1194,46 @@ function PhonesTab() {
           placeholder="Пошук по номеру..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 px-4 py-2 border border-white/10 rounded-lg"
+          className="flex-1 min-w-[200px] px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white placeholder-gray-400"
         />
       </div>
 
       {loading ? (
-        <div className="text-center py-12">Завантаження...</div>
+        <div className="text-center py-12 text-white">Завантаження...</div>
+      ) : phones.length === 0 ? (
+        <div className="text-center py-12 text-gray-400">Немає номерів у довіднику</div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/10">
-                <th className="text-left py-3 px-4">Номер</th>
-                <th className="text-left py-3 px-4">Категорія</th>
-                <th className="text-left py-3 px-4">Назва</th>
-                <th className="text-left py-3 px-4">Статус</th>
-                <th className="text-left py-3 px-4">Останнє використання</th>
+                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Номер</th>
+                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Категорія</th>
+                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Назва</th>
+                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Статус</th>
+                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Останнє використання</th>
               </tr>
             </thead>
             <tbody>
               {phones.map((phone: any) => (
                 <tr key={phone.id} className="border-b border-white/10 hover:bg-white/5">
-                  <td className="py-3 px-4 font-medium">{phone.phone}</td>
+                  <td className="py-3 px-4 font-medium text-white">{phone.phone}</td>
                   <td className="py-3 px-4">
                     <span className={`px-2 py-1 rounded text-xs ${
-                      phone.category === 'BUSINESS' ? 'bg-blue-100 text-blue-800' : 'bg-green-100 text-green-800'
+                      phone.category === 'BUSINESS' ? 'bg-blue-500/20 text-blue-300' : 'bg-green-500/20 text-green-300'
                     }`}>
                       {phone.category === 'BUSINESS' ? 'Бізнес' : 'Клієнт'}
                     </span>
                   </td>
-                  <td className="py-3 px-4">{phone.businessName || phone.clientName || '-'}</td>
+                  <td className="py-3 px-4 text-gray-300">{phone.businessName || phone.clientName || '-'}</td>
                   <td className="py-3 px-4">
                     {phone.isActive ? (
-                      <span className="px-2 py-1 rounded text-xs bg-green-100 text-green-800">Активний</span>
+                      <span className="px-2 py-1 rounded text-xs bg-green-500/20 text-green-300">Активний</span>
                     ) : (
-                      <span className="px-2 py-1 rounded text-xs bg-red-100 text-red-800">Неактивний</span>
+                      <span className="px-2 py-1 rounded text-xs bg-red-500/20 text-red-300">Неактивний</span>
                     )}
                   </td>
-                  <td className="py-3 px-4 text-sm text-gray-600">
+                  <td className="py-3 px-4 text-sm text-gray-400">
                     {phone.lastUsedAt ? format(new Date(phone.lastUsedAt), 'dd.MM.yyyy', { locale: uk }) : 'Ніколи'}
                   </td>
                 </tr>
@@ -1256,24 +1247,14 @@ function PhonesTab() {
 }
 
 // Activity Tab Component
-function ActivityTab() {
+function ActivityTab({ refreshTrigger }: { refreshTrigger?: number }) {
   const [logs, setLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [actionType, setActionType] = useState<string>('all')
 
   useEffect(() => {
     loadLogs()
-  }, [actionType])
-
-  useEffect(() => {
-    const intervalId = setInterval(loadLogs, TAB_REFRESH_INTERVAL_MS)
-    const onVisibility = () => { if (document.visibilityState === 'visible') loadLogs() }
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => {
-      clearInterval(intervalId)
-      document.removeEventListener('visibilitychange', onVisibility)
-    }
-  }, [actionType])
+  }, [actionType, refreshTrigger])
 
   const loadLogs = async () => {
     setLoading(true)
@@ -1296,8 +1277,8 @@ function ActivityTab() {
   }
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6 text-white">
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-white">
         Архів дій
       </h2>
       
@@ -1305,7 +1286,7 @@ function ActivityTab() {
         <select
           value={actionType}
           onChange={(e) => setActionType(e.target.value)}
-          className="px-4 py-2 border border-white/10 rounded-lg"
+          className="px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white"
         >
           <option value="all">Всі дії</option>
           <option value="business_created">Створення бізнесу</option>
@@ -1315,24 +1296,26 @@ function ActivityTab() {
       </div>
 
       {loading ? (
-        <div className="text-center py-12">Завантаження...</div>
+        <div className="text-center py-12 text-white">Завантаження...</div>
+      ) : logs.length === 0 ? (
+        <div className="text-center py-12 text-gray-400">Немає записів в архіві</div>
       ) : (
         <div className="space-y-4">
           {logs.map((log: any, index: number) => (
-            <div key={index} className="border border-white/10 rounded-lg p-4">
-              <div className="flex justify-between items-start">
+            <div key={index} className="border border-white/10 rounded-lg p-4 card-glass">
+              <div className="flex justify-between items-start gap-4">
                 <div>
-                  <div className="font-medium">{log.action_type}</div>
-                  <div className="text-sm text-gray-600">
+                  <div className="font-medium text-white">{log.action_type}</div>
+                  <div className="text-sm text-gray-400">
                     Бізнес: {log.business_name || log.business_id}
                   </div>
                   {log.client_name && (
-                    <div className="text-sm text-gray-600">
+                    <div className="text-sm text-gray-400">
                       Клієнт: {log.client_name} ({log.client_phone})
                     </div>
                   )}
                 </div>
-                <div className="text-sm text-gray-500">
+                <div className="text-sm text-gray-500 shrink-0">
                   {format(new Date(log.created_at), 'dd.MM.yyyy HH:mm', { locale: uk })}
                 </div>
               </div>
@@ -1347,36 +1330,32 @@ function ActivityTab() {
 // Graph Tab Component
 function GraphTab() {
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6 text-white">
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-white">
         Граф зв'язків
       </h2>
-      <p className="text-gray-300">
-        Візуалізація зв'язків між бізнесами, клієнтами та майстрами (в розробці)
-      </p>
+      <div className="card-glass rounded-xl p-8 text-center">
+        <LinkIcon className="w-16 h-16 mx-auto mb-4 text-blue-400/50" />
+        <p className="text-gray-300 mb-2">
+          Візуалізація зв'язків між бізнесами, клієнтами та майстрами
+        </p>
+        <p className="text-sm text-gray-500">
+          Модуль у розробці. Тут буде інтерактивний граф: бізнеси — майстри — клієнти — записи.
+        </p>
+      </div>
     </div>
   )
 }
 
 // Analytics Tab Component
-function AnalyticsTab({ stats }: { stats: any }) {
+function AnalyticsTab({ stats, refreshTrigger }: { stats: any; refreshTrigger?: number }) {
   const [analytics, setAnalytics] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year'>('month')
 
   useEffect(() => {
     loadAnalytics()
-  }, [period])
-
-  useEffect(() => {
-    const intervalId = setInterval(loadAnalytics, TAB_REFRESH_INTERVAL_MS)
-    const onVisibility = () => { if (document.visibilityState === 'visible') loadAnalytics() }
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => {
-      clearInterval(intervalId)
-      document.removeEventListener('visibilitychange', onVisibility)
-    }
-  }, [period])
+  }, [period, refreshTrigger])
 
   const loadAnalytics = async () => {
     setLoading(true)
@@ -1396,19 +1375,19 @@ function AnalyticsTab({ stats }: { stats: any }) {
   }
 
   if (loading) {
-    return <div className="text-center py-12">Завантаження...</div>
+    return <div className="text-center py-12 text-white">Завантаження...</div>
   }
 
   return (
-    <div>
-      <div className="mb-6 flex justify-between items-center">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <h2 className="text-2xl font-bold text-white">
           Аналітика
         </h2>
         <select
           value={period}
           onChange={(e) => setPeriod(e.target.value as any)}
-          className="px-4 py-2 border border-white/10 rounded-lg"
+          className="px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white"
         >
           <option value="day">День</option>
           <option value="week">Тиждень</option>
@@ -1417,44 +1396,36 @@ function AnalyticsTab({ stats }: { stats: any }) {
         </select>
       </div>
 
-      {analytics && (
+      {analytics ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <div className="bg-white/5 rounded-lg p-6">
-            <div className="text-sm text-gray-300 mb-2">Всього бізнесів</div>
-            <div className="text-3xl font-bold">{analytics.overview?.totalBusinesses || 0}</div>
+          <div className="card-glass rounded-xl p-6">
+            <div className="text-sm text-gray-400 mb-2">Всього бізнесів</div>
+            <div className="text-3xl font-bold text-white">{analytics.overview?.totalBusinesses || 0}</div>
           </div>
-          <div className="bg-white/5 rounded-lg p-6">
-            <div className="text-sm text-gray-300 mb-2">Активні</div>
-            <div className="text-3xl font-bold">{analytics.overview?.activeBusinesses || 0}</div>
+          <div className="card-glass rounded-xl p-6">
+            <div className="text-sm text-gray-400 mb-2">Активні</div>
+            <div className="text-3xl font-bold text-white">{analytics.overview?.activeBusinesses || 0}</div>
           </div>
-          <div className="bg-white/5 rounded-lg p-6">
-            <div className="text-sm text-gray-300 mb-2">Реєстрацій за період</div>
-            <div className="text-3xl font-bold">{analytics.registrations?.total || 0}</div>
+          <div className="card-glass rounded-xl p-6">
+            <div className="text-sm text-gray-400 mb-2">Реєстрацій за період</div>
+            <div className="text-3xl font-bold text-white">{analytics.registrations?.total || 0}</div>
           </div>
         </div>
+      ) : (
+        <div className="text-center py-12 text-gray-400">Немає даних аналітики</div>
       )}
     </div>
   )
 }
 
 // Integrations Tab Component
-function IntegrationsTab() {
+function IntegrationsTab({ refreshTrigger }: { refreshTrigger?: number }) {
   const [integrations, setIntegrations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     loadIntegrations()
-  }, [])
-
-  useEffect(() => {
-    const intervalId = setInterval(loadIntegrations, TAB_REFRESH_INTERVAL_MS)
-    const onVisibility = () => { if (document.visibilityState === 'visible') loadIntegrations() }
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => {
-      clearInterval(intervalId)
-      document.removeEventListener('visibilitychange', onVisibility)
-    }
-  }, [])
+  }, [refreshTrigger])
 
   const loadIntegrations = async () => {
     setLoading(true)
@@ -1474,28 +1445,33 @@ function IntegrationsTab() {
   }
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6 text-white">
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-white">
         Інтеграції
       </h2>
       {loading ? (
-        <div className="text-center py-12">Завантаження...</div>
+        <div className="text-center py-12 text-white">Завантаження...</div>
+      ) : integrations.length === 0 ? (
+        <div className="card-glass rounded-xl p-8 text-center">
+          <LinkIcon className="w-16 h-16 mx-auto mb-4 text-gray-400/50" />
+          <p className="text-gray-400">Немає активних інтеграцій</p>
+        </div>
       ) : (
         <div className="space-y-4">
           {integrations.map((integration: any) => (
-            <div key={integration.id} className="border border-white/10 rounded-lg p-4">
-              <div className="flex justify-between items-center">
+            <div key={integration.id} className="border border-white/10 rounded-lg p-4 card-glass">
+              <div className="flex justify-between items-center flex-wrap gap-4">
                 <div>
-                  <div className="font-medium">{integration.platform}</div>
-                  <div className="text-sm text-gray-600">
+                  <div className="font-medium text-white">{integration.platform}</div>
+                  <div className="text-sm text-gray-400">
                     {integration.business?.name || 'Невідомий бізнес'}
                   </div>
                 </div>
                 <div>
                   {integration.isConnected ? (
-                    <span className="px-2 py-1 rounded text-xs bg-green-100 text-green-800">Підключено</span>
+                    <span className="px-2 py-1 rounded text-xs bg-green-500/20 text-green-300">Підключено</span>
                   ) : (
-                    <span className="px-2 py-1 rounded text-xs bg-red-100 text-red-800">Відключено</span>
+                    <span className="px-2 py-1 rounded text-xs bg-red-500/20 text-red-300">Відключено</span>
                   )}
                 </div>
               </div>
@@ -1510,36 +1486,37 @@ function IntegrationsTab() {
 // Security Tab Component
 function SecurityTab() {
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6 text-white">
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-white">
         Безпека
       </h2>
-      <p className="text-gray-300">
-        Управління безпекою та доступом (в розробці)
-      </p>
+      <div className="card-glass rounded-xl p-8 text-center">
+        <ShieldIcon className="w-16 h-16 mx-auto mb-4 text-green-400/50" />
+        <p className="text-gray-300 mb-2">
+          Управління безпекою та доступом
+        </p>
+        <p className="text-sm text-gray-500 mb-4">
+          Модуль у розробці. Планується: аудит логів, 2FA, обмеження IP, сесії.
+        </p>
+        <div className="text-left max-w-md mx-auto text-sm text-gray-400 space-y-1">
+          <p>• JWT токени для авторизації</p>
+          <p>• RLS для ізоляції даних бізнесів</p>
+          <p>• Ролі: SUPER_ADMIN, ADMIN, VIEWER</p>
+        </div>
+      </div>
     </div>
   )
 }
 
 // Finances Tab Component
-function FinancesTab() {
+function FinancesTab({ refreshTrigger }: { refreshTrigger?: number }) {
   const [finances, setFinances] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year'>('month')
 
   useEffect(() => {
     loadFinances()
-  }, [period])
-
-  useEffect(() => {
-    const intervalId = setInterval(loadFinances, TAB_REFRESH_INTERVAL_MS)
-    const onVisibility = () => { if (document.visibilityState === 'visible') loadFinances() }
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => {
-      clearInterval(intervalId)
-      document.removeEventListener('visibilitychange', onVisibility)
-    }
-  }, [period])
+  }, [period, refreshTrigger])
 
   const loadFinances = async () => {
     setLoading(true)
@@ -1568,19 +1545,19 @@ function FinancesTab() {
   }
 
   if (loading) {
-    return <div className="text-center py-12">Завантаження...</div>
+    return <div className="text-center py-12 text-white">Завантаження...</div>
   }
 
   return (
-    <div>
-      <div className="mb-6 flex justify-between items-center">
+    <div className="space-y-6">
+      <div className="flex justify-between items-center flex-wrap gap-4">
         <h2 className="text-2xl font-bold text-white">
           Фінанси
         </h2>
         <select
           value={period}
           onChange={(e) => setPeriod(e.target.value as any)}
-          className="px-4 py-2 border border-white/10 rounded-lg"
+          className="px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white"
         >
           <option value="day">День</option>
           <option value="week">Тиждень</option>
@@ -1589,55 +1566,49 @@ function FinancesTab() {
         </select>
       </div>
 
-      {finances && (
+      {finances ? (
         <div className="space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="bg-white/5 rounded-lg p-6">
-              <div className="text-sm text-gray-300 mb-2">Загальний дохід</div>
-              <div className="text-3xl font-bold">{formatCurrency(finances.totalRevenue || 0)}</div>
+            <div className="card-glass rounded-xl p-6">
+              <div className="text-sm text-gray-400 mb-2">Загальний дохід</div>
+              <div className="text-3xl font-bold text-white">{formatCurrency(finances.totalRevenue || 0)}</div>
             </div>
-            <div className="bg-white/5 rounded-lg p-6">
-              <div className="text-sm text-gray-300 mb-2">Всього платежів</div>
-              <div className="text-3xl font-bold">{finances.totalPayments || 0}</div>
+            <div className="card-glass rounded-xl p-6">
+              <div className="text-sm text-gray-400 mb-2">Всього платежів</div>
+              <div className="text-3xl font-bold text-white">{finances.totalPayments || 0}</div>
             </div>
           </div>
 
-          <div>
-            <h3 className="text-xl font-bold mb-4">Топ бізнеси за доходами</h3>
-            <div className="space-y-2">
-              {finances.topBusinesses?.map((business: any, index: number) => (
-                <div key={index} className="flex justify-between items-center border-b border-white/10 py-2">
-                  <div>{business.businessName}</div>
-                  <div className="font-bold">{formatCurrency(business.revenue)}</div>
-                </div>
-              ))}
+          {finances.topBusinesses?.length > 0 && (
+            <div>
+              <h3 className="text-xl font-bold mb-4 text-white">Топ бізнеси за доходами</h3>
+              <div className="space-y-2">
+                {finances.topBusinesses.map((business: any, index: number) => (
+                  <div key={index} className="flex justify-between items-center border-b border-white/10 py-2">
+                    <div className="text-gray-300">{business.businessName}</div>
+                    <div className="font-bold text-white">{formatCurrency(business.revenue)}</div>
+                  </div>
+                ))}
+              </div>
             </div>
-          </div>
+          )}
         </div>
+      ) : (
+        <div className="text-center py-12 text-gray-400">Немає фінансових даних</div>
       )}
     </div>
   )
 }
 
 // Clients Tab Component
-function ClientsTab() {
+function ClientsTab({ refreshTrigger }: { refreshTrigger?: number }) {
   const [clients, setClients] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
 
   useEffect(() => {
     loadClients()
-  }, [search])
-
-  useEffect(() => {
-    const intervalId = setInterval(loadClients, TAB_REFRESH_INTERVAL_MS)
-    const onVisibility = () => { if (document.visibilityState === 'visible') loadClients() }
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => {
-      clearInterval(intervalId)
-      document.removeEventListener('visibilitychange', onVisibility)
-    }
-  }, [search])
+  }, [search, refreshTrigger])
 
   const loadClients = async () => {
     setLoading(true)
@@ -1660,8 +1631,8 @@ function ClientsTab() {
   }
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6 text-white">
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-white">
         Клієнти
       </h2>
       
@@ -1671,32 +1642,34 @@ function ClientsTab() {
           placeholder="Пошук клієнтів..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-4 py-2 border border-white/10 rounded-lg"
+          className="w-full px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white placeholder-gray-400"
         />
       </div>
 
       {loading ? (
-        <div className="text-center py-12">Завантаження...</div>
+        <div className="text-center py-12 text-white">Завантаження...</div>
+      ) : clients.length === 0 ? (
+        <div className="text-center py-12 text-gray-400">Немає клієнтів</div>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead>
               <tr className="border-b border-white/10">
-                <th className="text-left py-3 px-4">Ім'я</th>
-                <th className="text-left py-3 px-4">Телефон</th>
-                <th className="text-left py-3 px-4">Бізнес</th>
-                <th className="text-left py-3 px-4">Візитів</th>
-                <th className="text-left py-3 px-4">Витрачено</th>
+                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Ім'я</th>
+                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Телефон</th>
+                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Бізнес</th>
+                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Візитів</th>
+                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Витрачено</th>
               </tr>
             </thead>
             <tbody>
               {clients.map((client: any) => (
                 <tr key={client.id} className="border-b border-white/10 hover:bg-white/5">
-                  <td className="py-3 px-4 font-medium">{client.name}</td>
-                  <td className="py-3 px-4">{client.phone}</td>
-                  <td className="py-3 px-4">{client.business?.name || '-'}</td>
-                  <td className="py-3 px-4">{client.appointments?.length || 0}</td>
-                  <td className="py-3 px-4">
+                  <td className="py-3 px-4 font-medium text-white">{client.name}</td>
+                  <td className="py-3 px-4 text-gray-300">{client.phone}</td>
+                  <td className="py-3 px-4 text-gray-300">{client.business?.name || '-'}</td>
+                  <td className="py-3 px-4 text-gray-300">{client.appointments?.length || 0}</td>
+                  <td className="py-3 px-4 text-white font-medium">
                     {new Intl.NumberFormat('uk-UA', {
                       style: 'currency',
                       currency: 'UAH',
@@ -1716,19 +1689,29 @@ function ClientsTab() {
 // Settings Tab Component
 function SettingsTab() {
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6 text-white">
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-white">
         Налаштування Центру управління
       </h2>
-      <p className="text-gray-300">
-        Системні налаштування (в розробці)
-      </p>
+      <div className="card-glass rounded-xl p-8 text-center">
+        <SettingsIcon className="w-16 h-16 mx-auto mb-4 text-gray-400/50" />
+        <p className="text-gray-300 mb-2">
+          Системні налаштування
+        </p>
+        <p className="text-sm text-gray-500 mb-4">
+          Модуль у розробці. Планується: теми, частота оновлень, формати експорту, webhook.
+        </p>
+        <div className="text-left max-w-md mx-auto text-sm text-gray-400 space-y-1">
+          <p>• Оновлення даних: кожні 15 сек</p>
+          <p>• Live Stats Bar: кожні 3 сек</p>
+        </div>
+      </div>
     </div>
   )
 }
 
 // Admins Tab Component
-function AdminsTab() {
+function AdminsTab({ refreshTrigger }: { refreshTrigger?: number }) {
   const [admins, setAdmins] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [showCreateModal, setShowCreateModal] = useState(false)
@@ -1758,17 +1741,7 @@ function AdminsTab() {
 
   useEffect(() => {
     loadAdmins()
-  }, [search, roleFilter])
-
-  useEffect(() => {
-    const intervalId = setInterval(loadAdmins, TAB_REFRESH_INTERVAL_MS)
-    const onVisibility = () => { if (document.visibilityState === 'visible') loadAdmins() }
-    document.addEventListener('visibilitychange', onVisibility)
-    return () => {
-      clearInterval(intervalId)
-      document.removeEventListener('visibilitychange', onVisibility)
-    }
-  }, [search, roleFilter])
+  }, [search, roleFilter, refreshTrigger])
 
   const loadAdmins = async () => {
     setLoading(true)
@@ -2139,8 +2112,10 @@ function AdminsTab() {
 function ExportTab() {
   const [exportFormat, setExportFormat] = useState<'csv' | 'excel' | 'json'>('csv')
   const [exportType, setExportType] = useState<'businesses' | 'clients' | 'phones' | 'all'>('businesses')
+  const [exporting, setExporting] = useState(false)
 
   const handleExport = async () => {
+    setExporting(true)
     try {
       const response = await fetch(`/api/admin/export?format=${exportFormat}&type=${exportType}`, {
         headers: getAuthHeaders(),
@@ -2149,26 +2124,28 @@ function ExportTab() {
       const url = window.URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
-      a.download = `export.${exportFormat}`
+      a.download = `export-${exportType}-${new Date().toISOString().split('T')[0]}.${exportFormat}`
       a.click()
     } catch (error) {
       console.error('Error exporting:', error)
+    } finally {
+      setExporting(false)
     }
   }
 
   return (
-    <div>
-      <h2 className="text-2xl font-bold mb-6 text-white">
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold text-white">
         Експорт/Імпорт даних
       </h2>
       
-      <div className="space-y-4">
+      <div className="card-glass rounded-xl p-6 max-w-md space-y-4">
         <div>
-          <label className="block mb-2">Формат експорту</label>
+          <label className="block mb-2 text-gray-300">Формат експорту</label>
           <select
             value={exportFormat}
             onChange={(e) => setExportFormat(e.target.value as any)}
-            className="w-full px-4 py-2 border border-white/10 rounded-lg"
+            className="w-full px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white"
           >
             <option value="csv">CSV</option>
             <option value="excel">Excel</option>
@@ -2177,11 +2154,11 @@ function ExportTab() {
         </div>
 
         <div>
-          <label className="block mb-2">Тип даних</label>
+          <label className="block mb-2 text-gray-300">Тип даних</label>
           <select
             value={exportType}
             onChange={(e) => setExportType(e.target.value as any)}
-            className="w-full px-4 py-2 border border-white/10 rounded-lg"
+            className="w-full px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white"
           >
             <option value="businesses">Бізнеси</option>
             <option value="clients">Клієнти</option>
@@ -2192,9 +2169,11 @@ function ExportTab() {
 
         <button
           onClick={handleExport}
-          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          disabled={exporting}
+          className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-2"
         >
-          Експортувати
+          <DownloadIcon className="w-5 h-5" />
+          {exporting ? 'Експорт...' : 'Експортувати'}
         </button>
       </div>
     </div>
