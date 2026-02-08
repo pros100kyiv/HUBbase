@@ -1,12 +1,21 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-
-export const dynamic = 'force-dynamic'
 import { verifyAdminToken } from '@/lib/middleware/admin-auth'
 
-/** Хвилини для визначення статусу */
-const PAGE_ONLINE_MINUTES = 2   // heartbeat за останні 2 хв = сторінка відкрита (онлайн)
-const IDLE_MINUTES = 60        // 2–60 хв = в простої, >60 хв = офлайн
+export const dynamic = 'force-dynamic'
+
+const PAGE_ONLINE_MINUTES = 2
+const IDLE_MINUTES = 60
+
+const EMPTY_STATS = {
+  total: 0,
+  online: 0,
+  idle: 0,
+  offline: 0,
+  newToday: 0,
+  blocked: 0,
+  updatedAt: new Date().toISOString(),
+}
 
 export async function GET(request: Request) {
   const auth = verifyAdminToken(request as any)
@@ -20,45 +29,25 @@ export async function GET(request: Request) {
     const idleThreshold = new Date(now.getTime() - IDLE_MINUTES * 60 * 1000)
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
 
-    const [
-      total,
-      online,
-      idle,
-      offlineNever,
-      newToday,
-      blocked,
-    ] = await Promise.all([
+    const [total, online, idle, offlineNever, newToday, blocked] = await Promise.all([
       prisma.business.count(),
       prisma.managementCenter.count({
+        where: { lastSeenAt: { gte: pageOnlineThreshold }, isActive: true },
+      }),
+      prisma.managementCenter.count({
         where: {
-          lastSeenAt: { gte: pageOnlineThreshold },
+          lastSeenAt: { gte: idleThreshold, lt: pageOnlineThreshold },
           isActive: true,
         },
       }),
       prisma.managementCenter.count({
         where: {
-          lastSeenAt: {
-            gte: idleThreshold,
-            lt: pageOnlineThreshold,
-          },
+          OR: [{ lastSeenAt: null }, { lastSeenAt: { lt: idleThreshold } }],
           isActive: true,
         },
       }),
-      prisma.managementCenter.count({
-        where: {
-          OR: [
-            { lastSeenAt: null },
-            { lastSeenAt: { lt: idleThreshold } },
-          ],
-          isActive: true,
-        },
-      }),
-      prisma.business.count({
-        where: { createdAt: { gte: todayStart } },
-      }),
-      prisma.business.count({
-        where: { isActive: false },
-      }),
+      prisma.business.count({ where: { createdAt: { gte: todayStart } } }),
+      prisma.business.count({ where: { isActive: false } }),
     ])
 
     return NextResponse.json({
@@ -71,7 +60,7 @@ export async function GET(request: Request) {
       updatedAt: now.toISOString(),
     })
   } catch (error) {
-    console.error('Error fetching realtime stats:', error)
-    return NextResponse.json({ error: 'Помилка отримання статистики' }, { status: 500 })
+    console.error('Realtime stats error:', error)
+    return NextResponse.json(EMPTY_STATS, { status: 200 })
   }
 }

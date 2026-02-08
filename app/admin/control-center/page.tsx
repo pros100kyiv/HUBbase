@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { format, formatDistanceToNow } from 'date-fns'
 import { uk } from 'date-fns/locale'
@@ -78,6 +78,17 @@ export default function ControlCenterPage() {
   const [totalPages, setTotalPages] = useState(1)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [syncing, setSyncing] = useState(false)
+  const [loadError, setLoadError] = useState<string | null>(null)
+
+  const defaultStats = {
+    total: 0,
+    active: 0,
+    inactive: 0,
+    telegram: 0,
+    google: 0,
+    standard: 0,
+    byNiche: [] as Array<{ niche: string; _count: number }>,
+  }
 
   // Перевірка авторизації
   useEffect(() => {
@@ -85,6 +96,7 @@ export default function ControlCenterPage() {
       const token = localStorage.getItem('adminToken')
       
       if (!token) {
+        setIsLoadingAuth(false)
         router.push('/admin/login')
         return
       }
@@ -128,6 +140,12 @@ export default function ControlCenterPage() {
     setRefreshTrigger((t) => t + 1)
   }
 
+  // Оновлює дані + Live Stats Bar + статистику після блок/видалення
+  const handleDataChanged = async () => {
+    await loadData()
+    setRefreshTrigger((t) => t + 1)
+  }
+
   const handleSync = async () => {
     setSyncing(true)
     try {
@@ -138,8 +156,7 @@ export default function ControlCenterPage() {
       })
       const data = await response.json()
       if (response.ok) {
-        await loadData()
-        setRefreshTrigger((t) => t + 1)
+        await handleDataChanged()
       } else {
         alert(data.error || 'Помилка синхронізації')
       }
@@ -153,6 +170,7 @@ export default function ControlCenterPage() {
 
   const loadData = async () => {
     setLoading(true)
+    setLoadError(null)
     try {
       const token = localStorage.getItem('adminToken')
       if (!token) {
@@ -172,7 +190,13 @@ export default function ControlCenterPage() {
         headers: getAuthHeaders(),
         cache: 'no-store',
       })
-      const data = await response.json()
+
+      let data: { businesses?: Business[]; stats?: typeof defaultStats; pagination?: { totalPages?: number }; error?: string }
+      try {
+        data = await response.json()
+      } catch {
+        throw new Error('Не вдалося прочитати відповідь сервера')
+      }
 
       if (response.status === 401) {
         localStorage.removeItem('adminToken')
@@ -180,15 +204,21 @@ export default function ControlCenterPage() {
         router.push('/admin/login')
         return
       }
-      if (response.ok) {
-        setBusinesses(data.businesses || [])
-        setStats(data.stats || {})
-        setTotalPages(data.pagination?.totalPages || 1)
-      } else if (data.error) {
-        console.error('Control center error:', data.error)
+
+      setBusinesses(Array.isArray(data.businesses) ? data.businesses : [])
+      setStats(data.stats && typeof data.stats === 'object' ? data.stats : defaultStats)
+      setTotalPages(data.pagination?.totalPages || 1)
+
+      if (data.error) {
+        setLoadError(data.error)
       }
     } catch (error) {
-      console.error('Error loading data:', error)
+      const msg = error instanceof Error ? error.message : 'Помилка завантаження даних'
+      setLoadError(msg)
+      setBusinesses([])
+      setStats(defaultStats)
+      setTotalPages(1)
+      console.error('Control center load error:', error)
     } finally {
       setLoading(false)
     }
@@ -231,10 +261,21 @@ export default function ControlCenterPage() {
   }
 
   return (
-    <div className="min-h-screen p-4 md:p-6" style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}>
+    <div className="min-h-screen p-4 md:p-6 bg-[#0F172A]" style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}>
       <div className="max-w-7xl mx-auto w-full">
+      {loadError && (
+        <div className="mb-4 rounded-xl p-4 bg-red-500/20 border border-red-500/50 flex items-center justify-between gap-4">
+          <span className="text-red-300">{loadError}</span>
+          <button
+            onClick={() => { setLoadError(null); loadData(); }}
+            className="px-4 py-2 bg-red-500/30 hover:bg-red-500/50 text-white rounded-lg font-medium"
+          >
+            Повторити
+          </button>
+        </div>
+      )}
       {/* Live Stats Bar */}
-      <LiveStatsBar refreshTrigger={refreshTrigger} />
+      <LiveStatsBar refreshTrigger={refreshTrigger} onManualRefresh={handleRefresh} />
 
       {/* Header */}
       <div className="mb-6 flex flex-wrap items-center justify-between gap-4">
@@ -292,7 +333,7 @@ export default function ControlCenterPage() {
       {/* Tab Content */}
       <div className="card-glass rounded-xl p-6">
         {activeTab === 'overview' && (
-          <OverviewTab stats={stats} loading={loading} />
+          <OverviewTab stats={stats ?? defaultStats} loading={loading} />
         )}
 
         {activeTab === 'businesses' && (
@@ -307,7 +348,8 @@ export default function ControlCenterPage() {
             setPage={setPage}
             totalPages={totalPages}
             formatDate={formatDate}
-            onDataChanged={loadData}
+            onDataChanged={handleDataChanged}
+            refreshTrigger={refreshTrigger}
           />
         )}
 
@@ -360,8 +402,8 @@ export default function ControlCenterPage() {
   )
 }
 
-// Live Stats Bar — оновлюється при натисканні кнопки «Оновити»
-function LiveStatsBar({ refreshTrigger }: { refreshTrigger?: number }) {
+// Live Stats Bar — оновлюється при натисканні «Оновити» або кнопки на панелі
+function LiveStatsBar({ refreshTrigger, onManualRefresh }: { refreshTrigger?: number; onManualRefresh?: () => void }) {
   const [realtimeStats, setRealtimeStats] = useState<{
     total: number
     online: number
@@ -373,23 +415,25 @@ function LiveStatsBar({ refreshTrigger }: { refreshTrigger?: number }) {
   } | null>(null)
   const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    const fetchStats = async () => {
-      try {
-        const res = await fetch(`/api/admin/stats/realtime?_t=${Date.now()}`, {
-          headers: getAuthHeaders(),
-          cache: 'no-store',
-        })
-        if (res.ok) {
-          const data = await res.json()
-          setRealtimeStats(data)
-        }
-      } catch {
-        // ignore
-      } finally {
-        setLoading(false)
+  const fetchStats = async () => {
+    setLoading(true)
+    try {
+      const res = await fetch(`/api/admin/stats/realtime?_t=${Date.now()}`, {
+        headers: getAuthHeaders(),
+        cache: 'no-store',
+      })
+      if (res.ok) {
+        const data = await res.json()
+        setRealtimeStats(data)
       }
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false)
     }
+  }
+
+  useEffect(() => {
     fetchStats()
   }, [refreshTrigger])
 
@@ -405,7 +449,8 @@ function LiveStatsBar({ refreshTrigger }: { refreshTrigger?: number }) {
 
   return (
     <div className="mb-4 rounded-xl p-4 card-glass">
-      <div className="flex flex-wrap items-center gap-4 md:gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-4 md:gap-6">
+        <div className="flex flex-wrap items-center gap-4 md:gap-6">
         <div className="flex items-center gap-2">
           <span className="relative flex h-2.5 w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
@@ -441,6 +486,28 @@ function LiveStatsBar({ refreshTrigger }: { refreshTrigger?: number }) {
             <span className="text-lg md:text-xl font-bold text-red-400">{s.blocked}</span>
             <span className="text-sm text-gray-400">заблоковано</span>
           </div>
+        </div>
+        </div>
+
+        <div className="flex items-center gap-3 shrink-0">
+          {s.updatedAt && (
+            <span className="text-xs text-gray-500">
+              Оновлено: {new Date(s.updatedAt).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            </span>
+          )}
+          {onManualRefresh && (
+            <button
+              type="button"
+              onClick={() => onManualRefresh()}
+              disabled={loading}
+              className="p-1.5 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors"
+              title="Оновити всі дані та статистику"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+              </svg>
+            </button>
+          )}
         </div>
       </div>
     </div>
@@ -493,9 +560,16 @@ function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
   ]
 
   const byNiche = (stats?.byNiche || []) as Array<{ niche: string; _count: number }>
+  const hasData = (stats?.total ?? 0) > 0
 
   return (
     <div className="space-y-6">
+      {!hasData && (
+        <div className="rounded-xl p-6 bg-white/5 border border-white/10 text-center text-gray-300">
+          <p className="mb-2">Ще немає даних у системі.</p>
+          <p className="text-sm">Натисніть кнопку <strong>«Синхронізувати»</strong> або <strong>«Оновити»</strong> вгорі, щоб підтягнути бізнеси.</p>
+        </div>
+      )}
       <h2 className="text-2xl font-bold text-white">
         Статистика системи
       </h2>
@@ -538,7 +612,7 @@ function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
 }
 
 // Businesses Tab Component
-function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, setStatusFilter, page, setPage, totalPages, formatDate, onDataChanged }: any) {
+function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, setStatusFilter, page, setPage, totalPages, formatDate, onDataChanged, refreshTrigger }: any) {
   const [selectedBusinesses, setSelectedBusinesses] = useState<string[]>([])
   const [bulkAction, setBulkAction] = useState<string>('')
   const [blockModalOpen, setBlockModalOpen] = useState(false)
@@ -553,6 +627,9 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
   const [isDeleting, setIsDeleting] = useState(false)
   const [searchBy, setSearchBy] = useState<'all' | 'id' | 'name' | 'email'>('all')
   const [detailModalBusiness, setDetailModalBusiness] = useState<Business | null>(null)
+  const [quickIdSearch, setQuickIdSearch] = useState('')
+  const quickSearchInputRef = useRef<HTMLInputElement>(null)
+  const rowRefsMap = useRef<Record<string, HTMLTableRowElement | null>>({})
 
   const handleBulkAction = async () => {
     if (!bulkAction || selectedBusinesses.length === 0) return
@@ -726,11 +803,14 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
   const filteredBusinesses = businesses.filter((business: Business) => {
     if (!search) return true
     
-    const searchLower = search.toLowerCase()
+    const searchLower = search.toLowerCase().trim()
     
     switch (searchBy) {
       case 'id':
-        return business.businessIdentifier?.toLowerCase().includes(searchLower)
+        return (
+          business.businessIdentifier?.toLowerCase().includes(searchLower) ||
+          business.id.toLowerCase().includes(searchLower)
+        )
       case 'name':
         return business.name.toLowerCase().includes(searchLower)
       case 'email':
@@ -740,20 +820,77 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
           business.name.toLowerCase().includes(searchLower) ||
           business.email.toLowerCase().includes(searchLower) ||
           business.phone?.toLowerCase().includes(searchLower) ||
-          business.businessIdentifier?.toLowerCase().includes(searchLower)
+          business.businessIdentifier?.toLowerCase().includes(searchLower) ||
+          business.id.toLowerCase().includes(searchLower)
         )
     }
   })
 
+  // Швидкий пошук за ID — Ctrl+K / Cmd+K фокусує інпут
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault()
+        quickSearchInputRef.current?.focus()
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
+  const handleQuickIdSearch = useCallback(() => {
+    const q = quickIdSearch.trim()
+    if (!q) return
+    setSearchBy('id')
+    setSearch(q)
+    setPage(1)
+  }, [quickIdSearch, setSearch, setPage])
+
+  // Після завантаження: якщо пошук за ID і знайдено 1 акаунт — відкрити деталі
+  useEffect(() => {
+    const q = quickIdSearch.trim()
+    if (!loading && search && searchBy === 'id' && q && filteredBusinesses.length === 1) {
+      const biz = filteredBusinesses[0]
+      setDetailModalBusiness(biz)
+      setQuickIdSearch('')
+      setTimeout(() => {
+        rowRefsMap.current[biz.id]?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      }, 150)
+    }
+  }, [loading, search, searchBy, quickIdSearch, filteredBusinesses])
+
   return (
     <div>
+      {/* Швидкий пошук за ID — Ctrl+K */}
+      <div className="mb-4 p-4 rounded-xl bg-white/5 border border-white/10 flex flex-col sm:flex-row gap-3">
+        <div className="flex-1 flex gap-2">
+          <input
+            ref={quickSearchInputRef}
+            type="text"
+            placeholder="Швидкий пошук за ID (56836 або UUID) — Ctrl+K"
+            value={quickIdSearch}
+            onChange={(e) => setQuickIdSearch(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && handleQuickIdSearch()}
+            className="flex-1 px-4 py-2.5 border border-white/10 rounded-lg bg-white/5 text-white placeholder-gray-500 font-mono text-sm focus:outline-none focus:border-blue-500/50"
+          />
+          <button
+            type="button"
+            onClick={handleQuickIdSearch}
+            className="px-4 py-2.5 bg-blue-500/30 text-blue-300 rounded-lg hover:bg-blue-500/50 font-medium shrink-0"
+          >
+            Знайти
+          </button>
+        </div>
+        <span className="text-xs text-gray-500 self-center">Ctrl+K — фокус</span>
+      </div>
+
       <div className="mb-6 flex flex-col md:flex-row gap-4">
         <div className="flex-1 relative">
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
             placeholder={
-              searchBy === 'id' ? 'Пошук за ID (наприклад: 56836)...' :
+              searchBy === 'id' ? 'Пошук за ID (56836 або UUID)...' :
               searchBy === 'name' ? 'Пошук за назвою...' :
               searchBy === 'email' ? 'Пошук за email...' :
               'Пошук по назві, email, телефону, ID...'
@@ -884,6 +1021,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                 {(search ? filteredBusinesses : businesses).map((business: Business) => (
                   <tr
                     key={business.id}
+                    ref={(el) => { rowRefsMap.current[business.id] = el }}
                     className="border-b border-white/10 hover:bg-white/5"
                   >
                     <td className="py-3 px-4">
@@ -1163,6 +1301,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
             </div>
             <div className="space-y-3 text-sm">
               <div className="flex justify-between"><span className="text-gray-400">ID:</span><span className="font-mono text-blue-400">{detailModalBusiness.businessIdentifier || '-'}</span></div>
+              <div className="flex justify-between"><span className="text-gray-400">UUID:</span><span className="font-mono text-xs text-gray-400 truncate max-w-[200px]" title={detailModalBusiness.id}>{detailModalBusiness.id}</span></div>
               <div className="flex justify-between"><span className="text-gray-400">Email:</span><span className="text-white">{detailModalBusiness.email}</span></div>
               <div className="flex justify-between"><span className="text-gray-400">Телефон:</span><span className="text-white">{detailModalBusiness.phone || '-'}</span></div>
               <div className="flex justify-between"><span className="text-gray-400">Статус:</span><span className={detailModalBusiness.isActive ? 'text-green-400' : 'text-red-400'}>{detailModalBusiness.isActive ? 'Активний' : 'Неактивний'}</span></div>
