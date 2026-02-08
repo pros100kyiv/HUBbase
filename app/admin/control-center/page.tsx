@@ -138,7 +138,8 @@ export default function ControlCenterPage() {
       })
       const data = await response.json()
       if (response.ok) {
-        handleRefresh()
+        await loadData()
+        setRefreshTrigger((t) => t + 1)
       } else {
         alert(data.error || 'Помилка синхронізації')
       }
@@ -173,10 +174,18 @@ export default function ControlCenterPage() {
       })
       const data = await response.json()
 
+      if (response.status === 401) {
+        localStorage.removeItem('adminToken')
+        localStorage.removeItem('adminEmail')
+        router.push('/admin/login')
+        return
+      }
       if (response.ok) {
         setBusinesses(data.businesses || [])
         setStats(data.stats || {})
         setTotalPages(data.pagination?.totalPages || 1)
+      } else if (data.error) {
+        console.error('Control center error:', data.error)
       }
     } catch (error) {
       console.error('Error loading data:', error)
@@ -331,7 +340,7 @@ export default function ControlCenterPage() {
         )}
 
         {activeTab === 'clients' && (
-          <ClientsTab />
+          <ClientsTab refreshTrigger={refreshTrigger} />
         )}
 
         {activeTab === 'admins' && (

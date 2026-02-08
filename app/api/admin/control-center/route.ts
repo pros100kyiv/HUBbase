@@ -146,35 +146,35 @@ export async function PATCH(request: Request) {
 
     switch (action) {
       case 'activate':
-        await prisma.managementCenter.update({
-          where: { businessId },
-          data: { isActive: true },
-        })
         await prisma.business.update({
           where: { id: businessId },
+          data: { isActive: true },
+        })
+        await prisma.managementCenter.updateMany({
+          where: { businessId },
           data: { isActive: true },
         })
         break
 
       case 'deactivate':
-        await prisma.managementCenter.update({
-          where: { businessId },
-          data: { isActive: false },
-        })
         await prisma.business.update({
           where: { id: businessId },
+          data: { isActive: false },
+        })
+        await prisma.managementCenter.updateMany({
+          where: { businessId },
           data: { isActive: false },
         })
         break
 
       case 'update':
         if (data) {
-          await prisma.managementCenter.update({
-            where: { businessId },
-            data,
-          })
           await prisma.business.update({
             where: { id: businessId },
+            data,
+          })
+          await prisma.managementCenter.updateMany({
+            where: { businessId },
             data,
           })
         }
