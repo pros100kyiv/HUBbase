@@ -101,8 +101,8 @@ export default function MainPage() {
   // Calculate today's statistics
   const todayTotal = todayAppointments.length
   const todayCompleted = todayAppointments.filter(apt => apt.status === 'Done' || apt.status === 'Виконано').length
-  const todayPending = todayAppointments.filter(apt => (apt.status === 'Pending' || apt.status === 'Очікує') && apt.isFromBooking === true).length
-  const todayConfirmed = todayAppointments.filter(apt => apt.status === 'Confirmed' || apt.status === 'Підтверджено' || ((apt.status === 'Pending' || apt.status === 'Очікує') && apt.isFromBooking !== true)).length
+  const todayPending = todayAppointments.filter(apt => apt.status === 'Pending' || apt.status === 'Очікує').length
+  const todayConfirmed = todayAppointments.filter(apt => apt.status === 'Confirmed' || apt.status === 'Підтверджено').length
 
   return (
     <div className="max-w-7xl mx-auto">

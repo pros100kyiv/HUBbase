@@ -130,13 +130,10 @@ export function MyDayCard({
     (apt) => apt.status === 'Done' || apt.status === 'Виконано'
   ).length
   const pendingForDay = appointmentsForSelectedDay.filter(
-    (apt) => (apt.status === 'Pending' || apt.status === 'Очікує') && apt.isFromBooking === true
+    (apt) => apt.status === 'Pending' || apt.status === 'Очікує'
   ).length
   const confirmedForDay = appointmentsForSelectedDay.filter(
-    (apt) =>
-      apt.status === 'Confirmed' ||
-      apt.status === 'Підтверджено' ||
-      ((apt.status === 'Pending' || apt.status === 'Очікує') && apt.isFromBooking !== true)
+    (apt) => apt.status === 'Confirmed' || apt.status === 'Підтверджено'
   ).length
   
   const handleDateChange = (newDate: Date) => {
@@ -312,12 +309,11 @@ export function MyDayCard({
   const getFilteredAppointments = (type: 'pending' | 'confirmed' | 'done') => {
     return appointmentsForSelectedDay.filter(apt => {
       const status = apt.status
-      const isPending = status === 'Pending' || status === 'Очікує'
       switch (type) {
         case 'pending':
-          return isPending && apt.isFromBooking === true
+          return status === 'Pending' || status === 'Очікує'
         case 'confirmed':
-          return status === 'Confirmed' || status === 'Підтверджено' || (isPending && apt.isFromBooking !== true)
+          return status === 'Confirmed' || status === 'Підтверджено'
         case 'done':
           return status === 'Done' || status === 'Виконано'
         default:
