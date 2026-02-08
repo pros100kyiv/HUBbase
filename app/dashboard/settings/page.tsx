@@ -15,6 +15,8 @@ import {
   UsersIcon,
   ChartIcon,
   TrashIcon,
+  MoneyIcon,
+  ImageIcon,
 } from '@/components/icons'
 import { toast } from '@/components/ui/toast'
 import { Confetti, triggerConfetti } from '@/components/ui/confetti'
@@ -416,6 +418,12 @@ export default function SettingsPage() {
 
   const handleSaveService = async () => {
     if (!business) return
+    const priceNum = parseInt(serviceForm.price, 10)
+    const durationNum = parseInt(serviceForm.duration, 10)
+    if (!serviceForm.name?.trim() || isNaN(priceNum) || priceNum < 0 || isNaN(durationNum) || durationNum < 1) {
+      toast({ title: 'Помилка', description: 'Заповніть назву, ціну (≥ 0) та тривалість (≥ 1 хв)', type: 'error' })
+      return
+    }
 
     try {
       const url = editingService
@@ -427,12 +435,12 @@ export default function SettingsPage() {
         method,
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          ...(editingService ? {} : { businessId: business.id }),
-          name: serviceForm.name,
-          price: serviceForm.price,
-          duration: serviceForm.duration,
-          category: serviceForm.category || null,
-          subcategory: serviceForm.subcategory || null,
+          ...(editingService ? { businessId: business.id } : { businessId: business.id }),
+          name: serviceForm.name.trim(),
+          price: priceNum,
+          duration: durationNum,
+          category: serviceForm.category?.trim() || null,
+          subcategory: serviceForm.subcategory?.trim() || null,
         }),
       })
 
@@ -463,9 +471,10 @@ export default function SettingsPage() {
 
   const handleDeleteService = async (id: string) => {
     if (!window.confirm('Видалити цю послугу?')) return
+    if (!business?.id) return
 
     try {
-      const response = await fetch(`/api/services/${id}`, {
+      const response = await fetch(`/api/services/${id}?businessId=${encodeURIComponent(business.id)}`, {
         method: 'DELETE',
       })
 
@@ -638,7 +647,7 @@ export default function SettingsPage() {
               </div>
             </button>
             <button
-              onClick={() => setActiveTab('services')}
+              onClick={() => setTab('services')}
               className={cn(
                 'rounded-xl p-3 text-left transition-all border',
                 activeTab === 'services' ? 'card-glass border-white/30 bg-white/15' : 'card-glass-subtle border-white/10 hover:border-white/20'
@@ -646,7 +655,7 @@ export default function SettingsPage() {
             >
               <div className="flex items-center gap-2">
                 <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center">
-                  <ClockIcon className="w-4 h-4" />
+                  <MoneyIcon className="w-4 h-4" />
                 </div>
                 <div>
                   <p className="text-xs text-gray-400">Послуги</p>
@@ -672,7 +681,7 @@ export default function SettingsPage() {
               </div>
             </button>
             <button
-              onClick={() => setActiveTab('integrations')}
+              onClick={() => setTab('integrations')}
               className={cn(
                 'rounded-xl p-3 text-left transition-all border',
                 activeTab === 'integrations' ? 'card-glass border-white/30 bg-white/15' : 'card-glass-subtle border-white/10 hover:border-white/20'
@@ -702,6 +711,23 @@ export default function SettingsPage() {
                 <div>
                   <p className="text-xs text-gray-400">Графік</p>
                   <p className="text-sm font-bold text-white">Бізнес</p>
+                </div>
+              </div>
+            </button>
+            <button
+              onClick={() => setTab('businessCard')}
+              className={cn(
+                'rounded-xl p-3 text-left transition-all border',
+                activeTab === 'businessCard' ? 'card-glass border-white/30 bg-white/15' : 'card-glass-subtle border-white/10 hover:border-white/20'
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 flex items-center justify-center">
+                  <ImageIcon className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Візитівка</p>
+                  <p className="text-sm font-bold text-white">Картка</p>
                 </div>
               </div>
             </button>
@@ -1017,8 +1043,30 @@ export default function SettingsPage() {
                 </div>
               )}
 
+              {/* Empty state */}
+              {services.length === 0 && !showServiceForm && (
+                <div className="rounded-xl p-8 card-glass border border-white/10 text-center">
+                  <MoneyIcon className="w-12 h-12 text-gray-500/60 mx-auto mb-3" />
+                  <h3 className="text-lg font-semibold text-white mb-1">Ще немає послуг</h3>
+                  <p className="text-sm text-gray-400 mb-4 max-w-sm mx-auto">
+                    Додайте першу послугу — вона зʼявиться у прайсі та при бронюванні.
+                  </p>
+                  <Button
+                    onClick={() => {
+                      setShowServiceForm(true)
+                      setEditingService(null)
+                      setServiceForm({ name: '', price: '', duration: '', category: '', subcategory: '' })
+                    }}
+                    className="px-5 py-2.5 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                    style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+                  >
+                    Додати послугу
+                  </Button>
+                </div>
+              )}
+
               {/* Group services by category */}
-              {(() => {
+              {services.length > 0 && (() => {
                 const categoryGroups = services.reduce((acc, service) => {
                   let category = service.category || 'Інші'
                   let subcategory = service.subcategory || null

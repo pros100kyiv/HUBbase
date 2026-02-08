@@ -88,14 +88,14 @@ export default function MainPage() {
   if (!business) {
     return (
       <div className="max-w-7xl mx-auto">
-        <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-4" />
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="lg:col-span-2 space-y-4">
-            <div className="h-64 bg-gray-200 rounded animate-pulse" />
+        <div className="h-8 w-48 bg-white/10 rounded animate-pulse mb-4" />
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
+          <div className="lg:col-span-3 space-y-3 md:space-y-6">
+            <div className="h-64 rounded-xl bg-white/5 border border-white/10 animate-pulse" />
           </div>
-          <div className="space-y-4">
-            <div className="h-48 bg-gray-200 rounded animate-pulse" />
-            <div className="h-48 bg-gray-200 rounded animate-pulse" />
+          <div className="lg:col-span-1 space-y-3 md:space-y-6">
+            <div className="h-40 rounded-xl bg-white/5 border border-white/10 animate-pulse" />
+            <div className="h-40 rounded-xl bg-white/5 border border-white/10 animate-pulse" />
           </div>
         </div>
       </div>

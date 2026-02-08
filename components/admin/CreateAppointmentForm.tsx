@@ -165,13 +165,26 @@ export function CreateAppointmentForm({
               <label className="block text-sm font-medium mb-2 text-foreground">
                 Телефон клієнта *
               </label>
-              <Input
-                type="tel"
-                value={formData.clientPhone}
-                onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
-                placeholder="+380XXXXXXXXX"
-                required
-              />
+              <div className="flex gap-2 items-center">
+                <Input
+                  type="tel"
+                  value={formData.clientPhone}
+                  onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
+                  placeholder="+380XXXXXXXXX"
+                  required
+                  className="flex-1 min-w-0"
+                />
+                {formData.clientPhone.replace(/\D/g, '').length >= 9 && (
+                  <a
+                    href={`/dashboard/clients?phone=${encodeURIComponent(formData.clientPhone.trim())}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-medium text-primary hover:underline whitespace-nowrap"
+                  >
+                    Картка клієнта
+                  </a>
+                )}
+              </div>
             </div>
 
             {/* Services */}
@@ -228,13 +241,13 @@ export function CreateAppointmentForm({
                   onClick={() => setShowServiceModal(false)}
                 >
                   <div
-                    className="relative w-[95%] sm:w-full max-w-md modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+                    className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
                     onClick={(e) => e.stopPropagation()}
                   >
                     <button
                       type="button"
                       onClick={() => setShowServiceModal(false)}
-                      className="modal-close text-gray-400 hover:text-white rounded-xl"
+                      className="modal-close text-gray-400 hover:text-white rounded-full"
                       aria-label="Закрити"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

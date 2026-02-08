@@ -168,7 +168,7 @@ export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalS
       <div
         role="dialog"
         aria-label="Пошук"
-        className="fixed z-[100] rounded-xl border border-white/10 bg-[#1a1a1a] shadow-xl overflow-hidden flex flex-col"
+        className="fixed z-[100] rounded-xl border border-white/10 card-glass-elevated shadow-xl overflow-hidden flex flex-col"
         style={
           hasPosition && anchorPosition
             ? {

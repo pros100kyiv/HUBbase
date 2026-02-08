@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
-import { XIcon, CheckIcon, ClockIcon } from '@/components/icons'
+import { XIcon, CheckIcon, ClockIcon, PhoneIcon } from '@/components/icons'
 import { StatusSwitcher, type StatusValue } from './StatusSwitcher'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { toast } from '@/components/ui/toast'
@@ -19,28 +19,44 @@ interface Appointment {
   endTime: string
   status: string
   services?: string
+  customServiceName?: string | null
+  customPrice?: number | null
   notes?: string
 }
 
+type ServicesMap = Record<string, { name: string; price?: number }>
+
 interface AppointmentCardProps {
   appointment: Appointment
+  servicesMap: ServicesMap
   onConfirm: (id: string) => void
   onReschedule: (id: string, newStartTime: string, newEndTime: string) => void
   onStatusChange: (id: string, status: StatusValue) => void
   processing: string | null
 }
 
-function AppointmentCard({ appointment, onConfirm, onReschedule, onStatusChange, processing }: AppointmentCardProps) {
+function AppointmentCard({ appointment, servicesMap, onConfirm, onReschedule, onStatusChange, processing }: AppointmentCardProps) {
   const startTime = new Date(appointment.startTime)
   const endTime = new Date(appointment.endTime)
-  let servicesList: string[] = []
+  let serviceIds: string[] = []
   try {
     if (appointment.services) {
-      servicesList = JSON.parse(appointment.services)
+      serviceIds = JSON.parse(appointment.services)
     }
   } catch (e) {
     // Ignore
   }
+  const serviceNames = serviceIds
+    .map((id) => servicesMap[id]?.name)
+    .filter(Boolean) as string[]
+
+  const totalFromServices = serviceIds.reduce((sum, id) => sum + (servicesMap[id]?.price ?? 0), 0)
+  const displayPriceGrn =
+    appointment.customPrice != null && appointment.customPrice > 0
+      ? Math.round(appointment.customPrice / 100)
+      : totalFromServices > 0
+        ? totalFromServices
+        : null
 
   const [newDate, setNewDate] = useState(format(startTime, 'yyyy-MM-dd'))
   const [newStartTime, setNewStartTime] = useState(format(startTime, 'HH:mm'))
@@ -48,26 +64,65 @@ function AppointmentCard({ appointment, onConfirm, onReschedule, onStatusChange,
   const [showReschedule, setShowReschedule] = useState(false)
 
   return (
-    <div className="rounded-xl p-3 card-glass-subtle">
-      <div className="flex items-start justify-between gap-2 mb-2">
-        <div className="flex-1 min-w-0">
-          <h3 className="text-sm font-semibold text-white mb-1">
-            {appointment.clientName}
-          </h3>
-          <div className="space-y-0.5 text-xs text-gray-300">
-            <p>{appointment.clientPhone}</p>
-            {appointment.clientEmail && <p>{appointment.clientEmail}</p>}
-            <p>Майстер: {appointment.masterName}</p>
-            <p className="flex items-center gap-1 text-gray-400">
-              <ClockIcon className="w-3 h-3 flex-shrink-0" />
-              {format(startTime, 'd MMMM yyyy, HH:mm', { locale: uk })} - {format(endTime, 'HH:mm')}
-            </p>
-            {servicesList.length > 0 && <p>Послуги: {servicesList.length}</p>}
-            {appointment.notes && (
-              <p className="text-[10px] text-gray-500 mt-1">Примітка: {appointment.notes}</p>
-            )}
-          </div>
+    <div className="rounded-xl p-4 card-glass-subtle border border-white/10">
+      <div className="space-y-3 mb-3">
+        <div>
+          <div className="text-[10px] font-medium uppercase tracking-wide text-gray-500 mb-0.5">Клієнт</div>
+          <p className="text-base font-semibold text-white leading-tight">{appointment.clientName}</p>
         </div>
+        <div>
+          <div className="text-[10px] font-medium uppercase tracking-wide text-gray-500 mb-0.5">Телефон</div>
+          <p className="text-sm text-white font-medium flex items-center gap-1.5">
+            <PhoneIcon className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+            {appointment.clientPhone}
+          </p>
+        </div>
+        {appointment.clientEmail && (
+          <div>
+            <div className="text-[10px] font-medium uppercase tracking-wide text-gray-500 mb-0.5">Email</div>
+            <p className="text-sm text-white">{appointment.clientEmail}</p>
+          </div>
+        )}
+        <div>
+          <div className="text-[10px] font-medium uppercase tracking-wide text-gray-500 mb-0.5">Дата і час</div>
+          <p className="text-sm text-white font-medium flex items-center gap-1.5">
+            <ClockIcon className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+            {format(startTime, 'd MMMM yyyy', { locale: uk })}, {format(startTime, 'HH:mm', { locale: uk })} – {format(endTime, 'HH:mm', { locale: uk })}
+          </p>
+        </div>
+        <div>
+          <div className="text-[10px] font-medium uppercase tracking-wide text-gray-500 mb-0.5">Майстер</div>
+          <p className="text-sm text-white font-medium">{appointment.masterName ?? '—'}</p>
+        </div>
+        <div>
+          <div className="text-[10px] font-medium uppercase tracking-wide text-gray-500 mb-0.5">Послуги</div>
+          {serviceNames.length > 0 ? (
+            <ul className="mt-1 space-y-0.5">
+              {serviceNames.map((name, i) => (
+                <li key={i} className="text-sm text-white font-medium flex items-center gap-1.5">
+                  <span className="w-1.5 h-1.5 rounded-full bg-white/60 flex-shrink-0" />
+                  {name}
+                </li>
+              ))}
+            </ul>
+          ) : appointment.customServiceName ? (
+            <p className="text-sm text-white font-medium italic">{appointment.customServiceName}</p>
+          ) : (
+            <p className="text-sm text-gray-500">Не вказано</p>
+          )}
+        </div>
+        {displayPriceGrn != null && displayPriceGrn > 0 && (
+          <div>
+            <div className="text-[10px] font-medium uppercase tracking-wide text-gray-500 mb-0.5">Вартість</div>
+            <p className="text-base font-semibold text-white">{displayPriceGrn} ₴</p>
+          </div>
+        )}
+        {appointment.notes && (
+          <div>
+            <div className="text-[10px] font-medium uppercase tracking-wide text-gray-500 mb-0.5">Примітка</div>
+            <p className="text-sm text-gray-300">{appointment.notes}</p>
+          </div>
+        )}
       </div>
 
       {showReschedule ? (
@@ -158,6 +213,7 @@ interface NotificationsPanelProps {
 
 export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: NotificationsPanelProps) {
   const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [servicesMap, setServicesMap] = useState<Record<string, { name: string; price?: number }>>({})
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState<string | null>(null)
 
@@ -170,19 +226,28 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
   const loadPendingAppointments = async () => {
     setLoading(true)
     try {
-      const response = await fetch(`/api/appointments?businessId=${businessId}&status=Pending`)
-      if (!response.ok) throw new Error('Failed to fetch appointments')
-      const data = await response.json()
-      
-      // Get masters for names
-      const mastersRes = await fetch(`/api/masters?businessId=${businessId}`)
+      const [appointmentsRes, mastersRes, servicesRes] = await Promise.all([
+        fetch(`/api/appointments?businessId=${businessId}&status=Pending`),
+        fetch(`/api/masters?businessId=${businessId}`),
+        fetch(`/api/services?businessId=${businessId}`),
+      ])
+      if (!appointmentsRes.ok) throw new Error('Failed to fetch appointments')
+      const data = await appointmentsRes.json()
       const masters = mastersRes.ok ? await mastersRes.json() : []
-      
+      const servicesList = servicesRes.ok ? await servicesRes.json() : []
+
+      const map: Record<string, { name: string; price?: number }> = {}
+      if (Array.isArray(servicesList)) {
+        servicesList.forEach((s: { id: string; name: string; price?: number }) => {
+          if (s?.id) map[s.id] = { name: s.name || 'Послуга', price: s.price }
+        })
+      }
+      setServicesMap(map)
+
       const withMasters = (data || []).map((apt: Appointment) => {
         const master = masters.find((m: any) => m.id === apt.masterId)
         return { ...apt, masterName: master?.name || 'Невідомий майстер' }
       })
-      
       setAppointments(withMasters)
     } catch (error) {
       console.error('Error loading appointments:', error)
@@ -299,6 +364,7 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
                 <AppointmentCard
                   key={appointment.id}
                   appointment={appointment}
+                  servicesMap={servicesMap}
                   onConfirm={handleConfirm}
                   onReschedule={handleReschedule}
                   onStatusChange={handleStatusChange}

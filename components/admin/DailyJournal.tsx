@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { format, startOfDay, addMinutes, isSameDay } from 'date-fns'
 import { MobileAppointmentCard } from './MobileAppointmentCard'
 import { toast } from '@/components/ui/toast'
@@ -19,6 +20,9 @@ interface Appointment {
   endTime: string
   status: string
   services?: string
+  customServiceName?: string | null
+  customPrice?: number | null
+  isFromBooking?: boolean
 }
 
 interface DailyJournalProps {
@@ -26,14 +30,23 @@ interface DailyJournalProps {
 }
 
 export function DailyJournal({ businessId }: DailyJournalProps) {
+  const router = useRouter()
   const [selectedDate, setSelectedDate] = useState(new Date())
   const [masters, setMasters] = useState<Master[]>([])
+  const [services, setServices] = useState<Array<{ id: string; name: string; price?: number }>>([])
   const [appointments, setAppointments] = useState<Appointment[]>([])
 
   useEffect(() => {
     fetch(`/api/masters?businessId=${businessId}`)
       .then(res => res.json())
       .then(data => setMasters(data))
+  }, [businessId])
+
+  useEffect(() => {
+    fetch(`/api/services?businessId=${businessId}`)
+      .then(res => res.json())
+      .then(data => setServices(Array.isArray(data) ? data : []))
+      .catch(() => setServices([]))
   }, [businessId])
 
   useEffect(() => {
@@ -101,6 +114,21 @@ export function DailyJournal({ businessId }: DailyJournalProps) {
   const sortedAppointments = [...appointments].sort(
     (a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime()
   )
+
+  const getDisplayPrice = (apt: Appointment): number => {
+    if (apt.customPrice != null && apt.customPrice > 0) return Math.round(apt.customPrice / 100)
+    try {
+      const ids = apt.services ? JSON.parse(apt.services) : []
+      if (!Array.isArray(ids)) return 0
+      return ids.reduce((acc: number, id: string) => {
+        const s = services.find((x) => x.id === id)
+        return acc + (s?.price ?? 0)
+      }, 0)
+    } catch {
+      return 0
+    }
+  }
+  const dayTotalRevenue = sortedAppointments.reduce((sum, apt) => sum + getDisplayPrice(apt), 0)
 
   const handleStatusChange = async (id: string, status: string) => {
     const prev = appointments
@@ -189,10 +217,18 @@ export function DailyJournal({ businessId }: DailyJournalProps) {
                   ...appointment,
                   masterName: master?.name,
                 }}
+                services={services}
                 onStatusChange={handleStatusChange}
+                onOpenClientHistory={(phone) => router.push(`/dashboard/clients?phone=${encodeURIComponent(phone)}`)}
               />
             )
           })}
+          {dayTotalRevenue > 0 && (
+            <div className="mt-3 pt-3 border-t border-gray-200 dark:border-gray-700 flex items-center justify-between">
+              <span className="text-sm text-gray-500 dark:text-gray-400">Дохід за день</span>
+              <span className="text-base font-bold text-emerald-600 dark:text-emerald-400">{dayTotalRevenue} грн</span>
+            </div>
+          )}
         </div>
       )}
     </div>

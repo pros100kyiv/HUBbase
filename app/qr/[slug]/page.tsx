@@ -5,6 +5,7 @@ import { useParams, useRouter } from 'next/navigation'
 import { QRCodeSVG } from 'qrcode.react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { toast } from '@/components/ui/toast'
 
 export default function QRPage() {
   const params = useParams()
@@ -54,10 +55,20 @@ export default function QRPage() {
           <p className="text-center text-gray-600 dark:text-gray-400 text-sm mb-4">
             Відскануйте QR код для швидкого доступу до бронювання
           </p>
-          {mounted && (
-            <div className="bg-white dark:bg-gray-800 rounded-md p-4 text-center mb-4">
+          {mounted && bookingUrl && (
+            <div className="bg-white dark:bg-gray-800 rounded-md p-4 text-center mb-4 space-y-2">
               <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">Посилання:</p>
-              <p className="text-sm text-gray-700 dark:text-gray-300 break-all">{bookingUrl || 'Завантаження...'}</p>
+              <p className="text-sm text-gray-700 dark:text-gray-300 break-all">{bookingUrl}</p>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => {
+                  navigator.clipboard.writeText(bookingUrl)
+                  toast({ title: 'Посилання скопійовано', type: 'success' })
+                }}
+              >
+                Копіювати посилання
+              </Button>
             </div>
           )}
           <div className="flex gap-2">

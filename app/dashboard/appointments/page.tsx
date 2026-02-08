@@ -27,6 +27,8 @@ interface Appointment {
   endTime: string
   status: string
   services?: string
+  customServiceName?: string | null
+  customPrice?: number | null
   isFromBooking?: boolean
 }
 
@@ -63,6 +65,29 @@ export default function AppointmentsPage() {
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
   const [showQuickClientCard, setShowQuickClientCard] = useState(false)
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar')
+  // Показувати дохід у клітинках календаря, у блоці дня та в підсумку списку (зберігається в localStorage)
+  const [showRevenue, setShowRevenue] = useState(true)
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('appointments_showRevenue')
+      if (saved !== null) setShowRevenue(saved === '1')
+    } catch {
+      // ignore
+    }
+  }, [])
+
+  const toggleShowRevenue = () => {
+    setShowRevenue(prev => {
+      const next = !prev
+      try {
+        localStorage.setItem('appointments_showRevenue', next ? '1' : '0')
+      } catch {
+        // ignore
+      }
+      return next
+    })
+  }
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -278,7 +303,7 @@ export default function AppointmentsPage() {
 
   const handleExportCSV = () => {
     const monthForFilename = currentMonth ?? new Date()
-    const csvHeaders = ['Дата', 'Час', 'Клієнт', 'Телефон', 'Спеціаліст', 'Послуги', 'Статус', 'Примітки']
+    const csvHeaders = ['Дата', 'Час', 'Клієнт', 'Телефон', 'Спеціаліст', 'Послуги', 'Статус', 'Сума (грн)', 'Примітки']
     const csvRows = filteredAppointments.map(apt => {
       const start = new Date(apt.startTime)
       const end = new Date(apt.endTime)
@@ -303,6 +328,7 @@ export default function AppointmentsPage() {
         apt.masterName || 'Невідомий',
         servicesList.join(', '),
         apt.status,
+        String(getAppointmentDisplayPrice(apt)),
         (apt as any).notes || ''
       ]
     })
@@ -364,30 +390,37 @@ export default function AppointmentsPage() {
     return true
   })
 
+  /** Сума за запис: customPrice (копійки) / 100 або сума цін послуг */
+  const getAppointmentDisplayPrice = (apt: Appointment): number => {
+    if (apt.customPrice != null && apt.customPrice > 0) return Math.round(apt.customPrice / 100)
+    try {
+      const ids = apt.services ? JSON.parse(apt.services) : []
+      if (!Array.isArray(ids)) return 0
+      return ids.reduce((acc: number, id: string) => {
+        const s = services.find((x: { id: string; price?: number }) => x.id === id)
+        return acc + (s?.price ?? 0)
+      }, 0)
+    } catch {
+      return 0
+    }
+  }
+
+  // Дохід за період: сума по всіх відфільтрованих записах (для підсумку)
+  const periodRevenue = filteredAppointments.reduce((sum, apt) => sum + getAppointmentDisplayPrice(apt), 0)
+  // Дохід тільки по виконаних (для статистики)
+  const doneRevenue = filteredAppointments
+    .filter(a => a.status === 'Done' || a.status === 'Виконано')
+    .reduce((sum, apt) => sum + getAppointmentDisplayPrice(apt), 0)
+
   // Calculate statistics (Очікує тільки для записів від клієнта — isFromBooking)
   const stats = {
     total: filteredAppointments.length,
     pending: filteredAppointments.filter(a => (a.status === 'Pending' || a.status === 'Очікує') && a.isFromBooking === true).length,
     confirmed: filteredAppointments.filter(a => a.status === 'Confirmed' || a.status === 'Підтверджено' || ((a.status === 'Pending' || a.status === 'Очікує') && a.isFromBooking !== true)).length,
-    done: filteredAppointments.filter(a => a.status === 'Done').length,
-    cancelled: filteredAppointments.filter(a => a.status === 'Cancelled').length,
-    revenue: filteredAppointments
-      .filter(a => a.status === 'Done')
-      .reduce((sum, apt) => {
-        try {
-          if (apt.services) {
-            const servicesList = JSON.parse(apt.services)
-            const total = servicesList.reduce((acc: number, serviceId: string) => {
-              const service = services.find(s => s.id === serviceId)
-              return acc + (service?.price || 0)
-            }, 0)
-            return sum + total
-          }
-        } catch (e) {
-          // Ignore
-        }
-        return sum
-      }, 0)
+    done: filteredAppointments.filter(a => a.status === 'Done' || a.status === 'Виконано').length,
+    cancelled: filteredAppointments.filter(a => a.status === 'Cancelled' || a.status === 'Скасовано').length,
+    revenue: doneRevenue,
+    periodRevenue,
   }
 
   const monthStart = currentMonth ? startOfMonth(currentMonth) : null
@@ -404,6 +437,25 @@ export default function AppointmentsPage() {
       return isSameDay(start, day)
     })
   }
+
+  // Статистика за обраний день (тільки в режимі календаря, коли вибрано дату)
+  const dayAppointmentsForStats = viewMode === 'calendar' && selectedDate && isValid(selectedDate) ? getAppointmentsForDay(selectedDate) : []
+  const dayStats = viewMode === 'calendar' && selectedDate && isValid(selectedDate) ? (() => {
+    const list = dayAppointmentsForStats
+    const dayDoneRevenue = list
+      .filter(a => a.status === 'Done' || a.status === 'Виконано')
+      .reduce((sum, apt) => sum + getAppointmentDisplayPrice(apt), 0)
+    const dayPeriodRevenue = list.reduce((sum, apt) => sum + getAppointmentDisplayPrice(apt), 0)
+    return {
+      total: list.length,
+      pending: list.filter(a => (a.status === 'Pending' || a.status === 'Очікує') && a.isFromBooking === true).length,
+      confirmed: list.filter(a => a.status === 'Confirmed' || a.status === 'Підтверджено' || ((a.status === 'Pending' || a.status === 'Очікує') && a.isFromBooking !== true)).length,
+      done: list.filter(a => a.status === 'Done' || a.status === 'Виконано').length,
+      cancelled: list.filter(a => a.status === 'Cancelled' || a.status === 'Скасовано').length,
+      revenue: dayDoneRevenue,
+      periodRevenue: dayPeriodRevenue,
+    }
+  })() : null
 
   /** Колір бейджа кількості записів за домінантним статусом дня */
   const getDayBadgeStyle = (dayAppointments: Appointment[]) => {
@@ -611,9 +663,19 @@ export default function AppointmentsPage() {
                           {format(day, 'd')}
                         </span>
                         {dayAppointments.length > 0 && (
-                          <span className={cn("mt-1 text-[10px] font-semibold rounded-full px-1.5 py-0.5 min-w-[18px]", getDayBadgeStyle(dayAppointments))}>
-                            {dayAppointments.length}
-                          </span>
+                          <>
+                            <span className={cn("mt-1 text-[10px] font-semibold rounded-full px-1.5 py-0.5 min-w-[18px]", getDayBadgeStyle(dayAppointments))}>
+                              {dayAppointments.length}
+                            </span>
+                            {showRevenue && (() => {
+                              const dayRev = dayAppointments.reduce((s, apt) => s + getAppointmentDisplayPrice(apt), 0)
+                              return dayRev > 0 ? (
+                                <span className="mt-0.5 text-[9px] text-emerald-400/90 font-medium" title="Дохід за день">
+                                  {dayRev} грн
+                                </span>
+                              ) : null
+                            })()}
+                          </>
                         )}
                       </button>
                     )
@@ -627,6 +689,7 @@ export default function AppointmentsPage() {
           {selectedDate && (() => {
             const dayAppointments = getAppointmentsForDay(selectedDate)
             const sorted = [...dayAppointments].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+            const dayRevenue = sorted.reduce((sum, apt) => sum + getAppointmentDisplayPrice(apt), 0)
             return (
               <div className="dashboard-card">
                 <div className="flex flex-col gap-2 mb-3">
@@ -641,6 +704,12 @@ export default function AppointmentsPage() {
                       Закрити
                     </button>
                   </div>
+                  {showRevenue && dayRevenue > 0 && (
+                    <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-500/15 border border-emerald-500/30">
+                      <span className="text-sm text-gray-300">Дохід за день</span>
+                      <span className="text-lg font-bold text-emerald-400">{dayRevenue} грн</span>
+                    </div>
+                  )}
                   <div className="flex flex-wrap gap-1">
                     {['all', 'Pending', 'Confirmed', 'Done', 'Cancelled'].map((status) => (
                       <button
@@ -684,6 +753,7 @@ export default function AppointmentsPage() {
                           services={services}
                           onStatusChange={handleStatusChange}
                           onEdit={handleEditAppointment}
+                          onOpenClientHistory={(phone) => router.push(`/dashboard/clients?phone=${encodeURIComponent(phone)}`)}
                         />
                       ))}
                     </div>
@@ -717,21 +787,28 @@ export default function AppointmentsPage() {
                   </button>
                 </div>
               ) : (
-                <div className="max-h-[60vh] overflow-y-auto scrollbar-hide pr-0.5 -mr-0.5">
-                  <div className="space-y-1.5 md:space-y-2">
-                    {filteredAppointments
-                      .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-                      .map((appointment) => (
-                        <MobileAppointmentCard
-                          key={appointment.id}
-                          appointment={appointment}
-                          services={services}
-                          onStatusChange={handleStatusChange}
-                          onEdit={handleEditAppointment}
-                        />
-                      ))}
+                <>
+                  <div className="max-h-[60vh] overflow-y-auto scrollbar-hide pr-0.5 -mr-0.5">
+                    <div className="space-y-1.5 md:space-y-2">
+                      {filteredAppointments
+                        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                        .map((appointment) => (
+                          <MobileAppointmentCard
+                            key={appointment.id}
+                            appointment={appointment}
+                            services={services}
+                            onStatusChange={handleStatusChange}
+                            onEdit={handleEditAppointment}
+                            onOpenClientHistory={(phone) => router.push(`/dashboard/clients?phone=${encodeURIComponent(phone)}`)}
+                          />
+                        ))}
+                    </div>
                   </div>
-                </div>
+                  <div className="mt-3 pt-3 border-t border-white/10 text-center text-xs text-gray-400">
+                    Показано {filteredAppointments.length} записів
+                    {showRevenue && ` · Дохід: ${stats.periodRevenue} грн`}
+                  </div>
+                </>
               )}
             </div>
           )}
@@ -765,47 +842,124 @@ export default function AppointmentsPage() {
 
         {/* Right Column - Sidebar (1 column) - same as Dashboard */}
         <div className="lg:col-span-1 space-y-3 md:space-y-6">
-          {/* Quick Stats - same card style as Dashboard sidebar */}
+          {/* Quick Stats — за період або за обраний день (коли в календарі натиснуто дату) */}
           <div className="rounded-xl p-4 md:p-6 card-glass">
-            <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>
-              Статистика
-            </h3>
+            <div className="mb-3 md:mb-4 flex flex-col gap-1">
+              <h3 className="text-base md:text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
+                Статистика
+              </h3>
+              {dayStats ? (
+                <p className="text-xs text-emerald-400/90 font-medium">
+                  За обраний день · {safeFormat(selectedDate, 'd MMM yyyy', { locale: uk })}
+                </p>
+              ) : (
+                <p className="text-xs text-gray-500">За період (фільтри)</p>
+              )}
+            </div>
             <div className="space-y-2 md:space-y-3">
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
                 <span className="text-sm text-gray-300">Всього</span>
-                <span className="text-sm font-semibold text-white">{stats.total}</span>
+                <span className="text-sm font-semibold text-white">{dayStats ? dayStats.total : stats.total}</span>
               </div>
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
                 <span className="text-sm text-gray-300">Очікує</span>
-                <span className="text-sm font-semibold text-orange-400">{stats.pending}</span>
+                <span className="text-sm font-semibold text-orange-400">{dayStats ? dayStats.pending : stats.pending}</span>
               </div>
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
                 <span className="text-sm text-gray-300">Підтверджено</span>
-                <span className="text-sm font-semibold text-green-400">{stats.confirmed}</span>
+                <span className="text-sm font-semibold text-green-400">{dayStats ? dayStats.confirmed : stats.confirmed}</span>
               </div>
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
                 <span className="text-sm text-gray-300">Виконано</span>
-                <span className="text-sm font-semibold text-blue-400">{stats.done}</span>
+                <span className="text-sm font-semibold text-blue-400">{dayStats ? dayStats.done : stats.done}</span>
               </div>
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
-                <span className="text-sm text-gray-300">Дохід</span>
-                <span className="text-sm font-semibold text-purple-400">{stats.revenue} грн</span>
+                <span className="text-sm text-gray-300">Дохід (виконано)</span>
+                <span className="text-sm font-semibold text-purple-400">{dayStats ? dayStats.revenue : stats.revenue} грн</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
+                <span className="text-sm text-gray-300">{dayStats ? 'Дохід за день' : 'Дохід за період'}</span>
+                <span className="text-sm font-semibold text-emerald-400">{dayStats ? dayStats.periodRevenue : stats.periodRevenue} грн</span>
               </div>
             </div>
           </div>
 
+          {/* Повзунок: показувати дохід у календарі та списку */}
           <div className="rounded-xl p-4 md:p-6 card-glass">
             <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>
-              Швидкі дії
+              Відображення
             </h3>
+            <div className="flex items-center justify-between gap-3 p-3 bg-white/5 rounded-lg border border-white/10">
+              <span className="text-sm text-gray-300 flex-1">
+                Дохід у календарі та списку
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={showRevenue}
+                onClick={toggleShowRevenue}
+                className={cn(
+                  'relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:ring-offset-2 focus:ring-offset-[#2A2A2A]',
+                  showRevenue ? 'bg-emerald-500' : 'bg-white/20'
+                )}
+              >
+                <span
+                  className={cn(
+                    'pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out',
+                    showRevenue ? 'translate-x-5' : 'translate-x-0.5'
+                  )}
+                  style={{ marginTop: 2 }}
+                />
+              </button>
+            </div>
+            <p className="mt-2 text-[11px] text-gray-500">
+              {showRevenue ? 'Увімкнено' : 'Вимкнено'} — суми в клітинках календаря, блоці дня та підсумку списку
+            </p>
+          </div>
+
+          <div className="rounded-xl p-4 md:p-6 card-glass">
+            <div className="mb-3 md:mb-4 flex flex-col gap-1">
+              <h3 className="text-base md:text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
+                Швидкі дії
+              </h3>
+              {viewMode === 'calendar' && selectedDate && isValid(selectedDate) ? (
+                <p className="text-xs text-emerald-400/90 font-medium">
+                  Обрано: {safeFormat(selectedDate, 'd MMM yyyy', { locale: uk })}
+                </p>
+              ) : null}
+            </div>
             <div className="space-y-2">
+              {viewMode === 'calendar' && selectedDate && isValid(selectedDate) ? (
+                <>
+                  <button
+                    onClick={() => setShowCreateForm(true)}
+                    className="w-full px-3 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] text-left"
+                    style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+                  >
+                    + Запис на обраний день
+                  </button>
+                  <button
+                    onClick={() => setSelectedDate(null)}
+                    className="w-full px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors text-left"
+                  >
+                    Зняти вибір дати
+                  </button>
+                </>
+              ) : null}
               <button
                 onClick={() => {
                   setShowCreateForm(true)
-                  setSelectedDate(new Date())
+                  const today = new Date()
+                  today.setHours(0, 0, 0, 0)
+                  setSelectedDate(today)
                 }}
-                className="w-full px-3 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] text-left"
-                style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+                className={cn(
+                  'w-full px-3 py-2 rounded-lg text-sm font-semibold transition-colors active:scale-[0.98] text-left',
+                  viewMode === 'calendar' && selectedDate
+                    ? 'border border-white/20 bg-white/10 text-white hover:bg-white/20'
+                    : 'bg-white text-black hover:bg-gray-100 hover:text-gray-900'
+                )}
+                style={viewMode === 'calendar' && selectedDate ? undefined : { boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
               >
                 + Запис на сьогодні
               </button>
@@ -839,7 +993,7 @@ export default function AppointmentsPage() {
               >
                 <span className="text-xl leading-none">×</span>
               </button>
-              <div className="pr-10 flex-1 min-h-0 overflow-y-auto scrollbar-hide">
+              <div className="px-10 flex-1 min-h-0 overflow-y-auto scrollbar-hide max-w-xl mx-auto w-full">
                 <h2 className="modal-title text-white mb-2">Створити новий запис</h2>
                 <CreateAppointmentForm
                   businessId={business.id}

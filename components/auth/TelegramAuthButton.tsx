@@ -95,7 +95,7 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
   }, [])
 
   return (
-    <div className="w-full relative" style={{ height: '48px' }}>
+    <div className="w-full relative min-h-[52px]">
       {/* Telegram Login Widget - прихований */}
       <div 
         ref={containerRef} 
@@ -104,7 +104,7 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
       />
       {/* Власна кнопка - overlay */}
       <div
-        className="absolute inset-0 w-full h-full py-3 rounded-lg bg-white text-gray-700 font-medium flex items-center justify-center gap-3 hover:bg-gray-50 transition-all shadow-md cursor-pointer"
+        className="absolute inset-0 w-full h-full min-h-[52px] py-3 rounded-xl bg-white text-gray-700 font-medium flex items-center justify-center gap-3 hover:bg-gray-50 transition-all shadow-md cursor-pointer border border-white/20"
         style={{ zIndex: 2, pointerEvents: 'none' }}
       >
         {/* Telegram іконка */}
@@ -123,8 +123,8 @@ export function TelegramAuthButton({ text, isRegister = false }: TelegramAuthBut
         }
         div[data-telegram-login] iframe {
           width: 100% !important;
-          height: 48px !important;
-          border-radius: 8px !important;
+          height: 52px !important;
+          border-radius: 12px !important;
           border: none !important;
           background: transparent !important;
           pointer-events: auto !important;

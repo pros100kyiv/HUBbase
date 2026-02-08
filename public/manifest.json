@@ -1,7 +1,7 @@
 {
   "name": "045 Barbershop - Бронювання",
   "short_name": "045 Бронювання",
-  "description": "Професійна система бронювання записів",
+  "description": "Платформа записів та клієнтів для бізнесу",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#050505",

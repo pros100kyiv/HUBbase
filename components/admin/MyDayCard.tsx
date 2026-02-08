@@ -59,10 +59,7 @@ export function MyDayCard({
   const [shareFeedback, setShareFeedback] = useState<'share' | 'unsupported' | null>(null)
   const [selectedStatus, setSelectedStatus] = useState<'pending' | 'confirmed' | 'done' | null>(null)
   const [selectedAppointment, setSelectedAppointment] = useState<Appointment | null>(null)
-  const [historyPhone, setHistoryPhone] = useState<string | null>(null)
-  const [historyLoading, setHistoryLoading] = useState(false)
-  const [historyAppointments, setHistoryAppointments] = useState<Appointment[]>([])
-  const [servicesList, setServicesList] = useState<Array<{ id: string; name: string }>>([])
+  const [servicesList, setServicesList] = useState<Array<{ id: string; name: string; price?: number }>>([])
   const [touchStart, setTouchStart] = useState<{x: number, y: number} | null>(null)
   const menuRef = useRef<HTMLDivElement>(null)
   const [postVisitProcedureDone, setPostVisitProcedureDone] = useState('')
@@ -179,32 +176,8 @@ export function MyDayCard({
   }
 
   const openClientHistory = (phone: string) => {
-    setHistoryPhone(phone)
+    router.push(`/dashboard/clients?phone=${encodeURIComponent(phone)}`)
   }
-
-  useEffect(() => {
-    const loadHistory = async () => {
-      if (!businessId || !historyPhone) return
-      try {
-        setHistoryLoading(true)
-        const res = await fetch(
-          `/api/appointments?businessId=${encodeURIComponent(businessId)}&clientPhone=${encodeURIComponent(historyPhone)}`
-        )
-        if (!res.ok) throw new Error('Failed to load client history')
-        const data = await res.json()
-        const arr = Array.isArray(data) ? data : []
-        // Sort newest first for history
-        arr.sort((a: any, b: any) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
-        setHistoryAppointments(arr)
-      } catch (e) {
-        console.error('Error loading client history:', e)
-        setHistoryAppointments([])
-      } finally {
-        setHistoryLoading(false)
-      }
-    }
-    loadHistory()
-  }, [businessId, historyPhone])
 
   const parseServices = (services?: string) => {
     if (!services) return []
@@ -229,6 +202,25 @@ export function MyDayCard({
     if (customServiceName && customServiceName.trim()) return [customServiceName.trim()]
     return []
   }
+
+  /** Сума за запис: customPrice (копійки) / 100 або сума цін послуг */
+  const getDisplayPrice = (apt: Appointment): number | null => {
+    if (apt.customPrice != null && apt.customPrice > 0) return Math.round(apt.customPrice / 100)
+    const ids = parseServices(apt.services) as string[]
+    if (ids.length === 0) return null
+    let sum = 0
+    for (const id of ids) {
+      const s = servicesList.find((x) => x.id === id)
+      if (s?.price != null && s.price > 0) sum += s.price
+    }
+    return sum > 0 ? sum : null
+  }
+
+  /** Підсумок доходу за вибраний день (сума цін записів) */
+  const dayTotalRevenue = appointmentsForSelectedDay.reduce((acc, apt) => {
+    const p = getDisplayPrice(apt)
+    return acc + (p ?? 0)
+  }, 0)
 
   const getDaySummaryText = () => {
     const dateLabel = isToday ? 'Сьогодні' : format(selectedDate, 'd MMMM yyyy', { locale: uk })
@@ -445,32 +437,48 @@ export function MyDayCard({
 
   const AppointmentItem = ({ apt, onClick }: { apt: Appointment; onClick: () => void }) => {
     const startTime = new Date(apt.startTime)
+    const endTime = new Date(apt.endTime)
+    const durationMin = Math.round((endTime.getTime() - startTime.getTime()) / 60000)
     const isDone = apt.status === 'Done' || apt.status === 'Виконано'
+    const isPending = apt.status === 'Pending' || apt.status === 'Очікує'
+    const isConfirmed = apt.status === 'Confirmed' || apt.status === 'Підтверджено'
     const serviceNames = getServiceNamesList(apt.services, apt.customServiceName)
     const serviceDisplay = serviceNames.length > 0 ? serviceNames.join(', ') : (apt.customServiceName?.trim() ? apt.customServiceName.trim() : 'Послуга не вказана')
+    const displayPrice = getDisplayPrice(apt)
+    const statusBorder =
+      isDone ? 'border-l-4 border-l-sky-500' :
+      isConfirmed ? 'border-l-4 border-l-emerald-500' :
+      isPending ? 'border-l-4 border-l-amber-500' : 'border-l-4 border-l-rose-500/70'
 
     return (
-      <button
+      <div
+        role="button"
+        tabIndex={0}
         onClick={onClick}
-        className="w-full text-left bg-white/5 border border-white/10 rounded-xl p-2.5 md:p-3 hover:bg-white/10 transition-all active:scale-[0.99] group relative overflow-hidden touch-manipulation"
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
+        className={`w-full text-left bg-white/5 border border-white/10 rounded-xl p-2.5 md:p-3 hover:bg-white/10 transition-all active:scale-[0.99] group relative overflow-hidden touch-manipulation cursor-pointer ${statusBorder}`}
       >
-        {/* Ряд: контент зліва, статус і кнопки дій завжди справа в одній колонці */}
         <div className="flex flex-row items-stretch gap-2 sm:gap-3">
           <div className="flex items-start gap-2.5 sm:gap-3 min-w-0 flex-1">
-            {/* Time Box */}
-            <div className="flex flex-col items-center justify-center w-10 h-10 sm:w-11 sm:h-11 md:w-12 md:h-12 bg-[#2A2A2A] rounded-lg border border-white/10 flex-shrink-0 shadow-inner">
+            {/* Time Box + duration */}
+            <div className="flex flex-col items-center justify-center w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-[#252525] rounded-xl border border-white/10 flex-shrink-0">
               <span className="text-sm font-bold text-blue-400 leading-none">
                 {format(startTime, 'HH:mm')}
               </span>
-              <div className="w-1 h-1 rounded-full bg-gray-600 mt-1 hidden sm:block" />
+              <span className="text-[10px] text-gray-500 mt-1">{durationMin} хв</span>
             </div>
 
-            {/* Info */}
+            {/* Info + price */}
             <div className="flex-1 min-w-0 py-0.5">
-              <div className="flex items-center gap-2 mb-0.5">
+              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                 <h5 className="text-sm font-bold text-white truncate leading-tight">
                   {apt.clientName}
                 </h5>
+                {displayPrice != null && (
+                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 text-[11px] font-semibold border border-emerald-500/30 flex-shrink-0">
+                    {displayPrice} грн
+                  </span>
+                )}
                 {apt.clientPhone && (
                   <a
                     href={`tel:${apt.clientPhone}`}
@@ -492,11 +500,12 @@ export function MyDayCard({
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
                 </svg>
                 <span className="truncate">{apt.masterName || 'Невідомий спеціаліст'}</span>
+                <span className="text-gray-600">·</span>
+                <span>{format(startTime, 'HH:mm')}–{format(endTime, 'HH:mm')}</span>
               </div>
             </div>
           </div>
 
-          {/* Права колонка: один круглий перемикач статусів */}
           <div
             className="flex items-center justify-center flex-shrink-0"
             onClick={(e) => e.stopPropagation()}
@@ -510,12 +519,12 @@ export function MyDayCard({
             />
           </div>
         </div>
-      </button>
+      </div>
     )
   }
 
   return (
-    <div className="bg-[#1A1A1A] text-white rounded-xl p-4 md:p-6 card-floating">
+    <div className="rounded-xl p-4 md:p-6 card-floating text-white">
       {/* Header */}
       <div className="flex items-center justify-between gap-3 mb-4 md:mb-6">
         <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
@@ -612,7 +621,7 @@ export function MyDayCard({
       </div>
 
       {/* Statistics Grid — завжди для вибраного дня */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4 mb-4 md:mb-6">
+      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3 mb-4 md:mb-6">
         <div className="bg-white/5 border border-white/10 rounded-lg p-3 md:p-4">
           <div className="text-xl md:text-2xl font-bold text-white mb-0.5 md:mb-1">{totalForDay}</div>
           <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Всього записів</div>
@@ -638,6 +647,10 @@ export function MyDayCard({
           <div className="text-xl md:text-2xl font-bold text-blue-400 mb-0.5 md:mb-1">{completedForDay}</div>
           <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Виконано</div>
         </button>
+        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3 md:p-4 col-span-2 md:col-span-1">
+          <div className="text-xl md:text-2xl font-bold text-emerald-400 mb-0.5 md:mb-1">{dayTotalRevenue} грн</div>
+          <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Дохід за день</div>
+        </div>
       </div>
 
       {/* Appointments List — тільки записи вибраного дня */}
@@ -700,12 +713,14 @@ export function MyDayCard({
         </div>
       )}
 
-      {/* Revenue (if available) */}
-      {totalRevenue > 0 && (
+      {/* Revenue — показуємо обчислений дохід за день або з пропа (якщо є) */}
+      {(dayTotalRevenue > 0 || totalRevenue > 0) && (
         <div className="mt-4 pt-4 border-t border-white/10">
           <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-400">Дохід за день</span>
-            <span className="text-lg font-bold text-white">{totalRevenue} грн</span>
+            <span className="text-sm text-gray-400">Всього за день</span>
+            <span className="text-lg font-bold text-emerald-400">
+              {dayTotalRevenue > 0 ? dayTotalRevenue : totalRevenue} грн
+            </span>
           </div>
         </div>
       )}
@@ -715,8 +730,7 @@ export function MyDayCard({
         <ModalPortal>
           <div className="modal-overlay sm:!p-4" onClick={() => setSelectedStatus(null)}>
             <div
-              className="relative w-[95%] sm:w-full modal-content modal-dialog text-white max-h-[82dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
-              style={{ maxWidth: 'min(32rem, 95vw)' }}
+              className="relative w-[95%] sm:w-full sm:max-w-lg sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
               onTouchStart={handleTouchStart}
               onTouchEnd={(e) => handleTouchEnd(e, () => setSelectedStatus(null))}
@@ -724,7 +738,7 @@ export function MyDayCard({
               <button
                 type="button"
                 onClick={() => setSelectedStatus(null)}
-                className="modal-close text-gray-400 hover:text-white rounded-xl"
+                className="modal-close text-gray-400 hover:text-white rounded-full"
                 aria-label="Закрити"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -762,8 +776,7 @@ export function MyDayCard({
         <ModalPortal>
           <div className="modal-overlay sm:!p-4" onClick={() => setSelectedAppointment(null)}>
             <div
-              className="relative w-[95%] sm:w-full modal-content modal-dialog text-white max-h-[82dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
-              style={{ maxWidth: 'min(32rem, 95vw)' }}
+              className="relative w-[95%] sm:w-full sm:max-w-lg sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
               onTouchStart={handleTouchStart}
               onTouchEnd={(e) => handleTouchEnd(e, () => setSelectedAppointment(null))}
@@ -771,7 +784,7 @@ export function MyDayCard({
               <button
                 type="button"
                 onClick={() => setSelectedAppointment(null)}
-                className="modal-close text-gray-400 hover:text-white rounded-xl"
+                className="modal-close text-gray-400 hover:text-white rounded-full"
                 aria-label="Закрити"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -784,6 +797,18 @@ export function MyDayCard({
                   {format(new Date(selectedAppointment.startTime), 'd MMMM yyyy', { locale: uk })}{' '}
                   • {format(new Date(selectedAppointment.startTime), 'HH:mm')}–{format(new Date(selectedAppointment.endTime), 'HH:mm')}
                 </p>
+                {(() => {
+                  const sum = getDisplayPrice(selectedAppointment)
+                  if (sum != null) {
+                    return (
+                      <div className="mt-2 inline-flex items-center px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30">
+                        <span className="text-xs text-gray-400 mr-2">Сума</span>
+                        <span className="text-base font-bold text-emerald-400">{sum} грн</span>
+                      </div>
+                    )
+                  }
+                  return null
+                })()}
               </div>
               <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide p-2 pt-0 sm:p-3 sm:pt-0 space-y-1.5">
                 <div className="flex items-center justify-between gap-3">
@@ -822,7 +847,13 @@ export function MyDayCard({
 
                 {(() => {
                   const modalServiceNames = getServiceNamesList(selectedAppointment.services, selectedAppointment.customServiceName)
-                  const hasCustomPrice = selectedAppointment.customPrice != null && selectedAppointment.customPrice > 0
+                  const hasPrice = getDisplayPrice(selectedAppointment) != null
+                  const needsPriceAfter = !hasPrice && (selectedAppointment.customServiceName?.trim() || (() => {
+                    try {
+                      const ids = selectedAppointment.services ? JSON.parse(selectedAppointment.services) : []
+                      return Array.isArray(ids) && ids.length === 0
+                    } catch { return false }
+                  })())
                   return (
                     <div>
                       <div className="text-xs text-gray-400 mb-2">Послуги</div>
@@ -842,18 +873,8 @@ export function MyDayCard({
                               </span>
                             )}
                       </div>
-                      {hasCustomPrice && (
-                        <div className="text-xs text-gray-400 mt-2">
-                          Вартість: <span className="text-white font-medium">{(selectedAppointment.customPrice! / 100).toFixed(0)} ₴</span>
-                        </div>
-                      )}
-                      {!hasCustomPrice && (selectedAppointment.customServiceName?.trim() || (() => {
-                        try {
-                          const ids = selectedAppointment.services ? JSON.parse(selectedAppointment.services) : []
-                          return Array.isArray(ids) && ids.length === 0
-                        } catch { return false }
-                      })()) && (
-                        <div className="text-xs text-gray-400 mt-1">Вартість узгоджується після процедури</div>
+                      {needsPriceAfter && (
+                        <div className="text-xs text-gray-400 mt-2">Вартість узгоджується після процедури</div>
                       )}
                     </div>
                   )
@@ -937,88 +958,19 @@ export function MyDayCard({
         </ModalPortal>
       )}
 
-      {/* Client History Modal — обмежена ширина */}
-      {historyPhone && (
-        <ModalPortal>
-          <div className="modal-overlay sm:!p-4" onClick={() => setHistoryPhone(null)}>
-            <div
-              className="relative w-[95%] sm:w-full modal-content modal-dialog text-white max-h-[82dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
-              style={{ maxWidth: 'min(36rem, 95vw)' }}
-              onClick={(e) => e.stopPropagation()}
-              onTouchStart={handleTouchStart}
-              onTouchEnd={(e) => handleTouchEnd(e, () => setHistoryPhone(null))}
-            >
-              <button
-                type="button"
-                onClick={() => setHistoryPhone(null)}
-                className="modal-close text-gray-400 hover:text-white rounded-xl"
-                aria-label="Закрити"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-              <div className="pr-10 mb-2 flex-shrink-0">
-                <h3 className="modal-title truncate">Історія клієнта</h3>
-                <p className="modal-subtitle truncate">{historyPhone}</p>
-              </div>
-              <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide p-2 pt-0 sm:p-3 sm:pt-0">
-                {historyLoading ? (
-                  <div className="text-center py-10 text-sm text-gray-400">Завантаження…</div>
-                ) : historyAppointments.length === 0 ? (
-                  <div className="text-center py-10 text-sm text-gray-400">
-                    {businessId ? 'Немає записів для цього клієнта' : 'Немає businessId для пошуку історії'}
-                  </div>
-                ) : (
-                  <div className="space-y-2">
-                    {historyAppointments.map((apt) => {
-                      const start = new Date(apt.startTime)
-                      const end = new Date(apt.endTime)
-                      return (
-                        <button
-                          key={apt.id}
-                          className="w-full text-left bg-white/5 border border-white/10 rounded-lg p-3 hover:bg-white/10 transition-colors active:scale-[0.98]"
-                          onClick={() => {
-                            setSelectedAppointment(apt)
-                            setHistoryPhone(null)
-                          }}
-                        >
-                          <div className="flex items-start justify-between gap-2">
-                            <div className="min-w-0">
-                              <div className="text-sm font-semibold text-white truncate">{apt.clientName}</div>
-                              <div className="text-xs text-gray-400 truncate">
-                                {format(start, 'd MMM yyyy', { locale: uk })} • {format(start, 'HH:mm')}–{format(end, 'HH:mm')}
-                                {apt.masterName ? ` • ${apt.masterName}` : ''}
-                              </div>
-                            </div>
-                            <div className={`px-2 py-1 rounded text-xs font-medium border flex-shrink-0 ${getStatusColor(apt.status, apt.isFromBooking)}`}>
-                              {getStatusLabel(apt.status, apt.isFromBooking)}
-                            </div>
-                          </div>
-                        </button>
-                      )
-                    })}
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </ModalPortal>
-      )}
-
       {/* Date Picker Modal — компактна ширина */}
       {showDatePicker && (
         <ModalPortal>
           <div className="modal-overlay sm:!p-4" onClick={() => setShowDatePicker(false)}>
             <div
-              className="relative w-[95%] sm:w-full modal-content modal-dialog text-white max-h-[82dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+              className="relative w-[95%] sm:w-full sm:max-w-lg sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
               style={{ maxWidth: 'min(24rem, 95vw)' }}
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 type="button"
                 onClick={() => setShowDatePicker(false)}
-                className="modal-close text-gray-400 hover:text-white rounded-xl"
+                className="modal-close text-gray-400 hover:text-white rounded-full"
                 aria-label="Закрити"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -1128,6 +1128,7 @@ export default function MastersPage() {
         <MasterScheduleModal
           master={selectedMasterForSchedule}
           businessId={business.id}
+          otherMasters={masters.filter((m) => m.id !== selectedMasterForSchedule.id)}
           onClose={() => {
             setShowScheduleModal(false)
             setSelectedMasterForSchedule(null)

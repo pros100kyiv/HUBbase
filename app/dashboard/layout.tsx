@@ -36,13 +36,7 @@ export default function DashboardLayout({
       try {
         const parsed = JSON.parse(businessData)
         setBusiness(parsed)
-        
-        // Перевіряємо, чи користувач вже закривав це вікно
         const profileModalClosed = localStorage.getItem('profileModalClosed')
-        
-        // Показуємо модальне вікно ТІЛЬКИ якщо:
-        // 1. Профіль не заповнений
-        // 2. Користувач ще не закривав це вікно вручну
         if (!parsed.profileCompleted && !profileModalClosed) {
           setShowProfileModal(true)
         }
@@ -51,6 +45,33 @@ export default function DashboardLayout({
       }
     }
   }, [])
+
+  // Перевірка статусу блокування при завантаженні бізнесу
+  useEffect(() => {
+    if (!business?.id) {
+      setIsBlocked(null)
+      setBlockInfo(null)
+      return
+    }
+    fetch(`/api/business/block?businessId=${encodeURIComponent(business.id)}`)
+      .then((res) => res.json())
+      .then((data) => {
+        if (data?.business?.isActive === false && data?.blockInfo) {
+          setIsBlocked(true)
+          setBlockInfo({
+            reason: data.blockInfo.reason,
+            blockedAt: data.blockInfo.blockedAt,
+          })
+        } else {
+          setIsBlocked(false)
+          setBlockInfo(null)
+        }
+      })
+      .catch(() => {
+        setIsBlocked(false)
+        setBlockInfo(null)
+      })
+  }, [business?.id])
 
   useEffect(() => {
     globalMobileMenuState = { isOpen: mobileMenuOpen, setIsOpen: setMobileMenuOpen }

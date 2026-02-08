@@ -6,9 +6,14 @@ import { NavigationProgressProvider } from '@/contexts/NavigationProgressContext
 import { ToastContainer } from '@/components/ui/toast'
 
 export const metadata: Metadata = {
-  title: 'Система Бронювання - SaaS Платформа',
-  description: 'Професійна система бронювання записів',
+  title: 'Xbase — Записи та клієнти в одній базі | xbase.online',
+  description: 'Xbase: ваша база для записів та клієнтів. Онлайн-бронювання, QR, Telegram. Безкоштовний старт для бізнесів.',
   manifest: '/manifest.json',
+  openGraph: {
+    title: 'Xbase — Записи та клієнти в одній базі',
+    description: 'Ваша база для записів та клієнтів. Онлайн-бронювання, QR, Telegram.',
+    type: 'website',
+  },
 }
 
 export const viewport: Viewport = {

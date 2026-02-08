@@ -231,14 +231,26 @@ export function EditAppointmentForm({
             <label className="block text-sm font-medium mb-2 text-gray-300">
               Телефон клієнта *
             </label>
-            <Input
-              type="tel"
-              value={formData.clientPhone}
-              onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
-              placeholder="+380XXXXXXXXX"
-              required
-              className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
-            />
+            <div className="flex gap-2 items-center">
+              <Input
+                type="tel"
+                value={formData.clientPhone}
+                onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
+                placeholder="+380XXXXXXXXX"
+                required
+                className="flex-1 min-w-0 border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+              />
+              {formData.clientPhone.replace(/\D/g, '').length >= 9 && (
+                <a
+                  href={`/dashboard/clients?phone=${encodeURIComponent(formData.clientPhone.trim())}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-medium text-emerald-400 hover:underline whitespace-nowrap"
+                >
+                  Картка клієнта
+                </a>
+              )}
+            </div>
           </div>
 
           {/* Services */}
@@ -294,13 +306,13 @@ export function EditAppointmentForm({
                 onClick={() => setShowServiceModal(false)}
               >
                 <div
-                  className="relative w-[95%] sm:w-full max-w-md modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0"
+                  className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
                     type="button"
                     onClick={() => setShowServiceModal(false)}
-                    className="modal-close text-gray-400 hover:text-white rounded-xl"
+                    className="modal-close text-gray-400 hover:text-white rounded-full"
                     aria-label="Закрити"
                   >
                     <XIcon className="w-5 h-5" />

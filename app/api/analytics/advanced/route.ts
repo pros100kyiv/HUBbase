@@ -90,14 +90,18 @@ export async function GET(request: Request) {
       prisma.master.findMany({ where: { businessId } })
     ])
     
+    const isDone = (s: string) => s === 'Done' || s === 'Виконано'
+    const isConfirmed = (s: string) => s === 'Confirmed' || s === 'Підтверджено'
+    const isCancelled = (s: string) => s === 'Cancelled' || s === 'Скасовано'
+
     // Поточний прибуток (тільки виконані)
-    const completedAppointments = appointments.filter(a => a.status === 'Done')
+    const completedAppointments = appointments.filter(a => isDone(a.status))
     const currentRevenue = completedAppointments.reduce((sum, apt) => {
       return sum + appointmentRevenue(apt, services)
     }, 0)
     
     // Прогнозований прибуток (підтверджені)
-    const confirmedAppointments = appointments.filter(a => a.status === 'Confirmed')
+    const confirmedAppointments = appointments.filter(a => isConfirmed(a.status))
     const forecastedRevenue = confirmedAppointments.reduce((sum, apt) => {
       return sum + appointmentRevenue(apt, services)
     }, 0)
@@ -214,7 +218,7 @@ export async function GET(request: Request) {
       })
       
       const dayRevenue = dayAppointments
-        .filter(a => a.status === 'Done')
+        .filter(a => isDone(a.status))
         .reduce((sum, apt) => {
           return sum + appointmentRevenue(apt, services)
         }, 0)
@@ -230,9 +234,9 @@ export async function GET(request: Request) {
     
     // Конверсія
     const totalBookings = appointments.length
-    const confirmed = appointments.filter(a => a.status === 'Confirmed' || a.status === 'Done').length
-    const completed = appointments.filter(a => a.status === 'Done').length
-    const cancelled = appointments.filter(a => a.status === 'Cancelled').length
+    const confirmed = appointments.filter(a => isConfirmed(a.status) || isDone(a.status)).length
+    const completed = appointments.filter(a => isDone(a.status)).length
+    const cancelled = appointments.filter(a => isCancelled(a.status)).length
     
     const conversionFunnel = {
       total: totalBookings,
@@ -251,7 +255,7 @@ export async function GET(request: Request) {
         acc[source] = { count: 0, revenue: 0 }
       }
       acc[source].count++
-      if (apt.status === 'Done') {
+      if (isDone(apt.status)) {
         acc[source].revenue += appointmentRevenue(apt, services)
       }
       return acc

@@ -44,6 +44,7 @@ export async function GET(request: Request) {
           services: true,
           customPrice: true,
           clientId: true,
+          clientPhone: true,
           masterId: true,
         },
       }),
@@ -54,18 +55,26 @@ export async function GET(request: Request) {
       prisma.master.findMany({ where: { businessId } })
     ])
 
-    const totalAppointments = appointments.length
-    const confirmedAppointments = appointments.filter(
-      a => a.status === 'Confirmed'
-    ).length
-    const completedAppointments = appointments.filter(a => a.status === 'Done').length
-    const cancelledAppointments = appointments.filter(a => a.status === 'Cancelled').length
+    const isConfirmed = (s: string) => s === 'Confirmed' || s === 'Підтверджено'
+    const isDone = (s: string) => s === 'Done' || s === 'Виконано'
+    const isCancelled = (s: string) => s === 'Cancelled' || s === 'Скасовано'
 
-    const uniqueClientIds = new Set(appointments.map(a => a.clientId).filter(Boolean))
-    const uniqueClients = uniqueClientIds.size
+    const totalAppointments = appointments.length
+    const confirmedAppointments = appointments.filter(a => isConfirmed(a.status)).length
+    const completedAppointments = appointments.filter(a => isDone(a.status)).length
+    const cancelledAppointments = appointments.filter(a => isCancelled(a.status)).length
+
+    const uniqueClients = (() => {
+      const keys = new Set(
+        appointments
+          .map(a => (a as { clientId?: string; clientPhone?: string }).clientId || (a as { clientPhone?: string }).clientPhone)
+          .filter(Boolean)
+      )
+      return keys.size
+    })()
 
     const totalRevenue = appointments
-      .filter(a => a.status === 'Done')
+      .filter(a => isDone(a.status))
       .reduce((sum, apt) => {
         try {
           const servicesList = JSON.parse(apt.services || '[]') as string[]
@@ -80,7 +89,7 @@ export async function GET(request: Request) {
       }, 0)
 
     const serviceStats: Record<string, number> = {}
-    for (const apt of appointments.filter(a => a.status !== 'Cancelled')) {
+    for (const apt of appointments.filter(a => !isCancelled(a.status))) {
       try {
         const servicesList = JSON.parse(apt.services || '[]') as string[]
         for (const sid of servicesList) {
@@ -93,7 +102,7 @@ export async function GET(request: Request) {
 
     const masterStats = masters.map(m => ({
       masterId: m.id,
-      count: appointments.filter(a => (a as { masterId: string }).masterId === m.id && a.status !== 'Cancelled').length
+      count: appointments.filter(a => (a as { masterId: string }).masterId === m.id && !isCancelled(a.status)).length
     }))
 
     // Оновлюємо дату останнього входу в Центрі управління (як heartbeat)

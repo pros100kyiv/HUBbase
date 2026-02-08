@@ -21,6 +21,13 @@ import {
 } from 'date-fns'
 import { uk } from 'date-fns/locale'
 
+interface OtherMaster {
+  id: string
+  name: string
+  workingHours?: string | null
+  scheduleDateOverrides?: string | null
+}
+
 interface MasterScheduleModalProps {
   master: {
     id: string
@@ -29,6 +36,8 @@ interface MasterScheduleModalProps {
     scheduleDateOverrides?: string | null
   }
   businessId: string
+  /** Інші спеціалісти для копіювання графіка */
+  otherMasters?: OtherMaster[]
   onClose: () => void
   onSave: (workingHours?: string, scheduleDateOverrides?: string) => void
 }
@@ -54,9 +63,37 @@ const DAYS = [
   { key: 'sunday', label: 'Неділя' },
 ]
 
+const WEEK_PRESETS: { label: string; hours: WorkingHours }[] = [
+  {
+    label: 'Пн–Пт 9:00–18:00',
+    hours: {
+      monday: { enabled: true, start: '09:00', end: '18:00' },
+      tuesday: { enabled: true, start: '09:00', end: '18:00' },
+      wednesday: { enabled: true, start: '09:00', end: '18:00' },
+      thursday: { enabled: true, start: '09:00', end: '18:00' },
+      friday: { enabled: true, start: '09:00', end: '18:00' },
+      saturday: { enabled: false, start: '09:00', end: '18:00' },
+      sunday: { enabled: false, start: '09:00', end: '18:00' },
+    },
+  },
+  {
+    label: 'Пн–Сб 10:00–19:00',
+    hours: {
+      monday: { enabled: true, start: '10:00', end: '19:00' },
+      tuesday: { enabled: true, start: '10:00', end: '19:00' },
+      wednesday: { enabled: true, start: '10:00', end: '19:00' },
+      thursday: { enabled: true, start: '10:00', end: '19:00' },
+      friday: { enabled: true, start: '10:00', end: '19:00' },
+      saturday: { enabled: true, start: '10:00', end: '19:00' },
+      sunday: { enabled: false, start: '10:00', end: '19:00' },
+    },
+  },
+]
+
 export function MasterScheduleModal({
   master,
   businessId,
+  otherMasters = [],
   onClose,
   onSave,
 }: MasterScheduleModalProps) {
@@ -141,6 +178,47 @@ export function MasterScheduleModal({
       setScheduleDateOverrides((prev) => ({ ...prev, [dateKey]: value }))
     }
     setEditingDate(null)
+  }
+
+  const applyPreset = (preset: { hours: WorkingHours }) => {
+    setWorkingHours(preset.hours)
+    toast({ title: 'Застосовано', description: 'Пресет застосовано до тижня', type: 'success', duration: 2000 })
+  }
+
+  const applySameHoursToAllWorkingDays = () => {
+    const firstEnabled = DAYS.find((d) => workingHours[d.key]?.enabled)
+    if (!firstEnabled) {
+      toast({ title: 'Немає робочих днів', description: 'Увімкніть хоча б один день', type: 'error' })
+      return
+    }
+    const template = workingHours[firstEnabled.key]
+    if (!template) return
+    const next: WorkingHours = { ...workingHours }
+    DAYS.forEach((d) => {
+      if (next[d.key]?.enabled) {
+        next[d.key] = { ...next[d.key], start: template.start, end: template.end }
+      }
+    })
+    setWorkingHours(next)
+    toast({ title: 'Готово', description: 'Однакові години застосовано до всіх робочих днів', type: 'success', duration: 2000 })
+  }
+
+  const copyScheduleFromMaster = (other: OtherMaster) => {
+    try {
+      if (other.workingHours) {
+        const parsed = typeof other.workingHours === 'string' ? JSON.parse(other.workingHours) : other.workingHours
+        setWorkingHours(parsed && typeof parsed === 'object' ? parsed : workingHours)
+      }
+      if (other.scheduleDateOverrides) {
+        const parsed = typeof other.scheduleDateOverrides === 'string' ? JSON.parse(other.scheduleDateOverrides) : other.scheduleDateOverrides
+        setScheduleDateOverrides(parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})
+      } else {
+        setScheduleDateOverrides({})
+      }
+      toast({ title: 'Скопійовано', description: `Графік з «${other.name}» застосовано`, type: 'success', duration: 2000 })
+    } catch {
+      toast({ title: 'Помилка', description: 'Не вдалося скопіювати графік', type: 'error' })
+    }
   }
 
   const copyWeekToMonth = () => {
@@ -260,6 +338,41 @@ export function MasterScheduleModal({
             {activeTab === 'week' && (
               <div>
                 <h3 className="text-sm font-semibold text-white mb-2">Робочі години (типовий тиждень)</h3>
+                {/* Пресети та швидкі дії */}
+                <div className="flex flex-wrap gap-1.5 mb-3">
+                  {WEEK_PRESETS.map((preset) => (
+                    <button
+                      key={preset.label}
+                      type="button"
+                      onClick={() => applyPreset(preset)}
+                      className="px-2.5 py-1.5 text-[10px] font-medium rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors"
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={applySameHoursToAllWorkingDays}
+                    className="px-2.5 py-1.5 text-[10px] font-medium rounded-lg border border-emerald-500/30 bg-emerald-500/10 text-emerald-400 hover:bg-emerald-500/20 transition-colors"
+                  >
+                    Однакові години для всіх робочих днів
+                  </button>
+                </div>
+                {otherMasters.length > 0 && (
+                  <div className="mb-3 flex items-center gap-2 flex-wrap">
+                    <span className="text-[10px] text-gray-400">Скопіювати графік з:</span>
+                    {otherMasters.map((other) => (
+                      <button
+                        key={other.id}
+                        type="button"
+                        onClick={() => copyScheduleFromMaster(other)}
+                        className="px-2 py-1 text-[10px] font-medium rounded border border-white/20 bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white transition-colors"
+                      >
+                        {other.name}
+                      </button>
+                    ))}
+                  </div>
+                )}
                 <div className="space-y-2">
                   {DAYS.map((day) => {
                     const dayHours = workingHours[day.key] || { enabled: false, start: '09:00', end: '18:00' }

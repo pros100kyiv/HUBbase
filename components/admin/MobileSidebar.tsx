@@ -73,7 +73,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
 
   const navItems: NavItem[] = [
     { id: 'main', label: 'Головна', icon: <HomeIcon />, path: '/dashboard/main' },
-    { id: 'appointments', label: 'Записи', icon: <CalendarIcon />, path: '/dashboard/appointments' },
+    { id: 'appointments', label: 'Записи', icon: <CalendarIcon />, path: '/dashboard/appointments', badge: pendingCount > 0 ? pendingCount : undefined },
     { id: 'price', label: 'Прайс', icon: <MoneyIcon />, path: '/dashboard/price' },
     { id: 'clients', label: 'Клієнти', icon: <UsersIcon />, path: '/dashboard/clients' },
     { id: 'schedule', label: 'Графік роботи та спеціалісти', icon: <ClockIcon />, path: '/dashboard/schedule' },

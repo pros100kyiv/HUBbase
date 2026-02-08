@@ -382,7 +382,11 @@ export function StatisticsDetailModal({
                       </div>
                     ) : (
                       clients.map((client) => (
-                        <div key={client.id} className="p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
+                        <a
+                          key={client.id}
+                          href={`/dashboard/clients?id=${encodeURIComponent(client.id)}`}
+                          className="block p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+                        >
                           <div className="flex items-start justify-between">
                             <div className="flex-1">
                               <div className="flex items-center gap-2 mb-1">
@@ -399,8 +403,9 @@ export function StatisticsDetailModal({
                                 </div>
                               )}
                             </div>
+                            <span className="text-xs text-emerald-400 hover:underline">Відкрити</span>
                           </div>
-                        </div>
+                        </a>
                       ))
                     )}
                   </div>
@@ -436,7 +441,15 @@ export function StatisticsDetailModal({
                                     </span>
                                   </div>
                                   <div className="text-sm font-medium text-white mb-1">{apt.clientName}</div>
-                                  <div className="text-xs text-gray-400">{apt.clientPhone}</div>
+                                  <div className="text-xs text-gray-400 flex items-center gap-2 flex-wrap">
+                                    {apt.clientPhone}
+                                    <a
+                                      href={`/dashboard/clients?phone=${encodeURIComponent(apt.clientPhone)}`}
+                                      className="text-emerald-400 hover:underline"
+                                    >
+                                      Історія клієнта
+                                    </a>
+                                  </div>
                                   {master && (
                                     <div className="text-xs text-gray-500 mt-1">Майстер: {master.name}</div>
                                   )}

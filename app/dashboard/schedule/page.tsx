@@ -217,11 +217,21 @@ export default function SchedulePage() {
             </button>
           </div>
 
+          {/* Короткий опис і підказки */}
+          <div className="rounded-xl p-4 card-glass border border-white/10">
+            <p className="text-sm text-gray-300 mb-1">
+              Керуйте спеціалістами та їхнім графіком: робочі дні тижня, години та виключення по датах (відпустки, вихідні).
+            </p>
+            <p className="text-xs text-gray-500">
+              Оберіть день зверху → вмикайте/вимикайте працює/не працює. Клік по годинах або кнопка «Редагувати» → повний графік та виключення.
+            </p>
+          </div>
+
           {/* Хто працює — вибір дня + список */}
           <div className="dashboard-card">
-            <h2 className="dashboard-card-title mb-4">Хто працює</h2>
+            <h2 className="dashboard-card-title mb-2">Хто працює</h2>
             <p className="text-xs text-gray-400 mb-4">
-              Оберіть день і вмикайте/вимикайте спеціалістів одним кліком. Для зміни годин натисніть «Редагувати».
+              Оберіть день і перемикайте «працює / вихідний». Щоб змінити години — натисніть по годинах або кнопку з олівцем.
             </p>
 
             <div className="flex flex-wrap gap-2 mb-6">
@@ -307,9 +317,14 @@ export default function SchedulePage() {
                       <div className="flex-1 min-w-0">
                         <p className="text-sm font-medium text-white truncate">{master.name}</p>
                         {working && schedule ? (
-                          <p className="text-xs text-gray-400">
+                          <button
+                            type="button"
+                            onClick={() => setScheduleModalMaster(master)}
+                            className="text-xs text-gray-400 hover:text-emerald-400 hover:underline transition-colors text-left"
+                            title="Змінити години"
+                          >
                             {schedule.start} – {schedule.end}
-                          </p>
+                          </button>
                         ) : (
                           <p className="text-xs text-gray-500">Вихідний</p>
                         )}
@@ -319,7 +334,7 @@ export default function SchedulePage() {
                           type="button"
                           onClick={() => setScheduleModalMaster(master)}
                           className="p-2 rounded-lg border border-white/20 bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white transition-colors"
-                          title="Редагувати графік"
+                          title="Редагувати графік (години та виключення)"
                         >
                           <EditIcon className="w-4 h-4" />
                         </button>
@@ -350,9 +365,9 @@ export default function SchedulePage() {
           {/* Сітка тижня */}
           {masters.length > 0 && (
             <div className="dashboard-card">
-              <h2 className="dashboard-card-title mb-4">Тиждень</h2>
+              <h2 className="dashboard-card-title mb-2">Тиждень</h2>
               <p className="text-xs text-gray-400 mb-4">
-                Огляд по днях. Клік по спеціалісту — повний графік та корекція.
+                Огляд по днях. Клік по імені або по клітинці дня — відкрити графік та виключення.
               </p>
               <div className="overflow-x-auto">
                 <table className="w-full min-w-[400px] text-sm">
@@ -411,19 +426,38 @@ export default function SchedulePage() {
           <div className="dashboard-card">
             <h3 className="dashboard-card-title mb-3">Спеціалісти</h3>
             {masters.length === 0 ? (
-              <p className="text-sm text-gray-400">Додайте спеціалістів у розділі Спеціалісти.</p>
+              <p className="text-sm text-gray-400">Додайте спеціалістів нижче.</p>
             ) : (
               <ul className="space-y-2">
                 {masters.map((master) => (
-                  <li key={master.id} className="flex items-center justify-between gap-2">
-                    <span className="text-sm text-white truncate">{master.name}</span>
-                    <button
-                      type="button"
-                      onClick={() => setScheduleModalMaster(master)}
-                      className="dashboard-btn-secondary flex-shrink-0 px-2 py-1 text-xs"
-                    >
-                      Графік
-                    </button>
+                  <li key={master.id} className="flex items-center gap-3 p-2 rounded-lg border border-white/10 bg-white/[0.02] hover:bg-white/5 transition-colors">
+                    {master.photo ? (
+                      <img src={master.photo} alt="" className="w-9 h-9 rounded-full object-cover flex-shrink-0 border border-white/10" />
+                    ) : (
+                      <div className="w-9 h-9 rounded-full bg-white/20 flex items-center justify-center text-white text-sm font-semibold flex-shrink-0">
+                        {master.name.charAt(0).toUpperCase()}
+                      </div>
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-white truncate">{master.name}</p>
+                      <div className="flex gap-1.5 mt-0.5">
+                        <button
+                          type="button"
+                          onClick={() => setScheduleModalMaster(master)}
+                          className="text-[10px] font-medium text-emerald-400 hover:underline"
+                        >
+                          Графік
+                        </button>
+                        <span className="text-gray-600">·</span>
+                        <button
+                          type="button"
+                          onClick={() => { setEditingMaster(master); setShowQuickMasterCard(true) }}
+                          className="text-[10px] font-medium text-gray-400 hover:text-white hover:underline"
+                        >
+                          Профіль
+                        </button>
+                      </div>
+                    </div>
                   </li>
                 ))}
               </ul>
@@ -431,8 +465,9 @@ export default function SchedulePage() {
             <button
               type="button"
               onClick={() => { setEditingMaster(null); setShowQuickMasterCard(true) }}
-              className="w-full mt-4 dashboard-btn-secondary"
+              className="w-full mt-4 dashboard-btn-secondary flex items-center justify-center gap-2"
             >
+              <UserIcon className="w-4 h-4" />
               Додати спеціаліста
             </button>
           </div>
@@ -443,6 +478,7 @@ export default function SchedulePage() {
         <MasterScheduleModal
           master={scheduleModalMaster}
           businessId={business.id}
+          otherMasters={masters.filter((m) => m.id !== scheduleModalMaster.id)}
           onClose={() => setScheduleModalMaster(null)}
           onSave={handleScheduleSave}
         />

@@ -179,6 +179,16 @@ export default function AnalyticsPage() {
             </div>
           )}
 
+          {/* Підказка періоду */}
+          <div className="rounded-xl p-3 card-glass border border-white/10 flex items-center justify-between gap-2 flex-wrap">
+            <span className="text-sm text-gray-400">
+              Період: <span className="font-medium text-white">{period === 'day' ? 'сьогодні' : period === 'week' ? 'останні 7 днів' : 'останні 30 днів'}</span>
+            </span>
+            {!advancedStats && !loading && !apiError && (
+              <span className="text-xs text-amber-400">Розширена аналітика завантажується…</span>
+            )}
+          </div>
+
           {/* Tabs */}
           <div className="rounded-xl p-4 md:p-6 card-glass">
             <div className="flex gap-2 flex-wrap">
@@ -199,6 +209,12 @@ export default function AnalyticsPage() {
           </div>
 
           {/* Overview Tab */}
+          {activeTab === 'overview' && !advancedStats && (
+            <div className="rounded-xl p-6 md:p-8 card-glass text-center">
+              <p className="text-gray-400">Завантаження розширеної аналітики…</p>
+              <p className="text-sm text-gray-500 mt-1">Якщо дані не зʼявляються, натисніть «Оновити».</p>
+            </div>
+          )}
           {activeTab === 'overview' && advancedStats && (
             <div className="space-y-3 md:space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-3 md:gap-4">
@@ -222,14 +238,14 @@ export default function AnalyticsPage() {
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 <div className="rounded-xl p-4 md:p-6 card-glass">
-                  <h3 className="text-base font-semibold text-white mb-3 flex items-center gap-2"><TargetIcon className="w-5 h-5 text-purple-400" />Customer Lifetime Value</h3>
+                  <h3 className="text-base font-semibold text-white mb-3 flex items-center gap-2"><TargetIcon className="w-5 h-5 text-purple-400" />Цінність клієнта (LTV)</h3>
                   <div className="text-2xl md:text-3xl font-bold text-purple-400">{formatCurrency(advancedStats.avgLTV || 0)}</div>
                   <div className="text-xs text-gray-500 mt-1">Оцінка вартості клієнта за період</div>
                 </div>
                 <div className="rounded-xl p-4 md:p-6 card-glass">
-                  <h3 className="text-base font-semibold text-white mb-3 flex items-center gap-2"><UsersIcon className="w-5 h-5 text-blue-400" />Retention Rate</h3>
+                  <h3 className="text-base font-semibold text-white mb-3 flex items-center gap-2"><UsersIcon className="w-5 h-5 text-blue-400" />Утримання клієнтів</h3>
                   <div className="text-2xl md:text-3xl font-bold text-blue-400">{Math.round(advancedStats.retentionRate || 0)}%</div>
-                  <div className="text-xs text-gray-500 mt-1">Активні: {advancedStats.activeClients || 0} / {advancedStats.totalClients || 0}</div>
+                  <div className="text-xs text-gray-500 mt-1">Активні: {advancedStats.activeClients ?? 0} / {advancedStats.totalClients ?? 0}</div>
                 </div>
               </div>
               {advancedStats.conversionFunnel && (
@@ -238,19 +254,19 @@ export default function AnalyticsPage() {
                   <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                     <div className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/15 transition-colors">
                       <div className="text-xs text-gray-400 mb-1 uppercase tracking-wide">Всього</div>
-                      <div className="text-xl font-bold text-white tabular-nums">{advancedStats.conversionFunnel.total}</div>
+                      <div className="text-xl font-bold text-white tabular-nums">{advancedStats.conversionFunnel.total ?? 0}</div>
                     </div>
                     <div className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-blue-400/30 transition-colors">
                       <div className="text-xs text-gray-400 mb-1 uppercase tracking-wide">Підтверджено</div>
-                      <div className="text-xl font-bold text-blue-400 tabular-nums">{advancedStats.conversionFunnel.confirmed} <span className="text-sm font-medium text-gray-400">({Math.round(advancedStats.conversionFunnel.confirmationRate)}%)</span></div>
+                      <div className="text-xl font-bold text-blue-400 tabular-nums">{advancedStats.conversionFunnel.confirmed ?? 0} <span className="text-sm font-medium text-gray-400">({Math.round(advancedStats.conversionFunnel.confirmationRate ?? 0)}%)</span></div>
                     </div>
                     <div className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-green-400/30 transition-colors">
                       <div className="text-xs text-gray-400 mb-1 uppercase tracking-wide">Виконано</div>
-                      <div className="text-xl font-bold text-green-400 tabular-nums">{advancedStats.conversionFunnel.completed} <span className="text-sm font-medium text-gray-400">({Math.round(advancedStats.conversionFunnel.completionRate)}%)</span></div>
+                      <div className="text-xl font-bold text-green-400 tabular-nums">{advancedStats.conversionFunnel.completed ?? 0} <span className="text-sm font-medium text-gray-400">({Math.round(advancedStats.conversionFunnel.completionRate ?? 0)}%)</span></div>
                     </div>
                     <div className="p-4 rounded-xl bg-white/5 border border-white/10 hover:border-red-400/30 transition-colors">
                       <div className="text-xs text-gray-400 mb-1 uppercase tracking-wide">Скасовано</div>
-                      <div className="text-xl font-bold text-red-400 tabular-nums">{advancedStats.conversionFunnel.cancelled} <span className="text-sm font-medium text-gray-400">({Math.round(advancedStats.conversionFunnel.cancellationRate)}%)</span></div>
+                      <div className="text-xl font-bold text-red-400 tabular-nums">{advancedStats.conversionFunnel.cancelled ?? 0} <span className="text-sm font-medium text-gray-400">({Math.round(advancedStats.conversionFunnel.cancellationRate ?? 0)}%)</span></div>
                     </div>
                   </div>
                 </div>
@@ -260,8 +276,8 @@ export default function AnalyticsPage() {
                   <h3 className="chart-title">Тренди доходу</h3>
                   <div className="space-y-3">
                     {advancedStats.dailyTrends.map((day: any) => {
-                      const maxRevenue = Math.max(...advancedStats.dailyTrends.map((d: any) => d.revenue), 1)
-                      const barWidth = (day.revenue / maxRevenue) * 100
+                      const maxRevenue = Math.max(...advancedStats.dailyTrends.map((d: any) => d.revenue ?? 0), 1)
+                      const barWidth = Math.min(100, ((day.revenue ?? 0) / maxRevenue) * 100)
                       return (
                         <div key={day.date} className="flex items-center gap-3 md:gap-4">
                           <div className="w-14 md:w-20 text-xs text-gray-400 tabular-nums shrink-0">{day.dateLabel}</div>
@@ -290,15 +306,19 @@ export default function AnalyticsPage() {
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                 <div className="rounded-xl p-4 md:p-6 card-glass">
                   <h3 className="text-base font-semibold text-white mb-4">Аналіз джерел</h3>
-                  {advancedStats.sourceAnalysis && Object.entries(advancedStats.sourceAnalysis).map(([source, data]: [string, any]) => (
-                    <div key={source} className="flex justify-between items-center p-3 border-b border-white/10 last:border-0">
-                      <div>
-                        <div className="font-medium text-white">{source === 'qr' ? 'QR код' : source === 'link' ? 'Посилання' : source}</div>
-                        <div className="text-xs text-gray-400">{data.count} записів</div>
+                  {advancedStats.sourceAnalysis && Object.keys(advancedStats.sourceAnalysis).length > 0 ? (
+                    Object.entries(advancedStats.sourceAnalysis).map(([source, data]: [string, any]) => (
+                      <div key={source} className="flex justify-between items-center p-3 border-b border-white/10 last:border-0">
+                        <div>
+                          <div className="font-medium text-white">{source === 'qr' ? 'QR код' : source === 'link' ? 'Посилання' : source === 'unknown' ? 'Не вказано' : source}</div>
+                          <div className="text-xs text-gray-400">{data?.count ?? 0} записів</div>
+                        </div>
+                        <div className="font-semibold text-purple-400">{formatCurrency(data?.revenue ?? 0)}</div>
                       </div>
-                      <div className="font-semibold text-purple-400">{formatCurrency(data.revenue)}</div>
-                    </div>
-                  ))}
+                    ))
+                  ) : (
+                    <p className="text-sm text-gray-400 py-4">Немає даних про джерела записів за період</p>
+                  )}
                 </div>
                 <div className="rounded-xl p-4 md:p-6 card-glass">
                   <h3 className="text-base font-semibold text-white mb-4">Прогноз</h3>
@@ -344,7 +364,7 @@ export default function AnalyticsPage() {
                 <div className="rounded-xl p-4 md:p-6 card-glass">
                   <h3 className="text-base font-semibold text-white mb-3 flex items-center gap-2"><TargetIcon className="w-5 h-5 text-blue-400" /> Утримання та LTV</h3>
                   <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-                    <div className="text-xs text-gray-400 mb-1">Retention Rate</div>
+                    <div className="text-xs text-gray-400 mb-1">Утримання клієнтів</div>
                     <div className="text-2xl font-bold text-green-400">{Math.round(advancedStats.retentionRate ?? 0)}%</div>
                   </div>
                   <div className="p-3 bg-white/5 rounded-lg border border-white/10 mt-2">
@@ -357,68 +377,81 @@ export default function AnalyticsPage() {
           )}
 
           {/* Services Tab */}
-          {activeTab === 'services' && advancedStats?.serviceAnalysis && (
+          {activeTab === 'services' && advancedStats && (
             <div className="space-y-3 md:space-y-6">
               <div className="rounded-xl p-4 md:p-6 card-glass">
                 <h3 className="text-base font-semibold text-white mb-4">Детальний аналіз послуг</h3>
-                <div className="space-y-3">
-                  {advancedStats.serviceAnalysis.map((service: any) => (
-                    <div key={service.serviceId} className="p-4 rounded-lg border border-white/10 bg-white/5">
-                      <div className="flex justify-between items-start mb-2">
-                        <div>
-                          <div className="font-semibold text-white">{service.serviceName}</div>
-                          <div className="text-sm text-gray-400">{formatCurrency(service.price)}</div>
+                {advancedStats.serviceAnalysis && advancedStats.serviceAnalysis.length > 0 ? (
+                  <div className="space-y-3">
+                    {advancedStats.serviceAnalysis.map((service: any) => (
+                      <div key={service.serviceId} className="p-4 rounded-lg border border-white/10 bg-white/5">
+                        <div className="flex justify-between items-start mb-2">
+                          <div>
+                            <div className="font-semibold text-white">{service.serviceName}</div>
+                            <div className="text-sm text-gray-400">{formatCurrency(service.price ?? 0)}</div>
+                          </div>
+                          <div className="text-right">
+                            <div className="font-semibold text-purple-400">{formatCurrency(service.revenue ?? 0)}</div>
+                            <div className="text-xs text-gray-400">{service.bookings ?? 0} бронювань</div>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <div className="font-semibold text-purple-400">{formatCurrency(service.revenue)}</div>
-                          <div className="text-xs text-gray-400">{service.bookings} бронювань</div>
+                        <div className="flex gap-4 text-xs text-gray-400 flex-wrap">
+                          <span>Популярність: <span className="font-medium text-white">{(Number(service.popularity) ?? 0).toFixed(1)}%</span></span>
+                          <span>Середній дохід: <span className="font-medium text-white">{formatCurrency(service.avgRevenuePerBooking ?? 0)}</span></span>
                         </div>
                       </div>
-                      <div className="flex gap-4 text-xs text-gray-400">
-                        <span>Популярність: <span className="font-medium text-white">{service.popularity.toFixed(1)}%</span></span>
-                        <span>Середній дохід: <span className="font-medium text-white">{formatCurrency(service.avgRevenuePerBooking)}</span></span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400 py-4">Немає даних про послуги за період</p>
+                )}
               </div>
             </div>
           )}
 
           {/* Masters Tab */}
-          {activeTab === 'masters' && advancedStats?.masterUtilization && (
+          {activeTab === 'masters' && advancedStats && (
             <div className="space-y-3 md:space-y-6">
               <div className="rounded-xl p-4 md:p-6 card-glass">
                 <h3 className="text-base font-semibold text-white mb-4">Завантаженість спеціалістів</h3>
-                <div className="space-y-3">
-                  {advancedStats.masterUtilization.map((master: any) => (
-                    <div key={master.masterId} className="p-4 rounded-lg border border-white/10 bg-white/5">
-                      <div className="flex justify-between items-start mb-3">
-                        <div>
-                          <div className="font-semibold text-white">{master.masterName}</div>
-                          <div className="text-sm text-gray-400">{master.appointments} записів</div>
+                {advancedStats.masterUtilization && advancedStats.masterUtilization.length > 0 ? (
+                  <div className="space-y-3">
+                    {advancedStats.masterUtilization.map((master: any) => {
+                      const rate = Number(master.utilizationRate) ?? 0
+                      const totalH = Number(master.totalHours) ?? 0
+                      const availH = Number(master.availableHours) ?? 0
+                      return (
+                        <div key={master.masterId} className="p-4 rounded-lg border border-white/10 bg-white/5">
+                          <div className="flex justify-between items-start mb-3">
+                            <div>
+                              <div className="font-semibold text-white">{master.masterName}</div>
+                              <div className="text-sm text-gray-400">{master.appointments ?? 0} записів</div>
+                            </div>
+                            <div className="text-right">
+                              <div className="font-semibold text-blue-400">{formatCurrency(master.revenue ?? 0)}</div>
+                              <div className="text-xs text-gray-400">{formatCurrency(master.avgRevenuePerHour ?? 0)}/год</div>
+                            </div>
+                          </div>
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-xs text-gray-400">
+                              <span>Завантаженість</span>
+                              <span className="font-semibold text-white tabular-nums">{rate.toFixed(1)}%</span>
+                            </div>
+                            <div className="chart-progress-track">
+                              <div
+                                className="chart-progress-fill chart-bar-fill-util"
+                                style={{ width: `${Math.min(rate, 100)}%` }}
+                              />
+                            </div>
+                            <div className="text-xs text-gray-500 tabular-nums">{totalH.toFixed(1)} год / {availH.toFixed(1)} год</div>
+                          </div>
                         </div>
-                        <div className="text-right">
-                          <div className="font-semibold text-blue-400">{formatCurrency(master.revenue)}</div>
-                          <div className="text-xs text-gray-400">{formatCurrency(master.avgRevenuePerHour)}/год</div>
-                        </div>
-                      </div>
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-xs text-gray-400">
-                          <span>Завантаженість</span>
-                          <span className="font-semibold text-white tabular-nums">{master.utilizationRate.toFixed(1)}%</span>
-                        </div>
-                        <div className="chart-progress-track">
-                          <div
-                            className="chart-progress-fill chart-bar-fill-util"
-                            style={{ width: `${Math.min(master.utilizationRate, 100)}%` }}
-                          />
-                        </div>
-                        <div className="text-xs text-gray-500 tabular-nums">{master.totalHours.toFixed(1)} год / {master.availableHours.toFixed(1)} год</div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                      )
+                    })}
+                  </div>
+                ) : (
+                  <p className="text-sm text-gray-400 py-4">Немає даних про спеціалістів за період</p>
+                )}
               </div>
             </div>
           )}
@@ -542,15 +575,19 @@ export default function AnalyticsPage() {
                 <span className="text-sm font-semibold text-purple-400">{period === 'day' ? 'День' : period === 'week' ? 'Тиждень' : 'Місяць'}</span>
               </div>
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
-                <span className="text-sm text-gray-300">Середній дохід</span>
+                <span className="text-sm text-gray-300">Середній дохід на запис</span>
                 <span className="text-sm font-semibold text-blue-400">
-                  {stats?.totalRevenue != null && stats?.totalAppointments ? formatCurrency(Math.round(stats.totalRevenue / stats.totalAppointments)) : formatCurrency(0)}
+                  {stats?.totalAppointments && stats.totalAppointments > 0 && stats?.totalRevenue != null
+                    ? formatCurrency(Math.round(stats.totalRevenue / stats.totalAppointments))
+                    : formatCurrency(0)}
                 </span>
               </div>
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
-                <span className="text-sm text-gray-300">Конверсія</span>
+                <span className="text-sm text-gray-300">Конверсія (підтверджено)</span>
                 <span className="text-sm font-semibold text-green-400">
-                  {stats?.totalAppointments && stats?.confirmedAppointments ? Math.round((stats.confirmedAppointments / stats.totalAppointments) * 100) : 0}%
+                  {stats?.totalAppointments && stats.totalAppointments > 0 && stats?.confirmedAppointments != null
+                    ? Math.round((stats.confirmedAppointments / stats.totalAppointments) * 100)
+                    : 0}%
                 </span>
               </div>
             </div>
@@ -570,6 +607,12 @@ export default function AnalyticsPage() {
                 className="w-full px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors text-left"
               >
                 Клієнти
+              </button>
+              <button
+                onClick={() => router.push('/dashboard/schedule')}
+                className="w-full px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors text-left"
+              >
+                Графік та спеціалісти
               </button>
             </div>
           </div>

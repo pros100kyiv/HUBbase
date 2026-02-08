@@ -1,13 +1,27 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { format, isAfter, differenceInDays } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { ChevronDownIcon, ChevronUpIcon, UsersIcon, SearchIcon, DownloadIcon, FilterIcon, CheckIcon, CalendarIcon, PhoneIcon, UserIcon, XIcon, SettingsIcon } from '@/components/icons'
 import { QuickClientCard } from '@/components/admin/QuickClientCard'
+import { ModalPortal } from '@/components/ui/modal-portal'
 import { toast } from '@/components/ui/toast'
+
+function normalizePhone(phone: string): string {
+  return (phone || '').replace(/\D/g, '')
+}
+
+function findClientByPhoneNumber(clients: Client[], input: string): Client | null {
+  const digits = normalizePhone(input)
+  if (!digits.length) return null
+  return clients.find((c) => {
+    const clientDigits = normalizePhone(c.phone)
+    return clientDigits === digits || clientDigits.endsWith(digits) || digits.endsWith(clientDigits)
+  }) || null
+}
 
 interface Client {
   id: string
@@ -56,7 +70,10 @@ export default function ClientsPage() {
   const [showQuickClientCard, setShowQuickClientCard] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [showAllClients, setShowAllClients] = useState(false)
+  const [phoneSearchInput, setPhoneSearchInput] = useState('')
+  const [clientByPhoneModal, setClientByPhoneModal] = useState<Client | null>(null)
   const INITIAL_VISIBLE_COUNT = 10
+  const searchParams = useSearchParams()
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -162,6 +179,48 @@ export default function ClientsPage() {
 
     loadData()
   }, [business])
+
+  // Якщо в URL є phone= або id= — автоматично відкрити вікно клієнта з історією
+  useEffect(() => {
+    if (!clients.length || loading) return
+    const idFromUrl = searchParams.get('id')
+    const phoneFromUrl = searchParams.get('phone')
+    if (idFromUrl) {
+      const found = clients.find((c) => c.id === idFromUrl)
+      if (found) {
+        setClientByPhoneModal(found)
+        setPhoneSearchInput(found.phone)
+      }
+    } else if (phoneFromUrl) {
+      const found = findClientByPhoneNumber(clients, phoneFromUrl)
+      if (found) {
+        setClientByPhoneModal(found)
+        setPhoneSearchInput(found.phone)
+      }
+    }
+  }, [clients, loading, searchParams])
+
+  // Кешуємо деталі клієнта при відкритті модалки за номером
+  useEffect(() => {
+    if (!clientByPhoneModal) return
+    setClientDetails((prev) => ({
+      ...prev,
+      [clientByPhoneModal.id]: calculateClientDetails(clientByPhoneModal),
+    }))
+  }, [clientByPhoneModal?.id])
+
+  const handleOpenClientByPhone = () => {
+    const found = findClientByPhoneNumber(clients, phoneSearchInput)
+    if (found) {
+      setClientByPhoneModal(found)
+    } else {
+      toast({
+        title: 'Клієнта не знайдено',
+        description: 'Перевірте номер телефону або додайте клієнта.',
+        type: 'error',
+      })
+    }
+  }
 
   const calculateClientDetails = (client: Client): ClientDetails => {
     const serviceMap = new Map<string, { id: string; name: string; count: number }>()
@@ -689,6 +748,29 @@ export default function ClientsPage() {
                 </button>
               </div>
             </div>
+            {/* Пошук клієнта за номером телефону — відкриває вікно з історією */}
+            <div className="mt-3 pt-3 border-t border-white/10 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
+              <span className="text-sm text-gray-400 flex items-center gap-1.5">
+                <PhoneIcon className="w-4 h-4" />
+                Знайти клієнта за номером
+              </span>
+              <div className="flex-1 flex gap-2 min-w-0">
+                <input
+                  type="tel"
+                  placeholder="+38 050 123 45 67"
+                  value={phoneSearchInput}
+                  onChange={(e) => setPhoneSearchInput(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleOpenClientByPhone()}
+                  className="flex-1 min-w-0 px-3 py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30"
+                />
+                <button
+                  onClick={handleOpenClientByPhone}
+                  className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-semibold transition-colors flex-shrink-0"
+                >
+                  Відкрити
+                </button>
+              </div>
+            </div>
             {selectedClients.size > 0 && (
               <div className="mt-3 pt-3 border-t border-white/10 flex items-center gap-2 flex-wrap">
                 <span className="text-sm text-gray-300">Вибрано: {selectedClients.size}</span>
@@ -885,245 +967,210 @@ export default function ClientsPage() {
                 </div>
 
                 {isExpanded && (
-                  <div className="px-4 pb-4 pt-0 border-t border-white/10">
+                  <div className="px-4 pb-4 pt-0 border-t border-white/10 space-y-4">
                     {details ? (
-                      <div className="mt-3 space-y-3">
-                        <div className="grid grid-cols-3 gap-2">
-                          <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-                            <div className="text-[10px] text-gray-400 font-medium mb-0.5">Зароблено</div>
-                            <div className="text-sm font-semibold text-purple-400">
-                              {new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.round(details.totalSpent))}
-                            </div>
-                          </div>
-                          <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-                            <div className="text-[10px] text-gray-400 font-medium mb-0.5">Останній візит</div>
-                            <div className="text-xs font-semibold text-blue-400">{format(new Date(details.lastVisit), 'dd.MM.yyyy')}</div>
-                          </div>
-                          {details.nextAppointment ? (
+                      <>
+                        {/* Блок: підсумок клієнта + примітки + теги */}
+                        <div className="mt-3 space-y-3">
+                          <div className="grid grid-cols-3 gap-2">
                             <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-                              <div className="text-[10px] text-gray-400 font-medium mb-0.5">Наступний</div>
-                              <div className="text-xs font-semibold text-green-400">{format(new Date(details.nextAppointment), 'dd.MM.yyyy')}</div>
+                              <div className="text-[10px] text-gray-400 font-medium mb-0.5">Зароблено</div>
+                              <div className="text-sm font-semibold text-purple-400">
+                                {new Intl.NumberFormat('uk-UA', { style: 'currency', currency: 'UAH', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(Math.round(details.totalSpent))}
+                              </div>
                             </div>
-                          ) : (
                             <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-                              <div className="text-[10px] text-gray-400 font-medium mb-0.5">Наступний</div>
-                              <div className="text-xs font-semibold text-orange-400">Немає</div>
+                              <div className="text-[10px] text-gray-400 font-medium mb-0.5">Останній візит</div>
+                              <div className="text-xs font-semibold text-blue-400">{format(new Date(details.lastVisit), 'dd.MM.yyyy')}</div>
+                            </div>
+                            {details.nextAppointment ? (
+                              <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                                <div className="text-[10px] text-gray-400 font-medium mb-0.5">Наступний</div>
+                                <div className="text-xs font-semibold text-green-400">{format(new Date(details.nextAppointment), 'dd.MM.yyyy')}</div>
+                              </div>
+                            ) : (
+                              <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                                <div className="text-[10px] text-gray-400 font-medium mb-0.5">Наступний</div>
+                                <div className="text-xs font-semibold text-orange-400">Немає</div>
+                              </div>
+                            )}
+                          </div>
+                          {client.notes && (
+                            <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                              <div className="text-[10px] text-gray-400 font-medium mb-1">Примітки</div>
+                              <div className="text-xs text-white">{client.notes}</div>
+                            </div>
+                          )}
+                          {parseClientTags(client.tags).length > 0 && (
+                            <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                              <div className="text-[10px] text-gray-400 font-medium mb-1">Теги</div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {parseClientTags(client.tags).map((tag, idx) => (
+                                  <span key={`${tag}-${idx}`} className="px-2 py-1 text-[10px] font-semibold rounded-full bg-white/10 text-white border border-white/10">{tag}</span>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                          {formatClientMetadata(client.metadata) && (
+                            <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                              <div className="text-[10px] text-gray-400 font-medium mb-1">Додаткова інформація</div>
+                              <pre className="text-[11px] text-white/90 whitespace-pre-wrap break-words leading-relaxed">{formatClientMetadata(client.metadata)}</pre>
+                            </div>
+                          )}
+                          {details.servicesUsed.length > 0 && (
+                            <div className="p-3 bg-white/5 rounded-lg border border-white/10">
+                              <div className="text-xs text-gray-400 font-medium mb-1.5">Популярні послуги</div>
+                              <div className="flex flex-wrap gap-1.5">
+                                {details.servicesUsed.map((service, idx) => (
+                                  <span key={idx} className="px-2 py-1 text-xs font-medium rounded-full bg-white/10 text-pink-400 border border-white/10">{service.name} ({service.count})</span>
+                                ))}
+                              </div>
                             </div>
                           )}
                         </div>
-                        {client.notes && (
-                          <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-                            <div className="text-[10px] text-gray-400 font-medium mb-1">Примітки</div>
-                            <div className="text-xs text-white">{client.notes}</div>
-                          </div>
-                        )}
 
-                        {parseClientTags(client.tags).length > 0 && (
-                          <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-                            <div className="text-[10px] text-gray-400 font-medium mb-1">Теги</div>
-                            <div className="flex flex-wrap gap-1.5">
-                              {parseClientTags(client.tags).map((tag, idx) => (
-                                <span
-                                  key={`${tag}-${idx}`}
-                                  className="px-2 py-1 text-[10px] font-semibold rounded-full bg-white/10 text-white border border-white/10"
-                                >
-                                  {tag}
-                                </span>
-                              ))}
+                        {/* Картка: Історія клієнта — окрема картка для кращого відображення */}
+                        <div className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden">
+                          <div className="p-4 border-b border-white/10 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                            <div className="flex items-center gap-3 flex-wrap">
+                              <h4 className="text-sm font-semibold text-white flex items-center gap-2">
+                                <CalendarIcon className="w-4 h-4 text-emerald-400" />
+                                Історія клієнта
+                              </h4>
+                              <span className="text-xs text-gray-400">
+                                {client.appointments.length} візитів · {Math.round(details.totalSpent)} грн за весь час
+                              </span>
                             </div>
-                          </div>
-                        )}
-
-                        {formatClientMetadata(client.metadata) && (
-                          <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-                            <div className="text-[10px] text-gray-400 font-medium mb-1">Додаткова інформація</div>
-                            <pre className="text-[11px] text-white/90 whitespace-pre-wrap break-words leading-relaxed">{formatClientMetadata(client.metadata)}</pre>
-                          </div>
-                        )}
-
-                        <div>
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="text-sm font-semibold text-white">Історія візитів ({client.appointments.length})</h4>
                             <button
                               onClick={() => router.push(`/dashboard/appointments?clientPhone=${client.phone}`)}
-                              className="px-2.5 py-1.5 text-xs bg-white text-black rounded-lg font-medium hover:bg-gray-100 hover:text-gray-900 transition-colors"
+                              className="px-3 py-1.5 text-xs bg-white text-black rounded-lg font-semibold hover:bg-gray-100 transition-colors flex-shrink-0"
                               style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                             >
                               + Новий візит
                             </button>
                           </div>
-                          <div className="flex flex-col sm:flex-row gap-2 mb-2">
-                            <div className="flex-1 relative">
-                              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
-                              <input
-                                type="text"
-                                value={historySearchQuery}
-                                onChange={(e) => setHistorySearchQuery(e.target.value)}
-                                placeholder="Пошук в історії (послуга, майстер, нотатки...)"
-                                className="w-full pl-9 pr-3 py-2 text-xs border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
-                              />
+                          <div className="p-4 space-y-3">
+                            <div className="flex flex-col sm:flex-row gap-2">
+                              <div className="flex-1 relative">
+                                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                                <input
+                                  type="text"
+                                  value={historySearchQuery}
+                                  onChange={(e) => setHistorySearchQuery(e.target.value)}
+                                  placeholder="Пошук (послуга, майстер, нотатки...)"
+                                  className="w-full pl-9 pr-3 py-2 text-xs border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30"
+                                />
+                              </div>
+                              <select
+                                value={historyStatus}
+                                onChange={(e) => setHistoryStatus(e.target.value)}
+                                className="px-3 py-2 text-xs border border-white/20 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+                              >
+                                <option value="all">Всі</option>
+                                <option value="Pending">Очікує</option>
+                                <option value="Confirmed">Підтверджено</option>
+                                <option value="Done">Виконано</option>
+                                <option value="Cancelled">Скасовано</option>
+                              </select>
+                              <button
+                                onClick={() => setHistorySortOrder(historySortOrder === 'desc' ? 'asc' : 'desc')}
+                                className="px-3 py-2 text-xs border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg font-medium transition-colors"
+                                title="Сортування за датою"
+                              >
+                                {historySortOrder === 'desc' ? 'Нові ↓' : 'Старі ↑'}
+                              </button>
                             </div>
-                            <select
-                              value={historyStatus}
-                              onChange={(e) => setHistoryStatus(e.target.value)}
-                              className="px-3 py-2 text-xs border border-white/20 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
-                            >
-                              <option value="all">Всі</option>
-                              <option value="Pending">Очікує</option>
-                              <option value="Confirmed">Підтверджено</option>
-                              <option value="Done">Виконано</option>
-                              <option value="Cancelled">Скасовано</option>
-                            </select>
-                            <button
-                              onClick={() => setHistorySortOrder(historySortOrder === 'desc' ? 'asc' : 'desc')}
-                              className="px-3 py-2 text-xs border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg font-medium transition-colors"
-                              title="Сортування за датою"
-                            >
-                              {historySortOrder === 'desc' ? 'Нові' : 'Старі'}
-                            </button>
-                          </div>
 
-                          <div className="space-y-2 max-h-[400px] overflow-y-auto">
-                            {(() => {
-                              const q = historySearchQuery.trim().toLowerCase()
-                              const filtered = (client.appointments || [])
-                                .filter((apt: any) => {
-                                  if (historyStatus === 'all') return true
-                                  return normalizeStatusKey(apt.status) === historyStatus
-                                })
-                                .filter((apt: any) => {
-                                  if (!q) return true
-                                  const masterName =
-                                    masters.find((m) => m.id === apt.masterId)?.name || ''
-                                  const servicesList = getAppointmentServices(apt)
-                                  const servicesText = servicesList
-                                    .map((serviceId) => {
-                                      const service = services.find(
-                                        (s) => s.id === serviceId || s.name === serviceId
-                                      )
-                                      return service?.name || serviceId
+                            <div className="relative max-h-[380px] overflow-y-auto">
+                              {/* Таймлайн: вертикальна лінія зліва */}
+                              <div className="absolute left-[11px] top-2 bottom-2 w-px bg-white/10 rounded-full" aria-hidden />
+                              <div className="space-y-0 relative">
+                                {(() => {
+                                  const q = historySearchQuery.trim().toLowerCase()
+                                  const filtered = (client.appointments || [])
+                                    .filter((apt: any) => (historyStatus === 'all' || normalizeStatusKey(apt.status) === historyStatus))
+                                    .filter((apt: any) => {
+                                      if (!q) return true
+                                      const masterName = masters.find((m) => m.id === apt.masterId)?.name || ''
+                                      const servicesText = getAppointmentServices(apt)
+                                        .map((serviceId) => services.find((s) => s.id === serviceId || s.name === serviceId)?.name || serviceId)
+                                        .join(' ')
+                                      const dateText = (() => {
+                                        try {
+                                          const d = new Date(apt.startTime)
+                                          return Number.isFinite(d.getTime()) ? format(d, 'dd.MM.yyyy HH:mm') : ''
+                                        } catch { return '' }
+                                      })()
+                                      const hay = [apt.clientName, apt.clientPhone, apt.notes || '', masterName, servicesText, getStatusLabel(apt.status), dateText].join(' ').toLowerCase()
+                                      return hay.includes(q)
                                     })
-                                    .join(' ')
-                                  const dateText = (() => {
-                                    try {
-                                      const d = new Date(apt.startTime)
-                                      return Number.isFinite(d.getTime())
-                                        ? format(d, 'dd.MM.yyyy HH:mm')
-                                        : ''
-                                    } catch {
-                                      return ''
-                                    }
-                                  })()
-                                  const hay = [
-                                    apt.clientName,
-                                    apt.clientPhone,
-                                    apt.notes || '',
-                                    masterName,
-                                    servicesText,
-                                    getStatusLabel(apt.status),
-                                    dateText,
-                                  ]
-                                    .join(' ')
-                                    .toLowerCase()
-                                  return hay.includes(q)
-                                })
-                                .sort((a: any, b: any) => {
-                                  const aT = new Date(a.startTime).getTime()
-                                  const bT = new Date(b.startTime).getTime()
-                                  return historySortOrder === 'desc' ? bT - aT : aT - bT
-                                })
+                                    .sort((a: any, b: any) => {
+                                      const aT = new Date(a.startTime).getTime()
+                                      const bT = new Date(b.startTime).getTime()
+                                      return historySortOrder === 'desc' ? bT - aT : aT - bT
+                                    })
 
-                              if (filtered.length === 0) {
-                                return (
-                                  <div className="text-center py-4 text-xs text-gray-400">
-                                    Немає записів за цими фільтрами
-                                  </div>
-                                )
-                              }
-
-                              return filtered.map((appointment: any) => {
-                                const start = new Date(appointment.startTime)
-                                const end = new Date(appointment.endTime)
-                                const servicesList = getAppointmentServices(appointment)
-                                const total = getAppointmentTotal(appointment)
-                                const master = masters.find((m) => m.id === appointment.masterId)
-
-                                return (
-                                  <div
-                                    key={appointment.id}
-                                    className="p-3 rounded-lg border border-white/10 bg-white/5 hover:bg-white/[0.07] transition-colors"
-                                  >
-                                    <div className="flex items-start justify-between gap-2 mb-1.5">
-                                      <div className="flex-1 min-w-0">
-                                        <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                          <span className="text-xs font-semibold text-white">
-                                            {format(start, 'dd.MM.yyyy')}
-                                          </span>
-                                          <span className="text-xs text-gray-400">
-                                            {format(start, 'HH:mm')} - {format(end, 'HH:mm')}
-                                          </span>
-                                          <span
-                                            className={cn(
-                                              'px-1.5 py-0.5 rounded-full text-[10px] font-medium border',
-                                              getStatusColor(appointment.status)
-                                            )}
-                                          >
-                                            {getStatusLabel(appointment.status)}
-                                          </span>
-                                        </div>
-                                        {master && (
-                                          <div className="text-[10px] text-gray-400 mb-1">
-                                            Спеціаліст: {master.name}
-                                          </div>
-                                        )}
-                                        {servicesList.length > 0 && (
-                                          <div className="flex flex-wrap gap-1 mb-1">
-                                            {servicesList.map((serviceId, idx) => {
-                                              const service = services.find(
-                                                (s) => s.id === serviceId || s.name === serviceId
-                                              )
-                                              return (
-                                                <span
-                                                  key={idx}
-                                                  className="px-1.5 py-0.5 text-[10px] font-medium rounded-full bg-white/10 text-pink-400 border border-white/10"
-                                                >
-                                                  {service?.name || serviceId}{' '}
-                                                  {service ? `(${Math.round(service.price)} грн)` : ''}
-                                                </span>
-                                              )
-                                            })}
-
-                                          </div>
-                                        )}
-                                        {appointment.notes && (
-                                          <div className="text-[10px] text-gray-500 italic mt-1">
-                                            {appointment.notes}
-                                          </div>
-                                        )}
+                                  if (filtered.length === 0) {
+                                    return (
+                                      <div className="py-8 text-center text-xs text-gray-400 rounded-lg border border-dashed border-white/10 bg-white/5">
+                                        Немає записів за цими фільтрами
                                       </div>
-                                      {total > 0 && (
-                                        <div className="text-sm font-semibold text-purple-400 flex-shrink-0">
-                                          {Math.round(total)} грн
+                                    )
+                                  }
+
+                                  return filtered.map((appointment: any) => {
+                                    const start = new Date(appointment.startTime)
+                                    const end = new Date(appointment.endTime)
+                                    const servicesList = getAppointmentServices(appointment)
+                                    const total = getAppointmentTotal(appointment)
+                                    const master = masters.find((m) => m.id === appointment.masterId)
+                                    return (
+                                      <div
+                                        key={appointment.id}
+                                        className="relative pl-8 pr-3 py-3 group"
+                                      >
+                                        <div className="absolute left-0 top-5 w-3 h-3 rounded-full bg-white/30 border-2 border-[#2A2A2A] group-hover:bg-emerald-400/80 transition-colors" aria-hidden />
+                                        <div className="p-3 rounded-lg border border-white/10 bg-white/5 hover:bg-white/[0.08] hover:border-white/20 transition-all">
+                                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                                            <div className="min-w-0 flex-1">
+                                              <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                                                <span className="text-xs font-semibold text-white">{format(start, 'dd.MM.yyyy')}</span>
+                                                <span className="text-xs text-gray-400">{format(start, 'HH:mm')} – {format(end, 'HH:mm')}</span>
+                                                <span className={cn('px-1.5 py-0.5 rounded-full text-[10px] font-medium border', getStatusColor(appointment.status))}>
+                                                  {getStatusLabel(appointment.status)}
+                                                </span>
+                                              </div>
+                                              {master && <p className="text-[10px] text-gray-400 mb-1.5">Спеціаліст: {master.name}</p>}
+                                              {servicesList.length > 0 && (
+                                                <div className="flex flex-wrap gap-1">
+                                                  {servicesList.map((serviceId, idx) => {
+                                                    const service = services.find((s) => s.id === serviceId || s.name === serviceId)
+                                                    return (
+                                                      <span key={idx} className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-white/10 text-pink-400/90 border border-white/10">
+                                                        {service?.name || serviceId} {service ? `· ${Math.round(service.price)} грн` : ''}
+                                                      </span>
+                                                    )
+                                                  })}
+                                                </div>
+                                              )}
+                                              {appointment.notes && <p className="text-[10px] text-gray-500 italic mt-1.5">{appointment.notes}</p>}
+                                            </div>
+                                            {total > 0 && (
+                                              <div className="text-sm font-semibold text-purple-400 flex-shrink-0 sm:text-right">
+                                                {Math.round(total)} грн
+                                              </div>
+                                            )}
+                                          </div>
                                         </div>
-                                      )}
-                                    </div>
-                                  </div>
-                                )
-                              })
-                            })()}
+                                      </div>
+                                    )
+                                  })
+                                })()}
+                              </div>
+                            </div>
                           </div>
                         </div>
-                        {details.servicesUsed.length > 0 && (
-                          <div className="p-3 bg-white/5 rounded-lg border border-white/10">
-                            <div className="text-xs text-gray-400 font-medium mb-1.5">Популярні послуги</div>
-                            <div className="flex flex-wrap gap-1.5">
-                              {details.servicesUsed.map((service, idx) => (
-                                <span key={idx} className="px-2 py-1 text-xs font-medium rounded-full bg-white/10 text-pink-400 border border-white/10">{service.name} ({service.count})</span>
-                              ))}
-                            </div>
-                          </div>
-                        )}
-                      </div>
+                      </>
                     ) : (
                       <div className="py-4 text-center">
                         <p className="text-xs text-gray-400">Завантаження деталей...</p>
@@ -1161,25 +1208,264 @@ export default function ClientsPage() {
 
         <div className="lg:col-span-1 space-y-3 md:space-y-6">
           <div className="rounded-xl p-4 md:p-6 card-glass">
-            <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>Статистика</h3>
+            <div className="mb-3 md:mb-4">
+              <h3 className="text-base md:text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>Статистика</h3>
+              <p className="text-xs text-gray-500 mt-0.5">За поточними фільтрами</p>
+            </div>
             <div className="space-y-2 md:space-y-3">
-              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10"><span className="text-sm text-gray-300">Всього</span><span className="text-sm font-semibold text-white">{stats.total}</span></div>
-              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10"><span className="text-sm text-gray-300">VIP</span><span className="text-sm font-semibold text-purple-400">{stats.vip}</span></div>
-              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10"><span className="text-sm text-gray-300">Активні</span><span className="text-sm font-semibold text-green-400">{stats.active}</span></div>
-              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10"><span className="text-sm text-gray-300">Неактивні</span><span className="text-sm font-semibold text-orange-400">{stats.inactive}</span></div>
-              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10"><span className="text-sm text-gray-300">Дохід</span><span className="text-sm font-semibold text-blue-400">{Math.round(stats.totalRevenue)} грн</span></div>
-              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10"><span className="text-sm text-gray-300">Середній чек</span><span className="text-sm font-semibold text-pink-400">{Math.round(stats.avgRevenue)} грн</span></div>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
+                <span className="text-sm text-gray-300">Всього</span>
+                <span className="text-sm font-semibold text-white">{stats.total}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
+                <span className="text-sm text-gray-300">VIP</span>
+                <span className="text-sm font-semibold text-purple-400">{stats.vip}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
+                <span className="text-sm text-gray-300">Активні</span>
+                <span className="text-sm font-semibold text-green-400">{stats.active}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
+                <span className="text-sm text-gray-300">Неактивні</span>
+                <span className="text-sm font-semibold text-orange-400">{stats.inactive}</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
+                <span className="text-sm text-gray-300">Дохід</span>
+                <span className="text-sm font-semibold text-blue-400">{Math.round(stats.totalRevenue)} грн</span>
+              </div>
+              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
+                <span className="text-sm text-gray-300">Середній чек</span>
+                <span className="text-sm font-semibold text-pink-400">{Math.round(stats.avgRevenue)} грн</span>
+              </div>
             </div>
           </div>
           <div className="rounded-xl p-4 md:p-6 card-glass">
             <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>Швидкі дії</h3>
             <div className="space-y-2">
-              <button onClick={() => { setEditingClient(null); setShowQuickClientCard(true) }} className="w-full px-3 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] text-left" style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}>+ Додати клієнта</button>
-              <button onClick={() => router.push('/dashboard/appointments')} className="w-full px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors text-left">Записи</button>
+              <button
+                onClick={() => { setEditingClient(null); setShowQuickClientCard(true) }}
+                className="w-full px-3 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] text-left"
+                style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+              >
+                + Додати клієнта
+              </button>
+              <button
+                onClick={() => router.push('/dashboard/appointments')}
+                className="w-full px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors text-left"
+              >
+                Записи
+              </button>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Вікно клієнта за номером телефону — історія візитів (єдиний стиль модалок) */}
+      {clientByPhoneModal && (
+        <ModalPortal>
+          <div
+            className="modal-overlay sm:!p-4"
+            onClick={() => setClientByPhoneModal(null)}
+          >
+            <div
+              className="relative w-[95%] sm:w-full sm:max-w-2xl sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setClientByPhoneModal(null)}
+                className="modal-close text-gray-400 hover:text-white rounded-full"
+                aria-label="Закрити"
+              >
+                <XIcon className="w-5 h-5" />
+              </button>
+              <div className="modal-header-row">
+                <div className="min-w-0 flex-1">
+                  <h2 className="modal-title truncate">{clientByPhoneModal.name}</h2>
+                  <p className="modal-subtitle flex items-center gap-1.5">
+                    <PhoneIcon className="w-4 h-4 flex-shrink-0 opacity-70" />
+                    {clientByPhoneModal.phone}
+                  </p>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => window.open(`tel:${clientByPhoneModal.phone}`)}
+                    className="modal-action-btn"
+                    title="Дзвінок"
+                  >
+                    <PhoneIcon className="w-5 h-5" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setClientByPhoneModal(null)
+                      handleEditClient(clientByPhoneModal)
+                    }}
+                    className="modal-action-btn"
+                    title="Редагувати"
+                  >
+                    <SettingsIcon className="w-5 h-5" />
+                  </button>
+                </div>
+              </div>
+              <div className="flex-1 min-h-0 overflow-y-auto space-y-4 pr-1">
+                {(() => {
+                  const details = clientDetails[clientByPhoneModal.id] ?? calculateClientDetails(clientByPhoneModal)
+                  return (
+                    <>
+                      <div className="modal-summary-panels">
+                        <div className="modal-summary-panel">
+                          <div className="modal-summary-panel-label">Зароблено</div>
+                          <div className="modal-summary-panel-value modal-value-money">{Math.round(details.totalSpent)} грн</div>
+                        </div>
+                        <div className="modal-summary-panel">
+                          <div className="modal-summary-panel-label">Останній візит</div>
+                          <div className="modal-summary-panel-value modal-value-date">{format(new Date(details.lastVisit), 'dd.MM.yyyy')}</div>
+                        </div>
+                        <div className="modal-summary-panel">
+                          <div className="modal-summary-panel-label">Наступний</div>
+                          <div className="modal-summary-panel-value">
+                            {details.nextAppointment ? format(new Date(details.nextAppointment), 'dd.MM.yyyy') : '—'}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="modal-section">
+                        <div className="modal-section-header">
+                          <div className="flex items-center gap-3 flex-wrap">
+                            <h4 className="modal-section-title-with-icon">
+                              <CalendarIcon className="w-4 h-4 text-emerald-400" />
+                              Історія візитів
+                            </h4>
+                            <span className="modal-section-subtitle">
+                              {clientByPhoneModal.appointments.length} візитів · {Math.round(details.totalSpent)} грн
+                            </span>
+                          </div>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              setClientByPhoneModal(null)
+                              router.push(`/dashboard/appointments?clientPhone=${clientByPhoneModal.phone}`)
+                            }}
+                            className="px-3 py-2 text-sm font-semibold rounded-xl modal-value-cta hover:opacity-90 transition-opacity flex-shrink-0"
+                          >
+                            + Новий візит
+                          </button>
+                        </div>
+                        <div className="p-4 space-y-3">
+                          <div className="flex flex-col sm:flex-row gap-2">
+                            <div className="flex-1 relative">
+                              <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                              <input
+                                type="text"
+                                value={historySearchQuery}
+                                onChange={(e) => setHistorySearchQuery(e.target.value)}
+                                placeholder="Пошук (послуга, майстер...)"
+                                className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30"
+                              />
+                            </div>
+                            <select
+                              value={historyStatus}
+                              onChange={(e) => setHistoryStatus(e.target.value)}
+                              className="px-3 py-2.5 text-sm rounded-xl bg-white/10 border border-white/20 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+                            >
+                              <option value="all">Всі</option>
+                              <option value="Pending">Очікує</option>
+                              <option value="Confirmed">Підтверджено</option>
+                              <option value="Done">Виконано</option>
+                              <option value="Cancelled">Скасовано</option>
+                            </select>
+                            <button
+                              type="button"
+                              onClick={() => setHistorySortOrder(historySortOrder === 'desc' ? 'asc' : 'desc')}
+                              className="px-3 py-2.5 text-sm rounded-xl bg-white/10 border border-white/20 text-white hover:bg-white/15 font-medium transition-colors"
+                            >
+                              {historySortOrder === 'desc' ? 'Нові ↓' : 'Старі ↑'}
+                            </button>
+                          </div>
+                          <div className="relative max-h-[320px] overflow-y-auto">
+                            <div className="absolute left-[11px] top-2 bottom-2 w-px bg-white/10 rounded-full" aria-hidden />
+                            <div className="space-y-2 relative pl-6">
+                              {(() => {
+                                const q = historySearchQuery.trim().toLowerCase()
+                                const filtered = (clientByPhoneModal.appointments || [])
+                                  .filter((apt: any) => (historyStatus === 'all' || normalizeStatusKey(apt.status) === historyStatus))
+                                  .filter((apt: any) => {
+                                    if (!q) return true
+                                    const masterName = masters.find((m) => m.id === apt.masterId)?.name || ''
+                                    const servicesText = getAppointmentServices(apt)
+                                      .map((serviceId) => services.find((s) => s.id === serviceId || s.name === serviceId)?.name || serviceId)
+                                      .join(' ')
+                                    const hay = [apt.clientName, apt.clientPhone, apt.notes || '', masterName, servicesText, getStatusLabel(apt.status)].join(' ').toLowerCase()
+                                    return hay.includes(q)
+                                  })
+                                  .sort((a: any, b: any) => {
+                                    const aT = new Date(a.startTime).getTime()
+                                    const bT = new Date(b.startTime).getTime()
+                                    return historySortOrder === 'desc' ? bT - aT : aT - bT
+                                  })
+                                if (filtered.length === 0) {
+                                  return (
+                                    <div className="py-6 text-center text-sm text-gray-400 rounded-xl border border-dashed border-white/10 bg-white/5">
+                                      Немає записів за цими фільтрами
+                                    </div>
+                                  )
+                                }
+                                return filtered.map((appointment: any) => {
+                                  const start = new Date(appointment.startTime)
+                                  const end = new Date(appointment.endTime)
+                                  const servicesList = getAppointmentServices(appointment)
+                                  const total = getAppointmentTotal(appointment)
+                                  const master = masters.find((m) => m.id === appointment.masterId)
+                                  return (
+                                    <div key={appointment.id} className="relative group">
+                                      <div className="absolute -left-6 top-5 w-3 h-3 rounded-full bg-white/30 border-2 border-[var(--modal-dialog-bg)] group-hover:bg-emerald-400/80 transition-colors" aria-hidden />
+                                      <div className="modal-list-card">
+                                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+                                          <div className="min-w-0 flex-1">
+                                            <div className="flex flex-wrap items-center gap-2 mb-1.5">
+                                              <span className="text-sm font-semibold text-white">{format(start, 'dd.MM.yyyy')}</span>
+                                              <span className="text-xs text-gray-400">{format(start, 'HH:mm')} – {format(end, 'HH:mm')}</span>
+                                              <span className={cn('px-2 py-0.5 rounded-lg text-xs font-medium', getStatusColor(appointment.status))}>
+                                                {getStatusLabel(appointment.status)}
+                                              </span>
+                                            </div>
+                                            {master && <p className="text-xs text-gray-400 mb-1.5">Спеціаліст: {master.name}</p>}
+                                            {servicesList.length > 0 && (
+                                              <div className="flex flex-wrap gap-1">
+                                                {servicesList.map((serviceId, idx) => {
+                                                  const service = services.find((s) => s.id === serviceId || s.name === serviceId)
+                                                  return (
+                                                    <span key={idx} className="px-2 py-0.5 text-xs font-medium rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                                                      {service?.name || serviceId} {service ? `· ${Math.round(service.price)} грн` : ''}
+                                                    </span>
+                                                  )
+                                                })}
+                                              </div>
+                                            )}
+                                            {appointment.notes && <p className="text-xs text-gray-500 italic mt-1.5">{appointment.notes}</p>}
+                                          </div>
+                                          {total > 0 && (
+                                            <div className="text-sm font-semibold modal-value-money flex-shrink-0 sm:text-right">{Math.round(total)} грн</div>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </div>
+                                  )
+                                })
+                              })()}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </>
+                  )
+                })()}
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
 
       {/* Quick Client Card Modal */}
       {showQuickClientCard && business && (

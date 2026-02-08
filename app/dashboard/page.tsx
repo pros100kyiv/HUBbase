@@ -2,17 +2,12 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { DailyJournal } from '@/components/admin/DailyJournal'
-import { Statistics } from '@/components/admin/Statistics'
-import { MastersList } from '@/components/admin/MastersList'
 
 interface Business {
   id: string
   name: string
-  slug: string
-  email: string
+  slug?: string
+  email?: string
 }
 
 export default function DashboardPage() {
@@ -21,71 +16,47 @@ export default function DashboardPage() {
   const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    // Перевіряємо чи є дані в localStorage
     const businessData = localStorage.getItem('business')
-    
     if (!businessData) {
       router.push('/login')
       return
     }
-
     try {
       const parsed = JSON.parse(businessData)
-      
-      // Перевіряємо чи є обов'язкові поля
-      if (!parsed || !parsed.id || !parsed.name) {
-        console.error('Invalid business data:', parsed)
+      if (!parsed?.id || !parsed?.name) {
         localStorage.removeItem('business')
         router.push('/login')
         return
       }
-      
       setBusiness(parsed)
-      setIsLoading(false)
-    } catch (error) {
-      console.error('Error parsing business data:', error)
+    } catch {
       localStorage.removeItem('business')
       router.push('/login')
+    } finally {
+      setIsLoading(false)
     }
   }, [router])
 
-  // Redirect to main page when business is loaded
   useEffect(() => {
     if (business && !isLoading) {
       router.replace('/dashboard/main')
     }
   }, [business, isLoading, router])
 
-  const handleLogout = () => {
-    localStorage.removeItem('business')
-    router.push('/login')
-  }
-
-  if (isLoading) {
+  if (isLoading || !business) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-500 mb-4">Завантаження...</p>
-          <p className="text-gray-400 text-sm">Перевірка даних...</p>
-        </div>
-      </div>
-    )
-  }
-
-  if (!business) {
-    return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-gray-500 mb-4">Бізнес не знайдено</p>
-          <Button onClick={() => router.push('/login')}>Увійти</Button>
+      <div className="min-h-[240px] flex items-center justify-center">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 rounded-full border-2 border-white/10 border-t-indigo-500 animate-spin" aria-hidden />
+          <p className="text-sm text-white/70">Перевірка даних...</p>
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <p className="text-gray-500">Перенаправлення...</p>
+    <div className="min-h-[240px] flex items-center justify-center">
+      <p className="text-sm text-white/70">Перенаправлення на головну...</p>
     </div>
   )
 }

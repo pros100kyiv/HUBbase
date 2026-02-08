@@ -16,7 +16,7 @@ const sizeClasses = {
   lg: { icon: 'w-10 h-10', text: 'text-2xl' },
 }
 
-/** Minimal geometric X mark — two strokes, rounded caps */
+/** Мінімальний геометричний знак X — дві лінії, закруглені кінці */
 function XbaseMark({ className }: { className?: string }) {
   return (
     <svg
@@ -55,7 +55,7 @@ export function XbaseLogo({ className, compact = false, size = 'sm' }: XbaseLogo
           )}
           style={{ letterSpacing: '-0.03em' }}
         >
-          xbase
+          Xbase
         </span>
       )}
     </div>

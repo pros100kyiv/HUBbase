@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { AuthLayout } from '@/components/auth/AuthLayout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 
 function ResetPasswordForm() {
@@ -82,8 +83,7 @@ function ResetPasswordForm() {
         return
       }
 
-      // Успішно змінено пароль
-      alert('Пароль успішно змінено! Тепер ви можете увійти з новим паролем.')
+      toast({ title: 'Пароль успішно змінено', description: 'Тепер ви можете увійти з новим паролем.', type: 'success' })
       router.push('/login')
     } catch (error) {
       setErrors({ submit: 'Помилка при зміні паролю' })
@@ -108,9 +108,17 @@ function ResetPasswordForm() {
             <p className="text-red-400 text-sm">{errors.submit}</p>
           </div>
         )}
-        <Button onClick={() => router.push('/login')} className="w-full" size="lg">
-          Повернутися до входу
-        </Button>
+        <div className="space-y-3">
+          <Button onClick={() => router.push('/login')} className="w-full" size="lg">
+            Повернутися до входу
+          </Button>
+          <p className="text-center text-sm text-gray-400">
+            Новий лист з посиланням?{' '}
+            <button type="button" onClick={() => router.push('/forgot-password')} className="text-candy-blue hover:underline">
+              Відновити пароль знову
+            </button>
+          </p>
+        </div>
       </AuthLayout>
     )
   }
