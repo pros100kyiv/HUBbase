@@ -112,9 +112,15 @@ export async function PATCH(
 
   if (statusOnly && newStatus) {
     try {
-      const updated = await prisma.appointment.update({
-        where: { id: appointmentId },
+      const result = await prisma.appointment.updateMany({
+        where: { id: appointmentId, businessId },
         data: { status: newStatus },
+      })
+      if (result.count === 0) {
+        return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
+      }
+      const updated = await prisma.appointment.findUniqueOrThrow({
+        where: { id: appointmentId },
       })
       return NextResponse.json(updated)
     } catch (err: unknown) {
