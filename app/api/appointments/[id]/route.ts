@@ -121,7 +121,10 @@ export async function PATCH(
     }
     if (notes !== undefined) updateData.notes = String(notes ?? '').trim() || null
     if (procedureDone !== undefined) updateData.procedureDone = String(procedureDone ?? '').trim() || null
-    if (customPrice !== undefined) updateData.customPrice = customPrice || null
+    if (customPrice !== undefined) {
+      const n = customPrice === null ? null : Number(customPrice)
+      updateData.customPrice = n != null && Number.isFinite(n) ? n : null
+    }
     if (customServiceName !== undefined) {
       updateData.customServiceName = String(customServiceName ?? '').trim() || null
     } else if (customService !== undefined) {

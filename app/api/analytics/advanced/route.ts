@@ -26,11 +26,19 @@ function appointmentRevenue(apt: any, services: { id: string; price: number }[])
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
-    const businessId = searchParams.get('businessId')
-    const period = searchParams.get('period') || 'month'
+    const businessId = searchParams.get('businessId')?.trim()
+    const period = (searchParams.get('period') || 'month').toLowerCase()
     
     if (!businessId) {
       return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
+    }
+
+    const business = await prisma.business.findUnique({
+      where: { id: businessId },
+      select: { id: true },
+    })
+    if (!business) {
+      return NextResponse.json({ error: 'Business not found' }, { status: 404 })
     }
     
     const now = new Date()
@@ -96,8 +104,9 @@ export async function GET(request: Request) {
     
     // LTV
     const ltvData = clients.map(client => {
-      const clientAppointments = client.appointments.filter(a => a.status === 'Done')
-      const totalSpent = Number(client.totalSpent ?? 0) / 100
+      const clientAppointments = client.appointments?.filter(a => a.status === 'Done') ?? []
+      const totalSpentRaw = client.totalSpent ?? 0
+      const totalSpent = Number(totalSpentRaw) / 100
       const visits = clientAppointments.length
       const avgOrderValue = visits > 0 ? totalSpent / visits : 0
       const firstVisit = client.firstAppointmentDate ? new Date(client.firstAppointmentDate) : null
@@ -193,7 +202,12 @@ export async function GET(request: Request) {
     }).sort((a, b) => b.utilizationRate - a.utilizationRate)
     
     // Тренди
-    const dailyTrends = eachDayOfInterval({ start: startDate, end: endDate }).map(date => {
+    const intervalStart = startDate.getTime()
+    const intervalEnd = endDate.getTime()
+    const days = intervalEnd >= intervalStart
+      ? eachDayOfInterval({ start: startDate, end: endDate })
+      : []
+    const dailyTrends = days.map(date => {
       const dayAppointments = appointments.filter(a => {
         const aptDate = new Date(a.startTime)
         return aptDate.toDateString() === date.toDateString()
@@ -268,14 +282,14 @@ export async function GET(request: Request) {
         ? Math.round(((forecastedRevenue - currentRevenue) / currentRevenue) * 100)
         : 0
     })
-  } catch (error) {
+  } catch (error: unknown) {
+    const msg = error instanceof Error ? error.message : String(error)
     console.error('Advanced analytics error:', error)
-    const details =
-      process.env.NODE_ENV === 'production'
-        ? undefined
-        : error instanceof Error
-          ? error.message
-          : String(error)
+    const prismaCode = (error as { code?: string })?.code
+    if (prismaCode === 'P2025') {
+      return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    }
+    const details = process.env.NODE_ENV === 'development' ? msg : undefined
     return NextResponse.json({ error: 'Failed to calculate analytics', details }, { status: 500 })
   }
 }

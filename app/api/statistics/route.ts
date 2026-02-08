@@ -67,12 +67,16 @@ export async function GET(request: Request) {
     const totalRevenue = appointments
       .filter(a => a.status === 'Done')
       .reduce((sum, apt) => {
-        const servicesList = JSON.parse(apt.services || '[]') as string[]
-        const total = servicesList.reduce((s: number, serviceId: string) => {
-          const service = services.find(sv => sv.id === serviceId)
-          return s + (service?.price || 0)
-        }, 0)
-        return sum + (apt.customPrice ? Number(apt.customPrice) / 100 : total)
+        try {
+          const servicesList = JSON.parse(apt.services || '[]') as string[]
+          const total = servicesList.reduce((s: number, serviceId: string) => {
+            const service = services.find(sv => sv.id === serviceId)
+            return s + (service?.price || 0)
+          }, 0)
+          return sum + (apt.customPrice ? Number(apt.customPrice) / 100 : total)
+        } catch {
+          return sum + (apt.customPrice ? Number(apt.customPrice) / 100 : 0)
+        }
       }, 0)
 
     const serviceStats: Record<string, number> = {}
