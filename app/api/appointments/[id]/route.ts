@@ -144,8 +144,8 @@ export async function PATCH(
 
     const appointment = await prisma.$transaction(async (tx) => {
       if (shouldEnsureClient) {
-        const phone = updateData.clientPhone as string
-        const name = updateData.clientName as string
+        const phone = String(updateData.clientPhone ?? '')
+        const name = String(updateData.clientName ?? '')
         const ensuredClient = await tx.client.upsert({
           where: {
             businessId_phone: {
