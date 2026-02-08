@@ -48,7 +48,7 @@ export function AccountProfileButton({ business, router }: AccountProfileButtonP
     <div className="relative" ref={dropdownRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="p-2 rounded-lg hover:bg-white/10 transition-colors"
+        className="touch-target p-2 min-w-[44px] min-h-[44px] rounded-lg hover:bg-white/10 transition-colors flex items-center justify-center"
         aria-label="Профіль"
       >
         <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center border border-white/30">
@@ -71,7 +71,7 @@ export function AccountProfileButton({ business, router }: AccountProfileButtonP
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 top-full mt-2 w-72 bg-[#2A2A2A] border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden">
+        <div className="absolute right-0 top-full mt-2 w-72 max-w-[calc(100vw-env(safe-area-inset-left)-env(safe-area-inset-right)-1rem)] bg-[#2A2A2A] border border-white/10 rounded-xl shadow-xl z-50 overflow-hidden">
           {/* Header */}
           <div className="p-4 bg-white/5 border-b border-white/10">
             <div className="flex items-center gap-3">
@@ -133,13 +133,13 @@ export function AccountProfileButton({ business, router }: AccountProfileButtonP
           <div className="border-t border-white/10 p-2">
             <button
               onClick={handleSettings}
-              className="w-full px-3 py-2 text-left text-xs font-medium text-white hover:bg-white/10 rounded-lg transition-colors"
+              className="touch-target w-full px-3 py-3 min-h-[44px] text-left text-sm font-medium text-white hover:bg-white/10 rounded-lg transition-colors"
             >
               Налаштування
             </button>
             <button
               onClick={handleLogout}
-              className="w-full px-3 py-2 text-left text-xs font-medium text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
+              className="touch-target w-full px-3 py-3 min-h-[44px] text-left text-sm font-medium text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
             >
               Вийти
             </button>

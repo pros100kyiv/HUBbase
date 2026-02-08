@@ -163,8 +163,9 @@ export function MobileAppointmentCard({
           {onEdit && (
             <button
               onClick={(e) => { e.stopPropagation(); onEdit(appointment) }}
-              className="p-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 hover:text-white transition-all border border-white/10 touch-manipulation min-h-[36px] min-w-[36px] flex items-center justify-center"
+              className="touch-target p-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 hover:text-white transition-all border border-white/10 touch-manipulation min-h-[44px] min-w-[44px] flex items-center justify-center"
               title="Редагувати"
+              aria-label="Редагувати запис"
             >
               <EditIcon className="w-4 h-4 md:w-5 md:h-5" />
             </button>

@@ -239,24 +239,21 @@ export function ProfileSetupModal({ business, onComplete, onClose }: ProfileSetu
         {/* Close button - завжди доступний */}
         <button
           onClick={() => {
-            // Якщо профіль заповнений - викликаємо onComplete
             if (business?.profileCompleted) {
               onComplete(business)
             } else {
-              // Якщо профіль не заповнений - викликаємо onClose (якщо є)
-              // або просто закриваємо модальне вікно
               if (onClose) {
                 onClose()
               } else {
-                // Якщо onClose не передано, викликаємо onComplete з поточним бізнесом
                 onComplete(business)
               }
             }
           }}
-          className="absolute top-4 right-4 p-2 rounded-candy-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="touch-target absolute top-3 right-3 sm:top-4 sm:right-4 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-gray-500 dark:text-gray-400"
           title={business?.profileCompleted ? 'Закрити' : 'Закрити (профіль не заповнений)'}
+          aria-label="Закрити"
         >
-          <XIcon className="w-5 h-5 text-gray-500 dark:text-gray-400" />
+          <XIcon className="w-5 h-5" />
         </button>
 
         {/* Header */}

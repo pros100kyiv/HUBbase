@@ -180,7 +180,7 @@ export function EditAppointmentForm({
         <button
           type="button"
           onClick={onCancel}
-          className="modal-close text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded-xl"
+          className="modal-close touch-target text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded-xl"
           aria-label="Закрити"
         >
           <XIcon className="w-5 h-5" />
@@ -191,7 +191,7 @@ export function EditAppointmentForm({
           <p className="modal-subtitle">Оновіть інформацію про запис</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-2.5 flex-1 min-h-0 overflow-y-auto">
+        <form onSubmit={handleSubmit} className="space-y-2.5 flex-1 min-h-0 overflow-y-auto pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           {/* Master Selection */}
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-300">
@@ -265,7 +265,7 @@ export function EditAppointmentForm({
                   setServiceSearchQuery('')
                   setShowServiceModal(true)
                 }}
-                className="w-full px-4 py-2.5 border border-white/20 rounded-lg bg-white/10 text-white hover:bg-white/15 transition-colors text-sm font-medium flex items-center justify-center gap-2"
+                className="touch-target w-full px-4 py-2.5 min-h-[44px] border border-white/20 rounded-lg bg-white/10 text-white hover:bg-white/15 transition-colors text-sm font-medium flex items-center justify-center gap-2"
               >
                 Обрати послуги
                 {formData.serviceIds.length > 0 && (
@@ -312,7 +312,7 @@ export function EditAppointmentForm({
                   <button
                     type="button"
                     onClick={() => setShowServiceModal(false)}
-                    className="modal-close text-gray-400 hover:text-white rounded-full"
+                    className="modal-close touch-target text-gray-400 hover:text-white rounded-full"
                     aria-label="Закрити"
                   >
                     <XIcon className="w-5 h-5" />

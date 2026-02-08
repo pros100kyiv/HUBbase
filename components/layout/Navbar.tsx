@@ -148,13 +148,17 @@ export function Navbar() {
                     {theme === 'oled' && <OledIcon className="w-5 h-5 text-white" />}
                   </button>
                 )}
-                {/* Записати Button - Hidden on mobile (shown near Dashboard title) */}
+                {/* Записати — на мобільному компактно, на десктопі повний текст */}
                 <button 
                   onClick={() => { startNavigation(); router.push('/dashboard/appointments?create=true') }}
-                  className="hidden md:flex px-4 py-2 bg-white text-black rounded-lg text-sm font-medium hover:bg-gray-100 hover:text-gray-900 transition-colors" 
+                  className="touch-target flex items-center justify-center gap-1.5 px-3 py-2 md:px-4 bg-white text-black rounded-lg text-sm font-medium hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98]" 
                   style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+                  aria-label="Новий запис"
                 >
-                  Записати
+                  <svg className="w-4 h-4 md:w-4 md:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span className="hidden sm:inline">Записати</span>
                 </button>
                 
                 {/* QR Code - open QR page for booking */}

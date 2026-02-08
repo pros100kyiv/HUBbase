@@ -72,7 +72,7 @@ export function ModalDialog({
             <button
               type="button"
               onClick={onClose}
-              className="modal-close text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-[var(--modal-dialog-bg)] rounded-full"
+              className="modal-close touch-target text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-2 focus:ring-offset-[var(--modal-dialog-bg)] rounded-full"
               aria-label="Закрити"
             >
               <XIcon className="w-5 h-5" />

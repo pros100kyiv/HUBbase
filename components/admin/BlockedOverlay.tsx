@@ -56,7 +56,7 @@ export function BlockedOverlay({ blockReason, blockedAt }: BlockedOverlayProps) 
         <button
           type="button"
           onClick={handleLogout}
-          className="mt-4 px-6 py-2.5 min-h-[44px] rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 font-medium transition-colors"
+          className="touch-target mt-4 px-6 py-3 min-h-[48px] rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 font-medium transition-colors active:scale-[0.98]"
         >
           Вийти з акаунту
         </button>

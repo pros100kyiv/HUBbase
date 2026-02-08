@@ -156,7 +156,7 @@ export function MonthProgressCard({ stats, loading }: MonthProgressCardProps) {
               <button
                 type="button"
                 onClick={() => setShowModal(false)}
-                className="modal-close text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded-xl"
+                className="modal-close touch-target text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded-xl"
                 aria-label="Закрити"
               >
                 <XIcon className="w-5 h-5" />

@@ -131,7 +131,7 @@ function LoginForm() {
             <button
                 type="button"
                 onClick={() => router.push('/forgot-password')}
-                className="text-xs text-gray-400 hover:text-white transition-colors"
+                className="touch-target min-h-[44px] px-2 text-sm text-gray-400 hover:text-white transition-colors"
               >
                 Забули пароль?
               </button>
@@ -185,7 +185,7 @@ function LoginForm() {
 
         <div className="text-center text-sm text-gray-400 pt-2">
           Немає акаунту?{' '}
-          <button type="button" onClick={() => router.push('/register')} className="text-gray-300 hover:text-white font-medium transition-colors">
+          <button type="button" onClick={() => router.push('/register')} className="touch-target min-h-[44px] inline-flex items-center px-2 text-gray-300 hover:text-white font-medium transition-colors">
             Зареєструватися
           </button>
         </div>

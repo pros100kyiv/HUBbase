@@ -247,7 +247,7 @@ export function CreateAppointmentForm({
                     <button
                       type="button"
                       onClick={() => setShowServiceModal(false)}
-                      className="modal-close text-gray-400 hover:text-white rounded-full"
+                      className="modal-close touch-target text-gray-400 hover:text-white rounded-full"
                       aria-label="Закрити"
                     >
                       <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -265,7 +265,7 @@ export function CreateAppointmentForm({
                         autoFocus
                       />
                     </div>
-                    <div className="flex-1 overflow-y-auto min-h-0 p-2 space-y-2">
+                    <div className="flex-1 overflow-y-auto min-h-0 p-2 space-y-2 pb-[max(0.5rem,env(safe-area-inset-bottom))]">
                       {services
                         .filter((s) =>
                           s.name.toLowerCase().includes(serviceSearchQuery.trim().toLowerCase())

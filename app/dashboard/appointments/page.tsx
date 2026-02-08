@@ -492,7 +492,7 @@ export default function AppointmentsPage() {
                 setShowCreateForm(true)
                 if (!selectedDate) setSelectedDate(new Date())
               }}
-              className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] flex-shrink-0"
+              className="touch-target px-4 py-2.5 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] flex-shrink-0"
               style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
             >
               Записати
@@ -579,7 +579,8 @@ export default function AppointmentsPage() {
                         setCurrentMonth(prev)
                         setSelectedDate(null)
                       }}
-                      className="p-2 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors"
+                      className="touch-target p-2.5 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors"
+                      aria-label="Попередній місяць"
                     >
                       <ChevronLeftIcon className="w-4 h-4" />
                     </button>
@@ -590,7 +591,7 @@ export default function AppointmentsPage() {
                         setCurrentMonth(today)
                         setSelectedDate(today)
                       }}
-                      className="px-3 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98]"
+                      className="touch-target px-3 py-2.5 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98]"
                       style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                     >
                       Сьогодні
@@ -602,7 +603,8 @@ export default function AppointmentsPage() {
                         setCurrentMonth(next)
                         setSelectedDate(null)
                       }}
-                      className="p-2 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors"
+                      className="touch-target p-2.5 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors"
+                      aria-label="Наступний місяць"
                     >
                       <ChevronRightIcon className="w-4 h-4" />
                     </button>
@@ -616,7 +618,7 @@ export default function AppointmentsPage() {
                       key={status}
                       onClick={() => setFilterStatus(status)}
                       className={cn(
-                        'px-2 py-1 rounded-md text-[11px] font-medium transition-colors whitespace-nowrap active:scale-[0.98]',
+                        'touch-target min-h-[40px] px-2.5 py-2 sm:py-1 rounded-md text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap active:scale-[0.98]',
                         filterStatus === status ? 'bg-white text-black' : 'bg-white/10 text-gray-400 hover:bg-white/15 hover:text-white border border-white/10'
                       )}
                       style={filterStatus === status ? { boxShadow: '0 1px 2px rgba(0,0,0,0.2)' } : {}}
@@ -650,7 +652,7 @@ export default function AppointmentsPage() {
                           setSelectedDate(next)
                         }}
                         className={cn(
-                          'relative p-2 rounded-lg border transition-all min-h-[48px] flex flex-col items-center justify-start active:scale-[0.98]',
+                          'touch-target relative p-2 rounded-lg border transition-all min-h-[48px] flex flex-col items-center justify-start active:scale-[0.98]',
                           !isDayInCurrentMonth && 'opacity-30',
                           isSelected
                             ? 'border-white bg-white/25 text-white shadow-lg shadow-black/20'
@@ -699,7 +701,7 @@ export default function AppointmentsPage() {
                     </h3>
                     <button
                       onClick={() => setSelectedDate(null)}
-                      className="dashboard-btn-secondary px-2.5 py-1.5 text-xs"
+                      className="touch-target dashboard-btn-secondary px-3 py-2 text-sm"
                     >
                       Закрити
                     </button>
@@ -716,7 +718,7 @@ export default function AppointmentsPage() {
                         key={status}
                         onClick={() => setFilterStatus(status)}
                         className={cn(
-                          'px-2 py-0.5 rounded text-[10px] font-medium transition-colors whitespace-nowrap active:scale-[0.98]',
+                          'touch-target min-h-[36px] px-2.5 py-1.5 rounded text-[10px] sm:text-xs font-medium transition-colors whitespace-nowrap active:scale-[0.98]',
                           filterStatus === status
                             ? 'bg-white text-black'
                             : 'bg-white/10 text-gray-400 hover:bg-white/15 hover:text-white border border-white/10'

@@ -160,15 +160,15 @@ export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalS
     <ModalPortal>
       {/* Клік поза панеллю закриває (прозорий оверлей) */}
       <div
-        className="fixed inset-0 z-[99] min-h-[100dvh]"
+        className="fixed inset-0 z-[99] min-h-[100dvh] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]"
         onClick={onClose}
         aria-hidden
       />
-      {/* Popover пошуку — під кнопкою або по центру, якщо немає anchor */}
+      {/* На мобільному — bottom sheet на весь екран; на десктопі — popover під кнопкою */}
       <div
         role="dialog"
         aria-label="Пошук"
-        className="fixed z-[100] rounded-xl border border-white/10 card-glass-elevated shadow-xl overflow-hidden flex flex-col"
+        className="global-search-sheet fixed z-[100] rounded-t-2xl sm:rounded-xl border border-white/10 border-b-0 sm:border-b card-glass-elevated shadow-xl overflow-hidden flex flex-col"
         style={
           hasPosition && anchorPosition
             ? {
@@ -187,7 +187,7 @@ export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalS
               }
         }
       >
-        {/* Поле пошуку */}
+        {/* Поле пошуку — зручний touch target на мобільному */}
         <div className="p-3 border-b border-white/10 flex-shrink-0">
           <div className="flex items-center gap-2">
             <svg className="w-4 h-4 text-gray-400 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -199,14 +199,14 @@ export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalS
               value={query}
               onChange={(e) => setQuery(e.target.value)}
               placeholder="Пошук..."
-              className="flex-1 min-w-0 bg-transparent text-white placeholder-gray-400 outline-none text-sm"
+              className="flex-1 min-w-0 bg-transparent text-white placeholder-gray-400 outline-none text-sm min-h-[44px] py-2"
               style={{ letterSpacing: '-0.01em' }}
             />
             {query && (
               <button
                 type="button"
                 onClick={() => setQuery('')}
-                className="p-1 hover:bg-white/10 rounded transition-colors"
+                className="touch-target p-2 hover:bg-white/10 rounded-lg transition-colors"
                 aria-label="Очистити"
               >
                 <svg className="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -217,8 +217,8 @@ export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalS
           </div>
         </div>
 
-        {/* Результати — скрол всередині popover */}
-        <div className="overflow-y-auto min-h-0 flex-1">
+        {/* Результати — скрол всередині popover; на мобільному safe-area знизу */}
+        <div className="overflow-y-auto min-h-0 flex-1 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
           {error ? (
             <div className="p-4 text-center text-red-400 text-sm">{error}</div>
           ) : loading ? (
@@ -238,7 +238,7 @@ export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalS
                       <button
                         key={apt.id}
                         onClick={() => handleAppointmentClick(apt.id)}
-                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/10 transition-colors"
+                        className="touch-target w-full text-left px-3 py-3 rounded-lg hover:bg-white/10 transition-colors min-h-[44px]"
                       >
                         <div className="text-sm font-medium text-white">{apt.clientName}</div>
                         <div className="text-xs text-gray-400">
@@ -259,7 +259,7 @@ export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalS
                       <button
                         key={client.id}
                         onClick={() => handleClientClick(client.id)}
-                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/10 transition-colors"
+                        className="touch-target w-full text-left px-3 py-3 rounded-lg hover:bg-white/10 transition-colors min-h-[44px]"
                       >
                         <div className="text-sm font-medium text-white">{client.name}</div>
                         <div className="text-xs text-gray-400">{client.phone}</div>
@@ -278,7 +278,7 @@ export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalS
                       <button
                         key={service.id}
                         onClick={() => handleServiceClick(service.id)}
-                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/10 transition-colors"
+                        className="touch-target w-full text-left px-3 py-3 rounded-lg hover:bg-white/10 transition-colors min-h-[44px]"
                       >
                         <div className="text-sm font-medium text-white">{service.name}</div>
                         <div className="text-xs text-gray-400">{Math.round(service.price)} грн</div>
@@ -297,7 +297,7 @@ export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalS
                       <button
                         key={master.id}
                         onClick={() => handleMasterClick(master.id)}
-                        className="w-full text-left px-3 py-2 rounded-lg hover:bg-white/10 transition-colors"
+                        className="touch-target w-full text-left px-3 py-3 rounded-lg hover:bg-white/10 transition-colors min-h-[44px]"
                       >
                         <div className="text-sm font-medium text-white">{master.name}</div>
                         {master.bio && (

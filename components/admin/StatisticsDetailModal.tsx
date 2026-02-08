@@ -263,7 +263,7 @@ export function StatisticsDetailModal({
           <button
             type="button"
             onClick={onClose}
-            className="modal-close text-gray-400 hover:text-white rounded-xl"
+            className="modal-close touch-target text-gray-400 hover:text-white rounded-xl"
             aria-label="Закрити"
           >
             <XIcon className="w-5 h-5" />

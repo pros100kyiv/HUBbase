@@ -214,7 +214,7 @@ export function NotesCard({ businessId }: NotesCardProps) {
               <button
                 type="button"
                 onClick={() => setShowEditModal(false)}
-                className="modal-close text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded-xl"
+                className="modal-close touch-target text-gray-400 hover:text-white focus:outline-none focus:ring-2 focus:ring-white/30 rounded-xl"
                 aria-label="Закрити"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -227,7 +227,7 @@ export function NotesCard({ businessId }: NotesCardProps) {
                 </h3>
               </div>
 
-              <div className="space-y-2.5 flex-1 min-h-0 overflow-y-auto">
+              <div className="space-y-2.5 flex-1 min-h-0 overflow-y-auto pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <div>
                   <label className="block text-sm font-medium text-gray-300 mb-2">Дата</label>
                   <input
@@ -250,25 +250,25 @@ export function NotesCard({ businessId }: NotesCardProps) {
                   />
                 </div>
 
-                <div className="flex gap-2">
+                <div className="flex flex-wrap gap-2">
                   {editingNote && (
                     <button
                       onClick={handleDelete}
-                      className="flex-1 px-4 py-2 bg-red-500/20 border border-red-500/50 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/30 transition-colors"
+                      className="touch-target flex-1 min-w-[100px] px-4 py-2.5 min-h-[44px] bg-red-500/20 border border-red-500/50 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/30 transition-colors"
                     >
                       Видалити
                     </button>
                   )}
                   <button
                     onClick={() => setShowEditModal(false)}
-                    className="flex-1 px-4 py-2 bg-white/5 border border-white/10 rounded-lg text-sm font-medium text-white hover:bg-white/10 transition-colors"
+                    className="touch-target flex-1 min-w-[100px] px-4 py-2.5 min-h-[44px] bg-white/5 border border-white/10 rounded-lg text-sm font-medium text-white hover:bg-white/10 transition-colors"
                   >
                     Скасувати
                   </button>
                   <button
                     onClick={handleSave}
                     disabled={!editText.trim()}
-                    className="flex-1 px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="touch-target flex-1 min-w-[100px] px-4 py-2.5 min-h-[44px] bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ letterSpacing: '-0.01em' }}
                   >
                     Зберегти
@@ -291,7 +291,7 @@ export function NotesCard({ businessId }: NotesCardProps) {
               <button
                 type="button"
                 onClick={() => setShowDatePicker(false)}
-                className="modal-close text-gray-400 hover:text-white rounded-xl"
+                className="modal-close touch-target text-gray-400 hover:text-white rounded-xl"
                 aria-label="Закрити"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

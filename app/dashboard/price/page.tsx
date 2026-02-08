@@ -242,7 +242,7 @@ export default function PricePage() {
             <button
               type="button"
               onClick={() => { setCreateForm({ name: '', price: '', duration: '', category: '' }); setShowCreateModal(true) }}
-              className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] flex-shrink-0"
+              className="touch-target px-4 py-2.5 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] flex-shrink-0"
               style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
             >
               Додати до прайсу
@@ -296,12 +296,12 @@ export default function PricePage() {
               <button
                 type="button"
                 onClick={() => !isSubmitting && setShowCreateModal(false)}
-                className="modal-close text-gray-400 hover:text-white rounded-xl"
+                className="modal-close touch-target text-gray-400 hover:text-white rounded-xl"
                 aria-label="Закрити"
               >
                 <XIcon className="w-5 h-5" />
               </button>
-              <div className="pr-10 flex-1 min-h-0 overflow-y-auto">
+              <div className="pr-10 flex-1 min-h-0 overflow-y-auto pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <h2 className="modal-title text-white mb-2">Додати до прайсу</h2>
                 <form onSubmit={handleCreateService} className="space-y-4">
                   <div>
@@ -363,18 +363,18 @@ export default function PricePage() {
                       </select>
                     )}
                   </div>
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex flex-wrap gap-2 pt-2">
                     <button
                       type="button"
                       onClick={() => !isSubmitting && setShowCreateModal(false)}
-                      className="flex-1 px-4 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white font-medium hover:bg-white/15 transition-colors"
+                      className="touch-target flex-1 min-w-[100px] px-4 py-2.5 min-h-[44px] rounded-lg border border-white/20 bg-white/10 text-white font-medium hover:bg-white/15 transition-colors"
                     >
                       Скасувати
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="flex-1 px-4 py-2.5 rounded-lg bg-white text-black font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50"
+                      className="touch-target flex-1 min-w-[100px] px-4 py-2.5 min-h-[44px] rounded-lg bg-white text-black font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50"
                     >
                       {isSubmitting ? 'Збереження...' : 'Додати'}
                     </button>
@@ -397,12 +397,12 @@ export default function PricePage() {
               <button
                 type="button"
                 onClick={() => !isSubmitting && setEditingService(null)}
-                className="modal-close text-gray-400 hover:text-white rounded-xl"
+                className="modal-close touch-target text-gray-400 hover:text-white rounded-xl"
                 aria-label="Закрити"
               >
                 <XIcon className="w-5 h-5" />
               </button>
-              <div className="pr-10 flex-1 min-h-0 overflow-y-auto">
+              <div className="pr-10 flex-1 min-h-0 overflow-y-auto pb-[max(0.75rem,env(safe-area-inset-bottom))]">
                 <h2 className="modal-title text-white mb-2">Редагувати послугу</h2>
                 <form onSubmit={handleUpdateService} className="space-y-4">
                   <div>
@@ -464,18 +464,18 @@ export default function PricePage() {
                       </select>
                     )}
                   </div>
-                  <div className="flex gap-2 pt-2">
+                  <div className="flex flex-wrap gap-2 pt-2">
                     <button
                       type="button"
                       onClick={() => !isSubmitting && setEditingService(null)}
-                      className="flex-1 px-4 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white font-medium hover:bg-white/15 transition-colors"
+                      className="touch-target flex-1 min-w-[100px] px-4 py-2.5 min-h-[44px] rounded-lg border border-white/20 bg-white/10 text-white font-medium hover:bg-white/15 transition-colors"
                     >
                       Скасувати
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmitting}
-                      className="flex-1 px-4 py-2.5 rounded-lg bg-white text-black font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50"
+                      className="touch-target flex-1 min-w-[100px] px-4 py-2.5 min-h-[44px] rounded-lg bg-white text-black font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50"
                     >
                       {isSubmitting ? 'Збереження...' : 'Зберегти'}
                     </button>

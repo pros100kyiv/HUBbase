@@ -274,7 +274,7 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
                   <button
                     type="button"
                     onClick={() => setSelectedMessage(null)}
-                    className="modal-close text-gray-400 hover:text-white rounded-xl"
+                    className="modal-close touch-target text-gray-400 hover:text-white rounded-xl"
                     aria-label="Закрити"
                   >
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

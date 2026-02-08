@@ -126,7 +126,8 @@ export function DateRangePicker({
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-2 right-2 p-1 rounded-candy-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          className="touch-target absolute top-2 right-2 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-candy-xs hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
+          aria-label="Закрити"
         >
           <XIcon className="w-4 h-4 text-gray-500 dark:text-gray-400" />
         </button>
@@ -142,25 +143,25 @@ export function DateRangePicker({
         <div className="grid grid-cols-2 gap-1 sm:gap-1.5 mb-2 sm:mb-3">
           <button
             onClick={() => handleQuickSelect('today')}
-            className="px-1.5 sm:px-2 py-1 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded-candy-xs transition-all touch-manipulation"
+            className="touch-target min-h-[44px] px-2 py-2 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded-candy-xs transition-all"
           >
             Сьогодні
           </button>
           <button
             onClick={() => handleQuickSelect('tomorrow')}
-            className="px-1.5 sm:px-2 py-1 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded-candy-xs transition-all touch-manipulation"
+            className="touch-target min-h-[44px] px-2 py-2 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded-candy-xs transition-all"
           >
             Завтра
           </button>
           <button
             onClick={() => handleQuickSelect('week')}
-            className="px-1.5 sm:px-2 py-1 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded-candy-xs transition-all touch-manipulation"
+            className="touch-target min-h-[44px] px-2 py-2 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded-candy-xs transition-all"
           >
             Тиждень
           </button>
           <button
             onClick={() => handleQuickSelect('month')}
-            className="px-1.5 sm:px-2 py-1 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded-candy-xs transition-all touch-manipulation"
+            className="touch-target min-h-[44px] px-2 py-2 text-[10px] sm:text-xs border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-white hover:bg-gray-50 dark:hover:bg-gray-700 rounded-candy-xs transition-all"
           >
             Місяць
           </button>

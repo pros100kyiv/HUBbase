@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "dev:open": "node scripts/open-browser.js",
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",

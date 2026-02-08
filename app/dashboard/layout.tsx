@@ -1,12 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useRouter, usePathname } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
 import { Sidebar } from '@/components/admin/Sidebar'
 import { MobileSidebar } from '@/components/admin/MobileSidebar'
 import { AIChatWidget } from '@/components/ai/AIChatWidget'
 import { ProfileSetupModal } from '@/components/admin/ProfileSetupModal'
 import { BlockedOverlay } from '@/components/admin/BlockedOverlay'
+import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
 
 // Global state for mobile menu
 let globalMobileMenuState = { isOpen: false, setIsOpen: (open: boolean) => {} }
@@ -22,6 +24,9 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
+  const router = useRouter()
+  const pathname = usePathname()
+  const { startNavigation } = useNavigationProgress()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [business, setBusiness] = useState<any>(null)
   const [showProfileModal, setShowProfileModal] = useState(false)
@@ -155,10 +160,28 @@ export default function DashboardLayout({
       
       {/* Main Content Area — safe-area для notch та home indicator */}
       <main className="relative ml-0 md:ml-64 pt-14 md:pt-16 min-h-screen safe-bottom pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]" style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}>
-        <div className="px-3 py-3 md:p-6 pb-[max(1.5rem,env(safe-area-inset-bottom))] md:pb-6">
+        <div className="px-3 py-3 md:p-6 pb-[max(5rem,env(safe-area-inset-bottom)+3.5rem)] md:pb-6">
           {children}
         </div>
       </main>
+
+      {/* FAB «Записати» — тільки на мобільному в dashboard */}
+      <div className="fixed bottom-[max(1.25rem,env(safe-area-inset-bottom))] right-[max(1rem,env(safe-area-inset-right))] z-30 md:hidden">
+        <button
+          type="button"
+          onClick={() => {
+            startNavigation()
+            router.push('/dashboard/appointments?create=true')
+          }}
+          className="touch-target flex items-center justify-center w-14 h-14 rounded-full bg-white text-black shadow-lg hover:bg-gray-100 active:scale-95 transition-all"
+          style={{ boxShadow: '0 4px 14px rgba(0,0,0,0.25)' }}
+          aria-label="Новий запис"
+        >
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+          </svg>
+        </button>
+      </div>
 
       {/* AI Chat Widget — тільки після mount (уникнення hydration #418) */}
       {mounted && (() => {

@@ -738,7 +738,7 @@ export function MyDayCard({
               <button
                 type="button"
                 onClick={() => setSelectedStatus(null)}
-                className="modal-close text-gray-400 hover:text-white rounded-full"
+                className="modal-close touch-target text-gray-400 hover:text-white rounded-full"
                 aria-label="Закрити"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -784,7 +784,7 @@ export function MyDayCard({
               <button
                 type="button"
                 onClick={() => setSelectedAppointment(null)}
-                className="modal-close text-gray-400 hover:text-white rounded-full"
+                className="modal-close touch-target text-gray-400 hover:text-white rounded-full"
                 aria-label="Закрити"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -970,7 +970,7 @@ export function MyDayCard({
               <button
                 type="button"
                 onClick={() => setShowDatePicker(false)}
-                className="modal-close text-gray-400 hover:text-white rounded-full"
+                className="modal-close touch-target text-gray-400 hover:text-white rounded-full"
                 aria-label="Закрити"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -29,8 +29,8 @@ export function ErrorToast({ message, onClose, needsRegistration, onRegister }: 
   if (!isVisible) return null
 
   return (
-    <div className="fixed top-4 right-4 z-50 animate-in slide-in-from-top-5">
-      <div className="bg-red-500/90 backdrop-blur-sm border border-red-400 rounded-lg shadow-lg p-4 min-w-[300px] max-w-[400px]">
+    <div className="fixed z-50 left-[max(0.5rem,env(safe-area-inset-left))] right-[max(0.5rem,env(safe-area-inset-right))] top-[max(0.5rem,env(safe-area-inset-top))] sm:left-auto sm:right-4 sm:top-4 sm:w-auto w-[calc(100%-max(1rem,env(safe-area-inset-left))-max(1rem,env(safe-area-inset-right)))] max-w-[400px] animate-in slide-in-from-top-5">
+      <div className="bg-red-500/90 backdrop-blur-sm border border-red-400 rounded-xl shadow-lg p-4 min-w-0">
         <div className="flex items-start gap-3">
           <div className="flex-shrink-0">
             <svg
@@ -45,26 +45,29 @@ export function ErrorToast({ message, onClose, needsRegistration, onRegister }: 
               <path d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
-          <div className="flex-1">
-            <p className="text-white text-sm font-medium">{message}</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-white text-sm font-medium break-words">{message}</p>
             {needsRegistration && onRegister && (
               <button
+                type="button"
                 onClick={() => {
                   handleClose()
                   onRegister()
                 }}
-                className="mt-2 text-white text-xs underline hover:no-underline"
+                className="touch-target mt-2 min-h-[44px] text-white text-sm font-medium underline hover:no-underline"
               >
                 Зареєструватися
               </button>
             )}
           </div>
           <button
+            type="button"
             onClick={handleClose}
-            className="flex-shrink-0 text-white/80 hover:text-white transition-colors"
+            className="touch-target flex-shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center text-white/80 hover:text-white transition-colors rounded-lg"
+            aria-label="Закрити"
           >
             <svg
-              className="w-4 h-4"
+              className="w-5 h-5"
               fill="none"
               strokeLinecap="round"
               strokeLinejoin="round"

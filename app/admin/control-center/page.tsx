@@ -169,7 +169,7 @@ export default function ControlCenterPage() {
     }
   }
 
-  const loadData = async () => {
+  const loadData = async (overrides?: { status?: 'all' | 'active' | 'inactive'; page?: number }) => {
     setLoading(true)
     setLoadError(null)
     try {
@@ -179,12 +179,15 @@ export default function ControlCenterPage() {
         return
       }
 
+      const effectiveStatus = overrides?.status ?? statusFilter
+      const effectivePage = overrides?.page ?? page
+
       const params = new URLSearchParams({
-        page: page.toString(),
+        page: effectivePage.toString(),
         limit: '20',
         _t: Date.now().toString(),
         ...(search && { search }),
-        ...(statusFilter !== 'all' && { status: statusFilter }),
+        ...(effectiveStatus !== 'all' && { status: effectiveStatus }),
       })
 
       const response = await fetch(`/api/admin/control-center?${params}`, {
@@ -350,6 +353,8 @@ export default function ControlCenterPage() {
             totalPages={totalPages}
             formatDate={formatDate}
             onDataChanged={handleDataChanged}
+            loadData={loadData}
+            setRefreshTrigger={setRefreshTrigger}
             refreshTrigger={refreshTrigger}
           />
         )}
@@ -613,7 +618,7 @@ function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
 }
 
 // Businesses Tab Component
-function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, setStatusFilter, page, setPage, totalPages, formatDate, onDataChanged, refreshTrigger }: any) {
+function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, setStatusFilter, page, setPage, totalPages, formatDate, onDataChanged, loadData, setRefreshTrigger, refreshTrigger }: any) {
   const [selectedBusinesses, setSelectedBusinesses] = useState<string[]>([])
   const [bulkAction, setBulkAction] = useState<string>('')
   const [blockModalOpen, setBlockModalOpen] = useState(false)
@@ -698,7 +703,11 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
         setBlockModalOpen(false)
         setSelectedBusiness(null)
         setBlockReason('')
-        onDataChanged?.()
+        setStatusFilter('inactive')
+        setPage(1)
+        loadData({ status: 'inactive', page: 1 })
+        setRefreshTrigger((t) => t + 1)
+        toast({ title: 'Акаунт заблоковано', description: 'Показано список неактивних (заблокованих) — можна розблокувати тут.', type: 'success' })
       } else {
         const data = await response.json()
         alert(data.error || 'Помилка при блокуванні')
@@ -917,12 +926,13 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
 
         <select
           value={statusFilter}
-          onChange={(e) => setStatusFilter(e.target.value)}
+          onChange={(e) => setStatusFilter(e.target.value as 'all' | 'active' | 'inactive')}
           className="px-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white"
+          title="Оберіть «Неактивні (заблоковані)», щоб знайти та розблокувати акаунти"
         >
           <option value="all">Всі статуси</option>
           <option value="active">Активні</option>
-          <option value="inactive">Неактивні</option>
+          <option value="inactive">Неактивні (заблоковані)</option>
         </select>
 
         {selectedBusinesses.length > 0 && (
