@@ -120,7 +120,7 @@ export async function PATCH(
         )
       }
     }
-    if (notes !== undefined) updateData.notes = typeof notes === 'string' && notes.trim() ? notes.trim() : null
+    if (notes !== undefined) updateData.notes = String(notes ?? '').trim() || null
     if (procedureDone !== undefined) updateData.procedureDone = typeof procedureDone === 'string' && procedureDone.trim() ? procedureDone.trim() : null
     if (customPrice !== undefined) updateData.customPrice = customPrice || null
     if (customServiceName !== undefined) {
