@@ -12,6 +12,13 @@ interface BlockedOverlayProps {
  * Обмежує весь функціонал до моменту розблокування.
  */
 export function BlockedOverlay({ blockReason, blockedAt }: BlockedOverlayProps) {
+  const router = useRouter()
+
+  const handleLogout = () => {
+    localStorage.removeItem('business')
+    router.push('/login')
+  }
+
   return (
     <div 
       className="fixed inset-0 z-[100] flex items-center justify-center bg-black/85 backdrop-blur-md"
