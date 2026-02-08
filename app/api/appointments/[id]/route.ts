@@ -99,8 +99,7 @@ export async function PATCH(
     if (clientName != null && String(clientName).trim()) updateData.clientName = String(clientName).trim()
     if (clientPhone != null && String(clientPhone).trim()) updateData.clientPhone = normalizeUaPhone(String(clientPhone))
     if (clientEmail !== undefined) {
-      updateData.clientEmail =
-        typeof clientEmail === 'string' && clientEmail.trim() ? clientEmail.trim() : null
+      updateData.clientEmail = String(clientEmail ?? '').trim() || null
     }
     if (services !== undefined) {
       // Послуги можуть бути порожнім масивом
@@ -121,12 +120,12 @@ export async function PATCH(
       }
     }
     if (notes !== undefined) updateData.notes = String(notes ?? '').trim() || null
-    if (procedureDone !== undefined) updateData.procedureDone = typeof procedureDone === 'string' && procedureDone.trim() ? procedureDone.trim() : null
+    if (procedureDone !== undefined) updateData.procedureDone = String(procedureDone ?? '').trim() || null
     if (customPrice !== undefined) updateData.customPrice = customPrice || null
     if (customServiceName !== undefined) {
-      updateData.customServiceName = typeof customServiceName === 'string' && customServiceName.trim() ? customServiceName.trim() : null
+      updateData.customServiceName = String(customServiceName ?? '').trim() || null
     } else if (customService !== undefined) {
-      updateData.customServiceName = typeof customService === 'string' && customService.trim() ? customService.trim() : null
+      updateData.customServiceName = String(customService ?? '').trim() || null
     }
 
     // Якщо змінюємо тільки статус — просте оновлення без транзакції
@@ -188,9 +187,9 @@ export async function PATCH(
 
     return NextResponse.json(appointment)
   } catch (error: unknown) {
-    const msg = error instanceof Error ? error.message : 'Unknown error'
+    const msg = error instanceof Error ? error.message : String(error)
     const prismaCode = (error as { code?: string })?.code
-    console.error('Error updating appointment:', error)
+    console.error('PATCH /api/appointments/[id] error:', { prismaCode, msg })
 
     // Prisma P2025 = Record not found
     if (prismaCode === 'P2025') {
