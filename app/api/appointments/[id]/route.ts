@@ -130,7 +130,7 @@ export async function PATCH(
   const endTime = toDateOrNull(body.endTime)
   if (endTime) data.endTime = endTime
   const masterId = toStrOrNull(body.masterId)
-  if (masterId) data.masterId = masterId
+  if (masterId) data.master = { connect: { id: masterId } }
   const clientName = toStrOrNull(body.clientName)
   if (clientName) data.clientName = clientName
   if (body.clientPhone != null && String(body.clientPhone).trim()) {
@@ -172,7 +172,7 @@ export async function PATCH(
           ...(data.clientEmail !== undefined ? { email: data.clientEmail } : {}),
         },
       })
-      data.clientId = client.id
+      data.client = { connect: { id: client.id } }
       try {
         const { addClientPhoneToDirectory } = await import('@/lib/services/management-center')
         await addClientPhoneToDirectory(phone, businessId, client.id, name)
