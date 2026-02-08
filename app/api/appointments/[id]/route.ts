@@ -5,9 +5,22 @@ import type { Prisma } from '@prisma/client'
 const STATUSES = ['Pending', 'Confirmed', 'Done', 'Cancelled'] as const
 type Status = (typeof STATUSES)[number]
 
+const UK_TO_STATUS: Record<string, Status> = {
+  Очікує: 'Pending',
+  Підтверджено: 'Confirmed',
+  Виконано: 'Done',
+  Скасовано: 'Cancelled',
+}
+
+function normalizeStatusInput(s: unknown): string {
+  if (s == null) return ''
+  const v = String(s).trim()
+  return UK_TO_STATUS[v] ?? v
+}
+
 function toStatus(s: unknown): Status | null {
-  if (s == null) return null
-  const v = String(s)
+  const v = normalizeStatusInput(s)
+  if (!v) return null
   return STATUSES.includes(v as Status) ? (v as Status) : null
 }
 
@@ -109,6 +122,13 @@ export async function PATCH(
   const bodyKeys = Object.keys(body).filter(k => k !== 'businessId')
   const statusOnly = bodyKeys.length === 1 && body.status != null
   const newStatus = toStatus(body.status)
+
+  if (statusOnly && !newStatus) {
+    return NextResponse.json(
+      { error: 'Invalid status value. Use: Pending, Confirmed, Done, Cancelled (or Ukrainian equivalents)' },
+      { status: 400 }
+    )
+  }
 
   if (statusOnly && newStatus) {
     try {
