@@ -77,6 +77,7 @@ export default function ControlCenterPage() {
   const [page, setPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [refreshTrigger, setRefreshTrigger] = useState(0)
+  const [syncing, setSyncing] = useState(false)
 
   // Перевірка авторизації
   useEffect(() => {
@@ -127,6 +128,28 @@ export default function ControlCenterPage() {
     setRefreshTrigger((t) => t + 1)
   }
 
+  const handleSync = async () => {
+    setSyncing(true)
+    try {
+      const response = await fetch('/api/admin/sync-management', {
+        method: 'POST',
+        headers: getAuthHeaders(),
+        cache: 'no-store',
+      })
+      const data = await response.json()
+      if (response.ok) {
+        handleRefresh()
+      } else {
+        alert(data.error || 'Помилка синхронізації')
+      }
+    } catch (error) {
+      console.error('Sync error:', error)
+      alert('Помилка синхронізації')
+    } finally {
+      setSyncing(false)
+    }
+  }
+
   const loadData = async () => {
     setLoading(true)
     try {
@@ -154,6 +177,30 @@ export default function ControlCenterPage() {
         setBusinesses(data.businesses || [])
         setStats(data.stats || {})
         setTotalPages(data.pagination?.totalPages || 1)
+        // Авто-синхронізація якщо нічого не відображається
+        const total = data.stats?.total ?? 0
+        if (total === 0 && !search && statusFilter === 'all') {
+          const syncRes = await fetch('/api/admin/sync-management', {
+            method: 'POST',
+            headers: getAuthHeaders(),
+            cache: 'no-store',
+          })
+          const syncData = await syncRes.json()
+          if (syncRes.ok && syncData.synced > 0) {
+            // Перезавантажуємо після синхронізації
+            const recheck = await fetch(`/api/admin/control-center?page=1&limit=20&_t=${Date.now()}`, {
+              headers: getAuthHeaders(),
+              cache: 'no-store',
+            })
+            const recheckData = await recheck.json()
+            if (recheck.ok) {
+              setBusinesses(recheckData.businesses || [])
+              setStats(recheckData.stats || {})
+              setTotalPages(recheckData.pagination?.totalPages || 1)
+              setRefreshTrigger((t) => t + 1)
+            }
+          }
+        }
       }
     } catch (error) {
       console.error('Error loading data:', error)
@@ -214,14 +261,25 @@ export default function ControlCenterPage() {
             Управління всіма бізнесами та процесами системи · дані оновлюються в реальному часі
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleRefresh}
-          disabled={loading}
-          className="px-4 py-2 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 transition-colors font-medium"
-        >
-          {loading ? 'Оновлення...' : 'Оновити'}
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={handleSync}
+            disabled={syncing}
+            className="px-4 py-2 rounded-lg border border-blue-500/50 bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 disabled:opacity-50 transition-colors font-medium"
+            title="Синхронізувати всі акаунти з центром управління"
+          >
+            {syncing ? 'Синхронізація...' : 'Синхронізувати'}
+          </button>
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={loading}
+            className="px-4 py-2 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 transition-colors font-medium"
+          >
+            {loading ? 'Оновлення...' : 'Оновити'}
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}

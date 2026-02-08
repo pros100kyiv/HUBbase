@@ -387,3 +387,24 @@ export async function updateLastLogin(businessId: string) {
   }
 }
 
+/**
+ * Синхронізує ВСІ бізнеси з Business в ManagementCenter
+ * Включає вже створені акаунти
+ */
+export async function syncAllBusinessesToManagementCenter() {
+  const businesses = await prisma.business.findMany({
+    orderBy: { createdAt: 'desc' },
+  })
+
+  let synced = 0
+  for (const business of businesses) {
+    try {
+      await syncBusinessToManagementCenter(business.id)
+      synced++
+    } catch (error) {
+      console.error(`Error syncing business ${business.id}:`, error)
+    }
+  }
+  return { total: businesses.length, synced }
+}
+
