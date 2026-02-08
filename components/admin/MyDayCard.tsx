@@ -386,7 +386,12 @@ export function MyDayCard({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ businessId, status }),
       })
-      if (res.ok && onRefresh) onRefresh()
+      if (res.ok) {
+        if (selectedAppointment?.id === id) {
+          setSelectedAppointment((prev) => prev ? { ...prev, status } : null)
+        }
+        onRefresh?.()
+      }
     } catch (error) {
       console.error('Failed to update status:', error)
     }
@@ -775,11 +780,17 @@ export function MyDayCard({
                 </p>
               </div>
               <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide p-2 pt-0 sm:p-3 sm:pt-0 space-y-1.5">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center justify-between gap-3">
                   <span className="text-xs text-gray-400">Статус</span>
-                  <span className={`px-2 py-1 rounded text-xs font-medium border ${getStatusColor(selectedAppointment.status, selectedAppointment.isFromBooking)}`}>
-                    {getStatusLabel(selectedAppointment.status, selectedAppointment.isFromBooking)}
-                  </span>
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <StatusSwitcher
+                      status={selectedAppointment.status}
+                      isFromBooking={selectedAppointment.isFromBooking === true}
+                      onStatusChange={handleStatusChange}
+                      appointmentId={selectedAppointment.id}
+                      size="md"
+                    />
+                  </div>
                 </div>
 
                 {selectedAppointment.masterName && (

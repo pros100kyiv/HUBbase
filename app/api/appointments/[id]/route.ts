@@ -152,10 +152,7 @@ export async function PATCH(
       }
 
       return tx.appointment.update({
-        where: { 
-          id: resolvedParams.id,
-          businessId // Додаткова перевірка на рівні бази даних
-        },
+        where: { id: resolvedParams.id },
         data: updateData,
       })
     })
@@ -199,10 +196,7 @@ export async function DELETE(
     }
 
     await prisma.appointment.delete({
-      where: { 
-        id: resolvedParams.id,
-        businessId: finalBusinessId // Додаткова перевірка на рівні бази даних
-      },
+      where: { id: resolvedParams.id },
     })
 
     return NextResponse.json({ success: true })

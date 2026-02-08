@@ -222,6 +222,7 @@ export default function AppointmentsPage() {
           prev.map((apt) => (apt.id === id ? { ...apt, status } : apt))
         )
         toast({ title: 'Статус оновлено', type: 'success' })
+        reloadAppointments()
       } else {
         const error = await response.json()
         throw new Error(error.error || 'Failed to update status')
