@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { format, startOfDay, addMinutes, isSameDay } from 'date-fns'
+import { uk } from 'date-fns/locale'
 import { MobileAppointmentCard } from './MobileAppointmentCard'
+import { ModalPortal } from '@/components/ui/modal-portal'
 import { toast } from '@/components/ui/toast'
 
 interface Master {
@@ -35,6 +37,14 @@ export function DailyJournal({ businessId }: DailyJournalProps) {
   const [masters, setMasters] = useState<Master[]>([])
   const [services, setServices] = useState<Array<{ id: string; name: string; price?: number }>>([])
   const [appointments, setAppointments] = useState<Appointment[]>([])
+
+  useEffect(() => {
+  const [donePriceServiceName, setDonePriceServiceName] = useState('')
+    fetch(`/api/masters?businessId=${businessId}`)
+      .then(res => res.json())
+      .then(data => setMasters(data))
+    if (showDonePriceModalForId) setDonePriceInputGrn('')
+  }, [showDonePriceModalForId])
 
   useEffect(() => {
     fetch(`/api/masters?businessId=${businessId}`)
@@ -159,6 +169,46 @@ export function DailyJournal({ businessId }: DailyJournalProps) {
     }
   }
 
+  const handleDoneWithPriceSubmit = async () => {
+    if (!showDonePriceModalForId) return
+    const grn = donePriceInputGrn === '' ? NaN : Number(donePriceInputGrn)
+    if (Number.isNaN(grn) || grn < 0) {
+      toast({ title: 'Вкажіть вартість', type: 'error' })
+      return
+    }
+    setDonePriceSaving(true)
+    try {
+      const res = await fetch(`/api/appointments/${showDonePriceModalForId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+        businessId,
+        status: 'Done',
+        customPrice: Math.round(grn * 100),
+        ...(donePriceServiceName.trim() && { customServiceName: donePriceServiceName.trim() }),
+      }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        setShowDonePriceModalForId(null)
+        const dateStr = format(selectedDate, 'yyyy-MM-dd')
+        const listRes = await fetch(`/api/appointments?date=${dateStr}&businessId=${businessId}`)
+        if (listRes.ok) {
+          const list = await listRes.json()
+          setAppointments(Array.isArray(list) ? list : [])
+        }
+        toast({ title: 'Вартість збережено, статус: Виконано', type: 'success' })
+      } else {
+        toast({ title: 'Помилка', description: data?.error || 'Не вдалося зберегти', type: 'error' })
+      }
+    } catch (error) {
+      console.error('Done with price failed:', error)
+      toast({ title: 'Помилка', description: 'Не вдалося зберегти', type: 'error' })
+    } finally {
+      setDonePriceSaving(false)
+    }
+  }
+
   return (
     <div>
       {/* Mobile Header */}
@@ -220,6 +270,15 @@ export function DailyJournal({ businessId }: DailyJournalProps) {
                 services={services}
                 onStatusChange={handleStatusChange}
                 onOpenClientHistory={(phone) => router.push(`/dashboard/clients?phone=${encodeURIComponent(phone)}`)}
+                onDoneWithoutPrice={(id) => {
+                  toast({
+                    title: 'Статус не змінено',
+                    description: 'Щоб позначити запис як Виконано, спочатку вкажіть вартість послуги в формі нижче.',
+                    type: 'info',
+                    duration: 4000,
+                  })
+                  setShowDonePriceModalForId(id)
+                }}
               />
             )
           })}
@@ -231,7 +290,64 @@ export function DailyJournal({ businessId }: DailyJournalProps) {
           )}
         </div>
       )}
-    </div>
-  )
-}
 
+      {showDonePriceModalForId && businessId && (() => {
+        const apt = appointments.find((a) => a.id === showDonePriceModalForId)
+        return (
+          <ModalPortal>
+            <div className="modal-overlay sm:!p-4" onClick={() => setShowDonePriceModalForId(null)}>
+              <div
+                className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button type="button" onClick={() => setShowDonePriceModalForId(null)} className="modal-close touch-target text-gray-400 hover:text-white rounded-full" aria-label="Закрити">
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                </button>
+                <h3 className="modal-title pr-10 mb-1">Вказати вартість послуги</h3>
+                <p className="text-sm text-amber-400/90 mb-1">Статус не змінено. Заповніть вартість нижче, щоб позначити запис як Виконано.</p>
+                <p className="text-sm text-gray-400 mb-4">
+                  {apt ? `${apt.clientName} · ${format(new Date(apt.startTime), 'd MMM, HH:mm', { locale: uk })}` : 'Запис'}
+                </p>
+                <div className="space-y-4">
+                  <label className="block">
+                    <span className="text-xs font-medium text-gray-400 block mb-1.5">Вартість, грн</span>
+                    <input
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={donePriceInputGrn === '' ? '' : donePriceInputGrn}
+                      onChange={(e) => setDonePriceInputGrn(e.target.value === '' ? '' : Number(e.target.value))}
+                      className="w-full px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+                      placeholder="0"
+                      autoFocus
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium text-gray-400 block mb-1.5">Послуга (необов'язково)</span>
+                    <input
+                      type="text"
+                      value={donePriceServiceName}
+                      onChange={(e) => setDonePriceServiceName(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30 placeholder-gray-500"
+                      placeholder="Наприклад: Стрижка, Манікюр"
+                    />
+                  </label>
+                  <div className="flex gap-2 pt-2">
+                    <button type="button" onClick={() => setShowDonePriceModalForId(null)} className="flex-1 px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/15">
+                      Скасувати
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDoneWithPriceSubmit}
+                      disabled={donePriceSaving || donePriceInputGrn === '' || Number(donePriceInputGrn) < 0}
+                      className="flex-1 px-4 py-3 rounded-xl bg-white text-black text-sm font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {donePriceSaving ? 'Збереження...' : 'Зберегти та Виконано'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ModalPortal>
+        )
+      })()}

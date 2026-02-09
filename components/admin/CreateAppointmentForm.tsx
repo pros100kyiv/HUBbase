@@ -7,12 +7,15 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { format, isValid } from 'date-fns'
 import { toast } from '@/components/ui/toast'
 import { ModalPortal } from '@/components/ui/modal-portal'
+import { normalizeUaPhone } from '@/lib/utils/phone'
 
 interface CreateAppointmentFormProps {
   businessId: string
   masters: Array<{ id: string; name: string }>
   services: Array<{ id: string; name: string; price: number; duration: number }>
   selectedDate?: Date
+  /** Початковий час запису (HH:mm), наприклад з «Вільні години» */
+  initialStartTime?: string
   onSuccess: () => void
   onCancel: () => void
   /** У модальному вікні — без Card і заголовка */
@@ -20,6 +23,8 @@ interface CreateAppointmentFormProps {
   /** Початкові дані клієнта (наприклад після пошуку за телефоном або створення картки) */
   initialClientName?: string
   initialClientPhone?: string
+  /** Клієнт уже обраний (перехід з картки клієнта) — не показувати поля телефону/імені, тільки дата, час, майстер, послуги */
+  clientLocked?: boolean
   /** Уникнути модалки в модалці: вибір послуг показувати inline у тій самій модалці */
   inlineServicePicker?: boolean
 }
@@ -29,11 +34,13 @@ export function CreateAppointmentForm({
   masters,
   services,
   selectedDate,
+  initialStartTime,
   onSuccess,
   onCancel,
   embedded = false,
   initialClientName = '',
   initialClientPhone = '',
+  clientLocked = false,
   inlineServicePicker = false,
 }: CreateAppointmentFormProps) {
   const formRef = useRef<HTMLDivElement>(null)
@@ -44,7 +51,7 @@ export function CreateAppointmentForm({
     clientPhone: initialClientPhone,
     serviceIds: [] as string[],
     date: format(initialDate, 'yyyy-MM-dd'),
-    startTime: '09:00',
+    startTime: (initialStartTime && /^\d{1,2}:\d{2}$/.test(initialStartTime) ? initialStartTime : '09:00'),
     customService: '',
     customPrice: 0,
   })
@@ -53,15 +60,6 @@ export function CreateAppointmentForm({
   const [serviceSearchQuery, setServiceSearchQuery] = useState('')
   const [clientLookupStatus, setClientLookupStatus] = useState<'idle' | 'loading' | 'found' | 'not_found'>('idle')
   const lookupAbortRef = useRef<AbortController | null>(null)
-
-  /** Нормалізація телефону як у API (GET/POST clients) — для точного пошуку в базі */
-  const normalizePhone = (phone: string): string => {
-    let n = String(phone || '').replace(/\s/g, '').replace(/[()-]/g, '').trim()
-    if (n.startsWith('0')) n = `+380${n.slice(1)}`
-    else if (n.startsWith('380')) n = `+${n}`
-    else if (!n.startsWith('+380') && n.length > 0) n = `+380${n}`
-    return n
-  }
 
   useEffect(() => {
     if (formRef.current) {
@@ -76,6 +74,17 @@ export function CreateAppointmentForm({
     }
   }, [masters])
 
+  // Клієнт з картки: підтягнути ім'я/телефон з props (форма може змонтуватись пізніше за client state)
+  useEffect(() => {
+    if (clientLocked && (initialClientPhone || initialClientName)) {
+      setFormData((prev) => ({
+        ...prev,
+        clientName: initialClientName?.trim() || prev.clientName,
+        clientPhone: initialClientPhone?.trim() || prev.clientPhone,
+      }))
+    }
+  }, [clientLocked, initialClientPhone, initialClientName])
+
   // Пошук клієнта за телефоном: якщо є в базі — підтягнути ім'я; якщо немає — залишити поле для вводу (при створенні запису клієнт створиться через API)
   useEffect(() => {
     const raw = formData.clientPhone.trim()
@@ -85,8 +94,8 @@ export function CreateAppointmentForm({
       return
     }
 
-    const normalized = normalizePhone(raw)
-    if (normalized.length < 12) return
+    const normalized = normalizeUaPhone(raw)
+    if (normalized.length < 13) return
 
     const t = setTimeout(async () => {
       if (lookupAbortRef.current) lookupAbortRef.current.abort()
@@ -221,55 +230,63 @@ export function CreateAppointmentForm({
               </select>
             </div>
 
-            {/* Client Name */}
-            <div>
-              <label className={`block font-medium text-foreground ${embedded ? 'text-xs mb-0.5' : 'text-sm mb-2'}`}>
-                Ім'я клієнта *
-              </label>
-              <Input
-                value={formData.clientName}
-                onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
-                placeholder="Введіть ім'я клієнта"
-                required
-                className={embedded ? embeddedFieldClass : undefined}
-              />
-            </div>
-
-            {/* Client Phone */}
-            <div>
-              <label className={`block font-medium text-foreground ${embedded ? 'text-xs mb-0.5' : 'text-sm mb-2'}`}>
-                Телефон клієнта *
-              </label>
-              <div className="flex gap-2 items-center">
-                <Input
-                  type="tel"
-                  value={formData.clientPhone}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, clientPhone: e.target.value }))}
-                  placeholder="+380XXXXXXXXX"
-                  required
-                  className={embedded ? `flex-1 min-w-0 ${embeddedFieldClass}` : 'flex-1 min-w-0'}
-                />
-                {formData.clientPhone.replace(/\D/g, '').length >= 9 && (
-                  <a
-                    href={`/dashboard/clients?phone=${encodeURIComponent(normalizePhone(formData.clientPhone))}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-medium text-primary hover:underline whitespace-nowrap"
-                  >
-                    Картка клієнта
-                  </a>
-                )}
+            {/* Клієнт: або заблокований (перехід з картки — не показувати поля телефону/імені), або поля для вводу */}
+            {clientLocked && formData.clientPhone?.replace(/\D/g, '').length >= 9 ? (
+              <div className="rounded-xl border border-white/10 bg-white/5 p-3">
+                <p className="text-xs font-medium text-gray-500 mb-0.5">Клієнт</p>
+                <p className="text-sm font-semibold text-white">{formData.clientName?.trim() || '—'}</p>
+                <p className="text-xs text-gray-400 mt-0.5">{formData.clientPhone}</p>
               </div>
-              {clientLookupStatus === 'loading' && (
-                <p className="text-xs text-muted-foreground mt-0.5">Пошук клієнта…</p>
-              )}
-              {clientLookupStatus === 'found' && (
-                <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">Клієнт знайдено в базі</p>
-              )}
-              {clientLookupStatus === 'not_found' && formData.clientPhone.replace(/\D/g, '').length >= 9 && (
-                <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Новий клієнт — введіть ім'я</p>
-              )}
-            </div>
+            ) : (
+              <>
+                <div>
+                  <label className={`block font-medium text-foreground ${embedded ? 'text-xs mb-0.5' : 'text-sm mb-2'}`}>
+                    Ім'я клієнта *
+                  </label>
+                  <Input
+                    value={formData.clientName}
+                    onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
+                    placeholder="Введіть ім'я клієнта"
+                    required
+                    className={embedded ? embeddedFieldClass : undefined}
+                  />
+                </div>
+                <div>
+                  <label className={`block font-medium text-foreground ${embedded ? 'text-xs mb-0.5' : 'text-sm mb-2'}`}>
+                    Телефон клієнта *
+                  </label>
+                  <div className="flex gap-2 items-center">
+                    <Input
+                      type="tel"
+                      value={formData.clientPhone}
+                      onChange={(e) => setFormData((prev) => ({ ...prev, clientPhone: e.target.value }))}
+                      placeholder="0XX XXX XX XX"
+                      required
+                      className={embedded ? `flex-1 min-w-0 ${embeddedFieldClass}` : 'flex-1 min-w-0'}
+                    />
+                    {formData.clientPhone.replace(/\D/g, '').length >= 9 && (
+                      <a
+                        href={`/dashboard/clients?phone=${encodeURIComponent(normalizeUaPhone(formData.clientPhone))}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-xs font-medium text-primary hover:underline whitespace-nowrap"
+                      >
+                        Картка клієнта
+                      </a>
+                    )}
+                  </div>
+                  {clientLookupStatus === 'loading' && (
+                    <p className="text-xs text-muted-foreground mt-0.5">Пошук клієнта…</p>
+                  )}
+                  {clientLookupStatus === 'found' && (
+                    <p className="text-xs text-green-600 dark:text-green-400 mt-0.5">Клієнт знайдено в базі</p>
+                  )}
+                  {clientLookupStatus === 'not_found' && formData.clientPhone.replace(/\D/g, '').length >= 9 && (
+                    <p className="text-xs text-amber-600 dark:text-amber-400 mt-0.5">Новий клієнт — введіть ім'я</p>
+                  )}
+                </div>
+              </>
+            )}
 
             {/* Services */}
             <div>

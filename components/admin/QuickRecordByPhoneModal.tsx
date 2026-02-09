@@ -1,17 +1,10 @@
 'use client'
 
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { CreateAppointmentForm } from '@/components/admin/CreateAppointmentForm'
 import { QuickClientCard } from '@/components/admin/QuickClientCard'
-
-function normalizePhone(phone: string): string {
-  let n = String(phone || '').replace(/\s/g, '').replace(/[()-]/g, '').trim()
-  if (n.startsWith('0')) n = `+380${n.slice(1)}`
-  else if (n.startsWith('380')) n = `+${n}`
-  else if (!n.startsWith('+380') && n.length > 0) n = `+380${n}`
-  return n
-}
+import { normalizeUaPhone, isValidUaPhone } from '@/lib/utils/phone'
 
 export type QuickRecordStep = 'phone' | 'quick_record' | 'new_client'
 
@@ -22,6 +15,12 @@ interface QuickRecordByPhoneModalProps {
   masters: Array<{ id: string; name: string }>
   services: Array<{ id: string; name: string; price: number; duration: number }>
   selectedDate?: Date
+  /** Початковий час запису (HH:mm), наприклад з «Вільні години» */
+  initialStartTime?: string
+  /** Клієнт уже обраний (з картки клієнта) — пропускаємо крок телефону */
+  initialClientPhone?: string
+  initialClientName?: string
+  initialClientId?: string
   onAppointmentCreated?: () => void
 }
 
@@ -32,6 +31,10 @@ export function QuickRecordByPhoneModal({
   masters,
   services,
   selectedDate,
+  initialStartTime,
+  initialClientPhone,
+  initialClientName,
+  initialClientId,
   onAppointmentCreated,
 }: QuickRecordByPhoneModalProps) {
   const [step, setStep] = useState<QuickRecordStep>('phone')
@@ -39,6 +42,25 @@ export function QuickRecordByPhoneModal({
   const [lookupLoading, setLookupLoading] = useState(false)
   const [lookupError, setLookupError] = useState('')
   const [client, setClient] = useState<{ id: string; name: string; phone: string } | null>(null)
+
+  // Якщо відкрили з картки клієнта — одразу показуємо форму запису з підставленим клієнтом
+  useEffect(() => {
+    if (!isOpen) return
+    const phoneNorm = initialClientPhone?.trim()
+    if (phoneNorm && phoneNorm.replace(/\D/g, '').length >= 9) {
+      setClient({
+        id: initialClientId || '',
+        name: initialClientName?.trim() || '',
+        phone: normalizeUaPhone(phoneNorm) || phoneNorm,
+      })
+      setStep('quick_record')
+      setPhone(phoneNorm)
+    } else {
+      setStep('phone')
+      setClient(null)
+      setPhone('')
+    }
+  }, [isOpen, initialClientPhone, initialClientName, initialClientId])
 
   const handleClose = useCallback(() => {
     setStep('phone')
@@ -55,9 +77,9 @@ export function QuickRecordByPhoneModal({
       setLookupError('Введіть мінімум 9 цифр')
       return
     }
-    const normalized = normalizePhone(raw)
-    if (normalized.length < 12) {
-      setLookupError('Невірний формат. Приклад: +380631234567')
+    const normalized = normalizeUaPhone(raw)
+    if (!isValidUaPhone(raw)) {
+      setLookupError('Невірний формат. Введіть номер з 0, наприклад 0671234567')
       return
     }
     setLookupError('')
@@ -92,7 +114,7 @@ export function QuickRecordByPhoneModal({
     setClient({
       id: createdClient.id,
       name: createdClient.name ?? '',
-      phone: createdClient.phone ?? normalizePhone(phone),
+      phone: createdClient.phone ?? normalizeUaPhone(phone),
     })
     setStep('quick_record')
   }
@@ -119,7 +141,7 @@ export function QuickRecordByPhoneModal({
     return (
       <QuickClientCard
         businessId={businessId}
-        initialPhone={phone.trim() ? normalizePhone(phone.trim()) : ''}
+        initialPhone={phone.trim() ? normalizeUaPhone(phone.trim()) : ''}
         onSuccess={handleNewClientSuccess}
         onCancel={handleNewClientCancel}
       />
@@ -171,7 +193,7 @@ export function QuickRecordByPhoneModal({
                         if (lookupError) setLookupError('')
                       }}
                       onKeyDown={(e) => e.key === 'Enter' && handlePhoneNext()}
-                      placeholder="+380 XX XXX XX XX"
+                      placeholder="0XX XXX XX XX"
                       className="w-full min-h-[44px] sm:min-h-[38px] px-3 py-2.5 text-sm rounded-xl border border-white/20 bg-white/5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/30 focus:border-white/30 transition-colors"
                       autoFocus
                       disabled={lookupLoading}
@@ -232,11 +254,13 @@ export function QuickRecordByPhoneModal({
                   masters={masters}
                   services={services}
                   selectedDate={selectedDate}
+                  initialStartTime={initialStartTime}
                   onSuccess={handleAppointmentSuccess}
                   onCancel={handleClose}
                   embedded
                   initialClientName={client.name}
                   initialClientPhone={client.phone}
+                  clientLocked={Boolean(initialClientPhone?.trim())}
                   inlineServicePicker
                 />
               </div>

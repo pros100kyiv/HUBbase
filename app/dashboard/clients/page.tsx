@@ -730,7 +730,7 @@ export default function ClientsPage() {
                   <button
                     onClick={() => {
                       const c = clients.find(x => selectedClients.has(x.id))
-                      if (c) router.push(`/dashboard/appointments?clientPhone=${c.phone}`)
+                      if (c) router.push(`/dashboard/appointments?create=true&clientPhone=${encodeURIComponent(c.phone)}&clientName=${encodeURIComponent(c.name || '')}`)
                     }}
                     className="px-2.5 py-1.5 text-xs bg-green-500/90 text-white rounded-lg font-medium hover:opacity-90 transition-all"
                   >
@@ -841,7 +841,7 @@ export default function ClientsPage() {
                         <td className="p-3">
                           <div className="flex gap-1 justify-center">
                             <button onClick={() => window.open(`tel:${client.phone}`)} className="p-1.5 text-blue-400 hover:bg-white/10 rounded-lg transition-colors" title="Дзвінок"><PhoneIcon className="w-4 h-4" /></button>
-                            <button onClick={() => router.push(`/dashboard/appointments?clientPhone=${client.phone}`)} className="p-1.5 text-green-400 hover:bg-white/10 rounded-lg transition-colors" title="Запис"><CalendarIcon className="w-4 h-4" /></button>
+                            <button onClick={() => router.push(`/dashboard/appointments?create=true&clientPhone=${encodeURIComponent(client.phone)}&clientName=${encodeURIComponent(client.name || '')}`)} className="p-1.5 text-green-400 hover:bg-white/10 rounded-lg transition-colors" title="Записати"><CalendarIcon className="w-4 h-4" /></button>
                             <button onClick={() => handleEditClient(client)} className="p-1.5 text-gray-300 hover:bg-white/10 rounded-lg transition-colors" title="Редагувати"><SettingsIcon className="w-4 h-4" /></button>
                             <button onClick={() => handleDeleteClient(client.id)} className="p-1.5 text-red-400 hover:bg-white/10 rounded-lg transition-colors" title="Видалити"><XIcon className="w-4 h-4" /></button>
                           </div>
@@ -909,7 +909,7 @@ export default function ClientsPage() {
                       </div>
                       <div className="flex gap-1">
                         <button onClick={() => window.open(`tel:${client.phone}`)} className="p-1.5 text-blue-400 hover:bg-white/10 rounded-lg transition-colors" title="Дзвінок"><PhoneIcon className="w-4 h-4" /></button>
-                        <button onClick={() => router.push(`/dashboard/appointments?clientPhone=${client.phone}`)} className="p-1.5 text-green-400 hover:bg-white/10 rounded-lg transition-colors" title="Запис"><CalendarIcon className="w-4 h-4" /></button>
+                        <button onClick={() => router.push(`/dashboard/appointments?create=true&clientPhone=${encodeURIComponent(client.phone)}&clientName=${encodeURIComponent(client.name || '')}`)} className="p-1.5 text-green-400 hover:bg-white/10 rounded-lg transition-colors" title="Записати"><CalendarIcon className="w-4 h-4" /></button>
                         <button onClick={() => handleEditClient(client)} className="p-1.5 text-gray-300 hover:bg-white/10 rounded-lg transition-colors" title="Редагувати"><SettingsIcon className="w-4 h-4" /></button>
                         <button onClick={() => handleDeleteClient(client.id)} className="p-1.5 text-red-400 hover:bg-white/10 rounded-lg transition-colors" title="Видалити"><XIcon className="w-4 h-4" /></button>
                         <button onClick={() => handleClientClick(client)} className="p-1.5 text-gray-400 hover:bg-white/10 rounded-lg transition-colors">
@@ -996,11 +996,13 @@ export default function ClientsPage() {
                               </span>
                             </div>
                             <button
-                              onClick={() => router.push(`/dashboard/appointments?clientPhone=${client.phone}`)}
-                              className="px-3 py-1.5 text-xs bg-white text-black rounded-lg font-semibold hover:bg-gray-100 transition-colors flex-shrink-0"
-                              style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+                              onClick={() => router.push(`/dashboard/appointments?create=true&clientPhone=${encodeURIComponent(client.phone)}&clientName=${encodeURIComponent(client.name || '')}`)}
+                              className="px-3 py-2 text-sm font-semibold bg-white text-black rounded-xl hover:bg-gray-100 transition-colors flex-shrink-0 flex items-center gap-2 touch-target"
+                              style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}
+                              title="Записати клієнта на прийом"
                             >
-                              + Новий візит
+                              <CalendarIcon className="w-4 h-4" />
+                              Записати
                             </button>
                           </div>
                           <div className="p-4 space-y-3">
@@ -1089,7 +1091,7 @@ export default function ClientsPage() {
                                             <div className="min-w-0 flex-1">
                                               <div className="flex flex-wrap items-center gap-2 mb-1.5">
                                                 <span className="text-xs font-semibold text-white">{format(start, 'dd.MM.yyyy')}</span>
-                                                <span className="text-xs text-gray-400">{format(start, 'HH:mm')} – {format(end, 'HH:mm')}</span>
+                                                <span className="text-xs text-gray-400 tabular-nums">{format(start, 'HH:mm')}–{format(end, 'HH:mm')}</span>
                                                 <span className={cn('px-1.5 py-0.5 rounded-full text-[10px] font-medium border', getStatusColor(appointment.status))}>
                                                   {getStatusLabel(appointment.status)}
                                                 </span>
@@ -1310,11 +1312,12 @@ export default function ClientsPage() {
                             type="button"
                             onClick={() => {
                               setClientByPhoneModal(null)
-                              router.push(`/dashboard/appointments?clientPhone=${clientByPhoneModal.phone}`)
+                              router.push(`/dashboard/appointments?create=true&clientPhone=${encodeURIComponent(clientByPhoneModal.phone)}&clientName=${encodeURIComponent(clientByPhoneModal.name || '')}`)
                             }}
-                            className="px-3 py-2 text-sm font-semibold rounded-xl modal-value-cta hover:opacity-90 transition-opacity flex-shrink-0"
+                            className="px-3 py-2 text-sm font-semibold rounded-xl modal-value-cta hover:opacity-90 transition-opacity flex-shrink-0 flex items-center gap-2"
                           >
-                            + Новий візит
+                            <CalendarIcon className="w-4 h-4" />
+                            Записати
                           </button>
                         </div>
                         <div className="p-4 space-y-3">
@@ -1390,7 +1393,7 @@ export default function ClientsPage() {
                                           <div className="min-w-0 flex-1">
                                             <div className="flex flex-wrap items-center gap-2 mb-1.5">
                                               <span className="text-sm font-semibold text-white">{format(start, 'dd.MM.yyyy')}</span>
-                                              <span className="text-xs text-gray-400">{format(start, 'HH:mm')} – {format(end, 'HH:mm')}</span>
+                                              <span className="text-xs text-gray-400 tabular-nums">{format(start, 'HH:mm')}–{format(end, 'HH:mm')}</span>
                                               <span className={cn('px-2 py-0.5 rounded-lg text-xs font-medium', getStatusColor(appointment.status))}>
                                                 {getStatusLabel(appointment.status)}
                                               </span>

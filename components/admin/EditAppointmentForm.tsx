@@ -9,6 +9,7 @@ import { XIcon } from '@/components/icons'
 import { ErrorToast } from '@/components/ui/error-toast'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { Button } from '@/components/ui/button'
+import { normalizeUaPhone } from '@/lib/utils/phone'
 
 interface EditAppointmentFormProps {
   appointment: {
@@ -236,13 +237,13 @@ export function EditAppointmentForm({
                 type="tel"
                 value={formData.clientPhone}
                 onChange={(e) => setFormData({ ...formData, clientPhone: e.target.value })}
-                placeholder="+380XXXXXXXXX"
+                placeholder="0XX XXX XX XX"
                 required
                 className="flex-1 min-w-0 border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
               />
               {formData.clientPhone.replace(/\D/g, '').length >= 9 && (
                 <a
-                  href={`/dashboard/clients?phone=${encodeURIComponent(formData.clientPhone.trim())}`}
+                  href={`/dashboard/clients?phone=${encodeURIComponent(normalizeUaPhone(formData.clientPhone))}`}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-xs font-medium text-emerald-400 hover:underline whitespace-nowrap"

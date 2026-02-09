@@ -18,9 +18,16 @@ function getDayOfWeekUTC(year: number, month: number, day: number): number {
   return new Date(Date.UTC(year, month, day)).getUTCDay()
 }
 
+type DayHours = { enabled: boolean; start: string; end: string; breakStart?: string; breakEnd?: string }
+
+function timeToHours(s: string): number {
+  const [h, m] = s.split(':').map((x) => parseInt(x, 10) || 0)
+  return h + m / 60
+}
+
 function parseWorkingHours(
   raw: string | null | undefined
-): Record<string, { enabled: boolean; start: string; end: string }> | null {
+): Record<string, DayHours> | null {
   if (raw == null || typeof raw !== 'string' || !raw.trim()) return null
   let obj: Record<string, unknown>
   try {
@@ -29,34 +36,52 @@ function parseWorkingHours(
     return null
   }
   if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null
-  const result: Record<string, { enabled: boolean; start: string; end: string }> = {}
+  const result: Record<string, DayHours> = {}
   for (const key of DAY_NAMES) {
     const k = Object.keys(obj).find((x) => x.toLowerCase() === key)
     if (!k) continue
     const dayVal = obj[k]
     if (!dayVal || typeof dayVal !== 'object' || Array.isArray(dayVal)) continue
-    const d = dayVal as { enabled?: unknown; start?: unknown; end?: unknown }
+    const d = dayVal as { enabled?: unknown; start?: unknown; end?: unknown; breakStart?: unknown; breakEnd?: unknown }
     result[key] = {
       enabled: d.enabled === true,
       start: typeof d.start === 'string' ? d.start : '09:00',
       end: typeof d.end === 'string' ? d.end : '18:00',
+      breakStart: typeof d.breakStart === 'string' ? d.breakStart : undefined,
+      breakEnd: typeof d.breakEnd === 'string' ? d.breakEnd : undefined,
     }
   }
   return Object.keys(result).length > 0 ? result : null
 }
 
-function getWindowForDay(
-  wh: Record<string, { enabled: boolean; start: string; end: string }> | null,
+/** Повертає масив робочих інтервалів на день (один або два, якщо є перерва). */
+function getWindowsForDay(
+  wh: Record<string, DayHours> | null,
   dayName: string
-): { start: number; end: number } | null {
+): Array<{ start: number; end: number }> | null {
   if (!wh || !wh[dayName] || !wh[dayName].enabled) return null
   const d = wh[dayName]
-  const [sh, sm] = d.start.split(':').map((x) => parseInt(x, 10) || 0)
-  const [eh, em] = d.end.split(':').map((x) => parseInt(x, 10) || 0)
-  const start = sh + sm / 60
-  const end = eh + em / 60
+  const start = timeToHours(d.start)
+  const end = timeToHours(d.end)
   if (start >= end) return null
-  return { start: Math.max(0, Math.floor(start)), end: Math.min(24, Math.ceil(end)) }
+  const startF = Math.max(0, Math.floor(start))
+  const endC = Math.min(24, Math.ceil(end))
+  const hasBreak =
+    d.breakStart != null &&
+    d.breakEnd != null &&
+    d.breakStart.trim() !== '' &&
+    d.breakEnd.trim() !== ''
+  if (hasBreak) {
+    const bStart = timeToHours(d.breakStart!)
+    const bEnd = timeToHours(d.breakEnd!)
+    if (bStart < bEnd && bStart >= start && bEnd <= end) {
+      return [
+        { start: startF, end: Math.min(endC, Math.ceil(bStart)) },
+        { start: Math.max(startF, Math.floor(bEnd)), end: endC },
+      ]
+    }
+  }
+  return [{ start: startF, end: endC }]
 }
 
 /** Виключення за датами: { "YYYY-MM-DD": { enabled, start?, end? } }. Якщо enabled: false — вихідний. */
@@ -122,15 +147,17 @@ async function getAvailableSlotsForDate(
   if (isNaN(year) || isNaN(month) || isNaN(day) || month < 0 || month > 11 || day < 1 || day > 31) return []
 
   const dayOfWeek = getDayOfWeekUTC(year, month, day)
-  const dayName = DAY_NAMES[dayOfWeek]
-  const wh = parseWorkingHours(master.workingHours)
-  const dateOverrides = parseScheduleDateOverrides(master.scheduleDateOverrides)
-  const window = getWindowForDate(dateNorm, dateOverrides, wh, dayName)
-  if (!window) return []
-  const dayStart = Math.max(0, window.start)
-  const dayEnd = Math.min(24, Math.max(dayStart + 1, window.end))
+  const windows = getWindowsForDate(dateNorm, dateOverrides, wh, dayName)
+  if (!windows || windows.length === 0) return []
 
   const slots: string[] = []
+  for (const win of windows) {
+    const dayStart = Math.max(0, win.start)
+    const dayEnd = Math.min(24, Math.max(dayStart + 1, win.end))
+    for (let h = dayStart; h < dayEnd; h++) {
+      for (let m = 0; m < 60; m += 30) {
+        slots.push(`${dateNorm}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
+      }
   for (let h = dayStart; h < dayEnd; h++) {
     for (let m = 0; m < 60; m += 30) {
       slots.push(`${dateNorm}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
@@ -163,9 +190,8 @@ async function getAvailableSlotsForDate(
       if (key.startsWith(dateNorm)) occupied.add(key)
       t = addMinutes(t, 30)
     }
-  }
-
-  const steps = Math.ceil(durationMinutes / 30)
+  const inAnyWindow = (hours: number) =>
+    windows!.some((w) => hours >= w.start && hours < w.end)
   return slots
     .filter((slotStr) => {
       if (typeof slotStr !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(slotStr)) return false
@@ -175,6 +201,9 @@ async function getAvailableSlotsForDate(
       for (let i = 0; i < steps; i++) {
         const t = addMinutes(slotDate, i * 30)
         const key = format(t, "yyyy-MM-dd'T'HH:mm")
+        if (occupied.has(key)) return false
+        const v = t.getHours() + t.getMinutes() / 60
+        if (!inAnyWindow(v)) return false
         if (occupied.has(key)) return false
         const v = t.getHours() + t.getMinutes() / 60
         if (v < dayStart || v >= dayEnd) return false
@@ -304,8 +333,8 @@ export async function GET(request: Request) {
 
     const dateNorm = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
     const dayOfWeek = getDayOfWeekUTC(year, month, day)
-    const dayName = DAY_NAMES[dayOfWeek]
-    const wh = parseWorkingHours(master.workingHours)
+    const windows = getWindowsForDate(dateNorm, dateOverrides, wh, dayName)
+    if (!windows || windows.length === 0) {
     const dateOverrides = parseScheduleDateOverrides(master.scheduleDateOverrides)
     const window = getWindowForDate(dateNorm, dateOverrides, wh, dayName)
     if (!window) {

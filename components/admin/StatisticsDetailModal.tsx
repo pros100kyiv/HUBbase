@@ -432,10 +432,10 @@ export function StatisticsDetailModal({
                             <div key={apt.id} className="p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
                               <div className="flex items-start justify-between mb-2">
                                 <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-1">
-                                    <ClockIcon className="w-4 h-4 text-gray-400" />
-                                    <span className="text-sm font-semibold text-white">
-                                      {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
+                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-white tabular-nums">
+                                      <ClockIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                      {format(startTime, 'HH:mm')}–{format(endTime, 'HH:mm')}
                                     </span>
                                     <span className="text-xs text-gray-400">
                                       {format(startTime, 'd MMM', { locale: uk })}

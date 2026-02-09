@@ -274,11 +274,13 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
                     className="w-full text-left bg-white/5 border border-white/10 rounded-xl p-3 hover:bg-white/10 transition-all active:scale-[0.99] touch-manipulation min-h-[56px]"
                   >
                     <div className="flex items-center gap-2 md:gap-3">
-                      <div className="flex flex-col items-center justify-center w-10 h-10 md:w-12 md:h-12 bg-[#2A2A2A] rounded-lg border border-white/10 flex-shrink-0 shadow-inner">
-                        <span className="text-xs md:text-sm font-bold text-blue-400 leading-none">
+                      <div className="flex flex-col items-center justify-center w-10 h-10 md:w-12 md:h-12 rounded-lg border border-white/15 bg-white/10 flex-shrink-0">
+                        <span className="text-xs md:text-sm font-semibold tabular-nums text-white leading-none">
                           {format(startTime, 'HH:mm')}
                         </span>
-                        <div className="w-0.5 h-0.5 rounded-full bg-gray-600 mt-0.5" />
+                        <span className="text-[10px] text-gray-400 mt-0.5 tabular-nums">
+                          {durationMin} хв
+                        </span>
                       </div>
                       <div className="flex-1 min-w-0 py-0.5">
                         <div className="text-sm font-bold text-white truncate leading-tight">
@@ -297,9 +299,9 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
                       </div>
                     </div>
                     <div className="flex items-center gap-2 mt-2 pt-2 border-t border-white/10">
-                      <ClockIcon className="w-3 h-3 text-gray-400 flex-shrink-0" />
-                      <span className="text-[10px] text-gray-400 font-medium">
-                        {format(startTime, 'HH:mm')} – {format(endTime, 'HH:mm')}
+                      <ClockIcon className="w-3 h-3 text-gray-500 flex-shrink-0" />
+                      <span className="text-[10px] text-gray-400 font-medium tabular-nums">
+                        {format(startTime, 'HH:mm')}–{format(endTime, 'HH:mm')}
                         <span className="text-gray-500 ml-1">({durationMin} хв)</span>
                       </span>
                     </div>

@@ -140,7 +140,10 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="relative min-h-screen" style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}>
+    <div className="relative min-h-screen overflow-x-hidden">
+      {/* Той самий фон, що на реєстрації, вході та головній — м’які градієнтні орби */}
+      <div className="fixed inset-0 pointer-events-none landing-hero-gradient" aria-hidden />
+
       {/* Оверлей «Доступ заблоковано» — показується, коли акаунт заблоковано в центрі управління */}
       {mounted && isBlocked === true && (
         <BlockedOverlay
@@ -159,7 +162,7 @@ export default function DashboardLayout({
       <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       
       {/* Main Content Area — safe-area для notch та home indicator */}
-      <main className="relative ml-0 md:ml-64 pt-14 md:pt-16 min-h-screen safe-bottom pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]" style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}>
+      <main className="relative ml-0 md:ml-64 pt-14 md:pt-16 min-h-screen safe-bottom pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
         <div className="px-3 py-3 md:p-6 pb-[max(5rem,env(safe-area-inset-bottom)+3.5rem)] md:pb-6">
           {children}
         </div>

@@ -5,6 +5,7 @@ import { useBooking } from '@/contexts/BookingContext'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
+import { normalizeUaPhone, isValidUaPhone } from '@/lib/utils/phone'
 
 interface FinalStepProps {
   businessId?: string
@@ -24,10 +25,8 @@ export function FinalStep({ businessId }: FinalStepProps) {
 
     if (!state.clientPhone.trim()) {
       newErrors.phone = 'Телефон обов\'язковий'
-    } else if (!state.clientPhone.startsWith('+380')) {
-      newErrors.phone = 'Телефон повинен починатися з +380'
-    } else if (state.clientPhone.length !== 13) {
-      newErrors.phone = 'Невірний формат телефону'
+    } else if (!isValidUaPhone(state.clientPhone)) {
+      newErrors.phone = 'Введіть номер з 0, наприклад 0671234567'
     }
 
     setErrors(newErrors)
@@ -143,7 +142,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
               <input
                 value={state.clientPhone}
                 onChange={(e) => setClientPhone(e.target.value)}
-                placeholder="+380XXXXXXXXX"
+                placeholder="0XX XXX XX XX"
                 type="tel"
                 className={cn(
                   'w-full px-4 py-3 sm:py-2.5 rounded-lg border text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 min-h-[48px] sm:min-h-0',

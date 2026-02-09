@@ -32,6 +32,8 @@ interface MobileAppointmentCardProps {
   onEdit?: (appointment: Appointment) => void
   /** Відкрити історію клієнта на сторінці Клієнти (передати phone) */
   onOpenClientHistory?: (phone: string) => void
+  /** Якщо вартість не вказана і користувач обирає «Виконано» — викликається (відкрити модалку введення вартості) */
+  onDoneWithoutPrice?: (id: string) => void
 }
 
 function getDisplayPrice(
@@ -65,6 +67,7 @@ export function MobileAppointmentCard({
   onStatusChange,
   onEdit,
   onOpenClientHistory,
+  onDoneWithoutPrice,
 }: MobileAppointmentCardProps) {
   const startTimeDate = new Date(appointment.startTime)
   const endTimeDate = new Date(appointment.endTime)
@@ -91,12 +94,12 @@ export function MobileAppointmentCard({
   return (
     <div className="w-full text-left bg-white/5 border border-white/10 rounded-xl p-3 md:p-3.5 hover:bg-white/8 transition-all active:scale-[0.99] group touch-manipulation">
       <div className="flex gap-3">
-        {/* Час + тривалість — компактний блок */}
-        <div className="flex flex-col items-center justify-center w-12 h-12 sm:w-14 sm:h-14 bg-[#252525] rounded-xl border border-white/10 flex-shrink-0">
-          <span className="text-sm font-bold text-blue-400 leading-none">
+        {/* Час запису — блок з tabular-nums */}
+        <div className="flex flex-col items-center justify-center w-12 h-12 sm:w-14 sm:h-14 rounded-xl border border-white/15 bg-white/10 flex-shrink-0">
+          <span className="text-sm font-semibold tabular-nums text-white leading-none">
             {format(startTime, 'HH:mm')}
           </span>
-          <span className="text-[10px] text-gray-500 mt-1">
+          <span className="text-[10px] text-gray-400 mt-1 tabular-nums">
             {durationMin} хв
           </span>
         </div>
@@ -141,7 +144,7 @@ export function MobileAppointmentCard({
               <UserIcon className="w-2.5 h-2.5 flex-shrink-0" />
               <span className="truncate">{appointment.masterName || 'Спеціаліст'}</span>
               <span className="text-gray-600">·</span>
-              <span className="text-gray-500">{format(startTime, 'HH:mm')}–{format(endTime, 'HH:mm')}</span>
+              <span className="tabular-nums text-gray-400">{format(startTime, 'HH:mm')}–{format(endTime, 'HH:mm')}</span>
             </div>
             {displayPrice != null && (
               <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 text-xs font-semibold border border-emerald-500/30">
@@ -159,6 +162,9 @@ export function MobileAppointmentCard({
             onStatusChange={onStatusChange ?? (() => {})}
             appointmentId={appointment.id}
             disabled={!onStatusChange}
+            size="sm"
+            customPrice={appointment.customPrice}
+            onDoneWithoutPrice={onDoneWithoutPrice}
           />
           {onEdit && (
             <button

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { format, startOfDay } from 'date-fns'
 import { MyDayCard } from '@/components/admin/MyDayCard'
+import { FreeSlotsModal } from '@/components/admin/FreeSlotsModal'
 import { WeeklyProcessCard } from '@/components/admin/WeeklyProcessCard'
 import { NotesCard } from '@/components/admin/NotesCard'
 import { SocialMessagesCard } from '@/components/admin/SocialMessagesCard'
@@ -35,6 +36,8 @@ export default function MainPage() {
   const [todayAppointments, setTodayAppointments] = useState<Appointment[]>([])
   const [loading, setLoading] = useState(true)
   const [refreshKey, setRefreshKey] = useState(0)
+  const [showFreeSlotsModal, setShowFreeSlotsModal] = useState(false)
+  const [freeSlotsDate, setFreeSlotsDate] = useState<Date | null>(null)
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -128,8 +131,10 @@ export default function MainPage() {
             </button>
           </div>
 
-          {/* My Day Card — не рендеримо до отримання дати (уникнення hydration #418) */}
-          {!selectedDate || loading ? (
+          {/* My Day Card — плейсхолдер тільки при першому завантаженні дати, щоб модалка «Вільні години» не зникала при оновленні */}
+          {!selectedDate ? (
+            <div className="h-64 rounded-xl bg-white/5 border border-white/10 animate-pulse" />
+          ) : loading && todayAppointments.length === 0 ? (
             <div className="h-64 rounded-xl bg-white/5 border border-white/10 animate-pulse" />
           ) : (
             <MyDayCard
@@ -140,11 +145,31 @@ export default function MainPage() {
               pendingAppointments={todayPending}
               confirmedAppointments={todayConfirmed}
               onBookAppointment={() => router.push('/dashboard/appointments?create=true')}
+              onBookSlot={(date, time) => router.push(`/dashboard/appointments?create=true&date=${format(date, 'yyyy-MM-dd')}&time=${encodeURIComponent(time)}`)}
+              onOpenFreeSlots={(date) => {
+                setFreeSlotsDate(date)
+                setShowFreeSlotsModal(true)
+              }}
               selectedDate={selectedDate}
               onDateChange={(date) => setSelectedDate(startOfDay(date))}
               onRefresh={handleRefresh}
             />
           )}
+
+          <FreeSlotsModal
+            isOpen={showFreeSlotsModal}
+            onClose={() => {
+              setShowFreeSlotsModal(false)
+              setFreeSlotsDate(null)
+            }}
+            businessId={business?.id}
+            date={freeSlotsDate ?? selectedDate ?? new Date()}
+            onBookSlot={(date, time) => {
+              setShowFreeSlotsModal(false)
+              setFreeSlotsDate(null)
+              router.push(`/dashboard/appointments?create=true&date=${format(date, 'yyyy-MM-dd')}&time=${encodeURIComponent(time)}`)
+            }}
+          />
         </div>
 
         {/* Right Column - Sidebar (1 column). Мобільний порядок: Соцмережі → Нотатки → Календар */}

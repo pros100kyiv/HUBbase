@@ -12,6 +12,14 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
     }
 
+    const business = await prisma.business.findUnique({
+      where: { id: businessId },
+      select: { id: true, createdAt: true },
+    })
+    if (!business) {
+      return NextResponse.json({ error: 'Business not found' }, { status: 404 })
+    }
+
     const now = new Date()
     let startDate: Date, endDate: Date
 
@@ -31,6 +39,12 @@ export async function GET(request: Request) {
       default:
         startDate = startOfDay(subMonths(now, 1))
         endDate = endOfDay(now)
+    }
+
+    // Початкова дата періоду — не раніше реєстрації акаунта
+    if (business.createdAt) {
+      const regStart = startOfDay(new Date(business.createdAt))
+      if (startDate < regStart) startDate = regStart
     }
 
     const [appointments, clients, services, masters] = await Promise.all([

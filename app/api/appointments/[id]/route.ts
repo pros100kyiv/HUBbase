@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { normalizeUaPhone } from '@/lib/utils/phone'
 import type { Prisma } from '@prisma/client'
 
 const STATUSES = ['Pending', 'Confirmed', 'Done', 'Cancelled'] as const
@@ -24,13 +25,6 @@ function toStatus(s: unknown): Status | null {
   return STATUSES.includes(v as Status) ? (v as Status) : null
 }
 
-function toPhone(phone: string): string {
-  let s = String(phone ?? '').replace(/\s/g, '').replace(/[()-]/g, '').trim()
-  if (s.startsWith('0')) return `+380${s.slice(1)}`
-  if (s.startsWith('380')) return `+${s}`
-  if (!s.startsWith('+380')) return `+380${s}`
-  return s
-}
 
 function toServicesJson(value: unknown): string | null {
   if (value == null) return null
@@ -162,7 +156,7 @@ export async function PATCH(
   const clientName = toStrOrNull(body.clientName)
   if (clientName) data.clientName = clientName
   if (body.clientPhone != null && String(body.clientPhone).trim()) {
-    data.clientPhone = toPhone(String(body.clientPhone))
+    data.clientPhone = normalizeUaPhone(String(body.clientPhone))
   }
   if (body.clientEmail !== undefined) data.clientEmail = toStrOrNull(body.clientEmail)
   const servicesJson = toServicesJson(body.services)

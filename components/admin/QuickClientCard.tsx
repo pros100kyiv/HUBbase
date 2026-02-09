@@ -1,11 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { XIcon, UserIcon, PhoneIcon, CheckIcon } from '@/components/icons'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { cn } from '@/lib/utils'
+import { normalizeUaPhone, isValidUaPhone } from '@/lib/utils/phone'
 import { toast } from '@/components/ui/toast'
 import { ErrorToast } from '@/components/ui/error-toast'
+import { getSuggestedClientStatus, type ClientStatusValue } from '@/lib/client-status'
 
 export const CLIENT_STATUS_OPTIONS = [
   { value: 'new', label: 'Новий' },
@@ -13,6 +15,12 @@ export const CLIENT_STATUS_OPTIONS = [
   { value: 'vip', label: 'VIP' },
   { value: 'inactive', label: 'Неактивний' },
 ] as const
+
+const VALID_STATUSES: ClientStatusValue[] = ['new', 'regular', 'vip', 'inactive']
+function normalizeStatusForSend(s: string): ClientStatusValue {
+  const v = s.trim().toLowerCase()
+  return VALID_STATUSES.includes(v as ClientStatusValue) ? (v as ClientStatusValue) : 'new'
+}
 
 interface QuickClientCardProps {
   businessId: string
@@ -29,6 +37,9 @@ interface QuickClientCardProps {
     tags?: string | null
     metadata?: string | null
     status?: string | null
+    totalAppointments?: number
+    totalSpent?: number
+    lastAppointmentDate?: string | null
   } | null
 }
 
@@ -40,11 +51,23 @@ export function QuickClientCard({
   initialName = '',
   editingClient = null,
 }: QuickClientCardProps) {
+  const suggestedStatus = editingClient
+    ? getSuggestedClientStatus(
+        editingClient.totalAppointments ?? 0,
+        Number(editingClient.totalSpent ?? 0),
+        editingClient.lastAppointmentDate ?? null
+      )
+    : 'new'
+  const initialStatus =
+    (editingClient?.status && VALID_STATUSES.includes(editingClient.status.trim().toLowerCase() as ClientStatusValue))
+      ? (editingClient.status.trim().toLowerCase() as ClientStatusValue)
+      : (editingClient ? suggestedStatus : 'new')
+
   const [formData, setFormData] = useState({
     name: editingClient?.name || initialName,
     phone: editingClient?.phone || initialPhone,
     email: editingClient?.email || '',
-    status: (editingClient?.status as 'new' | 'regular' | 'vip' | 'inactive') || 'new',
+    status: initialStatus,
     notes: editingClient?.notes || '',
     tags: editingClient?.tags || '',
     metadata: editingClient?.metadata || '',
@@ -53,17 +76,15 @@ export function QuickClientCard({
   const [showErrorToast, setShowErrorToast] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
-  const normalizePhone = (phone: string) => {
-    let cleaned = phone.replace(/\s/g, '').replace(/[()-]/g, '')
-    if (cleaned.startsWith('0')) {
-      cleaned = `+380${cleaned.slice(1)}`
-    } else if (cleaned.startsWith('380')) {
-      cleaned = `+${cleaned}`
-    } else if (!cleaned.startsWith('+380')) {
-      cleaned = `+380${cleaned}`
+  // При відкритті редагування підставити рекомендований статус, якщо у клієнта був "new" або порожній
+  useEffect(() => {
+    if (!editingClient) return
+    const current = (editingClient.status || '').trim().toLowerCase()
+    const hadNoStatus = !current || current === 'new'
+    if (hadNoStatus && suggestedStatus !== 'new') {
+      setFormData((prev) => ({ ...prev, status: suggestedStatus }))
     }
-    return cleaned
-  }
+  }, [editingClient?.id, suggestedStatus])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -85,10 +106,9 @@ export function QuickClientCard({
       return
     }
 
-    // Нормалізація телефону
-    const normalizedPhone = normalizePhone(formData.phone)
-    if (normalizedPhone.length !== 13) {
-      setErrorMessage('Невірний формат телефону. Використовуйте формат: +380XXXXXXXXX')
+    const normalizedPhone = normalizeUaPhone(formData.phone)
+    if (!isValidUaPhone(formData.phone)) {
+      setErrorMessage('Невірний формат. Введіть номер з 0, наприклад 0671234567')
       setShowErrorToast(true)
       setIsSubmitting(false)
       return
@@ -107,7 +127,7 @@ export function QuickClientCard({
             name: formData.name.trim(),
             phone: normalizedPhone,
             email: formData.email.trim() || null,
-            status: formData.status,
+            status: normalizeStatusForSend(formData.status),
             notes: formData.notes.trim() || null,
             tags: formData.tags.trim() || null,
             metadata: formData.metadata.trim() || null,
@@ -138,7 +158,7 @@ export function QuickClientCard({
                 businessId,
                 name: formData.name.trim(),
                 email: formData.email.trim() || null,
-                status: formData.status,
+                status: normalizeStatusForSend(formData.status),
                 notes: formData.notes.trim() || null,
                 tags: formData.tags.trim() || null,
                 metadata: formData.metadata.trim() || null,
@@ -161,7 +181,7 @@ export function QuickClientCard({
               name: formData.name.trim(),
               phone: normalizedPhone,
               email: formData.email.trim() || null,
-              status: formData.status,
+              status: normalizeStatusForSend(formData.status),
               notes: formData.notes.trim() || null,
               tags: formData.tags.trim() || null,
               metadata: formData.metadata.trim() || null,
@@ -252,13 +272,13 @@ export function QuickClientCard({
                 type="tel"
                 value={formData.phone}
                 onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="+380XXXXXXXXX"
+                placeholder="0XX XXX XX XX"
                 required
                 className="w-full pl-10 pr-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
               />
             </div>
             <p className="text-xs text-gray-400 mt-1">
-              Формат: +380XXXXXXXXX
+              Введіть номер з 0, наприклад 0671234567
             </p>
           </div>
 
@@ -304,6 +324,11 @@ export function QuickClientCard({
                 </button>
               ))}
             </div>
+            {editingClient && suggestedStatus !== formData.status && suggestedStatus !== 'new' && (
+              <p className="text-xs text-gray-400 mt-1.5">
+                За візитами та сумою рекомендовано: <span className="text-white font-medium">{CLIENT_STATUS_OPTIONS.find((o) => o.value === suggestedStatus)?.label ?? suggestedStatus}</span>
+              </p>
+            )}
           </div>
 
           {/* Примітки */}

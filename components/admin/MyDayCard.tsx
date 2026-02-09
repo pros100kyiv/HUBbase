@@ -33,6 +33,10 @@ export interface MyDayCardProps {
   confirmedAppointments: number
   totalRevenue?: number
   onBookAppointment?: () => void
+  /** Вибір вільного слота: дата + час (HH:mm) для переходу на запис */
+  onBookSlot?: (date: Date, time: string) => void
+  /** Відкрити модалку «Вільні години» (рендериться на батьківській сторінці) */
+  onOpenFreeSlots?: (date: Date) => void
   selectedDate?: Date
   onDateChange?: (date: Date) => void
   onRefresh?: () => void
@@ -47,6 +51,8 @@ export function MyDayCard({
   confirmedAppointments,
   totalRevenue = 0,
   onBookAppointment,
+  onBookSlot,
+  onOpenFreeSlots,
   selectedDate: externalSelectedDate,
   onDateChange,
   onRefresh,
@@ -65,6 +71,11 @@ export function MyDayCard({
   const [postVisitProcedureDone, setPostVisitProcedureDone] = useState('')
   const [postVisitCustomPriceGrn, setPostVisitCustomPriceGrn] = useState<number | ''>('')
   const [postVisitSaving, setPostVisitSaving] = useState(false)
+  /** Відкрити модалку «Вказати вартість» перед перемиканням на Виконано (id запису) */
+  const [showDonePriceModalForId, setShowDonePriceModalForId] = useState<string | null>(null)
+  const [donePriceInputGrn, setDonePriceInputGrn] = useState<number | ''>('')
+  const [donePriceServiceName, setDonePriceServiceName] = useState('')
+  const [donePriceSaving, setDonePriceSaving] = useState(false)
 
   useEffect(() => {
     if (selectedAppointment) {
@@ -78,6 +89,14 @@ export function MyDayCard({
   }, [selectedAppointment?.id, selectedAppointment?.procedureDone, selectedAppointment?.customPrice])
 
   useEffect(() => {
+    if (showDonePriceModalForId) {
+      setDonePriceInputGrn('')
+      const apt = appointments.find((a) => a.id === showDonePriceModalForId)
+      setDonePriceServiceName(apt?.customServiceName?.trim() ?? '')
+    }
+  }, [showDonePriceModalForId, appointments])
+
+  useEffect(() => {
     if (!businessId) return
     fetch(`/api/services?businessId=${businessId}`)
       .then((res) => (res.ok ? res.json() : []))
@@ -86,11 +105,13 @@ export function MyDayCard({
   }, [businessId])
 
   const handleTouchStart = (e: React.TouchEvent) => {
-    setTouchStart({ x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY })
+    if (e.targetTouches?.length > 0) {
+      setTouchStart({ x: e.targetTouches[0].clientX, y: e.targetTouches[0].clientY })
+    }
   }
 
   const handleTouchEnd = (e: React.TouchEvent, onClose: () => void) => {
-    if (!touchStart) return
+    if (!touchStart || !e.changedTouches?.length) return
     const touchEnd = { x: e.changedTouches[0].clientX, y: e.changedTouches[0].clientY }
     
     const deltaX = touchEnd.x - touchStart.x
@@ -155,13 +176,6 @@ export function MyDayCard({
     handleDateChange(startOfDay(new Date()))
   }
   
-  const dateDisplay = isToday
-    ? `Сьогодні, ${format(selectedDate, 'd MMMM yyyy', { locale: uk })}`
-    : format(selectedDate, 'EEEE, d MMMM yyyy', { locale: uk })
-
-  // Мобільний формат: сьогодні = текст, інакше тільки число (щоб не ламався хедер)
-  const dateDisplayMobile = isToday ? 'СЬОГОДНІ' : format(selectedDate, 'd', { locale: uk })
-
   const handleBookAppointment = () => {
     if (onBookAppointment) {
       onBookAppointment()
@@ -216,16 +230,18 @@ export function MyDayCard({
     return sum > 0 ? sum : null
   }
 
-  /** Підсумок доходу за вибраний день (сума цін записів) */
-  const dayTotalRevenue = appointmentsForSelectedDay.reduce((acc, apt) => {
-    const p = getDisplayPrice(apt)
-    return acc + (p ?? 0)
-  }, 0)
+  /** Дохід за день — тільки з виконаних записів (статус Виконано) */
+  const dayTotalRevenue = appointmentsForSelectedDay
+    .filter(apt => apt.status === 'Done' || apt.status === 'Виконано')
+    .reduce((acc, apt) => {
+      const p = getDisplayPrice(apt)
+      return acc + (p ?? 0)
+    }, 0)
 
   const getDaySummaryText = () => {
     const dateLabel = isToday ? 'Сьогодні' : format(selectedDate, 'd MMMM yyyy', { locale: uk })
     let text = `Мій день — ${dateLabel}\nЗаписів: ${totalForDay} (підтверджено: ${confirmedForDay}, очікує: ${pendingForDay}, виконано: ${completedForDay})`
-    if (totalRevenue > 0) text += `\nДохід: ${totalRevenue} грн`
+    if (dayTotalRevenue > 0) text += `\nДохід за день (виконано): ${dayTotalRevenue} грн`
     if (appointmentsForSelectedDay.length > 0) {
       text += '\n\nЗаписи:\n'
       appointmentsForSelectedDay.forEach((apt) => {
@@ -315,14 +331,6 @@ export function MyDayCard({
     })
   }
 
-  const getStatusTitle = (type: 'pending' | 'confirmed' | 'done') => {
-    switch (type) {
-      case 'pending': return 'Очікують підтвердження'
-      case 'confirmed': return 'Підтверджені записи'
-      case 'done': return 'Виконані записи'
-    }
-  }
-
   const handleMarkDone = async (e: React.MouseEvent, id: string) => {
     e.stopPropagation()
     if (!businessId) return
@@ -395,6 +403,44 @@ export function MyDayCard({
     }
   }
 
+  const handleDoneWithPriceSubmit = async () => {
+    if (!businessId || !showDonePriceModalForId) return
+    const grn = donePriceInputGrn === '' ? NaN : Number(donePriceInputGrn)
+    if (Number.isNaN(grn) || grn < 0) {
+      toast({ title: 'Вкажіть вартість', type: 'error' })
+      return
+    }
+    setDonePriceSaving(true)
+    try {
+      const res = await fetch(`/api/appointments/${showDonePriceModalForId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId,
+          status: 'Done',
+          customPrice: Math.round(grn * 100),
+          ...(donePriceServiceName.trim() && { customServiceName: donePriceServiceName.trim() }),
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        if (selectedAppointment?.id === showDonePriceModalForId) {
+          setSelectedAppointment((prev) => prev ? { ...prev, status: 'Done', customPrice: Math.round(grn * 100) } : null)
+        }
+        setShowDonePriceModalForId(null)
+        onRefresh?.()
+        toast({ title: 'Вартість збережено, статус: Виконано', type: 'success' })
+      } else {
+        toast({ title: 'Помилка', description: data?.error || 'Не вдалося зберегти', type: 'error' })
+      }
+    } catch (error) {
+      console.error('Done with price failed:', error)
+      toast({ title: 'Помилка', description: 'Не вдалося зберегти', type: 'error' })
+    } finally {
+      setDonePriceSaving(false)
+    }
+  }
+
   const isCostAfterProcedure = (apt: Appointment) => {
     const hasPrice = apt.customPrice != null && apt.customPrice > 0
     if (hasPrice) return false
@@ -460,12 +506,12 @@ export function MyDayCard({
       >
         <div className="flex flex-row items-stretch gap-2 sm:gap-3">
           <div className="flex items-start gap-2.5 sm:gap-3 min-w-0 flex-1">
-            {/* Time Box + duration */}
-            <div className="flex flex-col items-center justify-center w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 bg-[#252525] rounded-xl border border-white/10 flex-shrink-0">
-              <span className="text-sm font-bold text-blue-400 leading-none">
+            {/* Час запису — блок з табular-nums для вирівнювання */}
+            <div className="flex flex-col items-center justify-center w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl border border-white/15 bg-white/10 flex-shrink-0">
+              <span className="text-sm font-semibold tabular-nums text-white leading-none">
                 {format(startTime, 'HH:mm')}
               </span>
-              <span className="text-[10px] text-gray-500 mt-1">{durationMin} хв</span>
+              <span className="text-[10px] text-gray-400 mt-1 tabular-nums">{durationMin} хв</span>
             </div>
 
             {/* Info + price */}
@@ -501,7 +547,7 @@ export function MyDayCard({
                 </svg>
                 <span className="truncate">{apt.masterName || 'Невідомий спеціаліст'}</span>
                 <span className="text-gray-600">·</span>
-                <span>{format(startTime, 'HH:mm')}–{format(endTime, 'HH:mm')}</span>
+                <span className="tabular-nums">{format(startTime, 'HH:mm')}–{format(endTime, 'HH:mm')}</span>
               </div>
             </div>
           </div>
@@ -515,7 +561,17 @@ export function MyDayCard({
               isFromBooking={apt.isFromBooking === true}
               onStatusChange={handleStatusChange}
               appointmentId={apt.id}
-              size="sm"
+              size="xs"
+              customPrice={apt.customPrice}
+              onDoneWithoutPrice={(id) => {
+              toast({
+                title: 'Статус не змінено',
+                description: 'Щоб позначити запис як Виконано, спочатку вкажіть вартість послуги в формі нижче.',
+                type: 'info',
+                duration: 4000,
+              })
+              setShowDonePriceModalForId(id)
+            }}
             />
           </div>
         </div>
@@ -523,69 +579,24 @@ export function MyDayCard({
     )
   }
 
-  return (
-    <div className="rounded-xl p-4 md:p-6 card-floating text-white">
-      {/* Header */}
-      <div className="flex items-center justify-between gap-3 mb-4 md:mb-6">
-        <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-          <h3
-            className="text-base sm:text-lg md:text-2xl font-bold text-white whitespace-nowrap flex-shrink-0"
-            style={{ letterSpacing: '-0.02em' }}
-          >
-            МІЙ ДЕНЬ
-          </h3>
-          
-          {/* Date Navigation */}
-          <div className="flex items-center gap-1 md:gap-2 min-w-0 flex-1 whitespace-nowrap">
-            <button
-              onClick={handlePreviousDay}
-              className="touch-target p-1.5 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center active:scale-95 flex-shrink-0"
-              aria-label="Попередній день"
-            >
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-              </svg>
-            </button>
-            
-            <button
-              onClick={() => setShowDatePicker(true)}
-              className="px-2 md:px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-xs md:text-sm text-white flex items-center gap-1 md:gap-2 min-w-0 flex-1"
-            >
-              <svg className="w-3 h-3 md:w-4 md:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-              </svg>
-              <span className="md:hidden w-16 text-center truncate tabular-nums" suppressHydrationWarning>{dateDisplayMobile}</span>
-              <span className="hidden md:inline capitalize truncate" suppressHydrationWarning>{dateDisplay}</span>
-            </button>
-            
-            <button
-              onClick={handleNextDay}
-              className="touch-target p-1.5 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center active:scale-95 flex-shrink-0"
-              aria-label="Наступний день"
-            >
-              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-              </svg>
-            </button>
-            
-            {!isToday && (
-              <button
-                onClick={handleToday}
-                className="px-2 py-1.5 text-xs bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-white whitespace-nowrap flex-shrink-0"
-              >
-                Сьогодні
-              </button>
-            )}
-          </div>
-        </div>
+  const dateDisplayShort = isToday ? 'Сьогодні' : format(selectedDate, 'EEE, d MMM', { locale: uk })
 
+  return (
+    <div className="rounded-2xl p-4 md:p-6 card-floating text-white border border-white/10 overflow-hidden">
+      {/* Header: заголовок + меню */}
+      <div className="flex items-center justify-between gap-3 mb-3 md:mb-4">
+        <h2
+          className="text-lg md:text-xl font-bold text-white"
+          style={{ letterSpacing: '-0.02em' }}
+        >
+          Мій день
+        </h2>
         <div className="flex items-center gap-1 md:gap-2 flex-shrink-0 relative" ref={menuRef}>
           {shareFeedback && (
             <span className="absolute -top-8 right-0 px-2 py-1 bg-white/90 text-black text-xs rounded whitespace-nowrap z-10">
               {shareFeedback === 'share' ? 'Поділено' : 'Не підтримується'}
             </span>
           )}
-          {/* Three dots menu */}
           <button
             type="button"
             onClick={(e) => { e.stopPropagation(); setShowMenu((v) => !v) }}
@@ -620,56 +631,115 @@ export function MyDayCard({
         </div>
       </div>
 
-      {/* Statistics Grid — завжди для вибраного дня */}
-      <div className="grid grid-cols-2 md:grid-cols-5 gap-2 md:gap-3 mb-4 md:mb-6">
-        <div className="bg-white/5 border border-white/10 rounded-lg p-3 md:p-4">
-          <div className="text-xl md:text-2xl font-bold text-white mb-0.5 md:mb-1">{totalForDay}</div>
-          <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Всього записів</div>
-        </div>
-        <button 
-          onClick={() => setSelectedStatus('confirmed')}
-          className="bg-white/5 border border-white/10 rounded-lg p-3 md:p-4 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
+      {/* Дата */}
+      <div className="flex items-center gap-2 mb-4 md:mb-5 p-3 md:p-3.5 rounded-xl bg-white/5 border border-white/10">
+        <button
+          onClick={handlePreviousDay}
+          className="touch-target p-2 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center active:scale-95 flex-shrink-0"
+          aria-label="Попередній день"
         >
-          <div className="text-xl md:text-2xl font-bold text-green-400 mb-0.5 md:mb-1">{confirmedForDay}</div>
-          <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Підтверджено</div>
+          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+          </svg>
         </button>
-        <button 
-          onClick={() => setSelectedStatus('pending')}
-          className="bg-white/5 border border-white/10 rounded-lg p-3 md:p-4 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
+        <button
+          onClick={() => setShowDatePicker(true)}
+          className="flex-1 min-w-0 flex items-center justify-center gap-2 py-2 px-3 rounded-lg bg-white/5 hover:bg-white/10 transition-colors text-white"
         >
-          <div className="text-xl md:text-2xl font-bold text-orange-400 mb-0.5 md:mb-1">{pendingForDay}</div>
-          <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Очікує</div>
+          <svg className="w-4 h-4 flex-shrink-0 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+          </svg>
+          <span className="text-sm md:text-base font-medium truncate capitalize tabular-nums" suppressHydrationWarning>
+            {dateDisplayShort}
+          </span>
         </button>
-        <button 
-          onClick={() => setSelectedStatus('done')}
-          className="bg-white/5 border border-white/10 rounded-lg p-3 md:p-4 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
+        <button
+          onClick={handleNextDay}
+          className="touch-target p-2 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center active:scale-95 flex-shrink-0"
+          aria-label="Наступний день"
         >
-          <div className="text-xl md:text-2xl font-bold text-blue-400 mb-0.5 md:mb-1">{completedForDay}</div>
-          <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Виконано</div>
+          <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+          </svg>
         </button>
-        <div className="bg-emerald-500/10 border border-emerald-500/30 rounded-lg p-3 md:p-4 col-span-2 md:col-span-1">
-          <div className="text-xl md:text-2xl font-bold text-emerald-400 mb-0.5 md:mb-1">{dayTotalRevenue} грн</div>
-          <div className="text-[10px] md:text-xs text-gray-400 leading-tight">Дохід за день</div>
-        </div>
+        {!isToday && (
+          <button
+            onClick={handleToday}
+            className="px-3 py-2 text-xs font-medium bg-white/10 hover:bg-white/15 rounded-lg transition-colors text-white whitespace-nowrap flex-shrink-0"
+          >
+            Сьогодні
+          </button>
+        )}
       </div>
 
-      {/* Appointments List — тільки записи вибраного дня */}
+      {/* Статистика за день */}
+      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 md:gap-3 mb-4 md:mb-5">
+        <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+          <div className="text-lg md:text-xl font-bold text-white tabular-nums">{totalForDay}</div>
+          <div className="text-[10px] md:text-xs text-gray-400 mt-0.5">Записів</div>
+        </div>
+        <button
+          type="button"
+          onClick={() => setSelectedStatus('confirmed')}
+          className="rounded-xl bg-white/5 border border-white/10 p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
+        >
+          <div className="text-lg md:text-xl font-bold text-emerald-400 tabular-nums">{confirmedForDay}</div>
+          <div className="text-[10px] md:text-xs text-gray-400 mt-0.5">Підтверджено</div>
+        </button>
+        <button
+          type="button"
+          onClick={() => setSelectedStatus('pending')}
+          className="rounded-xl bg-white/5 border border-white/10 p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
+        >
+          <div className="text-lg md:text-xl font-bold text-amber-400 tabular-nums">{pendingForDay}</div>
+          <div className="text-[10px] md:text-xs text-gray-400 mt-0.5">Очікує</div>
+        </button>
+        <button
+          type="button"
+          onClick={() => setSelectedStatus('done')}
+          className="rounded-xl bg-white/5 border border-white/10 p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
+        >
+          <div className="text-lg md:text-xl font-bold text-sky-400 tabular-nums">{completedForDay}</div>
+          <div className="text-[10px] md:text-xs text-gray-400 mt-0.5">Виконано</div>
+        </button>
+        <button
+          type="button"
+          onClick={() => onOpenFreeSlots?.(selectedDate)}
+          className="rounded-xl bg-white/5 border border-white/10 p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98] col-span-2 sm:col-span-1 flex items-center gap-2"
+        >
+          <div className="w-9 h-9 rounded-lg bg-sky-500/20 border border-sky-500/30 flex items-center justify-center flex-shrink-0">
+            <svg className="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-sm font-semibold text-white">Вільні години</div>
+            <div className="text-[10px] text-gray-400 mt-0.5">Переглянути слоти</div>
+          </div>
+        </button>
+      </div>
+
+      {/* Список записів */}
       {appointmentsForSelectedDay.length > 0 ? (
-        <div className="space-y-1.5 md:space-y-2 mb-3 md:mb-4">
-          <div className="flex items-center justify-between mb-1.5 md:mb-2 gap-2">
-            <h4 className="text-xs md:text-sm font-semibold text-gray-300 uppercase flex-1" style={{ letterSpacing: '0.05em' }}>
+        <div className="space-y-2 mb-3 md:mb-4">
+          <div className="flex items-center justify-between gap-2">
+            <h3 className="text-sm md:text-base font-semibold text-white flex items-center gap-2">
               {isToday ? 'Записи на сьогодні' : `Записи на ${format(selectedDate, 'd MMMM', { locale: uk })}`}
-            </h4>
+              <span className="inline-flex items-center justify-center min-w-[1.5rem] h-6 px-1.5 rounded-md bg-white/10 text-xs font-medium text-gray-300 tabular-nums">
+                {totalForDay}
+              </span>
+            </h3>
             <button
+              type="button"
               onClick={() => setIsExpanded(!isExpanded)}
-              className="p-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-gray-300 hover:text-white transition-all active:scale-[0.95] flex-shrink-0"
-              aria-label={isExpanded ? 'Згорнути список записів' : 'Розгорнути список записів'}
+              className="p-2 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 text-gray-400 hover:text-white transition-all active:scale-[0.95] flex-shrink-0"
+              aria-label={isExpanded ? 'Згорнути список' : 'Розгорнути список'}
               title={isExpanded ? 'Згорнути' : 'Розгорнути'}
             >
-              <svg 
-                className={`w-4 h-4 transition-transform ${isExpanded ? 'rotate-180' : ''}`} 
-                fill="none" 
-                stroke="currentColor" 
+              <svg
+                className={`w-4 h-4 transition-transform duration-200 ${isExpanded ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
                 viewBox="0 0 24 24"
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
@@ -693,90 +763,153 @@ export function MyDayCard({
           </div>
         </div>
       ) : (
-        /* Empty State */
-        <div className="text-center py-8">
-          <div className="mb-4">
-            <svg className="w-16 h-16 mx-auto text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <div className="text-center py-10 px-4 rounded-xl bg-white/5 border border-white/10 border-dashed">
+          <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-white/10 flex items-center justify-center">
+            <svg className="w-6 h-6 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
             </svg>
           </div>
-          <p className="text-sm text-gray-400 mb-4">
-            {isToday ? 'Сьогодні немає записів' : `На ${format(selectedDate, 'd MMMM yyyy', { locale: uk })} немає записів`}
+          <p className="text-sm text-gray-400 mb-1">
+            {isToday ? 'На сьогодні записів немає' : `На ${format(selectedDate, 'd MMMM', { locale: uk })} записів немає`}
           </p>
+          <p className="text-xs text-gray-500 mb-5">Додайте запис, щоб планувати день</p>
           <button
+            type="button"
             onClick={handleBookAppointment}
-            className="px-4 md:px-6 py-2.5 md:py-3 bg-white text-black rounded-lg text-xs md:text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98]"
-            style={{ letterSpacing: '-0.01em', boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+            className="px-5 py-2.5 bg-white text-black rounded-xl text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] shadow-lg shadow-black/20"
           >
-            Записати на послугу
+            Записати
           </button>
         </div>
       )}
 
-      {/* Revenue — показуємо обчислений дохід за день або з пропа (якщо є) */}
-      {(dayTotalRevenue > 0 || totalRevenue > 0) && (
-        <div className="mt-4 pt-4 border-t border-white/10">
-          <div className="flex items-center justify-between">
-            <span className="text-sm text-gray-400">Всього за день</span>
-            <span className="text-lg font-bold text-emerald-400">
-              {dayTotalRevenue > 0 ? dayTotalRevenue : totalRevenue} грн
-            </span>
-          </div>
+      {/* Підсумок доходу після списку — компактно, тільки якщо є виконані */}
+      {appointmentsForSelectedDay.length > 0 && dayTotalRevenue > 0 && (
+        <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-sm">
+          <span className="text-gray-400">Дохід за день</span>
+          <span className="font-semibold text-emerald-400 tabular-nums">{dayTotalRevenue} грн</span>
         </div>
       )}
 
-      {/* Status Details Modal — обмежена ширина, щоб не розтягувалась на весь екран */}
-      {selectedStatus && (
-        <ModalPortal>
-          <div className="modal-overlay sm:!p-4" onClick={() => setSelectedStatus(null)}>
-            <div
-              className="relative w-[95%] sm:w-full sm:max-w-lg sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
-              onClick={(e) => e.stopPropagation()}
-              onTouchStart={handleTouchStart}
-              onTouchEnd={(e) => handleTouchEnd(e, () => setSelectedStatus(null))}
-            >
-              <button
-                type="button"
-                onClick={() => setSelectedStatus(null)}
-                className="modal-close touch-target text-gray-400 hover:text-white rounded-full"
-                aria-label="Закрити"
+      {/* Модалка за статусом: Підтверджено / Очікує / Виконано */}
+      {selectedStatus && (() => {
+        const filtered = getFilteredAppointments(selectedStatus)
+        const statusConfig = {
+          pending: { title: 'Очікують підтвердження', label: 'Очікує', accent: 'amber', iconBg: 'bg-amber-500/20', iconColor: 'text-amber-400', borderColor: 'border-amber-500/40' },
+          confirmed: { title: 'Підтверджені записи', label: 'Підтверджено', accent: 'emerald', iconBg: 'bg-emerald-500/20', iconColor: 'text-emerald-400', borderColor: 'border-emerald-500/40' },
+          done: { title: 'Виконані записи', label: 'Виконано', accent: 'sky', iconBg: 'bg-sky-500/20', iconColor: 'text-sky-400', borderColor: 'border-sky-500/40' },
+        }
+        const config = statusConfig[selectedStatus]
+        return (
+          <ModalPortal>
+            <div className="modal-overlay sm:!p-4" onClick={() => setSelectedStatus(null)}>
+              <div
+                className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white max-h-[90dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+                onClick={(e) => e.stopPropagation()}
+                onTouchStart={handleTouchStart}
+                onTouchEnd={(e) => handleTouchEnd(e, () => setSelectedStatus(null))}
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-              <h3 className="modal-title pr-10 mb-1.5">{getStatusTitle(selectedStatus)}</h3>
-              <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide p-2 pt-0 sm:p-3 sm:pt-0">
-                <div className="space-y-1.5">
-                  {getFilteredAppointments(selectedStatus).length > 0 ? (
-                    getFilteredAppointments(selectedStatus).map((apt) => (
-                      <AppointmentItem 
-                        key={apt.id} 
-                        apt={apt} 
-                        onClick={() => {
-                          setSelectedStatus(null)
-                          handleAppointmentClick(apt.id)
-                        }} 
-                      />
-                    ))
+                <button
+                  type="button"
+                  onClick={() => setSelectedStatus(null)}
+                  className="modal-close touch-target text-gray-400 hover:text-white rounded-full"
+                  aria-label="Закрити"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+
+                {/* Шапка з акцентом по статусу */}
+                <div className={`pr-10 flex-shrink-0 pb-4 border-b border-white/10 border-l-4 ${config.borderColor}`}>
+                  <div className="flex items-center gap-3 pl-1">
+                    <div className={`w-10 h-10 rounded-xl ${config.iconBg} flex items-center justify-center flex-shrink-0`}>
+                      {selectedStatus === 'pending' && (
+                        <svg className={`w-5 h-5 ${config.iconColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      )}
+                      {selectedStatus === 'confirmed' && (
+                        <svg className={`w-5 h-5 ${config.iconColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      )}
+                      {selectedStatus === 'done' && (
+                        <svg className={`w-5 h-5 ${config.iconColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                        </svg>
+                      )}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <h2 className="text-base font-bold text-white truncate" style={{ letterSpacing: '-0.02em' }}>
+                        {config.title}
+                      </h2>
+                      <p className="text-sm text-gray-400 mt-0.5">
+                        {filtered.length === 0
+                          ? 'Немає записів'
+                          : `${filtered.length} ${filtered.length === 1 ? 'запис' : filtered.length < 5 ? 'записи' : 'записів'}`}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Список записів або пустий стан */}
+                <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide py-4">
+                  {filtered.length > 0 ? (
+                    <div className="space-y-2">
+                      {filtered.map((apt) => (
+                        <AppointmentItem
+                          key={apt.id}
+                          apt={apt}
+                          onClick={() => {
+                            setSelectedStatus(null)
+                            handleAppointmentClick(apt.id)
+                          }}
+                        />
+                      ))}
+                    </div>
                   ) : (
-                    <div className="text-center py-8 text-gray-400 text-sm">
-                      Немає записів у цій категорії
+                    <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
+                      <div className={`w-14 h-14 rounded-2xl ${config.iconBg} flex items-center justify-center mb-4`}>
+                        {selectedStatus === 'pending' && (
+                          <svg className={`w-7 h-7 ${config.iconColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        )}
+                        {selectedStatus === 'confirmed' && (
+                          <svg className={`w-7 h-7 ${config.iconColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                        )}
+                        {selectedStatus === 'done' && (
+                          <svg className={`w-7 h-7 ${config.iconColor}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M5 13l4 4L19 7" />
+                          </svg>
+                        )}
+                      </div>
+                      <p className="text-sm font-medium text-gray-300 mb-1">
+                        У категорії «{config.label}» записів немає
+                      </p>
+                      <p className="text-xs text-gray-500">
+                        {selectedStatus === 'pending' && 'Записи зі статусом «Очікує» з\'являться тут'}
+                        {selectedStatus === 'confirmed' && 'Підтверджені записи з\'являться тут'}
+                        {selectedStatus === 'done' && 'Виконані записи з\'являться тут'}
+                      </p>
                     </div>
                   )}
                 </div>
               </div>
             </div>
-          </div>
-        </ModalPortal>
-      )}
+          </ModalPortal>
+        )
+      })()}
 
-      {/* Appointment Details Modal — обмежена ширина */}
+      {/* Модалка запису — деталі клієнта */}
       {selectedAppointment && (
         <ModalPortal>
           <div className="modal-overlay sm:!p-4" onClick={() => setSelectedAppointment(null)}>
             <div
-              className="relative w-[95%] sm:w-full sm:max-w-lg sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+              className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white max-h-[90dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
               onClick={(e) => e.stopPropagation()}
               onTouchStart={handleTouchStart}
               onTouchEnd={(e) => handleTouchEnd(e, () => setSelectedAppointment(null))}
@@ -784,114 +917,143 @@ export function MyDayCard({
               <button
                 type="button"
                 onClick={() => setSelectedAppointment(null)}
-                className="modal-close touch-target text-gray-400 hover:text-white rounded-full"
+                className="modal-close touch-target rounded-full"
                 aria-label="Закрити"
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
-              <div className="pr-10 mb-1.5 flex-shrink-0">
-                <h3 className="modal-title truncate">{selectedAppointment.clientName}</h3>
-                <p className="modal-subtitle truncate">
-                  {format(new Date(selectedAppointment.startTime), 'd MMMM yyyy', { locale: uk })}{' '}
-                  • {format(new Date(selectedAppointment.startTime), 'HH:mm')}–{format(new Date(selectedAppointment.endTime), 'HH:mm')}
-                </p>
-                {(() => {
-                  const sum = getDisplayPrice(selectedAppointment)
-                  if (sum != null) {
-                    return (
-                      <div className="mt-2 inline-flex items-center px-3 py-1.5 rounded-lg bg-emerald-500/15 border border-emerald-500/30">
-                        <span className="text-xs text-gray-400 mr-2">Сума</span>
-                        <span className="text-base font-bold text-emerald-400">{sum} грн</span>
+
+              {/* Шапка: ім'я + час + статус */}
+              <div className="pr-10 flex-shrink-0 pb-4 border-b border-white/10">
+                <div className="flex items-start gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0 text-lg font-bold text-white">
+                    {selectedAppointment.clientName.charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="text-lg font-bold text-white truncate" style={{ letterSpacing: '-0.02em' }}>
+                      {selectedAppointment.clientName}
+                    </h2>
+                    <p className="text-sm text-gray-400 mt-0.5 flex items-center gap-2 flex-wrap">
+                      <span className="inline-flex items-center gap-1.5 tabular-nums font-medium text-gray-300">
+                        <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        {format(new Date(selectedAppointment.startTime), 'HH:mm')}–{format(new Date(selectedAppointment.endTime), 'HH:mm')}
+                      </span>
+                      <span>{format(new Date(selectedAppointment.startTime), 'd MMMM', { locale: uk })}</span>
+                    </p>
+                    <div className="mt-2 flex flex-wrap items-center gap-2">
+                      <div onClick={(e) => e.stopPropagation()}>
+                        <StatusSwitcher
+                          status={selectedAppointment.status}
+                          isFromBooking={selectedAppointment.isFromBooking === true}
+                          onStatusChange={handleStatusChange}
+                          appointmentId={selectedAppointment.id}
+                          size="sm"
+                          customPrice={selectedAppointment.customPrice}
+                          onDoneWithoutPrice={(id) => {
+              toast({
+                title: 'Статус не змінено',
+                description: 'Щоб позначити запис як Виконано, спочатку вкажіть вартість послуги в формі нижче.',
+                type: 'info',
+                duration: 4000,
+              })
+              setShowDonePriceModalForId(id)
+            }}
+                        />
                       </div>
-                    )
-                  }
-                  return null
-                })()}
-              </div>
-              <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide p-2 pt-0 sm:p-3 sm:pt-0 space-y-1.5">
-                <div className="flex items-center justify-between gap-3">
-                  <span className="text-xs text-gray-400">Статус</span>
-                  <div onClick={(e) => e.stopPropagation()}>
-                    <StatusSwitcher
-                      status={selectedAppointment.status}
-                      isFromBooking={selectedAppointment.isFromBooking === true}
-                      onStatusChange={handleStatusChange}
-                      appointmentId={selectedAppointment.id}
-                      size="md"
-                    />
+                      {(() => {
+                        const sum = getDisplayPrice(selectedAppointment)
+                        return sum != null ? (
+                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-semibold border border-emerald-500/40">
+                            {sum} грн
+                          </span>
+                        ) : null
+                      })()}
+                    </div>
                   </div>
                 </div>
+              </div>
+
+              {/* Контент: картки інфо */}
+              <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide py-4 space-y-3">
+                {selectedAppointment.clientPhone && (
+                  <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-2">Телефон</p>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <a
+                        href={`tel:${selectedAppointment.clientPhone}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-sm font-medium hover:bg-emerald-500/30 transition-colors"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        Зателефонувати
+                      </a>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigator.clipboard.writeText(selectedAppointment.clientPhone!)
+                          toast({ title: 'Скопійовано', type: 'success' })
+                        }}
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 text-gray-300 text-sm font-medium hover:bg-white/15 transition-colors"
+                      >
+                        Копіювати
+                      </button>
+                    </div>
+                    <p className="text-sm text-white/80 mt-1.5 font-mono">{selectedAppointment.clientPhone}</p>
+                  </div>
+                )}
 
                 {selectedAppointment.masterName && (
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs text-gray-400">Спеціаліст</span>
-                    <span className="text-sm text-white truncate">{selectedAppointment.masterName}</span>
+                  <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-1">Спеціаліст</p>
+                    <p className="text-sm font-medium text-white">{selectedAppointment.masterName}</p>
                   </div>
                 )}
 
-                {selectedAppointment.clientPhone && (
-                  <div className="flex items-center justify-between gap-3">
-                    <span className="text-xs text-gray-400">Телефон</span>
-                    <button
-                      type="button"
-                      onClick={() => navigator.clipboard.writeText(selectedAppointment.clientPhone)}
-                      className="text-sm text-blue-300 hover:text-blue-200 transition-colors"
-                      title="Натисніть щоб скопіювати"
-                    >
-                      {selectedAppointment.clientPhone}
-                    </button>
-                  </div>
-                )}
-
-                {(() => {
-                  const modalServiceNames = getServiceNamesList(selectedAppointment.services, selectedAppointment.customServiceName)
-                  const hasPrice = getDisplayPrice(selectedAppointment) != null
-                  const needsPriceAfter = !hasPrice && (selectedAppointment.customServiceName?.trim() || (() => {
-                    try {
-                      const ids = selectedAppointment.services ? JSON.parse(selectedAppointment.services) : []
-                      return Array.isArray(ids) && ids.length === 0
-                    } catch { return false }
-                  })())
-                  return (
-                    <div>
-                      <div className="text-xs text-gray-400 mb-2">Послуги</div>
-                      <div className="flex flex-wrap gap-2">
-                        {modalServiceNames.length > 0
-                          ? modalServiceNames.map((name, idx) => (
-                              <span
-                                key={idx}
-                                className="px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-gray-200"
-                              >
-                                {name}
-                              </span>
-                            ))
-                          : (
-                              <span className="px-2 py-1 bg-white/5 border border-white/10 rounded-lg text-xs text-gray-400">
-                                Послуга не вказана
-                              </span>
+                <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+                  <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-2">Послуги</p>
+                  {(() => {
+                    const names = getServiceNamesList(selectedAppointment.services, selectedAppointment.customServiceName)
+                    const needsPriceAfter = isCostAfterProcedure(selectedAppointment)
+                    return (
+                      <>
+                        <div className="flex flex-wrap gap-2">
+                          {names.length > 0
+                            ? names.map((name, idx) => (
+                                <span key={idx} className="px-2.5 py-1 rounded-lg bg-white/10 text-sm text-gray-200 border border-white/10">
+                                  {name}
+                                </span>
+                              ))
+                            : (
+                              <span className="text-sm text-gray-400">Послуга не вказана</span>
                             )}
-                      </div>
-                      {needsPriceAfter && (
-                        <div className="text-xs text-gray-400 mt-2">Вартість узгоджується після процедури</div>
-                      )}
-                    </div>
-                  )
-                })()}
+                        </div>
+                        {needsPriceAfter && (
+                          <p className="text-xs text-gray-500 mt-2">Вартість узгоджується після процедури</p>
+                        )}
+                      </>
+                    )
+                  })()}
+                </div>
 
                 {selectedAppointment.procedureDone && (
-                  <div className="p-3 bg-white/5 border border-white/10 rounded-lg">
-                    <div className="text-xs text-gray-400 mb-1">Що зроблено після візиту</div>
-                    <div className="text-sm text-gray-200 whitespace-pre-wrap">{selectedAppointment.procedureDone}</div>
+                  <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-1">Що зроблено після візиту</p>
+                    <p className="text-sm text-gray-200 whitespace-pre-wrap">{selectedAppointment.procedureDone}</p>
                   </div>
                 )}
 
                 {isCostAfterProcedure(selectedAppointment) && (
-                  <div className="p-3 bg-white/5 border border-white/10 rounded-lg space-y-3">
-                    <div className="text-xs font-medium text-gray-300">Після візиту</div>
-                    <div>
-                      <label className="block text-[10px] text-gray-500 mb-1">Що зроблено</label>
+                  <div className="rounded-xl bg-white/5 border border-white/10 p-3 space-y-3">
+                    <p className="text-xs font-medium text-gray-300">Після візиту</p>
+                    <label className="block">
+                      <span className="block text-[10px] text-gray-500 mb-1">Що зроблено</span>
                       <textarea
                         value={postVisitProcedureDone}
                         onChange={(e) => setPostVisitProcedureDone(e.target.value)}
@@ -900,47 +1062,50 @@ export function MyDayCard({
                         className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-white/30 resize-none"
                         onClick={(e) => e.stopPropagation()}
                       />
+                    </label>
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <label className="block">
+                        <span className="block text-[10px] text-gray-500 mb-1">Сума, грн</span>
+                        <input
+                          type="number"
+                          min={0}
+                          value={postVisitCustomPriceGrn}
+                          onChange={(e) => {
+                            const v = e.target.value
+                            setPostVisitCustomPriceGrn(v === '' ? '' : Math.max(0, Number(v)))
+                          }}
+                          placeholder="0"
+                          className="w-24 px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:outline-none focus:ring-2 focus:ring-white/30"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </label>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); handleSavePostVisit() }}
+                        disabled={postVisitSaving}
+                        className="self-end px-4 py-2 rounded-lg text-sm font-semibold bg-emerald-500/20 text-emerald-400 border border-emerald-500/50 hover:bg-emerald-500/30 transition-colors disabled:opacity-50"
+                      >
+                        {postVisitSaving ? 'Збереження…' : 'Зберегти'}
+                      </button>
                     </div>
-                    <div>
-                      <label className="block text-[10px] text-gray-500 mb-1">Сума, грн</label>
-                      <input
-                        type="number"
-                        min={0}
-                        value={postVisitCustomPriceGrn}
-                        onChange={(e) => {
-                          const v = e.target.value
-                          setPostVisitCustomPriceGrn(v === '' ? '' : Math.max(0, Number(v)))
-                        }}
-                        placeholder="0"
-                        className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white placeholder-gray-500 text-sm focus:outline-none focus:ring-2 focus:ring-white/30 max-w-[120px]"
-                        onClick={(e) => e.stopPropagation()}
-                      />
-                    </div>
-                    <button
-                      type="button"
-                      onClick={(e) => { e.stopPropagation(); handleSavePostVisit() }}
-                      disabled={postVisitSaving}
-                      className="px-3 py-2 rounded-lg text-xs font-semibold bg-green-500/20 text-green-400 border border-green-500/50 hover:bg-green-500/30 transition-all disabled:opacity-50"
-                    >
-                      {postVisitSaving ? 'Збереження…' : 'Зберегти'}
-                    </button>
                   </div>
                 )}
 
                 {selectedAppointment.notes && (
-                  <div className="p-3 bg-white/5 border border-white/10 rounded-lg">
-                    <div className="text-xs text-gray-400 mb-1">Примітки</div>
-                    <div className="text-sm text-gray-200 whitespace-pre-wrap">{selectedAppointment.notes}</div>
+                  <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-1">Примітки</p>
+                    <p className="text-sm text-gray-200 whitespace-pre-wrap">{selectedAppointment.notes}</p>
                   </div>
                 )}
               </div>
 
-              <div className="p-4 border-t border-white/10 flex gap-2 flex-shrink-0">
+              {/* Кнопки внизу */}
+              <div className="pt-4 border-t border-white/10 flex gap-2 flex-shrink-0">
                 {selectedAppointment.clientPhone && (
                   <button
                     type="button"
                     onClick={() => openClientHistory(selectedAppointment.clientPhone)}
-                    className="flex-1 px-4 py-2 bg-white/10 border border-white/20 rounded-lg text-sm font-medium text-white hover:bg-white/20 transition-colors active:scale-[0.98]"
+                    className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-sm font-medium text-white hover:bg-white/15 transition-colors active:scale-[0.98]"
                   >
                     Історія клієнта
                   </button>
@@ -948,15 +1113,88 @@ export function MyDayCard({
                 <button
                   type="button"
                   onClick={() => router.push(`/dashboard/appointments?edit=${selectedAppointment.id}`)}
-                  className="flex-1 px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                  className="flex-1 px-4 py-3 rounded-xl bg-white text-black text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] shadow-lg shadow-black/20"
                 >
-                  Редагувати
+                  Редагувати запис
                 </button>
               </div>
             </div>
           </div>
         </ModalPortal>
       )}
+
+      {/* Модалка: вказати вартість перед перемиканням на Виконано */}
+      {showDonePriceModalForId && (() => {
+        const apt = appointments.find((a) => a.id === showDonePriceModalForId)
+        return (
+          <ModalPortal>
+            <div className="modal-overlay sm:!p-4" onClick={() => setShowDonePriceModalForId(null)}>
+              <div
+                className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={() => setShowDonePriceModalForId(null)}
+                  className="modal-close touch-target text-gray-400 hover:text-white rounded-full"
+                  aria-label="Закрити"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <h3 className="modal-title pr-10 mb-1">Вказати вартість послуги</h3>
+                <p className="text-sm text-amber-400/90 mb-1">Статус не змінено. Заповніть вартість нижче, щоб позначити запис як Виконано.</p>
+                <p className="text-sm text-gray-400 mb-4">
+                  {apt ? `${apt.clientName} · ${format(new Date(apt.startTime), 'd MMM, HH:mm', { locale: uk })}` : 'Запис'}
+                </p>
+                <div className="space-y-4">
+                  <label className="block">
+                    <span className="text-xs font-medium text-gray-400 block mb-1.5">Вартість, грн</span>
+                    <input
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={donePriceInputGrn === '' ? '' : donePriceInputGrn}
+                      onChange={(e) => setDonePriceInputGrn(e.target.value === '' ? '' : Number(e.target.value))}
+                      className="w-full px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+                      placeholder="0"
+                      autoFocus
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium text-gray-400 block mb-1.5">Послуга (необов'язково)</span>
+                    <input
+                      type="text"
+                      value={donePriceServiceName}
+                      onChange={(e) => setDonePriceServiceName(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30 placeholder-gray-500"
+                      placeholder="Наприклад: Стрижка, Манікюр"
+                    />
+                  </label>
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowDonePriceModalForId(null)}
+                      className="flex-1 px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/15"
+                    >
+                      Скасувати
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDoneWithPriceSubmit}
+                      disabled={donePriceSaving || donePriceInputGrn === '' || Number(donePriceInputGrn) < 0}
+                      className="flex-1 px-4 py-3 rounded-xl bg-white text-black text-sm font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {donePriceSaving ? 'Збереження...' : 'Зберегти та Виконано'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ModalPortal>
+        )
+      })()}
 
       {/* Date Picker Modal — компактна ширина */}
       {showDatePicker && (

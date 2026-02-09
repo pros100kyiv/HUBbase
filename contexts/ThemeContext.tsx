@@ -34,7 +34,7 @@ function applyTheme(newTheme: Theme) {
 }
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
-  const [theme, setThemeState] = useState<Theme>('dark')
+  const [theme, setThemeState] = useState<Theme>('oled')
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {

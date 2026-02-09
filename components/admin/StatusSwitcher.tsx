@@ -19,14 +19,18 @@ interface StatusSwitcherProps {
   onStatusChange: (id: string, status: StatusValue) => void
   appointmentId: string
   disabled?: boolean
-  size?: 'sm' | 'md'
+  /** xs = тільки крапка + шеврон (мінімум місця), sm = короткий текст, md = повний текст */
+  size?: 'xs' | 'sm' | 'md'
+  /** Якщо вартість не вказана і користувач обирає «Виконано» — викликається замість onStatusChange (відкрити модалку введення вартості) */
+  customPrice?: number | null
+  onDoneWithoutPrice?: (id: string) => void
 }
 
-const STATUS_CONFIG: Record<StatusValue, { label: string; dotClass: string; chipClass: string }> = {
-  Pending: { label: 'Очікує', dotClass: 'bg-amber-400', chipClass: 'bg-amber-500/15 text-amber-400 border-amber-500/40' },
-  Confirmed: { label: 'Підтверджено', dotClass: 'bg-emerald-400', chipClass: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40' },
-  Done: { label: 'Виконано', dotClass: 'bg-sky-400', chipClass: 'bg-sky-500/15 text-sky-400 border-sky-500/40' },
-  Cancelled: { label: 'Скасовано', dotClass: 'bg-rose-400', chipClass: 'bg-rose-500/15 text-rose-400 border-rose-500/40' },
+const STATUS_CONFIG: Record<StatusValue, { label: string; labelShort: string; dotClass: string; chipClass: string }> = {
+  Pending: { label: 'Очікує', labelShort: 'Очік.', dotClass: 'bg-amber-400', chipClass: 'bg-amber-500/15 text-amber-400 border-amber-500/40' },
+  Confirmed: { label: 'Підтверджено', labelShort: 'Підт.', dotClass: 'bg-emerald-400', chipClass: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40' },
+  Done: { label: 'Виконано', labelShort: 'Вик.', dotClass: 'bg-sky-400', chipClass: 'bg-sky-500/15 text-sky-400 border-sky-500/40' },
+  Cancelled: { label: 'Скасовано', labelShort: 'Скас.', dotClass: 'bg-rose-400', chipClass: 'bg-rose-500/15 text-rose-400 border-rose-500/40' },
 }
 
 function normalizeStatus(s: string): StatusValue {
@@ -44,6 +48,8 @@ export function StatusSwitcher({
   appointmentId,
   disabled = false,
   size = 'md',
+  customPrice,
+  onDoneWithoutPrice,
 }: StatusSwitcherProps) {
   const [open, setOpen] = useState(false)
   const [position, setPosition] = useState<{ top: number; left: number; openUp: boolean } | null>(null)
@@ -62,11 +68,17 @@ export function StatusSwitcher({
   ]
   const options = allOptions.filter((o) => o.show && o.value !== currentStatus)
 
+  const effectiveSize = size ?? 'md'
+  const cfg = STATUS_CONFIG[currentStatus] ?? { label: status, labelShort: status.slice(0, 4), dotClass: 'bg-gray-400', chipClass: 'bg-white/10 text-gray-400 border-white/10' }
+  const buttonLabel = effectiveSize === 'xs' ? null : effectiveSize === 'sm' ? cfg.labelShort : cfg.label
+
   useEffect(() => {
     if (open && buttonRef.current && options.length > 0) {
       const rect = buttonRef.current.getBoundingClientRect()
-      const dropdownWidth = 160
-      const dropdownHeight = Math.min(options.length * 44 + 48, 280)
+      const dropdownWidth = 152
+      const itemHeight = 36
+      const headerHeight = 32
+      const dropdownHeight = Math.min(headerHeight + options.length * itemHeight, 280)
       const inset = 12
       const vw = typeof window !== 'undefined' ? window.innerWidth : 320
       const vh = typeof window !== 'undefined' ? window.innerHeight : 568
@@ -104,17 +116,19 @@ export function StatusSwitcher({
   }, [open, appointmentId])
 
   const handleSelect = (value: StatusValue) => {
-    onStatusChange(appointmentId, value)
     setOpen(false)
+    if (value === 'Done' && (customPrice == null || customPrice <= 0) && onDoneWithoutPrice) {
+      onDoneWithoutPrice(appointmentId)
+      return
+    }
+    onStatusChange(appointmentId, value)
   }
-
-  const cfg = STATUS_CONFIG[currentStatus] ?? { label: status, dotClass: 'bg-gray-400', chipClass: 'bg-white/10 text-gray-400 border-white/10' }
 
   const dropdownContent = open && options.length > 0 && position && typeof document !== 'undefined' && (
     createPortal(
       <div
         id={`status-dropdown-${appointmentId}`}
-        className="dropdown-fixed dropdown-theme fixed min-w-[160px] max-h-[70vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150 rounded-xl py-2"
+        className="dropdown-fixed dropdown-theme fixed min-w-[140px] max-w-[200px] max-h-[70vh] overflow-y-auto animate-in fade-in zoom-in-95 duration-150 rounded-lg py-1.5"
         style={{
           top: position.top,
           left: position.left,
@@ -122,25 +136,23 @@ export function StatusSwitcher({
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div>
-          <div className="px-3 py-1.5 mb-1 border-b border-white/10">
-            <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500">Змінити статус</span>
-          </div>
-          {options.map((opt) => (
-            <button
-              key={opt.value}
-              type="button"
-              onClick={(e) => {
-                e.stopPropagation()
-                handleSelect(opt.value)
-              }}
-              className="w-full px-4 py-2.5 min-h-[44px] text-left text-sm font-medium text-white hover:bg-white/10 flex items-center gap-3 transition-colors first:rounded-t-lg last:rounded-b-lg touch-manipulation"
-            >
-              <span className={cn('w-2.5 h-2.5 rounded-full flex-shrink-0', STATUS_CONFIG[opt.value].dotClass)} />
-              {opt.label}
-            </button>
-          ))}
+        <div className="px-2.5 py-1 border-b border-white/10 mb-1">
+          <span className="text-[10px] font-medium uppercase tracking-wider text-gray-500">Статус</span>
         </div>
+        {options.map((opt) => (
+          <button
+            key={opt.value}
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              handleSelect(opt.value)
+            }}
+            className="w-full px-3 py-2 min-h-[36px] sm:min-h-[40px] text-left text-xs sm:text-sm font-medium text-white hover:bg-white/10 flex items-center gap-2.5 transition-colors rounded-md touch-manipulation"
+          >
+            <span className={cn('w-2 h-2 rounded-full flex-shrink-0', STATUS_CONFIG[opt.value].dotClass)} />
+            {STATUS_CONFIG[opt.value].label}
+          </button>
+        ))}
       </div>,
       document.body
     )
@@ -157,19 +169,22 @@ export function StatusSwitcher({
           if (!disabled) setOpen((v) => !v)
         }}
         disabled={disabled}
-        title="Змінити статус"
+        title={cfg.label}
+        aria-label={`Статус: ${cfg.label}. Змінити`}
         className={cn(
-          'inline-flex items-center gap-1.5 rounded-lg border font-medium transition-all touch-manipulation',
+          'inline-flex items-center rounded-md border font-medium transition-all touch-manipulation',
           'hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-1 focus:ring-offset-[#1A1A1A]',
           disabled && 'opacity-60 cursor-not-allowed',
-          size === 'sm' ? 'px-2 py-1 text-[10px]' : 'px-2.5 py-1.5 text-xs',
+          effectiveSize === 'xs' && 'p-1.5 min-w-0',
+          effectiveSize === 'sm' && 'gap-1 px-1.5 py-0.5 text-[10px] min-h-[28px]',
+          effectiveSize === 'md' && 'gap-1.5 px-2 py-1 text-xs min-h-[32px]',
           cfg.chipClass
         )}
       >
-        <span className={cn('w-1.5 h-1.5 rounded-full flex-shrink-0', cfg.dotClass)} />
-        <span className="max-w-[72px] truncate">{cfg.label}</span>
+        <span className={cn('rounded-full flex-shrink-0', effectiveSize === 'xs' ? 'w-2 h-2' : 'w-1.5 h-1.5', cfg.dotClass)} />
+        {buttonLabel != null && <span className="max-w-[64px] sm:max-w-[72px] truncate">{buttonLabel}</span>}
         {!disabled && options.length > 0 && (
-          <svg className="w-3 h-3 flex-shrink-0 opacity-70" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className={cn('flex-shrink-0 opacity-70', effectiveSize === 'xs' ? 'w-2.5 h-2.5' : 'w-3 h-3')} fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
           </svg>
         )}

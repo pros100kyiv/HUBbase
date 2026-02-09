@@ -1,24 +1,7 @@
 import { NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-
-function normalizeUaPhone(phone: string): string {
-  // Нормалізуємо телефон клієнта до формату +380XXXXXXXXX
-  let normalizedPhone = String(phone || '')
-    .replace(/\s/g, '')
-    .replace(/[()-]/g, '')
-    .trim()
-
-  if (normalizedPhone.startsWith('0')) {
-    normalizedPhone = `+380${normalizedPhone.slice(1)}`
-  } else if (normalizedPhone.startsWith('380')) {
-    normalizedPhone = `+${normalizedPhone}`
-  } else if (!normalizedPhone.startsWith('+380')) {
-    normalizedPhone = `+380${normalizedPhone}`
-  }
-
-  return normalizedPhone
-}
+import { normalizeUaPhone } from '@/lib/utils/phone'
 
 function normalizeServicesToJsonArrayString(services: unknown): string | null {
   // В БД зберігаємо JSON-рядок масиву ID послуг: '["id1","id2"]' або '[]' (без послуги / своя послуга)

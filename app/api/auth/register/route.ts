@@ -6,6 +6,7 @@ import { ensureAdminControlCenterTable } from '@/lib/database/ensure-admin-contr
 import { prisma } from '@/lib/prisma'
 import { BusinessNiche } from '@prisma/client'
 import { generateBusinessIdentifier } from '@/lib/utils/business-identifier'
+import { normalizeUaPhone } from '@/lib/utils/phone'
 
 const registerSchema = z.object({
   name: z.string().min(1, 'Назва обов\'язкова'),
@@ -114,7 +115,7 @@ export async function POST(request: Request) {
           email: normalizedEmail, // Завжди lowercase
           password: hashedPassword,
           slug: finalSlug,
-          phone: validated.phone || null,
+          phone: validated.phone ? normalizeUaPhone(validated.phone) : null,
           businessIdentifier: businessIdentifier,
           niche: BusinessNiche.OTHER,
           customNiche: null,

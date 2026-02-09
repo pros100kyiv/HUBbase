@@ -785,7 +785,7 @@ export default function SettingsPage() {
                   <Input
                     value={formData.phone || ''}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                    placeholder="+380XXXXXXXXX"
+                    placeholder="0XX XXX XX XX"
                     className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                   />
                 </div>
@@ -887,7 +887,7 @@ export default function SettingsPage() {
               <div className="rounded-xl p-6 md:p-8 card-glass border border-white/10 text-center">
                 <UserIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
                 <p className="text-white font-medium mb-1">Спеціалісти та їх графіки об’єднані в одному місці.</p>
-                <p className="text-sm text-gray-400 mb-4">Додавання, редагування профілю, графік роботи та видалення — у розділі «Графік роботи та спеціалісти».</p>
+                <p className="text-sm text-gray-400 mb-4">Додавання, редагування профілю, графік роботи та видалення — у розділі «Графік роботи».</p>
                 <Button
                   onClick={() => router.push('/dashboard/schedule')}
                   className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] inline-flex items-center gap-2"

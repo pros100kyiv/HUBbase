@@ -7,8 +7,8 @@ import { useTheme } from '@/contexts/ThemeContext'
 import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
 import { SunIcon, MoonIcon, OledIcon, MenuIcon, QRIcon } from '@/components/icons'
 import { setMobileMenuState } from '@/app/dashboard/layout'
-import { AccountInfo } from '@/components/layout/AccountInfo'
 import { GlobalSearch } from '@/components/admin/GlobalSearch'
+import { playNotificationSound } from '@/lib/notification-sound'
 import { AccountProfileButton } from '@/components/layout/AccountProfileButton'
 import { NotificationsPanel } from '@/components/admin/NotificationsPanel'
 
@@ -84,7 +84,34 @@ export function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
+  const [pendingCount, setPendingCount] = useState(0)
   const searchButtonRef = useRef<HTMLButtonElement>(null)
+  const prevPendingRef = useRef<number | null>(null)
+
+  // Pending appointments count; звук при появі нового запису (червона точка з’являється)
+  useEffect(() => {
+    if (!business?.id || !pathname?.startsWith('/dashboard')) return
+    const fetchPending = async () => {
+      try {
+        const res = await fetch(`/api/appointments?businessId=${business.id}&status=Pending`)
+        if (!res.ok) return
+        const data = await res.json()
+        const count = Array.isArray(data) ? data.length : 0
+        const prevVal = prevPendingRef.current
+        prevPendingRef.current = count
+        if (prevVal !== null && count > prevVal && typeof document !== 'undefined' && document.visibilityState === 'visible') {
+          playNotificationSound()
+        }
+        setPendingCount(count)
+      } catch {
+        setPendingCount(0)
+        prevPendingRef.current = 0
+      }
+    }
+    fetchPending()
+    const interval = setInterval(fetchPending, 120_000) // 2 хв — економія запитів до БД
+    return () => clearInterval(interval)
+  }, [business?.id, pathname])
 
   // Close mobile menu when pathname changes
   useEffect(() => {
@@ -112,9 +139,9 @@ export function Navbar() {
     return (
       <>
         <nav className="fixed top-0 left-0 md:left-64 right-0 z-50 border-b safe-top navbar-theme pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
-          <div className="px-2 sm:px-3 md:px-6">
+          <div className="px-3 sm:px-4 md:px-6">
             <div className="flex justify-between items-center h-14 md:h-16 gap-2">
-              {/* Left side - Menu button (mobile) and Hi User */}
+              {/* Left: меню (mobile) + назва бізнесу */}
               <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
                 <button
                   onClick={() => {
@@ -122,70 +149,73 @@ export function Navbar() {
                     setMobileMenuOpen(newState)
                     setMobileMenuState(newState)
                   }}
-                  className="md:hidden touch-target p-2.5 rounded-lg hover:bg-white/10 transition-colors flex-shrink-0 flex items-center justify-center"
+                  className="md:hidden touch-target p-2.5 rounded-xl hover:bg-white/10 active:bg-white/15 transition-colors flex-shrink-0 flex items-center justify-center"
                   aria-label="Відкрити меню"
+                  title="Меню"
                 >
                   <MenuIcon className="w-5 h-5 text-white" />
                 </button>
-                
-                <h2 className="text-sm md:text-base font-medium text-white truncate" style={{ letterSpacing: '-0.01em' }}>
-                  {business?.name || 'Hi, User!'}
+                <h2 className="text-sm md:text-base font-semibold text-white truncate" style={{ letterSpacing: '-0.02em' }}>
+                  {business?.name || 'Кабінет'}
                 </h2>
               </div>
 
-              {/* Right side - Actions */}
-              <div className="flex items-center gap-1 sm:gap-2 md:gap-3 flex-shrink-0">
-                {/* Тема: швидке керування — першим у панелі */}
-                {mounted && (
+              {/* Right: дії — згруповані візуально */}
+              <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 flex-shrink-0">
+                {/* Група: тема + іконки */}
+                <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2">
+                  {mounted && (
+                    <button
+                      onClick={cycleTheme}
+                      className="touch-target p-2.5 rounded-xl hover:bg-white/10 active:bg-white/15 transition-colors border border-white/10 flex items-center justify-center flex-shrink-0"
+                      title={themeTitles[theme] || 'Тема'}
+                      aria-label={themeTitles[theme] || 'Змінити тему'}
+                    >
+                      {theme === 'light' && <MoonIcon className="w-5 h-5 text-white" />}
+                      {theme === 'dark' && <SunIcon className="w-5 h-5 text-white" />}
+                      {theme === 'oled' && <OledIcon className="w-5 h-5 text-white" />}
+                    </button>
+                  )}
+                  {business?.slug && (
+                    <button
+                      onClick={() => window.open(`/qr/${business.slug}`, '_blank')}
+                      className="touch-target p-2.5 rounded-xl hover:bg-white/10 active:bg-white/15 transition-colors border border-white/10 flex items-center justify-center"
+                      title="QR код для бронювання"
+                      aria-label="QR код для бронювання"
+                    >
+                      <QRIcon className="w-5 h-5 text-white" />
+                    </button>
+                  )}
                   <button
-                    onClick={cycleTheme}
-                    className="touch-target p-2.5 rounded-lg hover:bg-white/10 transition-colors border border-white/10 flex items-center justify-center flex-shrink-0"
-                    title={themeTitles[theme] || 'Тема'}
-                    aria-label={themeTitles[theme] || 'Змінити тему'}
+                    ref={searchButtonRef}
+                    onClick={() => setSearchOpen(true)}
+                    className="touch-target p-2.5 md:px-3 md:py-2 rounded-xl hover:bg-white/10 active:bg-white/15 transition-colors flex items-center justify-center gap-2 border border-white/10"
+                    title="Пошук (Ctrl+K)"
+                    aria-label="Пошук (Ctrl+K)"
                   >
-                    {theme === 'light' && <MoonIcon className="w-5 h-5 text-white" />}
-                    {theme === 'dark' && <SunIcon className="w-5 h-5 text-white" />}
-                    {theme === 'oled' && <OledIcon className="w-5 h-5 text-white" />}
+                    <svg className="w-4 h-4 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                    </svg>
+                    <span className="text-sm text-gray-300 hidden md:inline">Пошук</span>
+                    <kbd className="hidden lg:inline-flex h-5 items-center rounded border border-white/20 bg-white/5 px-1.5 text-[10px] font-medium text-gray-400">⌘K</kbd>
                   </button>
-                )}
-                {/* Записати — на мобільному компактно, на десктопі повний текст */}
-                <button 
-                  onClick={() => { startNavigation(); router.push('/dashboard/appointments?create=true') }}
-                  className="touch-target flex items-center justify-center gap-1.5 px-3 py-2 md:px-4 bg-white text-black rounded-lg text-sm font-medium hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98]" 
-                  style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
-                  aria-label="Новий запис"
-                >
-                  <svg className="w-4 h-4 md:w-4 md:h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                  </svg>
-                  <span className="hidden sm:inline">Записати</span>
-                </button>
-                
-                {/* QR Code - open QR page for booking */}
-                {business?.slug && (
                   <button
-                    onClick={() => window.open(`/qr/${business.slug}`, '_blank')}
-                    className="touch-target p-2.5 rounded-lg hover:bg-white/10 transition-colors border border-white/10 flex items-center justify-center"
-                    title="QR код для бронювання"
-                    aria-label="QR код для бронювання"
+                    onClick={() => setShowNotifications(true)}
+                    className="touch-target p-2.5 rounded-xl hover:bg-white/10 active:bg-white/15 transition-colors relative flex items-center justify-center"
+                    title={pendingCount > 0 ? `Сповіщення (${pendingCount})` : 'Сповіщення'}
+                    aria-label={pendingCount > 0 ? `Сповіщення: ${pendingCount}` : 'Сповіщення'}
                   >
-                    <QRIcon className="w-5 h-5 text-white" />
+                    <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    </svg>
+                    {business && pendingCount > 0 && (
+                      <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] px-1 flex items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                        {pendingCount > 99 ? '99+' : pendingCount}
+                      </span>
+                    )}
                   </button>
-                )}
-                {/* Search Button — ref для позиціонування модалки пошука */}
-                <button
-                  ref={searchButtonRef}
-                  onClick={() => setSearchOpen(true)}
-                  className="touch-target p-2.5 md:px-3 md:py-2 rounded-lg hover:bg-white/10 transition-colors flex items-center justify-center gap-2 border border-white/10"
-                  aria-label="Пошук"
-                >
-                  <svg className="w-4 h-4 text-white flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                  </svg>
-                  <span className="text-sm text-gray-300 hidden md:block">Пошук</span>
-                </button>
+                </div>
 
-                {/* Global Search Modal — відкривається біля кнопки пошука */}
                 {business && (
                   <GlobalSearch
                     businessId={business.id}
@@ -194,30 +224,40 @@ export function Navbar() {
                     anchorRef={searchButtonRef}
                   />
                 )}
-                
-                {/* Notifications Icon */}
-                <button
-                  onClick={() => setShowNotifications(true)}
-                  className="touch-target p-2.5 rounded-lg hover:bg-white/10 transition-colors relative flex items-center justify-center"
-                  title="Сповіщення"
-                  aria-label="Сповіщення"
-                >
-                  <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-                  </svg>
-                  {business && (
-                    <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-                  )}
-                </button>
                 {business?.id && (
                   <NotificationsPanel
                     businessId={business.id}
                     isOpen={showNotifications}
                     onClose={() => setShowNotifications(false)}
-                    onUpdate={() => {}}
+                    onUpdate={() => {
+                      if (business?.id) {
+                        fetch(`/api/appointments?businessId=${business.id}&status=Pending`)
+                          .then((r) => r.json())
+                          .then((d) => setPendingCount(Array.isArray(d) ? d.length : 0))
+                          .catch(() => setPendingCount(0))
+                      }
+                    }}
                   />
                 )}
-                {/* Profile Icon with Dropdown */}
+
+                {/* Роздільник перед головною дією */}
+                <div className="w-px h-6 bg-white/10 hidden sm:block flex-shrink-0" aria-hidden />
+
+                {/* Головна дія: Записати */}
+                <button
+                  onClick={() => { startNavigation(); router.push('/dashboard/appointments?create=true') }}
+                  className="touch-target flex items-center justify-center gap-1.5 px-3 py-2 md:px-4 bg-white text-black rounded-xl text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98]"
+                  style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}
+                  aria-label="Новий запис"
+                  title="Новий запис"
+                >
+                  <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                  </svg>
+                  <span className="hidden sm:inline">Записати</span>
+                </button>
+
+                {/* Профіль */}
                 {business && <AccountProfileButton business={business} router={router} />}
               </div>
             </div>

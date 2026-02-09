@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { jsonSafe } from '@/lib/utils/json'
+import { normalizeUaPhone } from '@/lib/utils/phone'
 
 export async function GET(
   request: Request,
@@ -79,9 +80,9 @@ export async function PATCH(
     }
 
     const updateData: any = {}
-    if (name !== undefined) updateData.name = name.trim()
-    if (email !== undefined) updateData.email = email?.trim() || null
-    if (notes !== undefined) updateData.notes = notes?.trim() || null
+    if (name !== undefined && name !== null) updateData.name = String(name).trim()
+    if (email !== undefined) updateData.email = (email != null && String(email).trim()) ? String(email).trim() : null
+    if (notes !== undefined) updateData.notes = (notes != null && String(notes).trim()) ? String(notes).trim() : null
     if (status !== undefined) updateData.status = normalizeStatus(status)
     if (tags !== undefined) {
       if (Array.isArray(tags)) {
@@ -118,16 +119,7 @@ export async function PATCH(
     }
 
     if (phone !== undefined) {
-      // Нормалізуємо телефон
-      let normalizedPhone = phone.replace(/\s/g, '').replace(/[()-]/g, '')
-      if (normalizedPhone.startsWith('0')) {
-        normalizedPhone = `+380${normalizedPhone.slice(1)}`
-      } else if (normalizedPhone.startsWith('380')) {
-        normalizedPhone = `+${normalizedPhone}`
-      } else if (!normalizedPhone.startsWith('+380')) {
-        normalizedPhone = `+380${normalizedPhone}`
-      }
-      updateData.phone = normalizedPhone
+      updateData.phone = normalizeUaPhone(String(phone))
     }
 
     const client = await prisma.client.update({

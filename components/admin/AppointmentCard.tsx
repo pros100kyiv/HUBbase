@@ -68,8 +68,8 @@ export function AppointmentCard({
       <div className="font-semibold text-secondary mb-1">
         {appointment.clientName}
       </div>
-      <div className="text-secondary/70 text-[10px] mb-1">
-        {format(startTime, 'HH:mm')} - {format(endTime, 'HH:mm')}
+      <div className="text-secondary/70 text-[10px] mb-1 tabular-nums">
+        {format(startTime, 'HH:mm')}–{format(endTime, 'HH:mm')}
       </div>
       {services.length > 0 && (
         <div className="text-secondary/60 text-[10px]">

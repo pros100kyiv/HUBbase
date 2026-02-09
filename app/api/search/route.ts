@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { jsonSafe } from '@/lib/utils/json'
+import { normalizeUaPhone } from '@/lib/utils/phone'
 
 export async function GET(request: Request) {
   try {
@@ -13,6 +14,9 @@ export async function GET(request: Request) {
     }
 
     const searchTerm = query.trim().toLowerCase()
+    const phoneNorm = normalizeUaPhone(query.trim())
+    const isPhoneSearch = /^[\d+\s()-]+$/.test(query.trim()) && phoneNorm.startsWith('+380')
+    const mode = 'insensitive' as const
 
     if (searchTerm.length < 2) {
       return NextResponse.json({ 
@@ -23,16 +27,25 @@ export async function GET(request: Request) {
       })
     }
 
-    // Search appointments (select без procedureDone — працює до застосування міграції)
+    const appointmentPhoneOr = isPhoneSearch
+      ? [
+          { clientName: { contains: searchTerm, mode } },
+          { clientPhone: { contains: searchTerm, mode } },
+          { clientPhone: { contains: phoneNorm, mode } },
+          { clientEmail: { contains: searchTerm, mode } },
+          { notes: { contains: searchTerm, mode } },
+        ]
+      : [
+          { clientName: { contains: searchTerm, mode } },
+          { clientPhone: { contains: searchTerm, mode } },
+          { clientEmail: { contains: searchTerm, mode } },
+          { notes: { contains: searchTerm, mode } },
+        ]
+
     const appointments = await prisma.appointment.findMany({
       where: {
         businessId,
-        OR: [
-          { clientName: { contains: searchTerm, mode: 'insensitive' } },
-          { clientPhone: { contains: searchTerm, mode: 'insensitive' } },
-          { clientEmail: { contains: searchTerm, mode: 'insensitive' } },
-          { notes: { contains: searchTerm, mode: 'insensitive' } },
-        ],
+        OR: appointmentPhoneOr,
       },
       select: {
         id: true,
@@ -65,15 +78,23 @@ export async function GET(request: Request) {
       orderBy: { startTime: 'desc' },
     })
 
-    // Search clients
+    const clientPhoneOr = isPhoneSearch
+      ? [
+          { name: { contains: searchTerm, mode } },
+          { phone: { contains: searchTerm, mode } },
+          { phone: { contains: phoneNorm, mode } },
+          { email: { contains: searchTerm, mode } },
+        ]
+      : [
+          { name: { contains: searchTerm, mode } },
+          { phone: { contains: searchTerm, mode } },
+          { email: { contains: searchTerm, mode } },
+        ]
+
     const clients = await prisma.client.findMany({
       where: {
         businessId,
-        OR: [
-          { name: { contains: searchTerm, mode: 'insensitive' } },
-          { phone: { contains: searchTerm, mode: 'insensitive' } },
-          { email: { contains: searchTerm, mode: 'insensitive' } },
-        ],
+        OR: clientPhoneOr,
       },
       take: 10,
       orderBy: {

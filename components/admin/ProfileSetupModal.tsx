@@ -6,6 +6,7 @@ import { ModalPortal } from '@/components/ui/modal-portal'
 import { Button } from '@/components/ui/button'
 import { ErrorToast } from '@/components/ui/error-toast'
 import { cn } from '@/lib/utils'
+import { normalizeUaPhone, isValidUaPhone } from '@/lib/utils/phone'
 
 interface ProfileSetupModalProps {
   business: any
@@ -82,11 +83,8 @@ export function ProfileSetupModal({ business, onComplete, onClose }: ProfileSetu
       return
     }
 
-    // Валідація телефону (український формат)
-    const phoneRegex = /^(\+380|380|0)[0-9]{9}$/
-    const cleanPhone = formData.phone.replace(/\s/g, '').replace(/[()-]/g, '')
-    if (!phoneRegex.test(cleanPhone)) {
-      setErrors({ phone: 'Невірний формат телефону. Використовуйте формат: +380XXXXXXXXX' })
+    if (!isValidUaPhone(formData.phone)) {
+      setErrors({ phone: 'Невірний формат. Введіть номер з 0, наприклад 0671234567' })
       setIsSaving(false)
       return
     }
@@ -130,22 +128,7 @@ export function ProfileSetupModal({ business, onComplete, onClose }: ProfileSetu
         }
       }
 
-      // Нормалізуємо телефон
-      let normalizedPhone = cleanPhone
-      if (normalizedPhone.startsWith('0')) {
-        normalizedPhone = `+380${normalizedPhone.slice(1)}`
-      } else if (normalizedPhone.startsWith('380')) {
-        normalizedPhone = `+${normalizedPhone}`
-      } else if (!normalizedPhone.startsWith('+380')) {
-        normalizedPhone = `+380${normalizedPhone}`
-      }
-
-      // Перевіряємо довжину нормалізованого телефону
-      if (normalizedPhone.length !== 13) {
-        setErrors({ phone: 'Невірний формат телефону. Має бути 13 символів: +380XXXXXXXXX' })
-        setIsSaving(false)
-        return
-      }
+      const normalizedPhone = normalizeUaPhone(formData.phone)
 
       const response = await fetch(`/api/business/${business.id}`, {
         method: 'PATCH',
@@ -298,7 +281,7 @@ export function ProfileSetupModal({ business, onComplete, onClose }: ProfileSetu
               type="tel"
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="+380XXXXXXXXX"
+              placeholder="0XX XXX XX XX"
               required
               className={cn(
                 'w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white',
@@ -310,7 +293,7 @@ export function ProfileSetupModal({ business, onComplete, onClose }: ProfileSetu
               <p className="text-red-500 text-xs mt-1">{errors.phone}</p>
             )}
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-              Формат: +380XXXXXXXXX
+              Введіть номер з 0, наприклад 0671234567
             </p>
           </div>
 

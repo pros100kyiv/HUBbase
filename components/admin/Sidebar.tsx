@@ -60,13 +60,16 @@ export function Sidebar({ className }: SidebarProps) {
     }
   }, [business])
 
+  // Індикатор біля «Записи» зникає, коли користувач вже на сторінці записів
+  const showAppointmentsBadge = pendingCount > 0 && pathname !== '/dashboard/appointments'
+
   // Main Navigation
   const mainNavItems: NavItem[] = [
     { id: 'main', label: 'Головна', icon: <HomeIcon />, path: '/dashboard/main' },
-    { id: 'appointments', label: 'Записи', icon: <CalendarIcon />, path: '/dashboard/appointments', badge: pendingCount > 0 ? pendingCount : undefined },
+    { id: 'appointments', label: 'Записи', icon: <CalendarIcon />, path: '/dashboard/appointments', badge: showAppointmentsBadge ? pendingCount : undefined },
     { id: 'price', label: 'Прайс', icon: <MoneyIcon />, path: '/dashboard/price' },
     { id: 'clients', label: 'Клієнти', icon: <UsersIcon />, path: '/dashboard/clients' },
-    { id: 'schedule', label: 'Графік роботи та спеціалісти', icon: <ClockIcon />, path: '/dashboard/schedule' },
+    { id: 'schedule', label: 'Графік роботи', icon: <ClockIcon />, path: '/dashboard/schedule' },
     { id: 'social', label: 'Соцмережі', icon: <ShareIcon />, path: '/dashboard/social' },
     { id: 'analytics', label: 'Аналітика', icon: <ChartIcon />, path: '/dashboard/analytics' },
   ]
@@ -94,7 +97,7 @@ export function Sidebar({ className }: SidebarProps) {
           }
         }}
         className={cn(
-          'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-all duration-200 relative group',
+          'nav-item-base w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-all duration-200 relative group',
           isActive
             ? 'nav-item-active'
             : 'text-gray-300 hover:bg-white/10 hover:text-white'
@@ -123,28 +126,41 @@ export function Sidebar({ className }: SidebarProps) {
 
   return (
     <>
-      <aside className={cn('border-r w-0 md:w-64 min-h-screen fixed left-0 top-0 z-40 hidden md:block sidebar-theme backdrop-blur-xl', className)}>
-        {/* Logo Section */}
-        <div className="p-6 border-b">
-          <XbaseLogo size="sm" />
+      <aside className={cn('border-r w-0 md:w-64 min-h-screen fixed left-0 top-0 z-40 hidden md:flex flex-col sidebar-theme backdrop-blur-xl', className)}>
+        {/* Logo — клік веде на головну кабінету */}
+        <div className="flex-shrink-0 border-b px-4 py-5">
+          <button
+            type="button"
+            onClick={() => { startNavigation(); router.push('/dashboard/main') }}
+            className="flex items-center gap-2 w-full rounded-xl hover:bg-white/10 active:bg-white/15 transition-colors -m-2 p-2 text-left"
+            title="На головну"
+            aria-label="На головну"
+          >
+            <XbaseLogo size="sm" />
+          </button>
         </div>
-        
-        <nav className="p-4 space-y-6">
-          {/* Main Navigation */}
-          <div className="space-y-1">
+
+        <nav className="flex-1 overflow-y-auto p-3 md:p-4 min-h-0">
+          <p className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+            Меню
+          </p>
+          <div className="space-y-0.5">
             {mainNavItems.map(renderNavItem)}
           </div>
 
-          {/* Settings */}
-          <div className="space-y-1 pt-4 border-t">
+          <div className="mt-5 pt-4 border-t border-white/10">
+            <p className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
+              Система
+            </p>
             <button
               onClick={() => { startNavigation(); router.push('/dashboard/settings') }}
               className={cn(
-                'w-full flex items-center gap-3 px-4 py-2.5 rounded-lg text-left transition-all duration-200',
+                'nav-item-base w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-all duration-200',
                 pathname === '/dashboard/settings'
                   ? 'nav-item-active'
                   : 'text-gray-300 hover:bg-white/10 hover:text-white'
               )}
+              title="Налаштування"
             >
               <div className={cn('w-5 h-5 flex-shrink-0', pathname === '/dashboard/settings' ? 'text-white' : 'text-gray-400')}>
                 <SettingsIcon />

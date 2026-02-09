@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, eachDayOfInterval, isValid } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
@@ -35,6 +35,7 @@ interface Appointment {
 
 export default function AppointmentsPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [business, setBusiness] = useState<any>(null)
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [calendarReady, setCalendarReady] = useState(false)
@@ -62,12 +63,20 @@ export default function AppointmentsPage() {
   const [masters, setMasters] = useState<any[]>([])
   const [services, setServices] = useState<any[]>([])
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [initialCreateTime, setInitialCreateTime] = useState<string | null>(null)
+  const [initialClientPhone, setInitialClientPhone] = useState<string>('')
+  const [initialClientName, setInitialClientName] = useState<string>('')
   const [showEditForm, setShowEditForm] = useState(false)
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
   const [showQuickClientCard, setShowQuickClientCard] = useState(false)
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar')
   // Показувати дохід у клітинках календаря, у блоці дня та в підсумку списку (зберігається в localStorage)
   const [showRevenue, setShowRevenue] = useState(true)
+  /** Модалка «Вказати вартість» перед перемиканням на Виконано */
+  const [showDonePriceModalForId, setShowDonePriceModalForId] = useState<string | null>(null)
+  const [donePriceInputGrn, setDonePriceInputGrn] = useState<number | ''>('')
+  const [donePriceServiceName, setDonePriceServiceName] = useState('')
+  const [donePriceSaving, setDonePriceSaving] = useState(false)
 
   useEffect(() => {
     try {
@@ -77,6 +86,14 @@ export default function AppointmentsPage() {
       // ignore
     }
   }, [])
+
+  useEffect(() => {
+    if (showDonePriceModalForId) {
+      setDonePriceInputGrn('')
+      const apt = appointments.find((a) => a.id === showDonePriceModalForId)
+      setDonePriceServiceName(apt?.customServiceName?.trim() ?? '')
+    }
+  }, [showDonePriceModalForId, appointments])
 
   const toggleShowRevenue = () => {
     setShowRevenue(prev => {
@@ -104,17 +121,25 @@ export default function AppointmentsPage() {
     }
   }, [router])
 
-  // Check for create parameter in URL
+  // Відкрити модалку «Записати» при переході з верхньої панелі (?create=true) або з «Вільні години» (?date=...&time=...)
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const params = new URLSearchParams(window.location.search)
-      if (params.get('create') === 'true') {
-        setShowCreateForm(true)
-        // Remove parameter from URL
-        router.replace('/dashboard/appointments', { scroll: false })
+    if (searchParams.get('create') !== 'true') return
+    setShowCreateForm(true)
+    const dateParam = searchParams.get('date')
+    const timeParam = searchParams.get('time')
+    if (dateParam && /^\d{4}-\d{2}-\d{2}$/.test(dateParam)) {
+      const [y, m, d] = dateParam.split('-').map(Number)
+      const dObj = new Date(y, m - 1, d)
+      if (!isNaN(dObj.getTime())) {
+        setSelectedDate(dObj)
+        setCurrentMonth(dObj)
       }
     }
-  }, [router])
+    if (timeParam && /^\d{1,2}:\d{2}$/.test(decodeURIComponent(timeParam))) {
+      setInitialCreateTime(decodeURIComponent(timeParam))
+    }
+    router.replace('/dashboard/appointments', { scroll: false })
+  }, [searchParams, router])
 
   useEffect(() => {
     if (!business) return
@@ -262,6 +287,41 @@ export default function AppointmentsPage() {
     }
   }
 
+  const handleDoneWithPriceSubmit = async () => {
+    if (!business || !showDonePriceModalForId) return
+    const grn = donePriceInputGrn === '' ? NaN : Number(donePriceInputGrn)
+    if (Number.isNaN(grn) || grn < 0) {
+      toast({ title: 'Вкажіть вартість', type: 'error' })
+      return
+    }
+    setDonePriceSaving(true)
+    try {
+      const res = await fetch(`/api/appointments/${showDonePriceModalForId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId: business.id,
+          status: 'Done',
+          customPrice: Math.round(grn * 100),
+          ...(donePriceServiceName.trim() && { customServiceName: donePriceServiceName.trim() }),
+        }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        setShowDonePriceModalForId(null)
+        reloadAppointments()
+        toast({ title: 'Вартість збережено, статус: Виконано', type: 'success' })
+      } else {
+        toast({ title: 'Помилка', description: data?.error || 'Не вдалося зберегти', type: 'error' })
+      }
+    } catch (error) {
+      console.error('Done with price failed:', error)
+      toast({ title: 'Помилка', description: 'Не вдалося зберегти', type: 'error' })
+    } finally {
+      setDonePriceSaving(false)
+    }
+  }
+
   const handleBulkStatusChange = async (status: string) => {
     if (selectedAppointments.size === 0 || !business) return
     
@@ -406,9 +466,7 @@ export default function AppointmentsPage() {
     }
   }
 
-  // Дохід за період: сума по всіх відфільтрованих записах (для підсумку)
-  const periodRevenue = filteredAppointments.reduce((sum, apt) => sum + getAppointmentDisplayPrice(apt), 0)
-  // Дохід тільки по виконаних (для статистики)
+  // Дохід тільки по виконаних записах (статус Виконано) — для календаря, дня та підсумку
   const doneRevenue = filteredAppointments
     .filter(a => a.status === 'Done' || a.status === 'Виконано')
     .reduce((sum, apt) => sum + getAppointmentDisplayPrice(apt), 0)
@@ -421,7 +479,6 @@ export default function AppointmentsPage() {
     done: filteredAppointments.filter(a => a.status === 'Done' || a.status === 'Виконано').length,
     cancelled: filteredAppointments.filter(a => a.status === 'Cancelled' || a.status === 'Скасовано').length,
     revenue: doneRevenue,
-    periodRevenue,
   }
 
   const monthStart = currentMonth ? startOfMonth(currentMonth) : null
@@ -446,7 +503,6 @@ export default function AppointmentsPage() {
     const dayDoneRevenue = list
       .filter(a => a.status === 'Done' || a.status === 'Виконано')
       .reduce((sum, apt) => sum + getAppointmentDisplayPrice(apt), 0)
-    const dayPeriodRevenue = list.reduce((sum, apt) => sum + getAppointmentDisplayPrice(apt), 0)
     return {
       total: list.length,
       pending: list.filter(a => (a.status === 'Pending' || a.status === 'Очікує') && a.isFromBooking === true).length,
@@ -454,7 +510,6 @@ export default function AppointmentsPage() {
       done: list.filter(a => a.status === 'Done' || a.status === 'Виконано').length,
       cancelled: list.filter(a => a.status === 'Cancelled' || a.status === 'Скасовано').length,
       revenue: dayDoneRevenue,
-      periodRevenue: dayPeriodRevenue,
     }
   })() : null
 
@@ -671,9 +726,11 @@ export default function AppointmentsPage() {
                               {dayAppointments.length}
                             </span>
                             {showRevenue && (() => {
-                              const dayRev = dayAppointments.reduce((s, apt) => s + getAppointmentDisplayPrice(apt), 0)
+                              const dayRev = dayAppointments
+                                .filter(a => a.status === 'Done' || a.status === 'Виконано')
+                                .reduce((s, apt) => s + getAppointmentDisplayPrice(apt), 0)
                               return dayRev > 0 ? (
-                                <span className="mt-0.5 text-[9px] text-emerald-400/90 font-medium" title="Дохід за день">
+                                <span className="mt-0.5 text-[9px] text-emerald-400/90 font-medium" title="Дохід за день (виконано)">
                                   {dayRev} грн
                                 </span>
                               ) : null
@@ -692,7 +749,9 @@ export default function AppointmentsPage() {
           {selectedDate && (() => {
             const dayAppointments = getAppointmentsForDay(selectedDate)
             const sorted = [...dayAppointments].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-            const dayRevenue = sorted.reduce((sum, apt) => sum + getAppointmentDisplayPrice(apt), 0)
+            const dayRevenue = sorted
+              .filter(a => a.status === 'Done' || a.status === 'Виконано')
+              .reduce((sum, apt) => sum + getAppointmentDisplayPrice(apt), 0)
             return (
               <div className="dashboard-card">
                 <div className="flex flex-col gap-2 mb-3">
@@ -757,6 +816,15 @@ export default function AppointmentsPage() {
                           onStatusChange={handleStatusChange}
                           onEdit={handleEditAppointment}
                           onOpenClientHistory={(phone) => router.push(`/dashboard/clients?phone=${encodeURIComponent(phone)}`)}
+                          onDoneWithoutPrice={(id) => {
+                          toast({
+                            title: 'Статус не змінено',
+                            description: 'Щоб позначити запис як Виконано, спочатку вкажіть вартість послуги в формі нижче.',
+                            type: 'info',
+                            duration: 4000,
+                          })
+                          setShowDonePriceModalForId(id)
+                        }}
                         />
                       ))}
                     </div>
@@ -803,13 +871,22 @@ export default function AppointmentsPage() {
                             onStatusChange={handleStatusChange}
                             onEdit={handleEditAppointment}
                             onOpenClientHistory={(phone) => router.push(`/dashboard/clients?phone=${encodeURIComponent(phone)}`)}
+                            onDoneWithoutPrice={(id) => {
+                          toast({
+                            title: 'Статус не змінено',
+                            description: 'Щоб позначити запис як Виконано, спочатку вкажіть вартість послуги в формі нижче.',
+                            type: 'info',
+                            duration: 4000,
+                          })
+                          setShowDonePriceModalForId(id)
+                        }}
                           />
                         ))}
                     </div>
                   </div>
                   <div className="mt-3 pt-3 border-t border-white/10 text-center text-xs text-gray-400">
                     Показано {filteredAppointments.length} записів
-                    {showRevenue && ` · Дохід: ${stats.periodRevenue} грн`}
+                    {showRevenue && ` · Дохід: ${stats.revenue} грн`}
                   </div>
                 </>
               )}
@@ -877,12 +954,8 @@ export default function AppointmentsPage() {
                 <span className="text-sm font-semibold text-blue-400">{dayStats ? dayStats.done : stats.done}</span>
               </div>
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
-                <span className="text-sm text-gray-300">Дохід (виконано)</span>
-                <span className="text-sm font-semibold text-purple-400">{dayStats ? dayStats.revenue : stats.revenue} грн</span>
-              </div>
-              <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
                 <span className="text-sm text-gray-300">{dayStats ? 'Дохід за день' : 'Дохід за період'}</span>
-                <span className="text-sm font-semibold text-emerald-400">{dayStats ? dayStats.periodRevenue : stats.periodRevenue} грн</span>
+                <span className="text-sm font-semibold text-emerald-400">{dayStats ? dayStats.revenue : stats.revenue} грн</span>
               </div>
             </div>
           </div>
@@ -981,11 +1054,19 @@ export default function AppointmentsPage() {
       {showCreateForm && business && (
         <QuickRecordByPhoneModal
           isOpen={showCreateForm}
-          onClose={() => setShowCreateForm(false)}
+          onClose={() => {
+            setShowCreateForm(false)
+            setInitialCreateTime(null)
+            setInitialClientPhone('')
+            setInitialClientName('')
+          }}
           businessId={business.id}
           masters={masters}
           services={services}
           selectedDate={selectedDate || undefined}
+          initialStartTime={initialCreateTime ?? undefined}
+          initialClientPhone={initialClientPhone || undefined}
+          initialClientName={initialClientName || undefined}
           onAppointmentCreated={handleAppointmentCreated}
         />
       )}
@@ -1005,6 +1086,79 @@ export default function AppointmentsPage() {
           onCancel={() => setShowQuickClientCard(false)}
         />
       )}
+
+      {/* Модалка: вказати вартість перед перемиканням на Виконано */}
+      {showDonePriceModalForId && business && (() => {
+        const apt = appointments.find((a) => a.id === showDonePriceModalForId)
+        return (
+          <ModalPortal>
+            <div className="modal-overlay sm:!p-4" onClick={() => setShowDonePriceModalForId(null)}>
+              <div
+                className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button
+                  type="button"
+                  onClick={() => setShowDonePriceModalForId(null)}
+                  className="modal-close touch-target text-gray-400 hover:text-white rounded-full"
+                  aria-label="Закрити"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <h3 className="modal-title pr-10 mb-1">Вказати вартість послуги</h3>
+                <p className="text-sm text-amber-400/90 mb-1">Статус не змінено. Заповніть вартість нижче, щоб позначити запис як Виконано.</p>
+                <p className="text-sm text-gray-400 mb-4">
+                  {apt ? `${apt.clientName} · ${format(new Date(apt.startTime), 'd MMM, HH:mm', { locale: uk })}` : 'Запис'}
+                </p>
+                <div className="space-y-4">
+                  <label className="block">
+                    <span className="text-xs font-medium text-gray-400 block mb-1.5">Вартість, грн</span>
+                    <input
+                      type="number"
+                      min={0}
+                      step={1}
+                      value={donePriceInputGrn === '' ? '' : donePriceInputGrn}
+                      onChange={(e) => setDonePriceInputGrn(e.target.value === '' ? '' : Number(e.target.value))}
+                      className="w-full px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+                      placeholder="0"
+                      autoFocus
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-medium text-gray-400 block mb-1.5">Послуга (необов'язково)</span>
+                    <input
+                      type="text"
+                      value={donePriceServiceName}
+                      onChange={(e) => setDonePriceServiceName(e.target.value)}
+                      className="w-full px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30 placeholder-gray-500"
+                      placeholder="Наприклад: Стрижка, Манікюр"
+                    />
+                  </label>
+                  <div className="flex gap-2 pt-2">
+                    <button
+                      type="button"
+                      onClick={() => setShowDonePriceModalForId(null)}
+                      className="flex-1 px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/15"
+                    >
+                      Скасувати
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleDoneWithPriceSubmit}
+                      disabled={donePriceSaving || donePriceInputGrn === '' || Number(donePriceInputGrn) < 0}
+                      className="flex-1 px-4 py-3 rounded-xl bg-white text-black text-sm font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {donePriceSaving ? 'Збереження...' : 'Зберегти та Виконано'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </ModalPortal>
+        )
+      })()}
 
       {/* Edit Appointment Form Modal */}
       {showEditForm && editingAppointment && business && (

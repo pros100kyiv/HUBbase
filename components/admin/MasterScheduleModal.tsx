@@ -21,13 +21,6 @@ import {
 } from 'date-fns'
 import { uk } from 'date-fns/locale'
 
-interface OtherMaster {
-  id: string
-  name: string
-  workingHours?: string | null
-  scheduleDateOverrides?: string | null
-}
-
 interface MasterScheduleModalProps {
   master: {
     id: string
@@ -36,18 +29,21 @@ interface MasterScheduleModalProps {
     scheduleDateOverrides?: string | null
   }
   businessId: string
-  /** Інші спеціалісти для копіювання графіка */
-  otherMasters?: OtherMaster[]
+  otherMasters?: Array<{ id: string; name: string }>
   onClose: () => void
   onSave: (workingHours?: string, scheduleDateOverrides?: string) => void
 }
 
+interface DayHours {
+  enabled: boolean
+  start: string
+  end: string
+  breakStart?: string
+  breakEnd?: string
+}
+
 interface WorkingHours {
-  [key: string]: {
-    enabled: boolean
-    start: string
-    end: string
-  }
+  [key: string]: DayHours
 }
 
 type DateOverride = { enabled: boolean; start: string; end: string }
@@ -63,17 +59,19 @@ const DAYS = [
   { key: 'sunday', label: 'Неділя' },
 ]
 
+const defaultDayHours = (): DayHours => ({ enabled: true, start: '09:00', end: '18:00' })
+
 const WEEK_PRESETS: { label: string; hours: WorkingHours }[] = [
   {
     label: 'Пн–Пт 9:00–18:00',
     hours: {
-      monday: { enabled: true, start: '09:00', end: '18:00' },
-      tuesday: { enabled: true, start: '09:00', end: '18:00' },
-      wednesday: { enabled: true, start: '09:00', end: '18:00' },
-      thursday: { enabled: true, start: '09:00', end: '18:00' },
-      friday: { enabled: true, start: '09:00', end: '18:00' },
-      saturday: { enabled: false, start: '09:00', end: '18:00' },
-      sunday: { enabled: false, start: '09:00', end: '18:00' },
+      monday: { ...defaultDayHours(), enabled: true },
+      tuesday: { ...defaultDayHours(), enabled: true },
+      wednesday: { ...defaultDayHours(), enabled: true },
+      thursday: { ...defaultDayHours(), enabled: true },
+      friday: { ...defaultDayHours(), enabled: true },
+      saturday: { ...defaultDayHours(), enabled: false },
+      sunday: { ...defaultDayHours(), enabled: false },
     },
   },
   {
@@ -159,6 +157,27 @@ export function MasterScheduleModal({
     }))
   }
 
+  const handleBreakChange = (dayKey: string, field: 'breakStart' | 'breakEnd', value: string) => {
+    setWorkingHours((prev) => ({
+      ...prev,
+      [dayKey]: {
+        ...(prev[dayKey] || { enabled: true, start: '09:00', end: '18:00' }),
+        [field]: value,
+      },
+    }))
+  }
+
+  const setBreakEnabled = (dayKey: string, enabled: boolean) => {
+    setWorkingHours((prev) => ({
+      ...prev,
+      [dayKey]: {
+        ...(prev[dayKey] || { enabled: true, start: '09:00', end: '18:00' }),
+        breakStart: enabled ? '13:00' : undefined,
+        breakEnd: enabled ? '14:00' : undefined,
+      },
+    }))
+  }
+
   const getWeekdayKey = (date: Date): string => {
     const d = date.getDay()
     const keys = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
@@ -196,29 +215,17 @@ export function MasterScheduleModal({
     const next: WorkingHours = { ...workingHours }
     DAYS.forEach((d) => {
       if (next[d.key]?.enabled) {
-        next[d.key] = { ...next[d.key], start: template.start, end: template.end }
+        next[d.key] = {
+          ...next[d.key],
+          start: template.start,
+          end: template.end,
+          breakStart: template.breakStart,
+          breakEnd: template.breakEnd,
+        }
       }
     })
     setWorkingHours(next)
     toast({ title: 'Готово', description: 'Однакові години застосовано до всіх робочих днів', type: 'success', duration: 2000 })
-  }
-
-  const copyScheduleFromMaster = (other: OtherMaster) => {
-    try {
-      if (other.workingHours) {
-        const parsed = typeof other.workingHours === 'string' ? JSON.parse(other.workingHours) : other.workingHours
-        setWorkingHours(parsed && typeof parsed === 'object' ? parsed : workingHours)
-      }
-      if (other.scheduleDateOverrides) {
-        const parsed = typeof other.scheduleDateOverrides === 'string' ? JSON.parse(other.scheduleDateOverrides) : other.scheduleDateOverrides
-        setScheduleDateOverrides(parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})
-      } else {
-        setScheduleDateOverrides({})
-      }
-      toast({ title: 'Скопійовано', description: `Графік з «${other.name}» застосовано`, type: 'success', duration: 2000 })
-    } catch {
-      toast({ title: 'Помилка', description: 'Не вдалося скопіювати графік', type: 'error' })
-    }
   }
 
   const copyWeekToMonth = () => {
@@ -358,21 +365,6 @@ export function MasterScheduleModal({
                     Однакові години для всіх робочих днів
                   </button>
                 </div>
-                {otherMasters.length > 0 && (
-                  <div className="mb-3 flex items-center gap-2 flex-wrap">
-                    <span className="text-[10px] text-gray-400">Скопіювати графік з:</span>
-                    {otherMasters.map((other) => (
-                      <button
-                        key={other.id}
-                        type="button"
-                        onClick={() => copyScheduleFromMaster(other)}
-                        className="px-2 py-1 text-[10px] font-medium rounded border border-white/20 bg-white/10 text-gray-300 hover:bg-white/20 hover:text-white transition-colors"
-                      >
-                        {other.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
                 <div className="space-y-2">
                   {DAYS.map((day) => {
                     const dayHours = workingHours[day.key] || { enabled: false, start: '09:00', end: '18:00' }
@@ -380,32 +372,63 @@ export function MasterScheduleModal({
                       <div
                         key={day.key}
                         className={cn(
-                          'flex items-center gap-3 p-3 rounded-xl border transition-colors',
+                          'p-3 rounded-xl border transition-colors space-y-2',
                           dayHours.enabled ? 'bg-white/10 border-white/20' : 'bg-white/5 border-white/10'
                         )}
                       >
-                        <input
-                          type="checkbox"
-                          checked={dayHours.enabled}
-                          onChange={() => handleDayToggle(day.key)}
-                          className="w-4 h-4 rounded border-white/30 bg-white/10 text-green-500 focus:ring-green-500/50"
-                        />
-                        <label className="flex-1 text-sm font-medium text-white">{day.label}</label>
+                        <div className="flex items-center gap-3">
+                          <input
+                            type="checkbox"
+                            checked={dayHours.enabled}
+                            onChange={() => handleDayToggle(day.key)}
+                            className="w-4 h-4 rounded border-white/30 bg-white/10 text-green-500 focus:ring-green-500/50"
+                          />
+                          <label className="flex-1 text-sm font-medium text-white">{day.label}</label>
+                          {dayHours.enabled && (
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <input
+                                type="time"
+                                value={dayHours.start}
+                                onChange={(e) => handleTimeChange(day.key, 'start', e.target.value)}
+                                className="min-w-[7.5rem] w-28 pl-2 pr-12 py-1.5 text-xs rounded-lg border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-1 focus:ring-white/30"
+                              />
+                              <span className="text-gray-400 text-xs">–</span>
+                              <input
+                                type="time"
+                                value={dayHours.end}
+                                onChange={(e) => handleTimeChange(day.key, 'end', e.target.value)}
+                                className="min-w-[7.5rem] w-28 pl-2 pr-12 py-1.5 text-xs rounded-lg border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-1 focus:ring-white/30"
+                              />
+                            </div>
+                          )}
+                        </div>
                         {dayHours.enabled && (
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 pl-7 text-[11px]">
                             <input
-                              type="time"
-                              value={dayHours.start}
-                              onChange={(e) => handleTimeChange(day.key, 'start', e.target.value)}
-                              className="w-20 px-2 py-1.5 text-xs rounded-lg border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-1 focus:ring-white/30"
+                              type="checkbox"
+                              id={`break-${day.key}`}
+                              checked={dayHours.breakStart != null && dayHours.breakEnd != null}
+                              onChange={(e) => setBreakEnabled(day.key, e.target.checked)}
+                              className="w-3.5 h-3.5 rounded border-white/30 bg-white/10 text-amber-500 focus:ring-amber-500/50"
                             />
-                            <span className="text-gray-400 text-xs">–</span>
-                            <input
-                              type="time"
-                              value={dayHours.end}
-                              onChange={(e) => handleTimeChange(day.key, 'end', e.target.value)}
-                              className="w-20 px-2 py-1.5 text-xs rounded-lg border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-1 focus:ring-white/30"
-                            />
+                            <label htmlFor={`break-${day.key}`} className="text-gray-400">Перерва</label>
+                            {dayHours.breakStart != null && dayHours.breakEnd != null && (
+                              <>
+                                <input
+                                  type="time"
+                                  value={dayHours.breakStart}
+                                  onChange={(e) => handleBreakChange(day.key, 'breakStart', e.target.value)}
+                                  className="min-w-[7rem] w-24 pl-1.5 pr-12 py-1 text-[11px] rounded border border-white/20 bg-white/10 text-white"
+                                />
+                                <span className="text-gray-500">–</span>
+                                <input
+                                  type="time"
+                                  value={dayHours.breakEnd}
+                                  onChange={(e) => handleBreakChange(day.key, 'breakEnd', e.target.value)}
+                                  className="min-w-[7rem] w-24 pl-1.5 pr-12 py-1 text-[11px] rounded border border-white/20 bg-white/10 text-white"
+                                />
+                              </>
+                            )}
                           </div>
                         )}
                       </div>
@@ -499,14 +522,14 @@ export function MasterScheduleModal({
                                   type="time"
                                   value={editOverride.start}
                                   onChange={(e) => setEditOverride((o) => ({ ...o, start: e.target.value }))}
-                                  className="flex-1 px-1.5 py-1 text-[10px] rounded bg-white/10 text-white border border-white/20"
+                                  className="min-w-[5rem] flex-1 px-1.5 py-1 pr-6 text-[10px] rounded bg-white/10 text-white border border-white/20 [&::-webkit-calendar-picker-indicator]:opacity-60"
                                 />
                                 <span className="text-gray-500 text-[10px]">–</span>
                                 <input
                                   type="time"
                                   value={editOverride.end}
                                   onChange={(e) => setEditOverride((o) => ({ ...o, end: e.target.value }))}
-                                  className="flex-1 px-1.5 py-1 text-[10px] rounded bg-white/10 text-white border border-white/20"
+                                  className="min-w-[5rem] flex-1 px-1.5 py-1 pr-6 text-[10px] rounded bg-white/10 text-white border border-white/20 [&::-webkit-calendar-picker-indicator]:opacity-60"
                                 />
                               </div>
                             )}
