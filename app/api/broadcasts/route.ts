@@ -10,17 +10,33 @@ export async function POST(request: Request) {
     
     const business = await prisma.business.findUnique({
       where: { id: businessId },
-      include: { clients: true }
+      select: {
+        id: true,
+        name: true,
+        smsProvider: true,
+        smsApiKey: true,
+        smsSender: true,
+        emailProvider: true,
+        emailApiKey: true,
+        emailFrom: true,
+        emailFromName: true,
+      },
     })
     
     if (!business) {
       return NextResponse.json({ error: 'Business not found' }, { status: 404 })
     }
     
+    const BROADCAST_LIMIT = 5000
     let recipients: Array<{phone?: string, email?: string, id: string}> = []
     
     if (targetClients === 'all') {
-      recipients = business.clients.map(c => ({
+      const clients = await prisma.client.findMany({
+        where: { businessId },
+        select: { id: true, phone: true, email: true },
+        take: BROADCAST_LIMIT,
+      })
+      recipients = clients.map(c => ({
         id: c.id,
         phone: c.phone,
         email: c.email || undefined

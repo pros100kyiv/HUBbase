@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { format, isAfter, differenceInDays } from 'date-fns'
 import { uk } from 'date-fns/locale'
@@ -93,6 +93,10 @@ export default function ClientsPage() {
   const [showAllClients, setShowAllClients] = useState(false)
   const [phoneSearchInput, setPhoneSearchInput] = useState('')
   const [clientByPhoneModal, setClientByPhoneModal] = useState<Client | null>(null)
+  const [clientsPage, setClientsPage] = useState(1)
+  const [clientsTotal, setClientsTotal] = useState(0)
+  const [clientsTotalPages, setClientsTotalPages] = useState(1)
+  const [loadingMore, setLoadingMore] = useState(false)
   const INITIAL_VISIBLE_COUNT = 10
   const searchParams = useSearchParams()
 
@@ -110,39 +114,46 @@ export default function ClientsPage() {
     }
   }, [router])
 
-  useEffect(() => {
+  const loadData = useCallback(async (page = 1, append = false, apps?: any[], svcs?: any[]) => {
     if (!business) return
-
-    const loadData = async () => {
       try {
-        setLoading(true)
+        if (page === 1) setLoading(true)
+        else setLoadingMore(true)
         
         const [servicesRes, mastersRes, clientsRes, appointmentsRes] = await Promise.all([
-          fetch(`/api/services?businessId=${business.id}`),
-          fetch(`/api/masters?businessId=${business.id}`),
-          fetch(`/api/clients?businessId=${business.id}`),
-          fetch(`/api/appointments?businessId=${business.id}`),
+          page === 1 ? fetch(`/api/services?businessId=${business.id}`) : Promise.resolve(null),
+          page === 1 ? fetch(`/api/masters?businessId=${business.id}`) : Promise.resolve(null),
+          fetch(`/api/clients?businessId=${business.id}&page=${page}&limit=50`),
+          page === 1 ? fetch(`/api/appointments?businessId=${business.id}`) : Promise.resolve(null),
         ])
 
-        const [servicesDataRaw, mastersDataRaw, clientsDataRaw, appointmentsDataRaw] = await Promise.all([
-          servicesRes.json(),
-          mastersRes.json(),
-          clientsRes.json(),
-          appointmentsRes.json(),
-        ])
+        const servicesDataRaw = servicesRes ? await servicesRes.json() : null
+        const mastersDataRaw = mastersRes ? await mastersRes.json() : null
+        const clientsDataRaw = await clientsRes.json()
+        const appointmentsDataRaw = appointmentsRes ? await appointmentsRes.json() : null
 
-        const servicesData = Array.isArray(servicesDataRaw) ? servicesDataRaw : []
-        const mastersData = Array.isArray(mastersDataRaw) ? mastersDataRaw : []
-        const clientsData = Array.isArray(clientsDataRaw) ? clientsDataRaw : []
-        const appointmentsData = Array.isArray(appointmentsDataRaw) ? appointmentsDataRaw : []
+        const servicesData = Array.isArray(servicesDataRaw) ? servicesDataRaw : (servicesDataRaw ? [] : [])
+        const mastersData = Array.isArray(mastersDataRaw) ? mastersDataRaw : (mastersDataRaw ? [] : [])
+        const clientsPayload = clientsDataRaw?.clients != null ? clientsDataRaw.clients : (Array.isArray(clientsDataRaw) ? clientsDataRaw : [])
+        const appointmentsData = Array.isArray(appointmentsDataRaw) ? appointmentsDataRaw : (appointmentsDataRaw ? [] : [])
 
-        setServices(servicesData)
-        setMasters(mastersData)
-        setAppointments(appointmentsData)
+        if (page === 1) {
+          setServices(servicesData)
+          setMasters(mastersData)
+          setAppointments(appointmentsData)
+        }
+        if (clientsDataRaw?.total != null) {
+          setClientsTotal(clientsDataRaw.total)
+          setClientsTotalPages(clientsDataRaw.totalPages ?? 1)
+          setClientsPage(clientsDataRaw.page ?? page)
+        }
         
-        // Об'єднуємо дані клієнтів з appointments для розрахунку статистики
+        const clientsData = Array.isArray(clientsPayload) ? clientsPayload : []
+        const appointmentsForMerge = append && apps ? apps : appointmentsData
+        const servicesForMerge = append && svcs ? svcs : servicesData
+        
         const clientsWithStats = clientsData.map((client: any) => {
-          const clientAppointments = appointmentsData.filter(
+          const clientAppointments = appointmentsForMerge.filter(
             (apt: any) => apt.clientPhone === client.phone
           )
           const appointmentsDesc = [...clientAppointments].sort(
@@ -160,7 +171,7 @@ export default function ClientsPage() {
                   : apt.services || []
                 
                 aptServices.forEach((serviceId: string) => {
-                  const service = servicesData.find((s: any) => s.id === serviceId || s.name === serviceId)
+                  const service = servicesForMerge.find((s: any) => s.id === serviceId || s.name === serviceId)
                   if (service) {
                     totalSpent += service.price || 0
                   }
@@ -190,16 +201,20 @@ export default function ClientsPage() {
           }
         })
 
-        setClients(clientsWithStats)
+        setClients((prev) => append ? [...prev, ...clientsWithStats] : clientsWithStats)
         setLoading(false)
+        setLoadingMore(false)
       } catch (error) {
         console.error('Error loading data:', error)
         setLoading(false)
+        setLoadingMore(false)
       }
-    }
-
-    loadData()
   }, [business])
+
+  useEffect(() => {
+    if (!business) return
+    loadData(1, false)
+  }, [business, loadData])
 
   // Якщо в URL є phone= або id= — автоматично відкрити вікно клієнта з історією
   useEffect(() => {
@@ -478,69 +493,8 @@ export default function ClientsPage() {
   const handleClientCreated = (createdClient?: any) => {
     setShowQuickClientCard(false)
     setEditingClient(null)
-    // Перезавантажуємо дані
-    if (business) {
-      fetch(`/api/clients?businessId=${business.id}`)
-        .then((res) => res.json())
-        .then((data) => {
-          const clientsWithStats = (data || []).map((client: any) => {
-            const clientAppointments = appointments.filter(
-              (apt: any) => apt.clientPhone === client.phone
-            )
-            const appointmentsDesc = [...clientAppointments].sort(
-              (a: any, b: any) =>
-                new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
-            )
-            
-            let totalSpent = 0
-            clientAppointments.forEach((apt: any) => {
-              if (apt.status === 'Done') {
-                try {
-                  const aptServices = typeof apt.services === 'string' 
-                    ? JSON.parse(apt.services) 
-                    : apt.services || []
-                  
-                  aptServices.forEach((serviceId: string) => {
-                    const service = services.find((s: any) => s.id === serviceId || s.name === serviceId)
-                    if (service) {
-                      totalSpent += service.price || 0
-                    }
-                  })
-                  
-                  // customPrice в БД зберігається в копійках
-                  if (apt.customPrice) {
-                    totalSpent += Number(apt.customPrice) / 100
-                  }
-                } catch (e) {
-                  // Ignore
-                }
-              }
-            })
-
-            return {
-              ...client,
-              totalAppointments: clientAppointments.length,
-              totalSpent,
-              appointments: appointmentsDesc,
-              firstAppointmentDate: appointmentsDesc.length > 0
-                ? appointmentsDesc[appointmentsDesc.length - 1]?.startTime
-                : null,
-              lastAppointmentDate: appointmentsDesc.length > 0
-                ? appointmentsDesc[0]?.startTime
-                : null,
-            }
-          })
-          setClients(clientsWithStats)
-
-          // Після створення нового клієнта — автоматично показуємо його у списку
-          if (createdClient?.name) {
-            setSearchQuery(createdClient.name)
-          }
-        })
-        .catch((error) => {
-          console.error('Error refreshing clients:', error)
-        })
-    }
+    if (createdClient?.name) setSearchQuery(createdClient.name)
+    if (business) loadData(1, false)
   }
 
   const filteredClients = clients
@@ -1226,24 +1180,35 @@ export default function ClientsPage() {
             )
           })}
             
-              {filteredClients.length > INITIAL_VISIBLE_COUNT && (
-                <div className="flex justify-center pt-2">
-                  <button
-                    onClick={() => setShowAllClients(!showAllClients)}
-                    className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm font-medium border border-white/10"
-                  >
-                    {showAllClients ? (
-                      <>
-                        <ChevronUpIcon className="w-4 h-4" />
-                        Згорнути до {INITIAL_VISIBLE_COUNT}
-                      </>
-                    ) : (
-                      <>
-                        <ChevronDownIcon className="w-4 h-4" />
-                        Показати ще {hiddenClientsCount}
-                      </>
-                    )}
-                  </button>
+              {(filteredClients.length > INITIAL_VISIBLE_COUNT || (clientsTotal > clients.length && !loading)) && (
+                <div className="flex flex-col items-center gap-2 pt-2">
+                  {clientsTotal > clients.length && (
+                    <button
+                      onClick={() => loadData(clientsPage + 1, true, appointments, services)}
+                      disabled={loadingMore}
+                      className="flex items-center gap-2 px-4 py-2 bg-primary text-white hover:bg-primary/90 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
+                    >
+                      {loadingMore ? 'Завантаження...' : `Завантажити ще (${clients.length} з ${clientsTotal})`}
+                    </button>
+                  )}
+                  {filteredClients.length > INITIAL_VISIBLE_COUNT && (
+                    <button
+                      onClick={() => setShowAllClients(!showAllClients)}
+                      className="flex items-center gap-2 px-4 py-2 bg-white/10 hover:bg-white/20 text-white rounded-lg transition-colors text-sm font-medium border border-white/10"
+                    >
+                      {showAllClients ? (
+                        <>
+                          <ChevronUpIcon className="w-4 h-4" />
+                          Згорнути до {INITIAL_VISIBLE_COUNT}
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDownIcon className="w-4 h-4" />
+                          Показати ще {hiddenClientsCount}
+                        </>
+                      )}
+                    </button>
+                  )}
                 </div>
               )}
             </div>

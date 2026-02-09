@@ -304,12 +304,14 @@ export async function GET(request: Request) {
       master: { select: { id: true, name: true } as const },
     } as const
 
+    const APPOINTMENTS_LIMIT = 500
     let appointments: Array<Record<string, unknown>>
     try {
       appointments = await prisma.appointment.findMany({
         where,
         select: { ...baseSelect, procedureDone: true },
         orderBy: { startTime: 'asc' },
+        take: APPOINTMENTS_LIMIT,
       })
     } catch (err) {
       const msg = String(err instanceof Error ? err.message : err)
@@ -318,6 +320,7 @@ export async function GET(request: Request) {
           where,
           select: baseSelect,
           orderBy: { startTime: 'asc' },
+          take: APPOINTMENTS_LIMIT,
         }) as Array<Record<string, unknown>>
         appointments.forEach((a) => { a.procedureDone = null })
       } else {

@@ -71,10 +71,11 @@ export function StatisticsDetailModal({
     
     // Для метрики "clients" завантажуємо клієнтів, а не записи
     if (metricType === 'clients') {
-      fetch(`/api/clients?businessId=${businessId}`)
+      fetch(`/api/clients?businessId=${businessId}&limit=200`)
         .then(res => res.json())
         .then(data => {
-          setClients(Array.isArray(data) ? data : [])
+          const list = data?.clients ?? (Array.isArray(data) ? data : [])
+          setClients(list)
           setAppointments([])
           setMasters([])
           setServices([])

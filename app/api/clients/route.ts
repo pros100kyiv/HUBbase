@@ -47,11 +47,17 @@ function normalizeStatus(status: unknown): string {
   return 'new'
 }
 
+const DEFAULT_PAGE = 1
+const DEFAULT_LIMIT = 50
+const MAX_LIMIT = 500
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const businessId = searchParams.get('businessId')
     const phone = searchParams.get('phone')
+    const page = Math.max(1, parseInt(searchParams.get('page') || String(DEFAULT_PAGE)) || DEFAULT_PAGE)
+    const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(searchParams.get('limit') || String(DEFAULT_LIMIT)) || DEFAULT_LIMIT))
 
     if (!businessId) {
       return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
@@ -62,44 +68,67 @@ export async function GET(request: Request) {
       where.phone = phone
     }
 
-    const clients = await prisma.client.findMany({
-      where,
-      include: {
-        appointments: {
-          orderBy: { startTime: 'desc' },
-          take: 5,
-          select: {
-            id: true,
-            businessId: true,
-            masterId: true,
-            clientId: true,
-            clientName: true,
-            clientPhone: true,
-            clientEmail: true,
-            startTime: true,
-            endTime: true,
-            status: true,
-            services: true,
-            customServiceName: true,
-            customPrice: true,
-            notes: true,
-            reminderSent: true,
-            isRecurring: true,
-            recurrencePattern: true,
-            recurrenceEndDate: true,
-            parentAppointmentId: true,
-            isFromBooking: true,
-            source: true,
-            campaignId: true,
-            createdAt: true,
-            updatedAt: true,
-          },
+    const includeAppointments = {
+      appointments: {
+        orderBy: { startTime: 'desc' as const },
+        take: 5,
+        select: {
+          id: true,
+          businessId: true,
+          masterId: true,
+          clientId: true,
+          clientName: true,
+          clientPhone: true,
+          clientEmail: true,
+          startTime: true,
+          endTime: true,
+          status: true,
+          services: true,
+          customServiceName: true,
+          customPrice: true,
+          notes: true,
+          reminderSent: true,
+          isRecurring: true,
+          recurrencePattern: true,
+          recurrenceEndDate: true,
+          parentAppointmentId: true,
+          isFromBooking: true,
+          source: true,
+          campaignId: true,
+          createdAt: true,
+          updatedAt: true,
         },
       },
-      orderBy: { createdAt: 'desc' },
-    })
+    }
 
-    return NextResponse.json(jsonSafe(clients))
+    if (phone) {
+      const clients = await prisma.client.findMany({
+        where,
+        include: includeAppointments,
+        orderBy: { createdAt: 'desc' },
+      })
+      return NextResponse.json(jsonSafe(clients))
+    }
+
+    const skip = (page - 1) * limit
+    const [clients, total] = await Promise.all([
+      prisma.client.findMany({
+        where,
+        skip,
+        take: limit,
+        include: includeAppointments,
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.client.count({ where }),
+    ])
+
+    return NextResponse.json(jsonSafe({
+      clients,
+      total,
+      page,
+      limit,
+      totalPages: Math.ceil(total / limit) || 1,
+    }))
   } catch (error) {
     console.error('Error fetching clients:', error)
     return NextResponse.json({ error: 'Failed to fetch clients' }, { status: 500 })

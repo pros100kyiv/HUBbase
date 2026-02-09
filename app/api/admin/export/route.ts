@@ -17,29 +17,26 @@ export async function GET(request: Request) {
     const format = searchParams.get('format') || 'csv'
     const type = searchParams.get('type') || 'businesses'
 
+    const EXPORT_LIMIT = 10_000
     let data: any[] = []
 
     switch (type) {
       case 'businesses':
-        data = await prisma.managementCenter.findMany()
+        data = await prisma.managementCenter.findMany({ take: EXPORT_LIMIT })
         break
       case 'clients':
         data = await prisma.client.findMany({
+          take: EXPORT_LIMIT,
           include: {
-            business: {
-              select: {
-                name: true,
-              },
-            },
+            business: { select: { name: true } },
           },
         })
         break
       case 'phones':
-        data = await prisma.phoneDirectory.findMany()
+        data = await prisma.phoneDirectory.findMany({ take: EXPORT_LIMIT })
         break
       case 'all':
-        // Експорт всіх даних
-        data = await prisma.managementCenter.findMany()
+        data = await prisma.managementCenter.findMany({ take: EXPORT_LIMIT })
         break
     }
 
