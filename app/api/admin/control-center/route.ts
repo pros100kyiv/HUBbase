@@ -1,9 +1,30 @@
 import { NextResponse } from 'next/server'
+import { unstable_cache } from 'next/cache'
 import { prisma } from '@/lib/prisma'
 import { verifyAdminToken } from '@/lib/middleware/admin-auth'
 import { jsonSafe } from '@/lib/utils/json'
 
 export const dynamic = 'force-dynamic'
+export const revalidate = 60
+
+async function getControlCenterStats() {
+  return unstable_cache(
+    async () => {
+      const [totalCount, activeCount, inactiveCount, telegramCount, googleCount, standardCount, byNiche] = await Promise.all([
+        prisma.business.count(),
+        prisma.business.count({ where: { isActive: true } }),
+        prisma.business.count({ where: { isActive: false } }),
+        prisma.business.count({ where: { telegramId: { not: null } } }),
+        prisma.business.count({ where: { googleId: { not: null } } }),
+        prisma.business.count({ where: { telegramId: null, googleId: null } }),
+        prisma.business.groupBy({ by: ['niche'], _count: true }),
+      ])
+      return { totalCount, activeCount, inactiveCount, telegramCount, googleCount, standardCount, byNiche }
+    },
+    ['control-center-stats'],
+    { revalidate: 60, tags: ['control-center'] }
+  )()
+}
 
 const EMPTY_STATS = {
   total: 0,
@@ -109,15 +130,7 @@ export async function GET(request: Request) {
       }
     })
 
-    const [totalCount, activeCount, inactiveCount, telegramCount, googleCount, standardCount, byNiche] = await Promise.all([
-      prisma.business.count(),
-      prisma.business.count({ where: { isActive: true } }),
-      prisma.business.count({ where: { isActive: false } }),
-      prisma.business.count({ where: { telegramId: { not: null } } }),
-      prisma.business.count({ where: { googleId: { not: null } } }),
-      prisma.business.count({ where: { telegramId: null, googleId: null } }),
-      prisma.business.groupBy({ by: ['niche'], _count: true }),
-    ])
+    const { totalCount, activeCount, inactiveCount, telegramCount, googleCount, standardCount, byNiche } = await getControlCenterStats()
 
     const stats = {
       total: totalCount,

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { jsonSafe } from '@/lib/utils/json'
+import { normalizeUaPhone } from '@/lib/utils/phone'
 
 function normalizeTags(tags: unknown): string | null {
   if (tags === null || tags === undefined) return null
@@ -56,6 +57,11 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const businessId = searchParams.get('businessId')
     const phone = searchParams.get('phone')
+    const search = (searchParams.get('search') || '').trim()
+    const status = searchParams.get('status') // new, regular, vip, inactive
+    const segment = searchParams.get('segment') // vip, active, inactive
+    const sortBy = searchParams.get('sortBy') || 'createdAt'
+    const sortOrder = searchParams.get('sortOrder') || 'desc'
     const page = Math.max(1, parseInt(searchParams.get('page') || String(DEFAULT_PAGE)) || DEFAULT_PAGE)
     const limit = Math.min(MAX_LIMIT, Math.max(1, parseInt(searchParams.get('limit') || String(DEFAULT_LIMIT)) || DEFAULT_LIMIT))
 
@@ -65,7 +71,42 @@ export async function GET(request: Request) {
 
     const where: any = { businessId }
     if (phone) {
-      where.phone = phone
+      where.phone = normalizeUaPhone(phone)
+    }
+    const andParts: any[] = []
+    if (search && search.length >= 2) {
+      andParts.push({
+        OR: [
+          { name: { contains: search, mode: 'insensitive' } },
+          { phone: { contains: search, mode: 'insensitive' } },
+          { email: { contains: search, mode: 'insensitive' } },
+        ],
+      })
+    }
+    if (status && ['new', 'regular', 'vip', 'inactive'].includes(status)) {
+      andParts.push({ status })
+    }
+    if (segment) {
+      const now = new Date()
+      if (segment === 'vip') {
+        andParts.push({ totalSpent: { gte: 500000 }, totalAppointments: { gte: 10 } })
+      } else if (segment === 'active') {
+        const cutoff = new Date(now)
+        cutoff.setDate(cutoff.getDate() - 30)
+        andParts.push({ lastAppointmentDate: { gte: cutoff } })
+      } else if (segment === 'inactive') {
+        const cutoff = new Date(now)
+        cutoff.setDate(cutoff.getDate() - 90)
+        andParts.push({
+          OR: [
+            { lastAppointmentDate: { lt: cutoff } },
+            { lastAppointmentDate: null },
+          ],
+        })
+      }
+    }
+    if (andParts.length > 0) {
+      where.AND = andParts
     }
 
     const includeAppointments = {
@@ -110,6 +151,8 @@ export async function GET(request: Request) {
       return NextResponse.json(jsonSafe(clients))
     }
 
+    const orderByField = sortBy === 'name' ? 'name' : sortBy === 'visits' ? 'totalAppointments' : sortBy === 'spent' ? 'totalSpent' : sortBy === 'lastVisit' ? 'lastAppointmentDate' : 'createdAt'
+    const orderBy = { [orderByField]: sortOrder as 'asc' | 'desc' }
     const skip = (page - 1) * limit
     const [clients, total] = await Promise.all([
       prisma.client.findMany({
@@ -117,7 +160,7 @@ export async function GET(request: Request) {
         skip,
         take: limit,
         include: includeAppointments,
-        orderBy: { createdAt: 'desc' },
+        orderBy,
       }),
       prisma.client.count({ where }),
     ])
@@ -148,15 +191,7 @@ export async function POST(request: Request) {
       )
     }
 
-    // Нормалізуємо телефон
-    let normalizedPhone = phone.replace(/\s/g, '').replace(/[()-]/g, '')
-    if (normalizedPhone.startsWith('0')) {
-      normalizedPhone = `+380${normalizedPhone.slice(1)}`
-    } else if (normalizedPhone.startsWith('380')) {
-      normalizedPhone = `+${normalizedPhone}`
-    } else if (!normalizedPhone.startsWith('+380')) {
-      normalizedPhone = `+380${normalizedPhone}`
-    }
+    const normalizedPhone = normalizeUaPhone(phone)
 
     // Перевіряємо, чи клієнт вже існує
     const existing = await prisma.client.findFirst({

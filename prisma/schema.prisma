@@ -210,6 +210,7 @@ model Client {
   @@index([businessId])
   @@index([phone])
   @@index([isActive])
+  @@index([businessId, status])
 }
 
 model Appointment {
@@ -252,6 +253,8 @@ model Appointment {
   @@index([startTime])
   @@index([clientPhone])
   @@index([status])
+  @@index([businessId, startTime])
+  @@index([businessId, status])
 }
 
 // Користувачі бізнесу з ролями

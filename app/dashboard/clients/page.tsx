@@ -9,16 +9,13 @@ import { ChevronDownIcon, ChevronUpIcon, UsersIcon, SearchIcon, DownloadIcon, Fi
 import { QuickClientCard } from '@/components/admin/QuickClientCard'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { toast } from '@/components/ui/toast'
-
-function normalizePhone(phone: string): string {
-  return (phone || '').replace(/\D/g, '')
-}
+import { uaPhoneDigits } from '@/lib/utils/phone'
 
 function findClientByPhoneNumber(clients: Client[], input: string): Client | null {
-  const digits = normalizePhone(input)
+  const digits = uaPhoneDigits(input)
   if (!digits.length) return null
   return clients.find((c) => {
-    const clientDigits = normalizePhone(c.phone)
+    const clientDigits = uaPhoneDigits(c.phone)
     return clientDigits === digits || clientDigits.endsWith(digits) || digits.endsWith(clientDigits)
   }) || null
 }
@@ -114,16 +111,25 @@ export default function ClientsPage() {
     }
   }, [router])
 
-  const loadData = useCallback(async (page = 1, append = false, apps?: any[], svcs?: any[]) => {
+  const loadData = useCallback(async (page = 1, append = false, apps?: any[], svcs?: any[], filters?: { search?: string; status?: string; segment?: string; sortBy?: string; sortOrder?: string }) => {
     if (!business) return
-      try {
+    const q = new URLSearchParams()
+    q.set('businessId', business.id)
+    q.set('page', String(page))
+    q.set('limit', '50')
+    if (filters?.search) q.set('search', filters.search)
+    if (filters?.status && filters.status !== 'all') q.set('status', filters.status)
+    if (filters?.segment && filters.segment !== 'all') q.set('segment', filters.segment)
+    if (filters?.sortBy) q.set('sortBy', filters.sortBy)
+    if (filters?.sortOrder) q.set('sortOrder', filters.sortOrder)
+    try {
         if (page === 1) setLoading(true)
         else setLoadingMore(true)
         
         const [servicesRes, mastersRes, clientsRes, appointmentsRes] = await Promise.all([
           page === 1 ? fetch(`/api/services?businessId=${business.id}`) : Promise.resolve(null),
           page === 1 ? fetch(`/api/masters?businessId=${business.id}`) : Promise.resolve(null),
-          fetch(`/api/clients?businessId=${business.id}&page=${page}&limit=50`),
+          fetch(`/api/clients?${q.toString()}`),
           page === 1 ? fetch(`/api/appointments?businessId=${business.id}`) : Promise.resolve(null),
         ])
 
@@ -213,8 +219,12 @@ export default function ClientsPage() {
 
   useEffect(() => {
     if (!business) return
-    loadData(1, false)
-  }, [business, loadData])
+    const filters = { search: searchQuery, status: filterClientStatus, segment: filterSegment, sortBy, sortOrder }
+    const t = setTimeout(() => {
+      loadData(1, false, undefined, undefined, filters)
+    }, searchQuery ? 400 : 100)
+    return () => clearTimeout(t)
+  }, [business, loadData, searchQuery, filterClientStatus, filterSegment, sortBy, sortOrder])
 
   // Якщо в URL є phone= або id= — автоматично відкрити вікно клієнта з історією
   useEffect(() => {
@@ -493,67 +503,13 @@ export default function ClientsPage() {
   const handleClientCreated = (createdClient?: any) => {
     setShowQuickClientCard(false)
     setEditingClient(null)
+    const search = createdClient?.name || searchQuery
     if (createdClient?.name) setSearchQuery(createdClient.name)
-    if (business) loadData(1, false)
+    if (business) loadData(1, false, undefined, undefined, { search, status: filterClientStatus, segment: filterSegment, sortBy, sortOrder })
   }
 
+  // Фільтрація та сортування на сервері — клієнти вже відфільтровані
   const filteredClients = clients
-    .filter((client) => {
-      // Search filter
-      if (searchQuery) {
-        const query = searchQuery.toLowerCase()
-        const matchesName = client.name.toLowerCase().includes(query)
-        const matchesPhone = client.phone.includes(query)
-        const matchesEmail = client.email?.toLowerCase().includes(query) || false
-        if (!matchesName && !matchesPhone && !matchesEmail) return false
-      }
-
-      // Segment filter
-      if (filterSegment !== 'all') {
-        const lastVisit = client.lastAppointmentDate 
-          ? new Date(client.lastAppointmentDate) 
-          : null
-        const daysSinceLastVisit = lastVisit 
-          ? Math.floor((new Date().getTime() - lastVisit.getTime()) / (1000 * 60 * 60 * 24))
-          : 999
-        
-        switch (filterSegment) {
-          case 'vip':
-            if (client.totalSpent < 5000 || client.totalAppointments < 10) return false
-            break
-          case 'active':
-            if (daysSinceLastVisit > 30) return false
-            break
-          case 'inactive':
-            if (daysSinceLastVisit <= 90) return false
-            break
-        }
-      }
-
-      return true
-    })
-    .sort((a, b) => {
-      let comparison = 0
-      switch (sortBy) {
-        case 'name':
-          comparison = a.name.localeCompare(b.name)
-          break
-        case 'visits':
-          comparison = a.totalAppointments - b.totalAppointments
-          break
-        case 'spent':
-          comparison = a.totalSpent - b.totalSpent
-          break
-        case 'lastVisit':
-          const aDate = a.lastAppointmentDate ? new Date(a.lastAppointmentDate).getTime() : 0
-          const bDate = b.lastAppointmentDate ? new Date(b.lastAppointmentDate).getTime() : 0
-          comparison = aDate - bDate
-          break
-        default:
-          comparison = 0
-      }
-      return sortOrder === 'asc' ? comparison : -comparison
-    })
 
   const visibleClients = showAllClients 
     ? filteredClients 
@@ -1184,7 +1140,7 @@ export default function ClientsPage() {
                 <div className="flex flex-col items-center gap-2 pt-2">
                   {clientsTotal > clients.length && (
                     <button
-                      onClick={() => loadData(clientsPage + 1, true, appointments, services)}
+                      onClick={() => loadData(clientsPage + 1, true, appointments, services, { search: searchQuery, status: filterClientStatus, segment: filterSegment, sortBy, sortOrder })}
                       disabled={loadingMore}
                       className="flex items-center gap-2 px-4 py-2 bg-primary text-white hover:bg-primary/90 rounded-lg transition-colors text-sm font-medium disabled:opacity-50"
                     >
