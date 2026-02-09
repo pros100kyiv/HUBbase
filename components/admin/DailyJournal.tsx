@@ -37,14 +37,10 @@ export function DailyJournal({ businessId }: DailyJournalProps) {
   const [masters, setMasters] = useState<Master[]>([])
   const [services, setServices] = useState<Array<{ id: string; name: string; price?: number }>>([])
   const [appointments, setAppointments] = useState<Appointment[]>([])
-
-  useEffect(() => {
+  const [showDonePriceModalForId, setShowDonePriceModalForId] = useState<string | null>(null)
+  const [donePriceInputGrn, setDonePriceInputGrn] = useState('')
   const [donePriceServiceName, setDonePriceServiceName] = useState('')
-    fetch(`/api/masters?businessId=${businessId}`)
-      .then(res => res.json())
-      .then(data => setMasters(data))
-    if (showDonePriceModalForId) setDonePriceInputGrn('')
-  }, [showDonePriceModalForId])
+  const [donePriceSaving, setDonePriceSaving] = useState(false)
 
   useEffect(() => {
     fetch(`/api/masters?businessId=${businessId}`)
@@ -277,6 +273,8 @@ export function DailyJournal({ businessId }: DailyJournalProps) {
                     type: 'info',
                     duration: 4000,
                   })
+                  setDonePriceInputGrn('')
+                  setDonePriceServiceName('')
                   setShowDonePriceModalForId(id)
                 }}
               />
@@ -316,7 +314,7 @@ export function DailyJournal({ businessId }: DailyJournalProps) {
                       min={0}
                       step={1}
                       value={donePriceInputGrn === '' ? '' : donePriceInputGrn}
-                      onChange={(e) => setDonePriceInputGrn(e.target.value === '' ? '' : Number(e.target.value))}
+                      onChange={(e) => setDonePriceInputGrn(e.target.value)}
                       className="w-full px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
                       placeholder="0"
                       autoFocus
@@ -351,3 +349,6 @@ export function DailyJournal({ businessId }: DailyJournalProps) {
           </ModalPortal>
         )
       })()}
+    </div>
+  )
+}

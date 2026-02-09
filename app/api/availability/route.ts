@@ -108,25 +108,34 @@ function parseScheduleDateOverrides(
   }
 }
 
-/** Вікно для конкретної дати: спочатку перевіряємо dateOverrides, потім weekly workingHours. */
+/** Вікно для конкретної дати (один інтервал). */
 function getWindowForDate(
   dateNorm: string,
   dateOverrides: Record<string, { enabled: boolean; start: string; end: string }> | null,
-  wh: Record<string, { enabled: boolean; start: string; end: string }> | null,
+  wh: Record<string, DayHours> | null,
   dayName: string
 ): { start: number; end: number } | null {
+  const windows = getWindowsForDate(dateNorm, dateOverrides, wh, dayName)
+  if (!windows || windows.length === 0) return null
+  return windows.length === 1 ? windows[0] : { start: windows[0].start, end: windows[windows.length - 1].end }
+}
+
+/** Робочі інтервали для дати: спочатку dateOverrides, потім weekly workingHours (з перервою). */
+function getWindowsForDate(
+  dateNorm: string,
+  dateOverrides: Record<string, { enabled: boolean; start: string; end: string }> | null,
+  wh: Record<string, DayHours> | null,
+  dayName: string
+): Array<{ start: number; end: number }> | null {
   const override = dateOverrides?.[dateNorm]
   if (override !== undefined) {
     if (!override.enabled) return null
-    const [sh, sm] = override.start.split(':').map((x) => parseInt(x, 10) || 0)
-    const [eh, em] = override.end.split(':').map((x) => parseInt(x, 10) || 0)
-    const start = sh + sm / 60
-    const end = eh + em / 60
+    const start = timeToHours(override.start)
+    const end = timeToHours(override.end)
     if (start >= end) return null
-    return { start: Math.max(0, Math.floor(start)), end: Math.min(24, Math.ceil(end)) }
+    return [{ start: Math.max(0, Math.floor(start)), end: Math.min(24, Math.ceil(end)) }]
   }
-  const w = getWindowForDay(wh, dayName)
-  return w ?? null
+  return getWindowsForDay(wh, dayName)
 }
 
 type MasterRow = { workingHours: string | null; scheduleDateOverrides: string | null }
@@ -147,6 +156,9 @@ async function getAvailableSlotsForDate(
   if (isNaN(year) || isNaN(month) || isNaN(day) || month < 0 || month > 11 || day < 1 || day > 31) return []
 
   const dayOfWeek = getDayOfWeekUTC(year, month, day)
+  const dayName = DAY_NAMES[dayOfWeek]
+  const wh = parseWorkingHours(master.workingHours)
+  const dateOverrides = parseScheduleDateOverrides(master.scheduleDateOverrides)
   const windows = getWindowsForDate(dateNorm, dateOverrides, wh, dayName)
   if (!windows || windows.length === 0) return []
 
@@ -158,9 +170,6 @@ async function getAvailableSlotsForDate(
       for (let m = 0; m < 60; m += 30) {
         slots.push(`${dateNorm}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
       }
-  for (let h = dayStart; h < dayEnd; h++) {
-    for (let m = 0; m < 60; m += 30) {
-      slots.push(`${dateNorm}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
     }
   }
 
@@ -190,8 +199,11 @@ async function getAvailableSlotsForDate(
       if (key.startsWith(dateNorm)) occupied.add(key)
       t = addMinutes(t, 30)
     }
+  }
+
+  const steps = Math.ceil(durationMinutes / 30)
   const inAnyWindow = (hours: number) =>
-    windows!.some((w) => hours >= w.start && hours < w.end)
+    windows.some((w) => hours >= w.start && hours < w.end)
   return slots
     .filter((slotStr) => {
       if (typeof slotStr !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(slotStr)) return false
@@ -204,9 +216,6 @@ async function getAvailableSlotsForDate(
         if (occupied.has(key)) return false
         const v = t.getHours() + t.getMinutes() / 60
         if (!inAnyWindow(v)) return false
-        if (occupied.has(key)) return false
-        const v = t.getHours() + t.getMinutes() / 60
-        if (v < dayStart || v >= dayEnd) return false
       }
       return true
     })
@@ -333,11 +342,11 @@ export async function GET(request: Request) {
 
     const dateNorm = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
     const dayOfWeek = getDayOfWeekUTC(year, month, day)
+    const dayName = DAY_NAMES[dayOfWeek]
+    const wh = parseWorkingHours(master.workingHours)
+    const dateOverrides = parseScheduleDateOverrides(master.scheduleDateOverrides)
     const windows = getWindowsForDate(dateNorm, dateOverrides, wh, dayName)
     if (!windows || windows.length === 0) {
-    const dateOverrides = parseScheduleDateOverrides(master.scheduleDateOverrides)
-    const window = getWindowForDate(dateNorm, dateOverrides, wh, dayName)
-    if (!window) {
       return NextResponse.json({
         availableSlots: [],
         scheduleNotConfigured: false,

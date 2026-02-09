@@ -1429,27 +1429,4 @@
   input[type="time"]::-webkit-date-and-time-value {
     text-align: left;
   }
-
-  /* Мобільна адаптація: модалки та форми — зони натискання 44px+, шрифт 16px для інпутів (без зума iOS) */
-  @media (max-width: 639px) {
-    .modal-dialog input[type="text"],
-    .modal-dialog input[type="number"],
-    .modal-dialog input[type="time"],
-    .modal-dialog input[type="date"],
-    .modal-dialog input[type="email"],
-    .modal-dialog input[type="tel"] {
-      min-height: 44px;
-      font-size: 16px;
-      padding-top: 0.625rem;
-      padding-bottom: 0.625rem;
-    }
-    .modal-dialog button:not(.no-touch-target) {
-      min-height: 44px;
-      padding-top: 0.5rem;
-      padding-bottom: 0.5rem;
-    }
-    .modal-content {
-      max-height: min(88dvh, calc(100dvh - env(safe-area-inset-top, 0) - env(safe-area-inset-bottom, 0) - 1.5rem));
-    }
-  }
 }
