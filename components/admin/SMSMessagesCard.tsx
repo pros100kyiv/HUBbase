@@ -26,7 +26,7 @@ export function SMSMessagesCard({ businessId }: SMSMessagesCardProps) {
   useEffect(() => {
     if (businessId) {
       loadMessages()
-      const interval = setInterval(loadMessages, 30000) // Оновлюємо кожні 30 секунд
+      const interval = setInterval(loadMessages, 120_000) // 2 хв — економія compute (Neon sleep)
       return () => clearInterval(interval)
     }
   }, [businessId])

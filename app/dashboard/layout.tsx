@@ -106,7 +106,7 @@ export default function DashboardLayout({
     }
 
     sendHeartbeat()
-    const interval = setInterval(sendHeartbeat, 30_000)
+    const interval = setInterval(sendHeartbeat, 180_000) // 3 хв — економія compute (Neon sleep)
 
     const onVisibilityChange = () => {
       if (document.visibilityState === 'visible') sendHeartbeat()

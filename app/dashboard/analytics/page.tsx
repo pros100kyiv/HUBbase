@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { MonthProgressCard } from '@/components/admin/MonthProgressCard'
 
-const REFRESH_INTERVAL_MS = 45_000 // оновлення кожні 45 сек
+const REFRESH_INTERVAL_MS = 120_000 // 2 хв — економія compute (Neon sleep)
 
 interface Service {
   id: string

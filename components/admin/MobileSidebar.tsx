@@ -66,7 +66,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
         }
       }
       fetchPendingCount()
-      const interval = setInterval(fetchPendingCount, 30000)
+      const interval = setInterval(fetchPendingCount, 120_000) // 2 хв — економія compute (Neon sleep)
       return () => clearInterval(interval)
     }
   }, [business])

@@ -33,7 +33,7 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
     // First load (show skeleton only once)
     loadMessages(false)
     // Background refresh: keep indicator up-to-date without UI flicker
-    const interval = setInterval(() => loadMessages(true), 30000)
+    const interval = setInterval(() => loadMessages(true), 120_000) // 2 хв — економія compute (Neon sleep)
     return () => clearInterval(interval)
   }, [businessId])
 

@@ -55,7 +55,7 @@ export function Sidebar({ className }: SidebarProps) {
         }
       }
       fetchPendingCount()
-      const interval = setInterval(fetchPendingCount, 30000) // Оновлюємо кожні 30 секунд
+      const interval = setInterval(fetchPendingCount, 120_000) // 2 хв — економія compute (Neon sleep)
       return () => clearInterval(interval)
     }
   }, [business])
