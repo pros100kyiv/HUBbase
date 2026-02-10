@@ -161,9 +161,9 @@ export default function DashboardLayout({
       {/* Mobile Sidebar */}
       <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       
-      {/* Main Content Area — safe-area для notch та home indicator */}
-      <main className="relative ml-0 md:ml-64 pt-14 md:pt-16 min-h-screen safe-bottom pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
-        <div className="px-3 py-3 md:p-6 pb-[max(5rem,env(safe-area-inset-bottom)+3.5rem)] md:pb-6">
+      {/* Main Content Area — safe-area для notch та home indicator, w-full щоб не залишати порожнього простору справа */}
+      <main className="relative w-full min-w-0 ml-0 md:ml-64 pt-14 md:pt-16 min-h-screen safe-bottom pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
+        <div className="w-full min-w-0 px-3 py-3 md:p-6 pb-[max(5rem,env(safe-area-inset-bottom)+3.5rem)] md:pb-6">
           {children}
         </div>
       </main>

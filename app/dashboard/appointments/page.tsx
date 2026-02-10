@@ -607,9 +607,9 @@ export default function AppointmentsPage() {
               <div className="mt-3 pt-3 border-t border-white/10 flex items-center gap-2 flex-wrap">
                 <span className="text-sm text-gray-300">Вибрано: {selectedAppointments.size}</span>
                 <div className="flex gap-2">
-                  <button onClick={() => handleBulkStatusChange('Confirmed')} className="px-2.5 py-1.5 text-xs bg-green-500/90 text-white rounded-lg font-medium hover:opacity-90 transition-all">Підтвердити</button>
-                  <button onClick={() => handleBulkStatusChange('Done')} className="px-2.5 py-1.5 text-xs bg-blue-500/90 text-white rounded-lg font-medium hover:opacity-90 transition-all">Виконано</button>
-                  <button onClick={() => handleBulkStatusChange('Cancelled')} className="px-2.5 py-1.5 text-xs bg-red-500/90 text-white rounded-lg font-medium hover:opacity-90 transition-all">Скасувати</button>
+                  <button onClick={() => handleBulkStatusChange('Confirmed')} className="touch-target min-h-[44px] px-3 py-2 text-xs bg-green-500/90 text-white rounded-lg font-medium hover:opacity-90 transition-all">Підтвердити</button>
+                  <button onClick={() => handleBulkStatusChange('Done')} className="touch-target min-h-[44px] px-3 py-2 text-xs bg-blue-500/90 text-white rounded-lg font-medium hover:opacity-90 transition-all">Виконано</button>
+                  <button onClick={() => handleBulkStatusChange('Cancelled')} className="touch-target min-h-[44px] px-3 py-2 text-xs bg-red-500/90 text-white rounded-lg font-medium hover:opacity-90 transition-all">Скасувати</button>
                   <button onClick={() => setSelectedAppointments(new Set())} className="px-2.5 py-1.5 text-xs border border-white/20 bg-white/10 text-white rounded-lg font-medium hover:bg-white/20 transition-all">Скасувати вибір</button>
                 </div>
               </div>
@@ -778,7 +778,7 @@ export default function AppointmentsPage() {
                         key={status}
                         onClick={() => setFilterStatus(status)}
                         className={cn(
-                          'touch-target min-h-[36px] px-2.5 py-1.5 rounded text-[10px] sm:text-xs font-medium transition-colors whitespace-nowrap active:scale-[0.98]',
+                          'touch-target min-h-[44px] px-3 py-2 rounded text-[10px] sm:text-xs font-medium transition-colors whitespace-nowrap active:scale-[0.98]',
                           filterStatus === status
                             ? 'bg-white text-black'
                             : 'bg-white/10 text-gray-400 hover:bg-white/15 hover:text-white border border-white/10'

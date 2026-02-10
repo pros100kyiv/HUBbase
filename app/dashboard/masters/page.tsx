@@ -954,28 +954,32 @@ export default function MastersPage() {
                             setSelectedMasterForSchedule(master)
                             setShowScheduleModal(true)
                           }}
-                          className="p-2 text-blue-400 hover:bg-blue-400/10 rounded-lg transition-all"
+                          className="touch-target min-h-[44px] min-w-[44px] p-2 text-blue-400 hover:bg-blue-400/10 rounded-lg transition-all flex items-center justify-center"
                           title="Графік роботи"
+                          aria-label="Графік роботи"
                         >
                           <CalendarIcon className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleEditMaster(master)}
-                          className="p-2 text-purple-400 hover:bg-purple-400/10 rounded-lg transition-all"
+                          className="touch-target min-h-[44px] min-w-[44px] p-2 text-purple-400 hover:bg-purple-400/10 rounded-lg transition-all flex items-center justify-center"
                           title="Редагувати"
+                          aria-label="Редагувати"
                         >
                           <EditIcon className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => handleDeleteMaster(master.id)}
-                          className="p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-all"
+                          className="touch-target min-h-[44px] min-w-[44px] p-2 text-red-400 hover:bg-red-400/10 rounded-lg transition-all flex items-center justify-center"
                           title="Видалити"
+                          aria-label="Видалити"
                         >
                           <TrashIcon className="w-4 h-4" />
                         </button>
                         <button
                           onClick={() => setExpandedMaster(isExpanded ? null : master.id)}
-                          className="p-2 text-gray-400 hover:bg-white/10 rounded-lg transition-all"
+                          className="touch-target min-h-[44px] min-w-[44px] p-2 text-gray-400 hover:bg-white/10 rounded-lg transition-all flex items-center justify-center"
+                          aria-label={isExpanded ? 'Згорнути' : 'Розгорнути'}
                         >
                           {isExpanded ? (
                             <ChevronUpIcon className="w-4 h-4" />

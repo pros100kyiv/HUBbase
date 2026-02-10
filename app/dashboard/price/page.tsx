@@ -493,7 +493,7 @@ export default function PricePage() {
               <button
                 onClick={() => setSelectedCategory(null)}
                 className={cn(
-                  "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
+                  "touch-target min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
                   !selectedCategory
                     ? "bg-white text-black"
                     : "bg-white/10 text-gray-300 hover:bg-white/15 border border-white/20"
@@ -506,7 +506,7 @@ export default function PricePage() {
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={cn(
-                    "px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
+                    "touch-target min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
                     selectedCategory === cat
                       ? "bg-white text-black"
                       : "bg-white/10 text-gray-300 hover:bg-white/15 border border-white/20"
@@ -534,7 +534,7 @@ export default function PricePage() {
               <button
                 type="button"
                 onClick={() => { setCreateForm({ name: '', price: '', duration: '', category: '' }); setShowCreateModal(true) }}
-                className="px-5 py-2.5 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                className="touch-target min-h-[44px] px-5 py-2.5 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
                 style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
               >
                 Додати до прайсу
@@ -568,7 +568,7 @@ export default function PricePage() {
                       <button
                         type="button"
                         onClick={e => { e.stopPropagation(); handleEditService(service) }}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                        className="touch-target min-h-[44px] min-w-[44px] p-2 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors flex items-center justify-center"
                         aria-label="Редагувати"
                       >
                         <EditIcon className="w-4 h-4" />
@@ -576,7 +576,7 @@ export default function PricePage() {
                       <button
                         type="button"
                         onClick={e => { e.stopPropagation(); handleDeleteService(service) }}
-                        className="p-1.5 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                        className="touch-target min-h-[44px] min-w-[44px] p-2 rounded-lg text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors flex items-center justify-center"
                         aria-label="Видалити"
                       >
                         <TrashIcon className="w-4 h-4" />
@@ -673,13 +673,13 @@ export default function PricePage() {
               <button
                 type="button"
                 onClick={() => { setCreateForm({ name: '', price: '', duration: '', category: '' }); setShowCreateModal(true) }}
-                className="w-full px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm font-medium hover:bg-white/15 transition-colors text-left"
+                className="touch-target w-full min-h-[44px] px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm font-medium hover:bg-white/15 transition-colors text-left"
               >
                 Додати послугу
               </button>
               <Link
                 href="/dashboard/appointments"
-                className="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm font-medium hover:bg-white/15 transition-colors flex items-center gap-2"
+                className="touch-target min-h-[44px] px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm font-medium hover:bg-white/15 transition-colors flex items-center gap-2"
               >
                 <CalendarIcon className="w-4 h-4 flex-shrink-0" />
                 Записи

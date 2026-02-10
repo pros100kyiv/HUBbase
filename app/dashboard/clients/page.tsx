@@ -842,8 +842,8 @@ export default function ClientsPage() {
                           <div className="flex gap-1 justify-center">
                             <button onClick={() => window.open(`tel:${client.phone}`)} className="p-1.5 text-blue-400 hover:bg-white/10 rounded-lg transition-colors" title="Дзвінок"><PhoneIcon className="w-4 h-4" /></button>
                             <button onClick={() => router.push(`/dashboard/appointments?create=true&clientPhone=${encodeURIComponent(client.phone)}&clientName=${encodeURIComponent(client.name || '')}`)} className="p-1.5 text-green-400 hover:bg-white/10 rounded-lg transition-colors" title="Записати"><CalendarIcon className="w-4 h-4" /></button>
-                            <button onClick={() => handleEditClient(client)} className="p-1.5 text-gray-300 hover:bg-white/10 rounded-lg transition-colors" title="Редагувати"><SettingsIcon className="w-4 h-4" /></button>
-                            <button onClick={() => handleDeleteClient(client.id)} className="p-1.5 text-red-400 hover:bg-white/10 rounded-lg transition-colors" title="Видалити"><XIcon className="w-4 h-4" /></button>
+                            <button onClick={() => handleEditClient(client)} className="touch-target min-h-[44px] min-w-[44px] p-2 text-gray-300 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center" title="Редагувати" aria-label="Редагувати"><SettingsIcon className="w-4 h-4" /></button>
+                            <button onClick={() => handleDeleteClient(client.id)} className="touch-target min-h-[44px] min-w-[44px] p-2 text-red-400 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center" title="Видалити" aria-label="Видалити"><XIcon className="w-4 h-4" /></button>
                           </div>
                         </td>
                       </tr>
@@ -910,8 +910,8 @@ export default function ClientsPage() {
                       <div className="flex gap-1">
                         <button onClick={() => window.open(`tel:${client.phone}`)} className="p-1.5 text-blue-400 hover:bg-white/10 rounded-lg transition-colors" title="Дзвінок"><PhoneIcon className="w-4 h-4" /></button>
                         <button onClick={() => router.push(`/dashboard/appointments?create=true&clientPhone=${encodeURIComponent(client.phone)}&clientName=${encodeURIComponent(client.name || '')}`)} className="p-1.5 text-green-400 hover:bg-white/10 rounded-lg transition-colors" title="Записати"><CalendarIcon className="w-4 h-4" /></button>
-                        <button onClick={() => handleEditClient(client)} className="p-1.5 text-gray-300 hover:bg-white/10 rounded-lg transition-colors" title="Редагувати"><SettingsIcon className="w-4 h-4" /></button>
-                        <button onClick={() => handleDeleteClient(client.id)} className="p-1.5 text-red-400 hover:bg-white/10 rounded-lg transition-colors" title="Видалити"><XIcon className="w-4 h-4" /></button>
+                        <button onClick={() => handleEditClient(client)} className="touch-target min-h-[44px] min-w-[44px] p-2 text-gray-300 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center" title="Редагувати" aria-label="Редагувати"><SettingsIcon className="w-4 h-4" /></button>
+                        <button onClick={() => handleDeleteClient(client.id)} className="touch-target min-h-[44px] min-w-[44px] p-2 text-red-400 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center" title="Видалити" aria-label="Видалити"><XIcon className="w-4 h-4" /></button>
                         <button onClick={() => handleClientClick(client)} className="p-1.5 text-gray-400 hover:bg-white/10 rounded-lg transition-colors">
                           {isExpanded ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
                         </button>

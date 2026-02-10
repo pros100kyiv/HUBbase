@@ -326,7 +326,7 @@ export default function SchedulePage() {
                     <button
                       type="button"
                       onClick={() => setOpenMenuId(openMenuId === master.id ? null : master.id)}
-                      className="p-2 rounded-lg border border-white/20 bg-white/10 text-gray-400 hover:text-white hover:bg-white/15 transition-colors"
+                      className="touch-target min-h-[44px] min-w-[44px] p-2 rounded-lg border border-white/20 bg-white/10 text-gray-400 hover:text-white hover:bg-white/15 transition-colors flex items-center justify-center"
                       aria-label="Ще дії"
                     >
                       <ChevronDownIcon className={cn('w-4 h-4 transition-transform', openMenuId === master.id && 'rotate-180')} />
@@ -342,7 +342,7 @@ export default function SchedulePage() {
                               setEditingMaster(master)
                               setShowQuickMasterCard(true)
                             }}
-                            className="w-full px-3 py-2 text-left text-sm text-white hover:bg-white/10 flex items-center gap-2"
+                            className="touch-target w-full min-h-[44px] px-3 py-2 text-left text-sm text-white hover:bg-white/10 flex items-center gap-2"
                           >
                             <SettingsIcon className="w-4 h-4" />
                             Профіль
@@ -350,7 +350,7 @@ export default function SchedulePage() {
                           <button
                             type="button"
                             onClick={() => handleDeleteMaster(master)}
-                            className="w-full px-3 py-2 text-left text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2"
+                            className="touch-target w-full min-h-[44px] px-3 py-2 text-left text-sm text-red-400 hover:bg-red-500/10 flex items-center gap-2"
                           >
                             <TrashIcon className="w-4 h-4" />
                             Видалити

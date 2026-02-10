@@ -90,9 +90,9 @@ export default function MainPage() {
 
   if (!business) {
     return (
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full max-w-7xl mx-auto min-w-0">
         <div className="h-8 w-48 bg-white/10 rounded animate-pulse mb-4" />
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0">
           <div className="lg:col-span-3 space-y-3 md:space-y-6">
             <div className="h-64 rounded-xl bg-white/5 border border-white/10 animate-pulse" />
           </div>
@@ -112,10 +112,10 @@ export default function MainPage() {
   const todayConfirmed = todayAppointments.filter(apt => apt.status === 'Confirmed' || apt.status === 'Підтверджено').length
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
+    <div className="w-full max-w-7xl mx-auto min-w-0">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0">
         {/* Left Column - Main Content (3 columns) */}
-        <div className="lg:col-span-3 space-y-3 md:space-y-6">
+        <div className="lg:col-span-3 space-y-3 md:space-y-6 min-w-0">
           {/* Header */}
           <div className="flex items-center justify-between gap-3">
             <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
@@ -173,7 +173,7 @@ export default function MainPage() {
         </div>
 
         {/* Right Column - Sidebar (1 column). Мобільний порядок: Соцмережі → Нотатки → Календар */}
-        <div className="lg:col-span-1 space-y-3 md:space-y-6 flex flex-col">
+        <div className="lg:col-span-1 space-y-3 md:space-y-6 flex flex-col min-w-0">
           {/* Social Messages — першими на мобільному (швидка відповідь) */}
           {business?.id && (
             <div className="order-1">
