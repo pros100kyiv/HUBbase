@@ -15,7 +15,7 @@ function applyBodyLock(isFirst: boolean) {
   body.style.overflow = 'hidden'
   body.style.touchAction = 'none'
   body.style.overscrollBehavior = 'none'
-  body.style.webkitOverflowScrolling = 'auto'
+  body.style.setProperty('-webkit-overflow-scrolling', 'auto')
   if (scrollbarWidth > 0) {
     body.style.paddingRight = `${scrollbarWidth}px`
   }
@@ -42,7 +42,7 @@ function removeBodyLock() {
   body.style.touchAction = ''
   body.style.overscrollBehavior = ''
   body.style.paddingRight = ''
-  body.style.webkitOverflowScrolling = ''
+  body.style.removeProperty('-webkit-overflow-scrolling')
   html.style.overflow = ''
 
   const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1)
