@@ -120,8 +120,20 @@
     @apply border-border;
     font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
   }
+
+  /* iOS Safari / Chrome: стабільна висота при ротації та зміні адресного рядка */
+  html {
+    height: 100%;
+    min-height: 100vh;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
+    -webkit-text-size-adjust: 100%;
+  }
   
   body {
+    min-height: 100vh;
+    min-height: 100dvh;
+    min-height: -webkit-fill-available;
     background: #0A0A0A;
     background-image:
       radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
@@ -921,7 +933,7 @@
    * Обов'язково: modal-overlay-nested для z-index, ті самі класи діалогу (фон і розмиття змінні застосовуються однаково).
    */
 
-  /* Оверлей: плавна поява, темний фон + розмиття. На мобільному і десктопі — по центру екрана (не прив'язка до низу). */
+  /* Оверлей: плавна поява, темний фон + розмиття. iOS/Safari/Chrome: повне покриття при ротації, safe area. */
   .modal-overlay {
     background-color: var(--modal-overlay-bg);
     backdrop-filter: blur(var(--modal-overlay-blur, 19px));
@@ -932,9 +944,13 @@
     right: 0;
     bottom: 0;
     z-index: var(--z-overlay);
+    /* iOS: 100vh/100dvh + -webkit-fill-available для коректної висоти при ротації та зміні адресного рядка */
+    min-height: 100vh;
     min-height: 100dvh;
     min-height: -webkit-fill-available;
     height: 100%;
+    height: 100dvh;
+    height: -webkit-fill-available;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -942,6 +958,12 @@
     padding: max(0.75rem, env(safe-area-inset-top, 0)) env(safe-area-inset-right, 0) env(safe-area-inset-bottom, 0) env(safe-area-inset-left, 0);
     box-sizing: border-box;
     animation: modal-overlay-in 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+    -webkit-overflow-scrolling: touch;
+    -webkit-tap-highlight-color: transparent;
+    /* Стабільний рендер при ротації на iOS/Safari */
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    transform: translateZ(0);
   }
   @keyframes modal-overlay-in {
     from { opacity: 0; }
@@ -958,7 +980,7 @@
     z-index: var(--z-modal-nested) !important;
   }
 
-  /* Контейнер контенту: по центру по вертикалі, скрол всередині. Не прив'язаний до низу на мобільному. */
+  /* Контейнер контенту: по центру по вертикалі, скрол всередині. iOS/Safari: -webkit-fill-available для ротації. */
   .modal-content {
     width: 100%;
     max-width: min(100%, 100vw - env(safe-area-inset-left, 0) - env(safe-area-inset-right, 0));
