@@ -534,10 +534,10 @@ export default function AppointmentsPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
+    <div className="w-full max-w-7xl mx-auto min-w-0">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0">
         {/* Left Column - Main Content (3 columns) - same as Dashboard */}
-        <div className="lg:col-span-3 space-y-3 md:space-y-6">
+        <div className="lg:col-span-3 space-y-3 md:space-y-6 min-w-0">
           {/* Header - same style as Dashboard */}
           <div className="flex items-center justify-between gap-3">
             <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>

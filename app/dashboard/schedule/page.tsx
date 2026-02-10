@@ -193,7 +193,7 @@ export default function SchedulePage() {
   }
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="w-full max-w-4xl mx-auto min-w-0">
       {/* Заголовок */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 md:mb-8">
         <div>
@@ -294,9 +294,10 @@ export default function SchedulePage() {
             {masters.map((master) => (
               <li
                 key={master.id}
-                className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/15 transition-colors"
+                className="flex flex-col gap-3 p-4 rounded-xl bg-white/5 border border-white/10 hover:border-white/15 transition-colors"
               >
-                <div className="flex items-center gap-3 min-w-0 flex-1">
+                {/* Рядок: аватар + ім'я/графік + меню (стрілка) */}
+                <div className="flex items-center gap-3 min-w-0">
                   {master.photo ? (
                     <img
                       src={master.photo}
@@ -312,17 +313,7 @@ export default function SchedulePage() {
                     <p className="font-semibold text-white truncate">{master.name}</p>
                     <p className="text-sm text-gray-400">{getScheduleSummary(master.workingHours)}</p>
                   </div>
-                </div>
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  <button
-                    type="button"
-                    onClick={() => setScheduleModalMaster(master)}
-                    className="px-4 py-2 rounded-lg bg-sky-500/20 border border-sky-500/40 text-sky-400 text-sm font-medium hover:bg-sky-500/30 transition-colors flex items-center gap-2"
-                  >
-                    <ClockIcon className="w-4 h-4" />
-                    Графік
-                  </button>
-                  <div className="relative">
+                  <div className="relative flex-shrink-0">
                     <button
                       type="button"
                       onClick={() => setOpenMenuId(openMenuId === master.id ? null : master.id)}
@@ -360,6 +351,15 @@ export default function SchedulePage() {
                     )}
                   </div>
                 </div>
+                {/* Кнопка «Графік» на всю ширину */}
+                <button
+                  type="button"
+                  onClick={() => setScheduleModalMaster(master)}
+                  className="w-full py-2.5 px-4 rounded-lg bg-sky-500/20 border border-sky-500/40 text-sky-400 text-sm font-medium hover:bg-sky-500/30 transition-colors flex items-center justify-center gap-2"
+                >
+                  <ClockIcon className="w-4 h-4" />
+                  Графік роботи
+                </button>
               </li>
             ))}
           </ul>

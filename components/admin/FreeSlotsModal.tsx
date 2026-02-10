@@ -103,7 +103,7 @@ export function FreeSlotsModal({
           <button
             type="button"
             onClick={onClose}
-            className="modal-close touch-target text-gray-400 hover:text-white rounded-full"
+            className="modal-close text-gray-400 hover:text-white"
             aria-label="Закрити"
           >
             <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -111,22 +111,11 @@ export function FreeSlotsModal({
             </svg>
           </button>
 
-          <div className="pr-10 flex-shrink-0 pb-4 border-b border-white/10 border-l-4 border-l-sky-500/40">
-            <div className="flex items-center gap-3 pl-1">
-              <div className="w-10 h-10 rounded-xl bg-sky-500/20 flex items-center justify-center flex-shrink-0">
-                <svg className="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                </svg>
-              </div>
-              <div className="min-w-0 flex-1">
-                <h2 className="text-base font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
-                  Вільні години
-                </h2>
-                <p className="text-sm text-gray-400 mt-0.5">
-                  {isValid(date) ? format(date, 'd MMMM yyyy', { locale: uk }) : '—'}
-                </p>
-              </div>
-            </div>
+          <div className="pr-10 mb-2 flex-shrink-0 pb-4 border-b border-white/10 border-l-4 border-l-sky-500/40">
+            <h2 className="modal-title">Вільні години</h2>
+            <p className="modal-subtitle">
+              {isValid(date) ? format(date, 'd MMMM yyyy', { locale: uk }) : '—'}
+            </p>
           </div>
 
           {mastersList.length > 1 && !mastersLoading && (
@@ -155,7 +144,7 @@ export function FreeSlotsModal({
             </div>
           )}
 
-          <div className="flex-1 min-h-[220px] overflow-y-auto scrollbar-hide py-4">
+          <div className="flex-1 min-h-[220px] overflow-y-auto scrollbar-hide py-4 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
             {isLoading ? (
               <div className="flex flex-col items-center justify-center py-12 text-gray-400 min-h-[180px]">
                 <div className="w-10 h-10 border-2 border-sky-500/40 border-t-sky-400 rounded-full animate-spin mb-4" />

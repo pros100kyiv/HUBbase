@@ -390,14 +390,14 @@ export function MasterScheduleModal({
                                 type="time"
                                 value={dayHours.start}
                                 onChange={(e) => handleTimeChange(day.key, 'start', e.target.value)}
-                                className="min-w-[7.5rem] w-28 pl-2 pr-12 py-1.5 text-xs rounded-lg border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-1 focus:ring-white/30"
+                                className="min-w-[8.5rem] sm:min-w-[7.5rem] w-28 pl-2 sm:pr-12 pr-2 py-1.5 text-xs rounded-lg border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-1 focus:ring-white/30"
                               />
                               <span className="text-gray-400 text-xs">–</span>
                               <input
                                 type="time"
                                 value={dayHours.end}
                                 onChange={(e) => handleTimeChange(day.key, 'end', e.target.value)}
-                                className="min-w-[7.5rem] w-28 pl-2 pr-12 py-1.5 text-xs rounded-lg border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-1 focus:ring-white/30"
+                                className="min-w-[8.5rem] sm:min-w-[7.5rem] w-28 pl-2 sm:pr-12 pr-2 py-1.5 text-xs rounded-lg border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-1 focus:ring-white/30"
                               />
                             </div>
                           )}
@@ -418,14 +418,14 @@ export function MasterScheduleModal({
                                   type="time"
                                   value={dayHours.breakStart}
                                   onChange={(e) => handleBreakChange(day.key, 'breakStart', e.target.value)}
-                                  className="min-w-[7rem] w-24 pl-1.5 pr-12 py-1 text-[11px] rounded border border-white/20 bg-white/10 text-white"
+                                  className="min-w-[8.5rem] sm:min-w-[7rem] w-24 pl-1.5 sm:pr-12 pr-2 py-1 text-[11px] rounded border border-white/20 bg-white/10 text-white"
                                 />
                                 <span className="text-gray-500">–</span>
                                 <input
                                   type="time"
                                   value={dayHours.breakEnd}
                                   onChange={(e) => handleBreakChange(day.key, 'breakEnd', e.target.value)}
-                                  className="min-w-[7rem] w-24 pl-1.5 pr-12 py-1 text-[11px] rounded border border-white/20 bg-white/10 text-white"
+                                  className="min-w-[8.5rem] sm:min-w-[7rem] w-24 pl-1.5 sm:pr-12 pr-2 py-1 text-[11px] rounded border border-white/20 bg-white/10 text-white"
                                 />
                               </>
                             )}
@@ -517,19 +517,19 @@ export function MasterScheduleModal({
                               <span className="text-[10px] text-gray-300">Робочий</span>
                             </label>
                             {editOverride.enabled && (
-                              <div className="flex items-center gap-1 mb-1.5">
+                              <div className="flex items-center gap-1 mb-1.5 flex-wrap">
                                 <input
                                   type="time"
                                   value={editOverride.start}
                                   onChange={(e) => setEditOverride((o) => ({ ...o, start: e.target.value }))}
-                                  className="min-w-[5rem] flex-1 px-1.5 py-1 pr-6 text-[10px] rounded bg-white/10 text-white border border-white/20 [&::-webkit-calendar-picker-indicator]:opacity-60"
+                                  className="min-w-[8.5rem] sm:min-w-[5rem] flex-1 px-1.5 py-1 pr-2 sm:pr-6 text-[10px] rounded bg-white/10 text-white border border-white/20 [&::-webkit-calendar-picker-indicator]:opacity-60"
                                 />
                                 <span className="text-gray-500 text-[10px]">–</span>
                                 <input
                                   type="time"
                                   value={editOverride.end}
                                   onChange={(e) => setEditOverride((o) => ({ ...o, end: e.target.value }))}
-                                  className="min-w-[5rem] flex-1 px-1.5 py-1 pr-6 text-[10px] rounded bg-white/10 text-white border border-white/20 [&::-webkit-calendar-picker-indicator]:opacity-60"
+                                  className="min-w-[8.5rem] sm:min-w-[5rem] flex-1 px-1.5 py-1 pr-2 sm:pr-6 text-[10px] rounded bg-white/10 text-white border border-white/20 [&::-webkit-calendar-picker-indicator]:opacity-60"
                                 />
                               </div>
                             )}

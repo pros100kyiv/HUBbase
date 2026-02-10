@@ -44,7 +44,7 @@ export default function SocialPage() {
           {
             id: 'telegram',
             name: 'Telegram',
-            icon: <BotIcon className="w-6 h-6" />,
+            icon: <BotIcon className="w-5 h-5" />,
             color: 'from-blue-500 to-blue-600',
             connected: !!business?.telegramChatId,
             description: 'Отримуйте сповіщення та керуйте ботом'
@@ -52,7 +52,7 @@ export default function SocialPage() {
           {
             id: 'instagram',
             name: 'Instagram',
-            icon: <span className="text-2xl">📷</span>,
+            icon: <span className="text-xl">📷</span>,
             color: 'from-pink-500 to-purple-600',
             connected: false,
             description: 'Скоро...'
@@ -60,7 +60,7 @@ export default function SocialPage() {
           {
             id: 'whatsapp',
             name: 'WhatsApp',
-            icon: <PhoneIcon className="w-6 h-6" />,
+            icon: <PhoneIcon className="w-5 h-5" />,
             color: 'from-green-500 to-green-600',
             connected: false,
             description: 'Скоро...'
@@ -99,15 +99,15 @@ export default function SocialPage() {
 
   if (loading) {
     return (
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full max-w-7xl mx-auto min-w-0">
         <p className="text-gray-400">Завантаження...</p>
       </div>
     )
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
+    <div className="w-full max-w-7xl mx-auto min-w-0">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0">
         <div className="lg:col-span-3 space-y-3 md:space-y-6">
           {/* Header - same as Dashboard */}
           <div className="flex items-center justify-between gap-3">
@@ -123,37 +123,37 @@ export default function SocialPage() {
             </div>
           )}
 
-          {/* Integrations */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+          {/* Integrations — дві картки в ряд, компактний вигляд */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3">
             {integrations.map((integration) => (
               <div
                 key={integration.id}
                 className={cn(
-                  'rounded-xl p-4 md:p-6 card-glass relative overflow-hidden',
+                  'rounded-xl p-3 md:p-4 card-glass relative overflow-hidden',
                   integration.connected && 'ring-2 ring-white/30'
                 )}
               >
                 <div className="relative">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="w-10 h-10 rounded-lg bg-white/20 flex items-center justify-center text-white">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center text-white flex-shrink-0">
                       {integration.icon}
                     </div>
                     {integration.connected ? (
-                      <div className="flex items-center gap-1.5 text-green-400">
-                        <CheckIcon className="w-4 h-4" />
-                        <span className="text-xs font-semibold">Підключено</span>
+                      <div className="flex items-center gap-1 text-green-400">
+                        <CheckIcon className="w-3.5 h-3.5" />
+                        <span className="text-[10px] font-semibold">Підключено</span>
                       </div>
                     ) : (
-                      <div className="flex items-center gap-1.5 text-gray-400">
-                        <XIcon className="w-4 h-4" />
-                        <span className="text-xs font-semibold">Не підключено</span>
+                      <div className="flex items-center gap-1 text-gray-400">
+                        <XIcon className="w-3.5 h-3.5" />
+                        <span className="text-[10px] font-semibold">Не підключено</span>
                       </div>
                     )}
                   </div>
-                  <h3 className="text-base font-semibold text-white mb-1.5">
+                  <h3 className="text-sm font-semibold text-white mb-1">
                     {integration.name}
                   </h3>
-                  <p className="text-xs text-gray-400 mb-4">
+                  <p className="text-[11px] text-gray-400 mb-3 line-clamp-2">
                     {integration.description}
                   </p>
                   {integration.id === 'telegram' ? (
@@ -161,7 +161,7 @@ export default function SocialPage() {
                       type="button"
                       onClick={() => router.push('/dashboard/settings?tab=telegram')}
                       className={cn(
-                        'w-full px-4 py-2 rounded-lg text-sm font-semibold transition-colors active:scale-[0.98]',
+                        'w-full px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors active:scale-[0.98]',
                         integration.connected
                           ? 'border border-white/20 bg-white/10 text-white hover:bg-white/20'
                           : 'bg-white text-black hover:bg-gray-100 hover:text-gray-900'
@@ -174,7 +174,7 @@ export default function SocialPage() {
                     <button
                       type="button"
                       disabled
-                      className="w-full px-4 py-2 rounded-lg text-sm font-medium border border-white/10 bg-white/5 text-gray-500 cursor-not-allowed"
+                      className="w-full px-3 py-1.5 rounded-lg text-xs font-medium border border-white/10 bg-white/5 text-gray-500 cursor-not-allowed"
                     >
                       Скоро
                     </button>

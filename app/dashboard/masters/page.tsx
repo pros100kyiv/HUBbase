@@ -495,9 +495,9 @@ export default function MastersPage() {
 
   if (!business || loading) {
     return (
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full max-w-7xl mx-auto min-w-0">
         <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-4" />
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0">
           <div className="lg:col-span-3 space-y-4">
             <div className="h-64 rounded-xl card-glass animate-pulse" />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
@@ -515,10 +515,10 @@ export default function MastersPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
+    <div className="w-full max-w-7xl mx-auto min-w-0">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0">
         {/* Main Content */}
-        <div className="lg:col-span-3 space-y-3 md:space-y-6">
+        <div className="lg:col-span-3 space-y-3 md:space-y-6 min-w-0">
           {/* Header */}
           <div className="flex items-center justify-between gap-3">
             <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>

@@ -170,15 +170,15 @@ export function QuickRecordByPhoneModal({
             {/* Крок 1: Номер телефону */}
             {step === 'phone' && (
               <div className="modal-dialog form text-left">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="modal-action-btn flex-shrink-0" aria-hidden>
+                <div className="flex items-start gap-3 mb-4">
+                  <div className="modal-action-btn flex-shrink-0 mt-0.5" aria-hidden>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
                     </svg>
                   </div>
-                  <div>
-                    <h2 className="modal-title text-white mb-0.5">Записати</h2>
-                    <p className="modal-subtitle text-gray-400">Введіть номер — знайдемо клієнта або створимо картку</p>
+                  <div className="min-w-0 flex-1 text-left">
+                    <h2 className="modal-title text-white mb-0.5 text-left">Записати</h2>
+                    <p className="modal-subtitle text-gray-400 text-left leading-snug">Введіть номер — знайдемо клієнта або створимо картку</p>
                   </div>
                 </div>
 

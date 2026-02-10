@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { XbaseLogo } from '@/components/layout/XbaseLogo'
 
 const features = [
   {
@@ -67,11 +68,8 @@ export default function Home() {
 
       {/* Header */}
       <header className="relative z-20 flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
-        <a href="/" className="flex items-center gap-2">
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white font-bold text-sm sm:text-base">
-            X
-          </div>
-          <span className="text-base sm:text-lg font-bold text-white landing-hero-title">Xbase</span>
+        <a href="/" className="flex items-center min-h-[44px] min-w-[44px]" aria-label="Xbase — на головну">
+          <XbaseLogo size="lg" variant="light" />
         </a>
         <nav className="flex items-center gap-2 sm:gap-3">
           <button
@@ -236,12 +234,9 @@ export default function Home() {
         {/* Footer */}
         <footer className="relative border-t border-white/10 px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-8 h-8 rounded-lg bg-white/10 border border-white/20 flex items-center justify-center text-white font-bold text-xs">
-                X
-              </div>
-              <span className="text-sm font-semibold text-white">Xbase</span>
-            </div>
+            <a href="/" className="flex items-center" aria-label="Xbase">
+              <XbaseLogo size="md" variant="light" />
+            </a>
             <div className="flex items-center gap-6 text-sm">
               <button
                 onClick={() => router.push('/login')}

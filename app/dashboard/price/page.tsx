@@ -296,91 +296,93 @@ export default function PricePage() {
               <button
                 type="button"
                 onClick={() => !isSubmitting && setShowCreateModal(false)}
-                className="modal-close touch-target text-gray-400 hover:text-white rounded-xl"
+                className="modal-close text-gray-400 hover:text-white"
                 aria-label="Закрити"
               >
                 <XIcon className="w-5 h-5" />
               </button>
-              <div className="pr-10 flex-1 min-h-0 overflow-y-auto pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-                <h2 className="modal-title text-white mb-2">Додати до прайсу</h2>
-                <form onSubmit={handleCreateService} className="space-y-4">
+              <div className="pr-10 mb-2 flex-shrink-0">
+                <h2 className="modal-title">Додати до прайсу</h2>
+                <p className="modal-subtitle">Заповніть основну інформацію про послугу</p>
+              </div>
+              <form onSubmit={handleCreateService} className="space-y-2.5 flex-1 min-h-0 overflow-y-auto pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Назва послуги *</label>
+                  <input
+                    type="text"
+                    value={createForm.name}
+                    onChange={e => setCreateForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Наприклад: Стрижка чоловіча"
+                    required
+                    className="w-full px-4 py-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Назва послуги *</label>
+                    <label className="block text-sm font-medium mb-2 text-gray-300">Ціна (₴) *</label>
                     <input
-                      type="text"
-                      value={createForm.name}
-                      onChange={e => setCreateForm(f => ({ ...f, name: e.target.value }))}
-                      placeholder="Наприклад: Стрижка чоловіча"
+                      type="number"
+                      min="0"
+                      value={createForm.price}
+                      onChange={e => setCreateForm(f => ({ ...f, price: e.target.value }))}
+                      placeholder="100"
                       required
-                      className="w-full px-4 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                      className="w-full px-4 py-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1.5">Ціна (₴) *</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={createForm.price}
-                        onChange={e => setCreateForm(f => ({ ...f, price: e.target.value }))}
-                        placeholder="100"
-                        required
-                        className="w-full px-4 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1.5">Тривалість (хв) *</label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={createForm.duration}
-                        onChange={e => setCreateForm(f => ({ ...f, duration: e.target.value }))}
-                        placeholder="30"
-                        required
-                        className="w-full px-4 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                      />
-                    </div>
-                  </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Категорія (опціонально)</label>
+                    <label className="block text-sm font-medium mb-2 text-gray-300">Тривалість (хв) *</label>
                     <input
-                      type="text"
+                      type="number"
+                      min="1"
+                      value={createForm.duration}
+                      onChange={e => setCreateForm(f => ({ ...f, duration: e.target.value }))}
+                      placeholder="30"
+                      required
+                      className="w-full px-4 py-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Категорія (опціонально)</label>
+                  <input
+                    type="text"
+                    value={createForm.category}
+                    onChange={e => setCreateForm(f => ({ ...f, category: e.target.value }))}
+                    placeholder="Наприклад: Стрижка, Манікюр"
+                    className="w-full px-4 py-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+                  />
+                  {categories.length > 0 && (
+                    <select
                       value={createForm.category}
                       onChange={e => setCreateForm(f => ({ ...f, category: e.target.value }))}
-                      placeholder="Наприклад: Стрижка, Манікюр"
-                      className="w-full px-4 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                    />
-                    {categories.length > 0 && (
-                      <select
-                        value={createForm.category}
-                        onChange={e => setCreateForm(f => ({ ...f, category: e.target.value }))}
-                        className="mt-1.5 w-full px-3 py-2 rounded-lg border border-white/20 bg-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                      >
-                        <option value="">Або виберіть існуючу категорію</option>
-                        {categories.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => !isSubmitting && setShowCreateModal(false)}
-                      className="touch-target flex-1 min-w-[100px] px-4 py-2.5 min-h-[44px] rounded-lg border border-white/20 bg-white/10 text-white font-medium hover:bg-white/15 transition-colors"
+                      className="mt-1.5 w-full px-4 py-3 rounded-lg border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                     >
-                      Скасувати
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="touch-target flex-1 min-w-[100px] px-4 py-2.5 min-h-[44px] rounded-lg bg-white text-black font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50"
-                    >
-                      {isSubmitting ? 'Збереження...' : 'Додати'}
-                    </button>
-                  </div>
-                </form>
-              </div>
+                      <option value="">Або виберіть існуючу категорію</option>
+                      {categories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => !isSubmitting && setShowCreateModal(false)}
+                    className="flex-1 px-4 py-3 border border-white/20 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-all"
+                  >
+                    Скасувати
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 px-4 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+                  >
+                    {isSubmitting ? 'Збереження...' : 'Додати'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </ModalPortal>
@@ -397,91 +399,93 @@ export default function PricePage() {
               <button
                 type="button"
                 onClick={() => !isSubmitting && setEditingService(null)}
-                className="modal-close touch-target text-gray-400 hover:text-white rounded-xl"
+                className="modal-close text-gray-400 hover:text-white"
                 aria-label="Закрити"
               >
                 <XIcon className="w-5 h-5" />
               </button>
-              <div className="pr-10 flex-1 min-h-0 overflow-y-auto pb-[max(0.75rem,env(safe-area-inset-bottom))]">
-                <h2 className="modal-title text-white mb-2">Редагувати послугу</h2>
-                <form onSubmit={handleUpdateService} className="space-y-4">
+              <div className="pr-10 mb-2 flex-shrink-0">
+                <h2 className="modal-title">Редагувати послугу</h2>
+                <p className="modal-subtitle">Оновіть інформацію про послугу</p>
+              </div>
+              <form onSubmit={handleUpdateService} className="space-y-2.5 flex-1 min-h-0 overflow-y-auto pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Назва послуги *</label>
+                  <input
+                    type="text"
+                    value={createForm.name}
+                    onChange={e => setCreateForm(f => ({ ...f, name: e.target.value }))}
+                    placeholder="Наприклад: Стрижка чоловіча"
+                    required
+                    className="w-full px-4 py-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+                  />
+                </div>
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Назва послуги *</label>
+                    <label className="block text-sm font-medium mb-2 text-gray-300">Ціна (₴) *</label>
                     <input
-                      type="text"
-                      value={createForm.name}
-                      onChange={e => setCreateForm(f => ({ ...f, name: e.target.value }))}
-                      placeholder="Наприклад: Стрижка чоловіча"
+                      type="number"
+                      min="0"
+                      value={createForm.price}
+                      onChange={e => setCreateForm(f => ({ ...f, price: e.target.value }))}
+                      placeholder="100"
                       required
-                      className="w-full px-4 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                      className="w-full px-4 py-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                     />
                   </div>
-                  <div className="grid grid-cols-2 gap-3">
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1.5">Ціна (₴) *</label>
-                      <input
-                        type="number"
-                        min="0"
-                        value={createForm.price}
-                        onChange={e => setCreateForm(f => ({ ...f, price: e.target.value }))}
-                        placeholder="100"
-                        required
-                        className="w-full px-4 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium text-gray-300 mb-1.5">Тривалість (хв) *</label>
-                      <input
-                        type="number"
-                        min="1"
-                        value={createForm.duration}
-                        onChange={e => setCreateForm(f => ({ ...f, duration: e.target.value }))}
-                        placeholder="30"
-                        required
-                        className="w-full px-4 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                      />
-                    </div>
-                  </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-300 mb-1.5">Категорія (опціонально)</label>
+                    <label className="block text-sm font-medium mb-2 text-gray-300">Тривалість (хв) *</label>
                     <input
-                      type="text"
+                      type="number"
+                      min="1"
+                      value={createForm.duration}
+                      onChange={e => setCreateForm(f => ({ ...f, duration: e.target.value }))}
+                      placeholder="30"
+                      required
+                      className="w-full px-4 py-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Категорія (опціонально)</label>
+                  <input
+                    type="text"
+                    value={createForm.category}
+                    onChange={e => setCreateForm(f => ({ ...f, category: e.target.value }))}
+                    placeholder="Наприклад: Стрижка, Манікюр"
+                    className="w-full px-4 py-3 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+                  />
+                  {categories.length > 0 && (
+                    <select
                       value={createForm.category}
                       onChange={e => setCreateForm(f => ({ ...f, category: e.target.value }))}
-                      placeholder="Наприклад: Стрижка, Манікюр"
-                      className="w-full px-4 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                    />
-                    {categories.length > 0 && (
-                      <select
-                        value={createForm.category}
-                        onChange={e => setCreateForm(f => ({ ...f, category: e.target.value }))}
-                        className="mt-1.5 w-full px-3 py-2 rounded-lg border border-white/20 bg-white/10 text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                      >
-                        <option value="">Або виберіть існуючу категорію</option>
-                        {categories.map(cat => (
-                          <option key={cat} value={cat}>{cat}</option>
-                        ))}
-                      </select>
-                    )}
-                  </div>
-                  <div className="flex flex-wrap gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => !isSubmitting && setEditingService(null)}
-                      className="touch-target flex-1 min-w-[100px] px-4 py-2.5 min-h-[44px] rounded-lg border border-white/20 bg-white/10 text-white font-medium hover:bg-white/15 transition-colors"
+                      className="mt-1.5 w-full px-4 py-3 rounded-lg border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                     >
-                      Скасувати
-                    </button>
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="touch-target flex-1 min-w-[100px] px-4 py-2.5 min-h-[44px] rounded-lg bg-white text-black font-semibold hover:bg-gray-100 transition-colors disabled:opacity-50"
-                    >
-                      {isSubmitting ? 'Збереження...' : 'Зберегти'}
-                    </button>
-                  </div>
-                </form>
-              </div>
+                      <option value="">Або виберіть існуючу категорію</option>
+                      {categories.map(cat => (
+                        <option key={cat} value={cat}>{cat}</option>
+                      ))}
+                    </select>
+                  )}
+                </div>
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => !isSubmitting && setEditingService(null)}
+                    className="flex-1 px-4 py-3 border border-white/20 bg-white/10 text-white font-medium rounded-lg hover:bg-white/20 transition-all"
+                  >
+                    Скасувати
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="flex-1 px-4 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+                  >
+                    {isSubmitting ? 'Збереження...' : 'Зберегти'}
+                  </button>
+                </div>
+              </form>
             </div>
           </div>
         </ModalPortal>

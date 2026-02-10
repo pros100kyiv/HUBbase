@@ -54,18 +54,6 @@ function LoginForm() {
 
       if (!response.ok) {
         console.error('Login error:', data)
-        
-        // Якщо потрібне OAuth підтвердження - показуємо повідомлення та кнопку Telegram
-        if (data.requiresOAuth && data.deviceId) {
-          setErrorMessage(data.error || 'Це новий пристрій. Підтвердіть вхід через Telegram OAuth.')
-          setShowErrorToast(true)
-          setIsLoading(false)
-          // Зберігаємо deviceId для подальшого використання
-          localStorage.setItem('pendingDeviceId', data.deviceId)
-          setErrors({ submit: data.error || 'Це новий пристрій. Підтвердіть вхід через Telegram OAuth.' })
-          return
-        }
-        
         // Показуємо маленьке вікно з помилкою
         setErrorMessage(data.error || 'Помилка при вході')
         setNeedsRegistration(data.needsRegistration || false)

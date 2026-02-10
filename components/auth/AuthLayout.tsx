@@ -2,6 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation'
 import { cn } from '@/lib/utils'
+import { XbaseLogo } from '@/components/layout/XbaseLogo'
 
 interface AuthLayoutProps {
   title: string
@@ -23,13 +24,10 @@ export function AuthLayout({ title, children }: AuthLayoutProps) {
         <button
           type="button"
           onClick={() => router.push('/')}
-          className="touch-target flex items-center gap-2 min-h-[44px] min-w-[44px] rounded-lg active:scale-[0.98]"
+          className="touch-target flex items-center min-h-[44px] min-w-[44px] rounded-lg active:scale-[0.98]"
           aria-label="На головну"
         >
-          <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center text-white font-bold text-sm sm:text-base">
-            X
-          </div>
-          <span className="text-base sm:text-lg font-bold text-white landing-hero-title">Xbase</span>
+          <XbaseLogo size="lg" variant="light" />
         </button>
         <nav className="flex items-center gap-1.5 sm:gap-3">
           <button
@@ -58,9 +56,14 @@ export function AuthLayout({ title, children }: AuthLayoutProps) {
       <main className="relative z-10 flex items-center justify-center px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] py-6 sm:py-12">
         <div className="w-full max-w-md">
           <div className="rounded-2xl p-6 sm:p-8 card-glass-elevated border border-white/10">
-            <h1 className="landing-hero-title text-2xl sm:text-3xl font-bold text-white text-center mb-6" style={{ letterSpacing: '-0.02em' }}>
-              {title}
-            </h1>
+            <div className="flex flex-col items-center mb-6">
+              <div className="mb-4">
+                <XbaseLogo size="lg" variant="light" />
+              </div>
+              <h1 className="landing-hero-title text-2xl sm:text-3xl font-bold text-white text-center" style={{ letterSpacing: '-0.02em' }}>
+                {title}
+              </h1>
+            </div>
             {children}
           </div>
         </div>

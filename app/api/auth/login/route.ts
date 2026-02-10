@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { authenticateBusiness } from '@/lib/auth'
 import { z } from 'zod'
-import { generateDeviceId, getClientIp, getUserAgent, isDeviceTrusted, addTrustedDevice } from '@/lib/utils/device'
+import { generateDeviceId, getClientIp, getUserAgent, addTrustedDevice } from '@/lib/utils/device'
 import { prisma } from '@/lib/prisma'
 
 const loginSchema = z.object({
@@ -59,25 +59,11 @@ export async function POST(request: Request) {
 
     console.log('Login successful for business:', businessAuth.id)
 
-    // Отримуємо бізнес з trustedDevices для перевірки пристрою
+    // Отримуємо бізнес з trustedDevices для додавання поточного пристрою
     const businessWithDevices = await prisma.business.findUnique({
       where: { id: businessAuth.id },
       select: { trustedDevices: true }
     })
-    
-    // Якщо ще немає довірених пристроїв — дозволяємо перший вхід (потім додамо пристрій)
-    const trustedJson = businessWithDevices?.trustedDevices || null
-    const hasTrustedDevices = trustedJson && trustedJson.trim() !== '' && trustedJson !== '[]'
-    if (hasTrustedDevices) {
-      const isTrusted = isDeviceTrusted(trustedJson, deviceId)
-      if (!isTrusted) {
-        return NextResponse.json({
-          error: 'Це новий пристрій. Будь ласка, підтвердіть вхід через Telegram OAuth.',
-          requiresOAuth: true,
-          deviceId: deviceId
-        }, { status: 403 })
-      }
-    }
 
     // Оновлюємо дату останнього входу в Центрі управління
     try {

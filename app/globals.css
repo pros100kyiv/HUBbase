@@ -274,6 +274,93 @@
     background-color: #050506;
   }
 
+  /* Темна та OLED теми: поля вводу та селекти в картках і в main — світлий текст і видимий placeholder */
+  .dark .card-glass input,
+  .dark .card-glass select,
+  .dark .card-glass textarea,
+  .dark .card-glass-subtle input,
+  .dark .card-glass-subtle select,
+  .dark .card-glass-subtle textarea,
+  .dark .card-glass-elevated input,
+  .dark .card-glass-elevated select,
+  .dark .card-glass-elevated textarea,
+  .dark main input,
+  .dark main select,
+  .dark main textarea,
+  .dark .dashboard-card input,
+  .dark .dashboard-card select,
+  .dark .dashboard-card textarea,
+  .dark .card-floating input,
+  .dark .card-floating select,
+  .dark .card-floating textarea,
+  .oled .card-glass input,
+  .oled .card-glass select,
+  .oled .card-glass textarea,
+  .oled .card-glass-subtle input,
+  .oled .card-glass-subtle select,
+  .oled .card-glass-subtle textarea,
+  .oled .card-glass-elevated input,
+  .oled .card-glass-elevated select,
+  .oled .card-glass-elevated textarea,
+  .oled main input,
+  .oled main select,
+  .oled main textarea,
+  .oled .dashboard-card input,
+  .oled .dashboard-card select,
+  .oled .dashboard-card textarea,
+  .oled .card-floating input,
+  .oled .card-floating select,
+  .oled .card-floating textarea {
+    color: #f1f5f9 !important;
+    border-color: rgba(255, 255, 255, 0.15) !important;
+  }
+  .dark .card-glass input::placeholder,
+  .dark .card-glass textarea::placeholder,
+  .dark .card-glass-subtle input::placeholder,
+  .dark .card-glass-subtle textarea::placeholder,
+  .dark .card-glass-elevated input::placeholder,
+  .dark .card-glass-elevated textarea::placeholder,
+  .dark main input::placeholder,
+  .dark main textarea::placeholder,
+  .dark .dashboard-card input::placeholder,
+  .dark .dashboard-card textarea::placeholder,
+  .dark .card-floating input::placeholder,
+  .dark .card-floating textarea::placeholder,
+  .oled .card-glass input::placeholder,
+  .oled .card-glass textarea::placeholder,
+  .oled .card-glass-subtle input::placeholder,
+  .oled .card-glass-subtle textarea::placeholder,
+  .oled .card-glass-elevated input::placeholder,
+  .oled .card-glass-elevated textarea::placeholder,
+  .oled main input::placeholder,
+  .oled main textarea::placeholder,
+  .oled .dashboard-card input::placeholder,
+  .oled .dashboard-card textarea::placeholder,
+  .oled .card-floating input::placeholder,
+  .oled .card-floating textarea::placeholder {
+    color: #94a3b8 !important;
+  }
+  .dark .card-glass select option,
+  .dark .card-glass-subtle select option,
+  .dark .card-glass-elevated select option,
+  .dark main select option,
+  .dark .dashboard-card select option,
+  .dark .card-floating select option,
+  .dark .modal-dialog select option {
+    background-color: #1e293b;
+    color: #f1f5f9;
+  }
+  .oled .card-glass select option,
+  .oled .card-glass-subtle select option,
+  .oled .card-glass-elevated select option,
+  .oled main select option,
+  .oled .dashboard-card select option,
+  .oled .card-floating select option,
+  .oled .modal-dialog select option {
+    background-color: #0f172a;
+    color: #f1f5f9;
+  }
+
   /* ========== Xbase: світла тема — картки, модалки, текст (сильний контраст) ========== */
   .light .card-glass {
     background-color: #FFFFFF;
@@ -380,8 +467,14 @@
   }
   .light .chart-ring-bg { stroke: rgba(0, 0, 0, 0.12); }
   /* Світла тема: модальні вікна — колір тексту та полів (фон/рамка через --modal-*) */
+  /* Темна та OLED: нативний випадаючий список select у модалці — темний фон, видно варіанти */
+  .dark .modal-dialog,
+  .oled .modal-dialog {
+    color-scheme: dark;
+  }
   .light .modal-dialog {
     color: #1a1a1a;
+    color-scheme: light;
   }
   .light .modal-dialog .text-white { color: #1a1a1a !important; }
   .light .modal-dialog .text-gray-400,
@@ -411,6 +504,61 @@
   .light .modal-dialog input::placeholder,
   .light .modal-dialog textarea::placeholder { color: #9ca3af !important; }
   .light .modal-dialog .modal-close:hover { background-color: rgba(0, 0, 0, 0.08) !important; }
+
+  /* Світла тема: поля вводу та селекти в картках і в main — темний текст і видимий placeholder на білому фоні */
+  .light .card-glass input,
+  .light .card-glass select,
+  .light .card-glass textarea,
+  .light .card-glass-subtle input,
+  .light .card-glass-subtle select,
+  .light .card-glass-subtle textarea,
+  .light .card-glass-elevated input,
+  .light .card-glass-elevated select,
+  .light .card-glass-elevated textarea,
+  .light main input,
+  .light main select,
+  .light main textarea,
+  .light .dashboard-card input,
+  .light .dashboard-card select,
+  .light .dashboard-card textarea,
+  .light .card-floating input,
+  .light .card-floating select,
+  .light .card-floating textarea {
+    color: #111827 !important;
+    border-color: rgba(0, 0, 0, 0.12) !important;
+  }
+  .light .card-glass input::placeholder,
+  .light .card-glass textarea::placeholder,
+  .light .card-glass-subtle input::placeholder,
+  .light .card-glass-subtle textarea::placeholder,
+  .light .card-glass-elevated input::placeholder,
+  .light .card-glass-elevated textarea::placeholder,
+  .light main input::placeholder,
+  .light main textarea::placeholder,
+  .light .dashboard-card input::placeholder,
+  .light .dashboard-card textarea::placeholder,
+  .light .card-floating input::placeholder,
+  .light .card-floating textarea::placeholder {
+    color: #6b7280 !important;
+  }
+  .light .card-glass select option,
+  .light .card-glass-subtle select option,
+  .light .card-glass-elevated select option,
+  .light main select option,
+  .light .dashboard-card select option,
+  .light .card-floating select option,
+  .light .modal-dialog select option {
+    background-color: #ffffff;
+    color: #111827;
+  }
+  /* Іконки поруч з полями (наприклад пошук) у світлій темі */
+  .light .card-glass .text-gray-400,
+  .light .card-glass-subtle .text-gray-400,
+  .light main .text-gray-400,
+  .light .dashboard-card .text-gray-400,
+  .light .card-floating .text-gray-400 {
+    color: #6b7280 !important;
+  }
 
   /* Landing: світла тема — м’який градієнт у hero */
   .light .landing-hero-gradient {
@@ -1015,6 +1163,20 @@
     }
   }
 
+  /* Модалки — ширина як було (96% / 94%), усі вікна + вкладені */
+  .modal-overlay > .modal-content,
+  .modal-overlay-nested > .modal-content {
+    width: 96% !important;
+    max-width: min(96vw, 48rem) !important;
+  }
+  @media (min-width: 640px) {
+    .modal-overlay > .modal-content,
+    .modal-overlay-nested > .modal-content {
+      width: 94% !important;
+      max-width: min(94vw, 52rem) !important;
+    }
+  }
+
   /* Єдиний дизайн діалогу: по центру екрана, повне заокруглення (не лише зверху). */
   .modal-dialog {
     background-color: var(--modal-dialog-bg);
@@ -1023,9 +1185,10 @@
     border: none;
     border-radius: 1.25rem;
     box-shadow: none;
-    padding: clamp(0.5rem, 2.5vmin, 1rem);
-    padding-bottom: max(clamp(0.5rem, 2.5vmin, 1rem), env(safe-area-inset-bottom));
     padding-top: clamp(0.75rem, 4vmin, 1.25rem);
+    padding-bottom: max(clamp(0.5rem, 2.5vmin, 1rem), env(safe-area-inset-bottom));
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
     min-width: 0;
     min-height: 0;
     overflow-x: hidden;
@@ -1043,6 +1206,10 @@
   .modal-dialog form {
     text-align: left;
   }
+  .modal-dialog form .modal-title,
+  .modal-dialog form .modal-subtitle {
+    text-align: left;
+  }
   @keyframes modal-dialog-in {
     from {
       opacity: 0;
@@ -1053,35 +1220,25 @@
       transform: scale(1) translateY(0);
     }
   }
+  /* Ручка-полоска зверху модалки вимкнена — не відображаємо */
   .modal-dialog::before {
-    content: '';
-    position: absolute;
-    top: 0.5rem;
-    left: 50%;
-    transform: translateX(-50%);
-    width: 2.75rem;
-    height: 0.25rem;
-    background: var(--modal-handle-bg);
-    border-radius: 9999px;
-    pointer-events: none;
-  }
-  /* Мобільний: кнопка закриття вище за ручку, щоб не перекривалась */
-  @media (max-width: 639px) {
-    .modal-dialog .modal-close {
-      top: calc(0.5rem + 0.25rem + 2px);
-      right: 0.75rem;
-    }
+    display: none;
   }
   @media (min-width: 640px) {
     .modal-dialog {
       border-radius: 1.5rem;
-      padding: 1rem 1.25rem;
+      padding-left: 1rem;
+      padding-right: 1rem;
       padding-top: 1rem;
       padding-bottom: max(0.75rem, env(safe-area-inset-bottom));
     }
-    .modal-dialog::before {
-      display: none;
-    }
+  }
+  /* Контент модалки на повну ширину — без пустого місця по боках */
+  .modal-dialog form,
+  .modal-dialog [class*="space-y"] {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
   /* Заголовок модалки — чіткий контраст, читабельний */
@@ -1111,61 +1268,98 @@
     color: rgba(255, 255, 255, 0.95);
   }
 
-  /* Кнопка закриття — над контентом (z-index), чіткі межі, плавний hover */
-  .modal-dialog .modal-close {
+  /* Кнопка закриття — відступ справа як зліва (0.75rem), щоб зліва і справа було однаково */
+  .modal-dialog .modal-close,
+  .modal-dialog button.modal-close {
     position: absolute;
-    top: 0.5rem;
-    right: 0.5rem;
+    top: 0.375rem;
+    right: 0.75rem;
     z-index: 10;
-    width: 2.75rem;
-    height: 2.75rem;
-    min-width: 44px;
-    min-height: 44px;
+    width: 1.5rem !important;
+    height: 1.5rem !important;
+    min-width: 1.5rem !important;
+    min-height: 1.5rem !important;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    border-radius: 9999px;
-    background-color: rgba(255, 255, 255, 0.1);
-    color: rgba(255, 255, 255, 0.9);
-    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 9999px !important;
+    background-color: rgba(255, 255, 255, 0.18);
+    color: #fff;
+    border: none;
     box-shadow: none;
     transition: background-color 0.2s ease, color 0.2s ease, transform 0.2s ease;
   }
+  .modal-dialog .modal-close svg {
+    width: 0.75rem;
+    height: 0.75rem;
+  }
+  .modal-dialog .modal-close svg path,
+  .modal-dialog .modal-close svg line {
+    stroke-width: 2.5;
+  }
   .modal-dialog .modal-close:hover {
-    background-color: rgba(255, 255, 255, 0.18);
+    background-color: rgba(255, 255, 255, 0.28);
     color: #fff;
-    transform: scale(1.05);
+    transform: scale(1.1);
     box-shadow: none;
   }
   .light .modal-dialog .modal-close {
-    background-color: rgba(0, 0, 0, 0.06);
-    border-color: rgba(0, 0, 0, 0.08);
-    color: #374151;
-  }
-  .light .modal-dialog .modal-close:hover {
     background-color: rgba(0, 0, 0, 0.1);
     color: #1a1a1a;
+    border: none;
+  }
+  .light .modal-dialog .modal-close:hover {
+    background-color: rgba(0, 0, 0, 0.16);
+    color: #111;
   }
   @media (min-width: 640px) {
     .modal-dialog .modal-close {
-      top: 0.75rem;
-      right: 0.75rem;
-      width: 2.5rem;
-      height: 2.5rem;
-      min-width: 2.5rem;
-      min-height: 2.5rem;
+      top: 0.5rem;
+      right: 1rem;
+      width: 1.5rem !important;
+      height: 1.5rem !important;
+      min-width: 1.5rem !important;
+      min-height: 1.5rem !important;
     }
   }
 
-  /* Рядок заголовка: компактніший на мобільному */
+  /* Заголовок і контент — мінімальний відступ справа, без пустого місця під хрестиком */
   .modal-dialog .modal-header-row {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
     gap: 0.5rem;
     flex-wrap: wrap;
-    padding-right: 2.5rem;
+    padding-right: 1.75rem;
     margin-bottom: clamp(0.5rem, 2vmin, 0.75rem);
+  }
+  /* Контент модалки (форма, скрол, слоти): мінімальний відступ зліва і справа */
+  .modal-dialog > div.flex-1 {
+    padding-left: 0.5rem !important;
+    padding-right: 0.75rem !important;
+  }
+  @media (min-width: 640px) {
+    .modal-dialog > div.flex-1 {
+      padding-left: 0.5rem !important;
+      padding-right: 1rem !important;
+    }
+  }
+  /* Слоти та скрол-контент в модалці — мінімальний відступ зліва і справа (усі модалки) */
+  .modal-dialog > div.flex-1.overflow-y-auto,
+  .modal-dialog > div.flex-1[class*="overflow-y-auto"] {
+    padding-left: 0.5rem !important;
+    padding-right: 0.5rem !important;
+  }
+  @media (min-width: 640px) {
+    .modal-dialog > div.flex-1.overflow-y-auto,
+    .modal-dialog > div.flex-1[class*="overflow-y-auto"] {
+      padding-left: 0.5rem !important;
+      padding-right: 0.5rem !important;
+    }
+  }
+  /* Заголовок у такій модалці — мінімальний відступ справа, щоб не заходив під маленький хрестик */
+  .modal-dialog > div.flex-1 > .modal-title {
+    padding-right: 1.5rem;
   }
   /* Кругла кнопка-іконка в модалці (телефон, налаштування, закрити) */
   .modal-dialog .modal-action-btn {
@@ -1450,5 +1644,18 @@
   }
   input[type="time"]::-webkit-date-and-time-value {
     text-align: left;
+  }
+
+  /* Мобільна версія: поля часу — хвилини видно, нічого не перекриває */
+  @media (max-width: 639px) {
+    input[type="time"] {
+      min-width: 8.5rem !important;
+      padding-left: 0.5rem !important;
+      padding-right: 0.5rem !important;
+    }
+    input[type="time"]::-webkit-date-and-time-value {
+      margin-right: 0;
+      padding-right: 0;
+    }
   }
 }

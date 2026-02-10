@@ -581,7 +581,7 @@ export default function SettingsPage() {
   return (
     <div className="min-h-screen">
       <Confetti trigger={showConfetti} />
-      <div className="max-w-7xl mx-auto">
+      <div className="w-full max-w-7xl mx-auto min-w-0">
         {/* Header + Status cards + Tabs */}
         <div className="mb-6">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">

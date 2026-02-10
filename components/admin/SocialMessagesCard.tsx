@@ -161,9 +161,9 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
         )}
         aria-expanded={!collapsed}
       >
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2">
-            <h3 className="text-base md:text-xl font-bold text-white" style={{ letterSpacing: '-0.01em' }}>
+        <div className="min-w-0 flex-1 overflow-hidden">
+          <div className="flex items-center gap-2 min-w-0">
+            <h3 className="text-base md:text-xl font-bold text-white truncate" style={{ letterSpacing: '-0.01em' }}>
               Повідомлення
             </h3>
             {hasUnread && (
@@ -172,12 +172,12 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
               </div>
             )}
             {!hasUnread && hasAny && (
-              <span className="text-[10px] md:text-xs px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-gray-300">
+              <span className="text-[10px] md:text-xs px-2 py-0.5 rounded-full bg-white/10 border border-white/10 text-gray-300 flex-shrink-0">
                 є
               </span>
             )}
           </div>
-          <p className="text-xs md:text-sm text-gray-300 font-normal">
+          <p className="text-xs md:text-sm text-gray-300 font-normal break-words min-w-0">
             {collapsed
               ? loading
                 ? 'Перевіряю…'
@@ -189,7 +189,7 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
               : 'З соціальних мереж'}
           </p>
           {collapsed && !loading && latest && (
-            <p className="text-[10px] md:text-xs text-gray-400 mt-1 line-clamp-1">
+            <p className="text-[10px] md:text-xs text-gray-400 mt-1 line-clamp-1 break-words min-w-0" title={`${latest.senderName}: ${latest.message}`}>
               {latest.senderName}: {latest.message}
             </p>
           )}

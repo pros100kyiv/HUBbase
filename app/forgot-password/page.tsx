@@ -1,20 +1,29 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { AuthLayout } from '@/components/auth/AuthLayout'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { toast } from '@/components/ui/toast'
+import { TelegramAuthButton } from '@/components/auth/TelegramAuthButton'
 import { cn } from '@/lib/utils'
 
-export default function ForgotPasswordPage() {
+function ForgotPasswordForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [email, setEmail] = useState('')
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [devResetUrl, setDevResetUrl] = useState<string | null>(null)
+
+  useEffect(() => {
+    const error = searchParams.get('error')
+    if (error) {
+      setErrors({ submit: decodeURIComponent(error) })
+    }
+  }, [searchParams])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -125,6 +134,13 @@ export default function ForgotPasswordPage() {
           {isLoading ? 'Відправка...' : 'Відправити інструкції'}
         </Button>
 
+        <div className="relative my-5">
+          <div className="absolute inset-0 flex items-center"><div className="w-full border-t border-white/10" /></div>
+          <div className="relative flex justify-center text-sm"><span className="px-3 bg-transparent text-gray-400">або</span></div>
+        </div>
+
+        <TelegramAuthButton forgotPasswordMode text="Відновити пароль через Telegram" />
+
         <div className="text-center text-sm text-gray-400 pt-2">
           <button type="button" onClick={() => router.push('/login')} className="text-gray-300 hover:text-white font-medium transition-colors active:opacity-70">
             Повернутися до входу
@@ -132,6 +148,18 @@ export default function ForgotPasswordPage() {
         </div>
       </form>
     </AuthLayout>
+  )
+}
+
+export default function ForgotPasswordPage() {
+  return (
+    <Suspense fallback={
+      <AuthLayout title="Відновлення паролю">
+        <div className="text-center text-gray-400">Завантаження...</div>
+      </AuthLayout>
+    }>
+      <ForgotPasswordForm />
+    </Suspense>
   )
 }
 

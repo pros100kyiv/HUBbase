@@ -85,6 +85,7 @@ export default function ClientsPage() {
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('asc')
   const [selectedClients, setSelectedClients] = useState<Set<string>>(new Set())
   const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards')
+  const [filterPanelOpen, setFilterPanelOpen] = useState(false)
   const [showQuickClientCard, setShowQuickClientCard] = useState(false)
   const [editingClient, setEditingClient] = useState<Client | null>(null)
   const [showAllClients, setShowAllClients] = useState(false)
@@ -604,10 +605,10 @@ export default function ClientsPage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
+    <div className="w-full max-w-7xl mx-auto min-w-0">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0">
         {/* Left Column - Main Content (3 columns) - same as Dashboard */}
-        <div className="lg:col-span-3 space-y-3 md:space-y-6">
+        <div className="lg:col-span-3 space-y-3 md:space-y-6 min-w-0">
           {/* Header - same style as Dashboard */}
           <div className="flex items-center justify-between gap-3">
             <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
@@ -618,7 +619,7 @@ export default function ClientsPage() {
                 setEditingClient(null)
                 setShowQuickClientCard(true)
               }}
-              className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] flex-shrink-0"
+              className="touch-target min-h-[44px] px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] flex-shrink-0"
               style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
             >
               Додати клієнта
@@ -627,69 +628,89 @@ export default function ClientsPage() {
 
           {/* Search and Filters - card same as Dashboard */}
           <div className="rounded-xl p-4 md:p-6 card-glass">
-            <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
-              <div className="flex-1 relative">
-                <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input
-                  type="text"
-                  placeholder="Пошук за ім'ям, телефоном або email..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-9 pr-3 py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
-                />
+            <div className="flex flex-col gap-3">
+              <div className="flex flex-col sm:flex-row gap-2 md:gap-3">
+                <div className="flex-1 relative">
+                  <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+                  <input
+                    type="text"
+                    placeholder="Пошук за ім'ям, телефоном або email..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+                  />
+                </div>
+                <div className="flex gap-2 flex-shrink-0">
+                  <button
+                    onClick={() => setFilterPanelOpen((v) => !v)}
+                    className={cn(
+                      'p-2 border rounded-lg transition-colors flex items-center justify-center',
+                      filterPanelOpen
+                        ? 'border-white/40 bg-white/20 text-white'
+                        : 'border-white/20 bg-white/10 text-white hover:bg-white/20'
+                    )}
+                    title="Фільтри"
+                    aria-label="Фільтри"
+                  >
+                    <FilterIcon className="w-4 h-4" />
+                  </button>
+                  <button
+                    onClick={() => setViewMode(viewMode === 'cards' ? 'table' : 'cards')}
+                    className="px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
+                  >
+                    {viewMode === 'cards' ? 'Таблиця' : 'Картки'}
+                  </button>
+                  <button
+                    onClick={handleExportCSV}
+                    className="px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
+                  >
+                    <DownloadIcon className="w-4 h-4" />
+                    Експорт
+                  </button>
+                </div>
               </div>
-              <select
-                value={filterClientStatus}
-                onChange={(e) => setFilterClientStatus(e.target.value)}
-                className="px-3 py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
-              >
-                <option value="all">Всі статуси</option>
-                <option value="new">Новий</option>
-                <option value="regular">Постійний</option>
-                <option value="vip">VIP</option>
-                <option value="inactive">Неактивний</option>
-              </select>
-              <select
-                value={filterSegment}
-                onChange={(e) => setFilterSegment(e.target.value)}
-                className="px-3 py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
-              >
-                <option value="all">Всі клієнти</option>
-                <option value="vip">VIP (по витратах)</option>
-                <option value="active">Активні</option>
-                <option value="inactive">Неактивні</option>
-              </select>
-              <select
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value)}
-                className="px-3 py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
-              >
-                <option value="name">За ім'ям</option>
-                <option value="visits">За візитами</option>
-                <option value="spent">За витратами</option>
-                <option value="lastVisit">За датою візиту</option>
-              </select>
-              <button
-                onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
-                className="px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
-              >
-                {sortOrder === 'asc' ? '↑' : '↓'}
-              </button>
-              <div className="flex gap-2 flex-shrink-0">
-                <button
-                  onClick={() => setViewMode(viewMode === 'cards' ? 'table' : 'cards')}
-                  className="px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
-                >
-                  {viewMode === 'cards' ? 'Таблиця' : 'Картки'}
-                </button>
-                <button
-                  onClick={handleExportCSV}
-                  className="px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5"
-                >
-                  <DownloadIcon className="w-4 h-4" />
-                  Експорт
-                </button>
-              </div>
+              {filterPanelOpen && (
+                <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-white/10">
+                  <select
+                    value={filterClientStatus}
+                    onChange={(e) => setFilterClientStatus(e.target.value)}
+                    className="px-3 py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+                  >
+                    <option value="all">Всі статуси</option>
+                    <option value="new">Новий</option>
+                    <option value="regular">Постійний</option>
+                    <option value="vip">VIP</option>
+                    <option value="inactive">Неактивний</option>
+                  </select>
+                  <select
+                    value={filterSegment}
+                    onChange={(e) => setFilterSegment(e.target.value)}
+                    className="px-3 py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+                  >
+                    <option value="all">Всі клієнти</option>
+                    <option value="vip">VIP (по витратах)</option>
+                    <option value="active">Активні</option>
+                    <option value="inactive">Неактивні</option>
+                  </select>
+                  <select
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                    className="px-3 py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+                  >
+                    <option value="name">За ім'ям</option>
+                    <option value="visits">За візитами</option>
+                    <option value="spent">За витратами</option>
+                    <option value="lastVisit">За датою візиту</option>
+                  </select>
+                  <button
+                    onClick={() => setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')}
+                    className="px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors"
+                    title={sortOrder === 'asc' ? 'За зростанням' : 'За спаданням'}
+                  >
+                    {sortOrder === 'asc' ? '↑' : '↓'}
+                  </button>
+                </div>
+              )}
             </div>
             {/* Пошук клієнта за номером телефону — відкриває вікно з історією */}
             <div className="mt-3 pt-3 border-t border-white/10 flex flex-col sm:flex-row gap-2 items-stretch sm:items-center">
@@ -869,8 +890,8 @@ export default function ClientsPage() {
                 )}
               >
                 <div className="w-full p-4 md:p-5">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
+                  <div className="flex flex-wrap items-start justify-between gap-x-4 gap-y-3">
+                    <div className="flex items-center gap-3 flex-1 min-w-0 overflow-hidden">
                       <button
                         onClick={() => toggleSelectClient(client.id)}
                         className={cn(
@@ -883,9 +904,9 @@ export default function ClientsPage() {
                       <div className="w-10 h-10 rounded-full bg-white/20 flex items-center justify-center text-white font-semibold text-sm flex-shrink-0">
                         {client.name.charAt(0).toUpperCase()}
                       </div>
-                      <div className="min-w-0 flex-1">
+                      <div className="min-w-0 flex-1 overflow-hidden">
                         <div className="flex items-center gap-2 flex-wrap mb-0.5">
-                          <h3 className="text-sm font-semibold text-white truncate">
+                          <h3 className="text-sm font-semibold text-white truncate min-w-0">
                             {client.name}
                           </h3>
                           <span className={cn('px-1.5 py-0.5 rounded text-[10px] font-medium border shrink-0', getClientStatusBadgeClass(client.status))}>
@@ -899,13 +920,13 @@ export default function ClientsPage() {
                       </div>
                     </div>
                     <div className="flex items-center gap-3 flex-shrink-0">
-                      <div className="text-center">
+                      <div className="text-center min-w-[3rem]">
                         <div className="text-sm font-semibold text-purple-400">{client.totalAppointments}</div>
-                        <div className="text-[10px] text-gray-400">Візитів</div>
+                        <div className="text-[10px] text-gray-400 leading-tight">Візитів</div>
                       </div>
-                      <div className="text-center">
+                      <div className="text-center min-w-[3.5rem]">
                         <div className="text-sm font-semibold text-blue-400">{Math.round(client.totalSpent)} грн</div>
-                        <div className="text-[10px] text-gray-400">Зароблено</div>
+                        <div className="text-[10px] text-gray-400 leading-tight">Зароблено</div>
                       </div>
                       <div className="flex gap-1">
                         <button onClick={() => window.open(`tel:${client.phone}`)} className="p-1.5 text-blue-400 hover:bg-white/10 rounded-lg transition-colors" title="Дзвінок"><PhoneIcon className="w-4 h-4" /></button>

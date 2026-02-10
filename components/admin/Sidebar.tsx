@@ -136,7 +136,7 @@ export function Sidebar({ className }: SidebarProps) {
             title="На головну"
             aria-label="На головну"
           >
-            <XbaseLogo size="sm" />
+            <XbaseLogo size="sm" compact />
           </button>
         </div>
 
