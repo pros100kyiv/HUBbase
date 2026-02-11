@@ -83,7 +83,7 @@ export async function GET(request: Request) {
       return NextResponse.redirect(new URL('/login?error=no_email', request.url))
     }
 
-    // Перевіряємо чи існує бізнес з цим Google ID або email
+    // Перевіряємо чи існує бізнес з цим Google ID або email (select без telegramWebhookSetAt)
     let business = await prisma.business.findFirst({
       where: {
         OR: [
@@ -91,24 +91,26 @@ export async function GET(request: Request) {
           { email: email.toLowerCase() },
         ],
       },
+      select: { id: true, googleId: true, email: true, name: true, logo: true, slug: true, niche: true, customNiche: true },
     })
 
     if (business) {
-      // Оновлюємо Google ID якщо його не було
+      // Оновлюємо Google ID якщо його не було (select без telegramWebhookSetAt)
       if (!business.googleId) {
         business = await prisma.business.update({
           where: { id: business.id },
           data: { googleId },
+          select: { id: true, googleId: true, email: true, name: true, logo: true, slug: true, niche: true, customNiche: true },
         })
       }
     } else {
       // Створюємо новий бізнес
       const slug = generateSlug(name)
       
-      // Перевіряємо чи slug вільний
+      // Перевіряємо чи slug вільний (select без telegramWebhookSetAt)
       let finalSlug = slug
       let counter = 1
-      while (await prisma.business.findUnique({ where: { slug: finalSlug } })) {
+      while (await prisma.business.findUnique({ where: { slug: finalSlug }, select: { id: true } })) {
         finalSlug = `${slug}-${counter}`
         counter++
       }
@@ -123,6 +125,7 @@ export async function GET(request: Request) {
           niche: 'OTHER',
           customNiche: null,
         },
+        select: { id: true, googleId: true, email: true, name: true, logo: true, slug: true, niche: true, customNiche: true },
       })
 
       // КРИТИЧНО ВАЖЛИВО: Автоматично реєструємо в Центрі управління (ПОВНЕ ДУБЛЮВАННЯ)

@@ -30,17 +30,23 @@ export async function POST(request: Request) {
     const userAgent = getUserAgent(request)
     const currentDeviceId = deviceId || generateDeviceId(clientIp, userAgent)
     
-    // КРОК 1: Перевіряємо чи акаунт вже існує
-    // Спочатку перевіряємо в Business.telegramId
+    // КРОК 1: Перевіряємо чи акаунт вже існує (явний select — без telegramWebhookSetAt)
+    const businessFieldsSelect = {
+      id: true, telegramId: true, businessIdentifier: true, avatar: true, trustedDevices: true,
+      name: true, slug: true, email: true, phone: true, address: true, description: true,
+      logo: true, primaryColor: true, secondaryColor: true, backgroundColor: true, surfaceColor: true,
+      isActive: true, profileCompleted: true, niche: true, customNiche: true,
+    }
     let business = await prisma.business.findUnique({
-      where: { telegramId }
+      where: { telegramId },
+      select: businessFieldsSelect,
     })
-    
+
     // Якщо не знайдено в Business - перевіряємо в TelegramUser
     if (!business) {
       const telegramUser = await prisma.telegramUser.findUnique({
         where: { telegramId },
-        include: { business: true }
+        include: { business: { select: businessFieldsSelect } }
       })
       
       if (telegramUser?.business) {
@@ -64,7 +70,7 @@ export async function POST(request: Request) {
         businessIdentifier = await generateBusinessIdentifier()
       }
 
-      // Оновлюємо дані бізнесу
+      // Оновлюємо дані бізнесу (select без telegramWebhookSetAt)
       const updatedBusiness = await prisma.business.update({
         where: { id: business.id },
         data: {
@@ -72,7 +78,8 @@ export async function POST(request: Request) {
           avatar: telegramData.photo_url || business.avatar,
           telegramId: business.telegramId || telegramId, // Переконаємося що telegramId встановлено
           businessIdentifier: businessIdentifier, // Оновлюємо businessIdentifier
-        }
+        },
+        select: { id: true, trustedDevices: true },
       })
 
       // Отримуємо або створюємо TelegramUser
@@ -184,7 +191,8 @@ export async function POST(request: Request) {
     // КРОК 3: Якщо businessId вказано (реєстрація з нового пристрою) - прив'язуємо до бізнесу
     if (businessId) {
       const business = await prisma.business.findUnique({
-        where: { id: businessId }
+        where: { id: businessId },
+        select: { id: true, trustedDevices: true },
       })
 
       if (!business) {
@@ -270,9 +278,10 @@ export async function POST(request: Request) {
       ? `${telegramData.username}@telegram.xbase.online`
       : `telegram-${telegramData.id}@xbase.online`
 
-    // 4.1. Перевіряємо, чи існує бізнес з таким email (щоб не дублювати акаунт)
+    // 4.1. Перевіряємо, чи існує бізнес з таким email (select без telegramWebhookSetAt)
     const existingByEmail = await prisma.business.findUnique({
-      where: { email }
+      where: { email },
+      select: { id: true, businessIdentifier: true, avatar: true, trustedDevices: true },
     })
 
     if (existingByEmail) {
@@ -282,7 +291,7 @@ export async function POST(request: Request) {
         businessIdentifier = await generateBusinessIdentifier()
       }
 
-      // Оновлюємо існуючий бізнес: прив'язуємо Telegram
+      // Оновлюємо існуючий бізнес: прив'язуємо Telegram (select без telegramWebhookSetAt)
       const updatedBusiness = await prisma.business.update({
         where: { id: existingByEmail.id },
         data: {
@@ -290,7 +299,8 @@ export async function POST(request: Request) {
           telegramChatId: telegramData.id.toString(),
           avatar: telegramData.photo_url || existingByEmail.avatar,
           businessIdentifier: businessIdentifier, // Оновлюємо businessIdentifier
-        }
+        },
+        select: { id: true, trustedDevices: true, name: true, slug: true, email: true, phone: true, address: true, description: true, logo: true, avatar: true, primaryColor: true, secondaryColor: true, backgroundColor: true, surfaceColor: true, isActive: true, businessIdentifier: true, profileCompleted: true, niche: true, customNiche: true },
       })
 
       // Додаємо пристрій до довірених
@@ -400,7 +410,7 @@ export async function POST(request: Request) {
     let slug = baseSlug
     let counter = 1
     
-    while (await prisma.business.findUnique({ where: { slug } })) {
+    while (await prisma.business.findUnique({ where: { slug }, select: { id: true } })) {
       slug = `${baseSlug}-${counter}`
       counter++
     }
@@ -414,7 +424,7 @@ export async function POST(request: Request) {
     // Генеруємо унікальний ідентифікатор бізнесу
     const businessIdentifier = await generateBusinessIdentifier()
 
-    // Створюємо новий бізнес з додаванням пристрою до довірених
+    // Створюємо новий бізнес (select без telegramWebhookSetAt)
     const newBusiness = await prisma.business.create({
       data: {
         name: telegramData.first_name 
@@ -437,7 +447,8 @@ export async function POST(request: Request) {
         niche: 'OTHER',
         customNiche: null,
         trustedDevices: JSON.stringify([currentDeviceId]), // Додаємо поточний пристрій до довірених
-      }
+      },
+      select: { id: true, name: true, slug: true, email: true, phone: true, address: true, description: true, logo: true, avatar: true, primaryColor: true, secondaryColor: true, backgroundColor: true, surfaceColor: true, isActive: true, businessIdentifier: true, profileCompleted: true, niche: true, customNiche: true },
     })
 
     // Реєструємо в Центрі управління
@@ -533,11 +544,12 @@ export async function POST(request: Request) {
     console.error('Telegram OAuth error:', error)
     
     if (error.code === 'P2002' && telegramData) {
-      // Якщо помилка унікальності - спробуємо знайти існуючий акаунт
+      // Якщо помилка унікальності - спробуємо знайти існуючий акаунт (select без telegramWebhookSetAt)
       try {
         const telegramId = BigInt(telegramData.id)
         const business = await prisma.business.findUnique({
-          where: { telegramId }
+          where: { telegramId },
+          select: { id: true, name: true, slug: true, email: true, phone: true, address: true, description: true, logo: true, avatar: true, primaryColor: true, secondaryColor: true, backgroundColor: true, surfaceColor: true, isActive: true, businessIdentifier: true, profileCompleted: true, niche: true, customNiche: true },
         })
         
         if (business) {

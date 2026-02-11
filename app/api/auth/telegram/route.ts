@@ -97,12 +97,12 @@ export async function POST(request: NextRequest) {
         (body.username || name || 'telegram-business') + '-' + String(body.id).slice(-4)
       )
 
-      // Гарантуємо унікальний slug
+      // Гарантуємо унікальний slug (select без telegramWebhookSetAt)
       let slug = baseSlug
       let counter = 1
       // eslint-disable-next-line no-constant-condition
       while (true) {
-        const existing = await prisma.business.findUnique({ where: { slug } })
+        const existing = await prisma.business.findUnique({ where: { slug }, select: { id: true } })
         if (!existing) break
         slug = `${baseSlug}-${counter++}`
       }

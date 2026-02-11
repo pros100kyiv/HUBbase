@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     const body = await request.json()
     const validated = resetPasswordSchema.parse(body)
 
-    // Шукаємо бізнес за токеном
+    // Шукаємо бізнес за токеном (select без telegramWebhookSetAt)
     const business = await prisma.business.findFirst({
       where: {
         resetToken: validated.token,
@@ -21,6 +21,7 @@ export async function POST(request: Request) {
           gt: new Date(), // Токен ще не закінчився
         },
       },
+      select: { id: true },
     })
 
     if (!business) {
