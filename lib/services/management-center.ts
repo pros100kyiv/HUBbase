@@ -26,8 +26,22 @@ export async function syncBusinessToManagementCenter(businessId: string) {
       throw tableError
     }
 
+    // Явний select без telegramWebhookSetAt — стійкість до відсутньої колонки в БД
     const business = await prisma.business.findUnique({
       where: { id: businessId },
+      select: {
+        id: true, name: true, slug: true, email: true, password: true, resetToken: true, resetTokenExpiry: true,
+        googleId: true, telegramId: true, phone: true, address: true, description: true, logo: true, avatar: true,
+        primaryColor: true, secondaryColor: true, backgroundColor: true, surfaceColor: true, hideRevenue: true,
+        isActive: true, niche: true, customNiche: true, businessIdentifier: true, profileCompleted: true, settings: true,
+        businessCardBackgroundImage: true, slogan: true, additionalInfo: true, socialMedia: true, workingHours: true,
+        location: true, telegramBotToken: true, telegramChatId: true, telegramNotificationsEnabled: true,
+        telegramSettings: true, aiChatEnabled: true, aiProvider: true, aiApiKey: true, aiSettings: true,
+        smsProvider: true, smsApiKey: true, smsSender: true, emailProvider: true, emailApiKey: true,
+        emailFrom: true, emailFromName: true, paymentProvider: true, paymentApiKey: true, paymentMerchantId: true,
+        paymentEnabled: true, remindersEnabled: true, reminderSmsEnabled: true, reminderEmailEnabled: true,
+        createdAt: true,
+      },
     })
 
     if (!business) {
@@ -338,12 +352,7 @@ export async function updateBusinessPhoneInDirectory(
       })
     }
 
-    // Оновлюємо в Центрі управління (синхронізуємо всі дані)
-    const business = await prisma.business.findUnique({
-      where: { id: businessId },
-    })
-
-    // Використовуємо функцію синхронізації для оновлення всіх даних
+    // Оновлюємо в Центрі управління (синхронізуємо всі дані; sync робить свій findUnique з select)
     await syncBusinessToManagementCenter(businessId)
   } catch (error) {
     console.error('Error updating business phone in directory:', error)
@@ -394,6 +403,7 @@ export async function updateLastLogin(businessId: string) {
 export async function syncAllBusinessesToManagementCenter() {
   const businesses = await prisma.business.findMany({
     orderBy: { createdAt: 'desc' },
+    select: { id: true },
   })
 
   let synced = 0
