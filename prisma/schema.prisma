@@ -76,6 +76,7 @@ model Business {
   telegramChatId               String? // ID чату для сповіщень
   telegramNotificationsEnabled Boolean             @default(false) // Чи увімкнені сповіщення
   telegramSettings             String? // JSON: налаштування бота (розсилки, команди тощо)
+  telegramWebhookSetAt         DateTime? // Коли останній раз успішно встановлено webhook (щоб після оновлення сторінки показувати «Готово»)
   // AI Чат
   aiChatEnabled                Boolean             @default(false) // Чи увімкнений AI чат
   aiProvider                   String? // 'gemini', 'openai'

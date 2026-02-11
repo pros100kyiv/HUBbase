@@ -47,6 +47,11 @@ export async function POST(request: NextRequest) {
       }, { status: 502 })
     }
 
+    await prisma.business.update({
+      where: { id: business.id },
+      data: { telegramWebhookSetAt: new Date() },
+    })
+
     return NextResponse.json({
       success: true,
       message: 'Готово! Повідомлення з Telegram тепер будуть приходити в кабінет.',

@@ -49,7 +49,7 @@ export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) 
     }
     fetch(`/api/telegram/webhook?businessId=${business.id}`)
       .then((res) => res.json())
-      .then((data) => setWebhookSet(!!data?.webhook?.url))
+      .then((data) => setWebhookSet(!!data?.webhook?.url || !!data?.telegramWebhookSetAt))
       .catch(() => setWebhookSet(false))
   }, [business.id, business.telegramBotToken])
 

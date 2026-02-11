@@ -75,7 +75,8 @@ export async function GET(request: NextRequest) {
       select: {
         id: true,
         name: true,
-        telegramBotToken: true
+        telegramBotToken: true,
+        telegramWebhookSetAt: true
       }
     })
 
@@ -86,7 +87,7 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Перевіряємо webhook через Telegram API
+    // Перевіряємо webhook через Telegram API (опційно; якщо не вдасться — покладаємось на telegramWebhookSetAt)
     const webhookInfo = await fetch(`https://api.telegram.org/bot${business.telegramBotToken}/getWebhookInfo`)
       .then(res => res.json())
       .catch(() => null)
@@ -97,7 +98,8 @@ export async function GET(request: NextRequest) {
         id: business.id,
         name: business.name
       },
-      webhook: webhookInfo?.result || null
+      webhook: webhookInfo?.result || null,
+      telegramWebhookSetAt: business.telegramWebhookSetAt?.toISOString() ?? null
     })
   } catch (error: any) {
     return NextResponse.json({ 
