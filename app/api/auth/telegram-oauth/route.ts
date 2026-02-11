@@ -311,7 +311,7 @@ export async function POST(request: Request) {
           avatar: telegramData.photo_url || existingByEmail.avatar,
           businessIdentifier: businessIdentifier, // Оновлюємо businessIdentifier
         },
-        select: { id: true, trustedDevices: true, name: true, slug: true, email: true, phone: true, address: true, description: true, logo: true, avatar: true, primaryColor: true, secondaryColor: true, backgroundColor: true, surfaceColor: true, isActive: true, businessIdentifier: true, profileCompleted: true, niche: true, customNiche: true },
+        select: { id: true, trustedDevices: true, name: true, slug: true, email: true, phone: true, address: true, description: true, logo: true, avatar: true, primaryColor: true, secondaryColor: true, backgroundColor: true, surfaceColor: true, isActive: true, businessIdentifier: true, profileCompleted: true, niche: true, customNiche: true, telegramChatId: true },
       })
 
       // Додаємо пристрій до довірених
