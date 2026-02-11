@@ -21,6 +21,7 @@ function RegisterForm() {
   const [isLoading, setIsLoading] = useState(false)
   const [showErrorToast, setShowErrorToast] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [showLoginLinkInToast, setShowLoginLinkInToast] = useState(false)
   
   // Перевіряємо параметри URL на наявність помилок
   useEffect(() => {
@@ -69,8 +70,8 @@ function RegisterForm() {
       const data = await response.json()
 
       if (!response.ok) {
-        // Показуємо маленьке вікно з помилкою
         setErrorMessage(data.error || 'Помилка при реєстрації')
+        setShowLoginLinkInToast(response.status === 409)
         setShowErrorToast(true)
         setErrors({ submit: data.error || 'Помилка при реєстрації' })
         setIsLoading(false)
@@ -220,7 +221,12 @@ function RegisterForm() {
       </form>
 
       {showErrorToast && (
-        <ErrorToast message={errorMessage} onClose={() => setShowErrorToast(false)} />
+        <ErrorToast
+          message={errorMessage}
+          onClose={() => setShowErrorToast(false)}
+          showLoginLink={showLoginLinkInToast}
+          onLogin={() => { setShowErrorToast(false); router.push('/login') }}
+        />
       )}
     </AuthLayout>
   )

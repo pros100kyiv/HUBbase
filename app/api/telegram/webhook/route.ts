@@ -70,15 +70,31 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const business = await prisma.business.findUnique({
-      where: { id: businessId },
-      select: {
-        id: true,
-        name: true,
-        telegramBotToken: true,
-        telegramWebhookSetAt: true
-      }
-    })
+    let business: { id: string; name: string; telegramBotToken: string | null; telegramWebhookSetAt?: Date | null } | null = null
+    try {
+      business = await prisma.business.findUnique({
+        where: { id: businessId },
+        select: {
+          id: true,
+          name: true,
+          telegramBotToken: true,
+          telegramWebhookSetAt: true
+        }
+      })
+    } catch (colErr: any) {
+      // Якщо колонки telegramWebhookSetAt ще немає (міграція не застосована), запитуємо без неї
+      if (colErr?.message?.includes('telegramWebhookSetAt') || colErr?.message?.includes('does not exist')) {
+        business = await prisma.business.findUnique({
+          where: { id: businessId },
+          select: {
+            id: true,
+            name: true,
+            telegramBotToken: true
+          }
+        }) as typeof business
+        if (business) (business as any).telegramWebhookSetAt = null
+      } else throw colErr
+    }
 
     if (!business || !business.telegramBotToken) {
       return NextResponse.json({ 
@@ -87,7 +103,6 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Перевіряємо webhook через Telegram API (опційно; якщо не вдасться — покладаємось на telegramWebhookSetAt)
     const webhookInfo = await fetch(`https://api.telegram.org/bot${business.telegramBotToken}/getWebhookInfo`)
       .then(res => res.json())
       .catch(() => null)
@@ -99,7 +114,9 @@ export async function GET(request: NextRequest) {
         name: business.name
       },
       webhook: webhookInfo?.result || null,
-      telegramWebhookSetAt: business.telegramWebhookSetAt?.toISOString() ?? null
+      telegramWebhookSetAt: business.telegramWebhookSetAt instanceof Date
+        ? business.telegramWebhookSetAt.toISOString()
+        : null
     })
   } catch (error: any) {
     return NextResponse.json({ 

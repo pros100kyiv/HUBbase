@@ -7,9 +7,12 @@ interface ErrorToastProps {
   onClose: () => void
   needsRegistration?: boolean
   onRegister?: () => void
+  /** Показати кнопку «Увійти» (на сторінці реєстрації при помилці типу «email вже зайнятий») */
+  showLoginLink?: boolean
+  onLogin?: () => void
 }
 
-export function ErrorToast({ message, onClose, needsRegistration, onRegister }: ErrorToastProps) {
+export function ErrorToast({ message, onClose, needsRegistration, onRegister, showLoginLink, onLogin }: ErrorToastProps) {
   const [isVisible, setIsVisible] = useState(true)
 
   useEffect(() => {
@@ -57,6 +60,18 @@ export function ErrorToast({ message, onClose, needsRegistration, onRegister }: 
                 className="touch-target mt-2 min-h-[44px] text-white text-sm font-medium underline hover:no-underline"
               >
                 Зареєструватися
+              </button>
+            )}
+            {showLoginLink && onLogin && (
+              <button
+                type="button"
+                onClick={() => {
+                  handleClose()
+                  onLogin()
+                }}
+                className="touch-target mt-2 min-h-[44px] text-white text-sm font-medium underline hover:no-underline"
+              >
+                Увійти
               </button>
             )}
           </div>

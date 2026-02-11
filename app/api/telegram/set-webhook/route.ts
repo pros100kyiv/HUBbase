@@ -47,10 +47,17 @@ export async function POST(request: NextRequest) {
       }, { status: 502 })
     }
 
-    await prisma.business.update({
-      where: { id: business.id },
-      data: { telegramWebhookSetAt: new Date() },
-    })
+    try {
+      await prisma.business.update({
+        where: { id: business.id },
+        data: { telegramWebhookSetAt: new Date() },
+      })
+    } catch (updateErr: any) {
+      // Якщо колонки telegramWebhookSetAt ще немає (міграція не застосована), не ламаємо відповідь
+      if (!updateErr?.message?.includes('telegramWebhookSetAt') && !updateErr?.message?.includes('does not exist')) {
+        throw updateErr
+      }
+    }
 
     return NextResponse.json({
       success: true,
