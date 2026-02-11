@@ -560,7 +560,7 @@ export async function POST(request: Request) {
         const telegramId = BigInt(telegramData.id)
         const business = await prisma.business.findUnique({
           where: { telegramId },
-          select: { id: true, name: true, slug: true, email: true, phone: true, address: true, description: true, logo: true, avatar: true, primaryColor: true, secondaryColor: true, backgroundColor: true, surfaceColor: true, isActive: true, businessIdentifier: true, profileCompleted: true, niche: true, customNiche: true },
+          select: { id: true, name: true, slug: true, email: true, phone: true, address: true, description: true, logo: true, avatar: true, primaryColor: true, secondaryColor: true, backgroundColor: true, surfaceColor: true, isActive: true, businessIdentifier: true, profileCompleted: true, niche: true, customNiche: true, telegramChatId: true },
         })
         
         if (business) {
