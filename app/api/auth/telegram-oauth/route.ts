@@ -197,7 +197,12 @@ export async function POST(request: Request) {
     if (businessId) {
       const business = await prisma.business.findUnique({
         where: { id: businessId },
-        select: { id: true, trustedDevices: true },
+        select: {
+          id: true, trustedDevices: true, avatar: true, name: true, slug: true, email: true,
+          phone: true, address: true, description: true, logo: true, primaryColor: true,
+          secondaryColor: true, backgroundColor: true, surfaceColor: true, isActive: true,
+          businessIdentifier: true, profileCompleted: true,
+        },
       })
 
       if (!business) {
@@ -211,13 +216,14 @@ export async function POST(request: Request) {
         data: { trustedDevices: updatedTrustedDevices }
       })
 
-      // Оновлюємо telegramId в бізнесі
+      // Оновлюємо telegramId в бізнесі (business має avatar з select вище)
+      const currentAvatar = (business as { avatar?: string | null }).avatar
       await prisma.business.update({
         where: { id: business.id },
         data: {
           telegramId: telegramId,
           telegramChatId: telegramData.id.toString(),
-          avatar: telegramData.photo_url || business.avatar
+          avatar: telegramData.photo_url || currentAvatar
         }
       })
 
