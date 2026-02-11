@@ -91,7 +91,7 @@ export async function GET(request: Request) {
           { email: email.toLowerCase() },
         ],
       },
-      select: { id: true, googleId: true, email: true, name: true, logo: true, slug: true, niche: true, customNiche: true },
+      select: { id: true, googleId: true, email: true, name: true, logo: true, slug: true, niche: true, customNiche: true, isActive: true, phone: true, address: true, description: true, primaryColor: true, secondaryColor: true, backgroundColor: true, surfaceColor: true },
     })
 
     if (business) {
@@ -100,7 +100,7 @@ export async function GET(request: Request) {
         business = await prisma.business.update({
           where: { id: business.id },
           data: { googleId },
-          select: { id: true, googleId: true, email: true, name: true, logo: true, slug: true, niche: true, customNiche: true },
+          select: { id: true, googleId: true, email: true, name: true, logo: true, slug: true, niche: true, customNiche: true, isActive: true, phone: true, address: true, description: true, primaryColor: true, secondaryColor: true, backgroundColor: true, surfaceColor: true },
         })
       }
     } else {
@@ -125,7 +125,7 @@ export async function GET(request: Request) {
           niche: 'OTHER',
           customNiche: null,
         },
-        select: { id: true, googleId: true, email: true, name: true, logo: true, slug: true, niche: true, customNiche: true },
+        select: { id: true, googleId: true, email: true, name: true, logo: true, slug: true, niche: true, customNiche: true, isActive: true, phone: true, address: true, description: true, primaryColor: true, secondaryColor: true, backgroundColor: true, surfaceColor: true },
       })
 
       // КРИТИЧНО ВАЖЛИВО: Автоматично реєструємо в Центрі управління (ПОВНЕ ДУБЛЮВАННЯ)
