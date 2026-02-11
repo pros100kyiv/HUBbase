@@ -52,6 +52,7 @@ export async function POST(request: Request) {
     await prisma.business.update({
       where: { id: business.id },
       data: { password: hashedPassword },
+      select: { id: true },
     })
 
     try {

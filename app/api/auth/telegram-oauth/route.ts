@@ -56,7 +56,8 @@ export async function POST(request: Request) {
         if (!business.telegramId) {
           await prisma.business.update({
             where: { id: business.id },
-            data: { telegramId }
+            data: { telegramId },
+            select: { id: true },
           })
         }
       }
@@ -119,11 +120,12 @@ export async function POST(request: Request) {
         })
       }
 
-      // Додаємо пристрій до довірених (OAuth підтвердження = довіра)
+      // Додаємо пристрій до довірених (OAuth підтвердження = довіра) (select без telegramWebhookSetAt)
       const updatedTrustedDevices = addTrustedDevice(updatedBusiness.trustedDevices, currentDeviceId)
       await prisma.business.update({
         where: { id: business.id },
-        data: { trustedDevices: updatedTrustedDevices }
+        data: { trustedDevices: updatedTrustedDevices },
+        select: { id: true },
       })
 
       // Оновлюємо інтеграцію
@@ -209,11 +211,12 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Business not found' }, { status: 404 })
       }
 
-      // Додаємо пристрій до довірених
+      // Додаємо пристрій до довірених (select без telegramWebhookSetAt)
       const updatedTrustedDevices = addTrustedDevice(business.trustedDevices, currentDeviceId)
       await prisma.business.update({
         where: { id: business.id },
-        data: { trustedDevices: updatedTrustedDevices }
+        data: { trustedDevices: updatedTrustedDevices },
+        select: { id: true },
       })
 
       // Оновлюємо telegramId в бізнесі (business має avatar з select вище)
@@ -224,7 +227,8 @@ export async function POST(request: Request) {
           telegramId: telegramId,
           telegramChatId: telegramData.id.toString(),
           avatar: telegramData.photo_url || currentAvatar
-        }
+        },
+        select: { id: true },
       })
 
       // Створюємо або оновлюємо TelegramUser
@@ -314,11 +318,12 @@ export async function POST(request: Request) {
         select: { id: true, trustedDevices: true, name: true, slug: true, email: true, phone: true, address: true, description: true, logo: true, avatar: true, primaryColor: true, secondaryColor: true, backgroundColor: true, surfaceColor: true, isActive: true, businessIdentifier: true, profileCompleted: true, niche: true, customNiche: true, telegramChatId: true },
       })
 
-      // Додаємо пристрій до довірених
+      // Додаємо пристрій до довірених (select без telegramWebhookSetAt)
       const updatedTrustedDevices = addTrustedDevice(updatedBusiness.trustedDevices, currentDeviceId)
       await prisma.business.update({
         where: { id: updatedBusiness.id },
-        data: { trustedDevices: updatedTrustedDevices }
+        data: { trustedDevices: updatedTrustedDevices },
+        select: { id: true },
       })
 
       // Створюємо або оновлюємо TelegramUser

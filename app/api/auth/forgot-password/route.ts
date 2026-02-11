@@ -37,13 +37,14 @@ export async function POST(request: Request) {
     const resetTokenExpiry = new Date()
     resetTokenExpiry.setHours(resetTokenExpiry.getHours() + 1) // Токен дійсний 1 годину
 
-    // Зберігаємо токен в базі даних
+    // Зберігаємо токен в базі даних (select без telegramWebhookSetAt)
     await prisma.business.update({
       where: { id: business.id },
       data: {
         resetToken,
         resetTokenExpiry,
       },
+      select: { id: true },
     })
 
     // Формуємо посилання для відновлення

@@ -34,7 +34,7 @@ export async function POST(request: Request) {
     // Хешуємо новий пароль
     const hashedPassword = await hashPassword(validated.password)
 
-    // Оновлюємо пароль та очищаємо токен
+    // Оновлюємо пароль та очищаємо токен (select без telegramWebhookSetAt)
     await prisma.business.update({
       where: { id: business.id },
       data: {
@@ -42,6 +42,7 @@ export async function POST(request: Request) {
         resetToken: null,
         resetTokenExpiry: null,
       },
+      select: { id: true },
     })
 
     // Синхронізуємо з ManagementCenter

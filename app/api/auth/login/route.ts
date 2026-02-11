@@ -78,11 +78,12 @@ export async function POST(request: Request) {
       // Не викидаємо помилку, щоб не зламати логін
     }
 
-    // Додаємо пристрій до довірених при успішному вході
+    // Додаємо пристрій до довірених при успішному вході (select без telegramWebhookSetAt)
     const updatedTrustedDevices = addTrustedDevice(businessWithDevices?.trustedDevices || null, deviceId)
     await prisma.business.update({
       where: { id: businessAuth.id },
-      data: { trustedDevices: updatedTrustedDevices }
+      data: { trustedDevices: updatedTrustedDevices },
+      select: { id: true },
     })
 
     // Синхронізуємо з ManagementCenter

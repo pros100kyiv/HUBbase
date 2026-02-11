@@ -50,6 +50,7 @@ export async function POST(request: Request) {
     await prisma.business.update({
       where: { id: business.id },
       data: { resetToken, resetTokenExpiry },
+      select: { id: true },
     })
 
     const resetUrl = `/reset-password?token=${resetToken}`
