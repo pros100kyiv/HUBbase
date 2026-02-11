@@ -70,7 +70,7 @@ export async function POST(request: Request) {
         businessIdentifier = await generateBusinessIdentifier()
       }
 
-      // Оновлюємо дані бізнесу (select без telegramWebhookSetAt)
+      // Оновлюємо дані бізнесу (select без telegramWebhookSetAt; потрібні поля для відповіді)
       const updatedBusiness = await prisma.business.update({
         where: { id: business.id },
         data: {
@@ -79,7 +79,12 @@ export async function POST(request: Request) {
           telegramId: business.telegramId || telegramId, // Переконаємося що telegramId встановлено
           businessIdentifier: businessIdentifier, // Оновлюємо businessIdentifier
         },
-        select: { id: true, trustedDevices: true },
+        select: {
+          id: true, trustedDevices: true, name: true, slug: true, email: true, phone: true,
+          address: true, description: true, logo: true, avatar: true, primaryColor: true,
+          secondaryColor: true, backgroundColor: true, surfaceColor: true, isActive: true,
+          telegramChatId: true, businessIdentifier: true, profileCompleted: true,
+        },
       })
 
       // Отримуємо або створюємо TelegramUser
