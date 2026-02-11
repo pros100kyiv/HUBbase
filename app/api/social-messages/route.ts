@@ -5,7 +5,8 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const businessId = searchParams.get('businessId')
-    const limit = Math.min(parseInt(searchParams.get('limit') || '50', 10), 100)
+    const limitRaw = parseInt(searchParams.get('limit') || '50', 10)
+    const limit = Number.isNaN(limitRaw) || limitRaw < 1 ? 50 : Math.min(limitRaw, 100)
 
     if (!businessId) {
       return NextResponse.json({ error: 'businessId is required' }, { status: 400 })

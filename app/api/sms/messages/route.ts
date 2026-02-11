@@ -1,64 +1,41 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
-interface SMSMessageWithClient {
-  id: string
-  phone: string
-  message: string
-  status: string
-  createdAt: Date
-  client: {
-    id: string
-    name: string
-    phone: string
-  } | null
-}
-
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const businessId = searchParams.get('businessId')
-    const limit = parseInt(searchParams.get('limit') || '5')
-    
+    const limitRaw = parseInt(searchParams.get('limit') || '5', 10)
+    const limit = Number.isNaN(limitRaw) || limitRaw < 1 ? 5 : Math.min(limitRaw, 100)
+
     if (!businessId) {
       return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
     }
 
-    // Отримуємо останні SMS повідомлення
-    // Prisma генерує sMSMessage для моделі SMSMessage
-    const smsMessages = await (prisma as any).sMSMessage.findMany({
-      where: {
-        businessId
-      },
+    // Отримуємо останні SMS повідомлення (Prisma: модель SMSMessage → sMSMessage)
+    const smsMessages = await prisma.sMSMessage.findMany({
+      where: { businessId },
       include: {
         client: {
-          select: {
-            id: true,
-            name: true,
-            phone: true
-          }
+          select: { id: true, name: true, phone: true }
         }
       },
       orderBy: { createdAt: 'desc' },
       take: limit
-    }) as SMSMessageWithClient[]
+    })
 
-    // Формуємо повідомлення
-    const messages = smsMessages.map((msg: SMSMessageWithClient) => ({
+    const messages = smsMessages.map((msg) => ({
       id: msg.id,
       phone: msg.phone,
       message: msg.message,
       status: msg.status,
       createdAt: msg.createdAt.toISOString(),
-      clientName: msg.client?.name || undefined
+      clientName: msg.client?.name ?? undefined
     }))
 
-    // Рахуємо непрочитані (pending)
-    const unreadCount = await (prisma as any).sMSMessage.count({
-      where: {
-        businessId,
-        status: 'pending'
-      }
+    // Кількість повідомлень зі статусом pending (відправляються / очікують)
+    const unreadCount = await prisma.sMSMessage.count({
+      where: { businessId, status: 'pending' }
     })
 
     return NextResponse.json({

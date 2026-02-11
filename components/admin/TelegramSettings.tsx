@@ -19,7 +19,8 @@ export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) 
   const [telegramUsers, setTelegramUsers] = useState<any[]>([])
   const [activePasswords, setActivePasswords] = useState<any[]>([])
   const [clientPasswordCount, setClientPasswordCount] = useState(1)
-  const [settingPhoto, setSettingPhoto] = useState(false)
+  const [webhookSet, setWebhookSet] = useState<boolean | null>(null)
+  const [settingWebhook, setSettingWebhook] = useState(false)
 
   const loadData = () => {
     if (business.id) {
@@ -39,6 +40,46 @@ export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) 
   useEffect(() => {
     loadData()
   }, [business.id])
+
+  // Статус webhook для отримання повідомлень у кабінеті
+  useEffect(() => {
+    if (!business.id || !business.telegramBotToken) {
+      setWebhookSet(null)
+      return
+    }
+    fetch(`/api/telegram/webhook?businessId=${business.id}`)
+      .then((res) => res.json())
+      .then((data) => setWebhookSet(!!data?.webhook?.url))
+      .catch(() => setWebhookSet(false))
+  }, [business.id, business.telegramBotToken])
+
+  const enableMessagesInCabinet = async () => {
+    if (!business.id || settingWebhook) return
+    const { toast } = await import('@/components/ui/toast')
+    const ok = typeof window !== 'undefined' && window.confirm(
+      'Підтвердити? Повідомлення з Telegram-бота будуть з\'являтися в кабінеті (Соцмережі → Повідомлення).'
+    )
+    if (!ok) return
+    setSettingWebhook(true)
+    try {
+      const res = await fetch('/api/telegram/set-webhook', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessId: business.id }),
+      })
+      const data = await res.json()
+      if (data.success) {
+        setWebhookSet(true)
+        toast({ title: 'Готово!', description: data.message || 'Повідомлення тепер надходять у кабінет.', type: 'success', duration: 5000 })
+      } else {
+        toast({ title: 'Помилка', description: data.error || 'Спробуйте пізніше.', type: 'error', duration: 5000 })
+      }
+    } catch (e) {
+      toast({ title: 'Помилка', description: 'Не вдалося налаштувати.', type: 'error' })
+    } finally {
+      setSettingWebhook(false)
+    }
+  }
 
   const generatePassword = async (role: 'ADMIN' | 'CLIENT', count: number = 1) => {
     try {
@@ -97,46 +138,43 @@ export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) 
         }}
       />
 
-      {/* Інформація про токен та логотип бота */}
+      {/* Інформація про токен бота */}
       {telegramBotToken && (
-        <div className="card-candy p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 space-y-3">
+        <div className="card-candy p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
           <p className="text-sm font-medium text-green-800 dark:text-green-200">
             ✅ Токен бота встановлено автоматично при реєстрації
           </p>
           <p className="text-xs text-green-600 dark:text-green-400 mt-1">
             Токен: {telegramBotToken.substring(0, 10)}...
           </p>
-          <div className="pt-2 border-t border-green-200 dark:border-green-800">
-            <p className="text-xs text-green-700 dark:text-green-300 mb-2">Логотип бота (як у проекті Xbase)</p>
-            <Button
-              size="sm"
-              disabled={settingPhoto}
-              onClick={async () => {
-                setSettingPhoto(true)
-                try {
-                  const res = await fetch('/api/telegram/set-bot-photo', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ businessId: business.id }),
-                  })
-                  const data = await res.json()
-                  const { toast } = await import('@/components/ui/toast')
-                  if (data.success) {
-                    toast({ title: 'Готово', description: 'Фото бота оновлено на логотип проекту.', type: 'success' })
-                  } else {
-                    toast({ title: 'Не вдалося встановити фото', description: data.error || 'Спробуйте пізніше або завантажте public/icon.png в @BotFather → Edit Bot → Edit Botpic.', type: 'error', duration: 6000 })
-                  }
-                } catch (e) {
-                  const { toast } = await import('@/components/ui/toast')
-                  toast({ title: 'Помилка', description: 'Помилка запиту', type: 'error' })
-                } finally {
-                  setSettingPhoto(false)
-                }
-              }}
-            >
-              {settingPhoto ? 'Встановлення…' : 'Встановити логотип бота'}
-            </Button>
-          </div>
+        </div>
+      )}
+
+      {/* Отримання повідомлень у кабінеті — один клік: Натиснути → Підтвердити → Готово */}
+      {telegramBotToken && (
+        <div className="card-candy p-4 bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800">
+          <h3 className="text-sm font-black text-foreground mb-2">📬 Повідомлення в кабінеті</h3>
+          {webhookSet === null ? (
+            <p className="text-xs text-gray-500">Перевірка...</p>
+          ) : webhookSet ? (
+            <p className="text-sm text-sky-800 dark:text-sky-200">
+              Готово. Повідомлення з Telegram надходять у розділ <strong>Соцмережі → Повідомлення</strong>.
+            </p>
+          ) : (
+            <>
+              <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+                Увімкніть отримання повідомлень — один клік, підтвердження, готово.
+              </p>
+              <Button
+                size="sm"
+                disabled={settingWebhook}
+                onClick={enableMessagesInCabinet}
+                className="bg-sky-600 hover:bg-sky-700 text-white"
+              >
+                {settingWebhook ? 'Налаштування…' : 'Увімкнути отримання повідомлень'}
+              </Button>
+            </>
+          )}
         </div>
       )}
 
@@ -318,8 +356,8 @@ export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) 
         <h3 className="text-sm font-black text-foreground mb-2">📋 Інструкції</h3>
         <ol className="text-xs text-gray-700 dark:text-gray-300 space-y-1 list-decimal list-inside">
           <li>Токен бота встановлено автоматично при реєстрації</li>
+          <li>Натисніть «Увімкнути отримання повідомлень» — підтвердіть — готово</li>
           <li>Згенеруйте паролі для адміністратора та клієнтів</li>
-          <li>Налаштуйте webhook: <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">npm run telegram:webhook {business.id}</code></li>
           <li>Користувачі відправляють <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">/start &lt;пароль&gt;</code> боту</li>
         </ol>
       </div>

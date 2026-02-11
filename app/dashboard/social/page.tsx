@@ -7,6 +7,30 @@ import { cn } from '@/lib/utils'
 import { TelegramOAuth } from '@/components/admin/TelegramOAuth'
 import { SocialMessagesCard } from '@/components/admin/SocialMessagesCard'
 
+// Метадані платформ для іконок та опису (API повертає лише id, name, connected)
+const PLATFORM_META: Record<string, { icon: React.ReactNode; description: string }> = {
+  telegram: {
+    icon: <BotIcon className="w-5 h-5" />,
+    description: 'Отримуйте сповіщення та керуйте ботом',
+  },
+  instagram: {
+    icon: <span className="text-xl">📷</span>,
+    description: 'Скоро...',
+  },
+  whatsapp: {
+    icon: <PhoneIcon className="w-5 h-5" />,
+    description: 'Скоро...',
+  },
+  facebook: {
+    icon: <span className="text-xl">f</span>,
+    description: 'Скоро...',
+  },
+  viber: {
+    icon: <span className="text-xl">V</span>,
+    description: 'Скоро...',
+  },
+}
+
 export default function SocialPage() {
   const router = useRouter()
   const [business, setBusiness] = useState<any>(null)
@@ -38,7 +62,16 @@ export default function SocialPage() {
       const response = await fetch(`/api/social/integrations?businessId=${business.id}`)
       if (response.ok) {
         const data = await response.json()
-        setIntegrations(data.integrations || [])
+        const list = data.integrations || []
+        setIntegrations(
+          list.map((i: { id: string; name?: string; connected?: boolean }) => ({
+            ...i,
+            icon: PLATFORM_META[i.id]?.icon,
+            description: PLATFORM_META[i.id]?.description ?? 'Скоро...',
+            connected:
+              i.id === 'telegram' ? (i.connected || !!business?.telegramChatId) : i.connected,
+          }))
+        )
       } else {
         // Якщо API не існує, створюємо базовий список
         setIntegrations([

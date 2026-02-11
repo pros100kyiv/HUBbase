@@ -104,7 +104,7 @@ export async function POST(request: Request) {
         }))
       
       if (smsMessages.length > 0) {
-        await (prisma as any).sMSMessage.createMany({
+        await prisma.sMSMessage.createMany({
           data: smsMessages
         })
       }
