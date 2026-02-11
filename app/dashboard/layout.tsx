@@ -57,7 +57,11 @@ export default function DashboardLayout({
         const parsed = JSON.parse(businessData)
         setBusiness(parsed)
         const profileModalClosed = localStorage.getItem('profileModalClosed')
-        if (!parsed.profileCompleted && !profileModalClosed) {
+        const forceShowProfile = localStorage.getItem('showProfileModal') === '1'
+        if (forceShowProfile) {
+          localStorage.removeItem('showProfileModal')
+          setShowProfileModal(true)
+        } else if (!parsed.profileCompleted && !profileModalClosed) {
           setShowProfileModal(true)
         }
       } catch (e) {

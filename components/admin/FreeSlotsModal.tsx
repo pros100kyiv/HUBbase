@@ -5,6 +5,15 @@ import { format, isValid } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { ModalPortal } from '@/components/ui/modal-portal'
 
+/** Нормалізує час до HH:mm (двозначні години і хвилини) для коректного відображення і передачі в запис. */
+function normalizeTimeHHmm(t: string): string {
+  const match = t.trim().match(/^(\d{1,2}):(\d{2})$/)
+  if (!match) return t
+  const h = Math.max(0, Math.min(23, parseInt(match[1], 10) || 0))
+  const m = Math.max(0, Math.min(59, parseInt(match[2], 10) || 0))
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
 export interface FreeSlotsModalProps {
   isOpen: boolean
   onClose: () => void
@@ -74,7 +83,10 @@ export function FreeSlotsModal({
         const raw: unknown[] = Array.isArray(data?.availableSlots) ? data.availableSlots : []
         const times = raw
           .filter((s: unknown): s is string => typeof s === 'string')
-          .map((s: string) => (s.includes('T') ? s.slice(11, 16) : s))
+          .map((s: string) => {
+            const t = s.includes('T') ? s.slice(11, 16) : s
+            return normalizeTimeHHmm(t)
+          })
           .filter((t): t is string => Boolean(t))
         setFreeSlots(times)
         setFreeSlotsError(
@@ -212,7 +224,7 @@ export function FreeSlotsModal({
                       type="button"
                       onClick={() => {
                         onClose()
-                        onBookSlot(date, time)
+                        onBookSlot(date, normalizeTimeHHmm(time))
                       }}
                       className="flex-1 sm:flex-none px-3 py-2 rounded-lg bg-sky-500/20 border border-sky-500/40 text-sky-400 text-sm font-medium hover:bg-sky-500/30 transition-colors active:scale-[0.98]"
                     >

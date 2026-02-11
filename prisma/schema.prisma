@@ -118,6 +118,7 @@ model Business {
   clientSegments               ClientSegment[] // Сегменти клієнтів
   smsMessages                  SMSMessage[] // SMS повідомлення
   socialIntegrations           SocialIntegration[] // Інтеграції з соцмережами
+  socialInboxMessages          SocialInboxMessage[] // Вхідні/исхідні повідомлення з соцмереж (дубль в кабінет)
   notes                        Note[] // Нотатки
   modules                      BusinessModule[] // Модулі/розширення бізнесу
   createdAt                    DateTime            @default(now())
@@ -620,6 +621,29 @@ model SocialIntegration {
   @@index([businessId])
   @@index([platform])
   @@index([isConnected])
+}
+
+// Вхідні/исхідні повідомлення з соцмереж — відображаються в кабінеті, можливість відповісти
+model SocialInboxMessage {
+  id               String   @id @default(cuid())
+  businessId       String
+  business         Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  platform         String   // 'telegram', 'instagram', 'whatsapp', ...
+  direction        String   @default("inbound") // inbound | outbound
+  externalId       String?  // ID повідомлення в платформі (напр. message_id в Telegram)
+  externalChatId   String?  // ID чату для відповіді (напр. chat.id в Telegram)
+  senderId         String?  // ID відправника в платформі (напр. from.id)
+  senderName       String   // Відображуване ім'я
+  message         String   @db.Text
+  isRead           Boolean  @default(false)
+  replyToId        String?  // ID повідомлення, на яке це відповідь (в нашій БД)
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  @@index([businessId])
+  @@index([businessId, platform])
+  @@index([createdAt])
+  @@index([isRead])
 }
 
 // Нотатки

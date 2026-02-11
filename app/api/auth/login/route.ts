@@ -25,26 +25,30 @@ export async function POST(request: Request) {
 
     if (!businessAuth) {
       console.log('Authentication failed for email:', validated.email)
-      // Перевіряємо, чи користувач існує
       const existingBusiness = await prisma.business.findUnique({
         where: { email: validated.email.toLowerCase().trim() },
-        select: { id: true }
+        select: { id: true, password: true },
       })
-      
       if (!existingBusiness) {
         return NextResponse.json(
           {
             error: 'Ви ще не зареєстровані. Будь ласка, зареєструйтесь спочатку.',
-            needsRegistration: true
+            needsRegistration: true,
           },
           { status: 404 }
         )
       }
-      
+      if (!existingBusiness.password) {
+        return NextResponse.json(
+          {
+            error: 'У цього акаунту ще немає пароля (реєстрація через Telegram). Увійдіть через Telegram, потім у Налаштуваннях → Інформація створіть пароль для входу по пошті.',
+            noPasswordSet: true,
+          },
+          { status: 401 }
+        )
+      }
       return NextResponse.json(
-        {
-          error: 'Невірний пароль. Спробуйте ще раз або відновіть пароль.',
-        },
+        { error: 'Невірний пароль. Спробуйте ще раз або відновіть пароль.' },
         { status: 401 }
       )
     }

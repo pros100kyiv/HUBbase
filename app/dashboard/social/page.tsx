@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { BotIcon, PhoneIcon, CheckIcon, XIcon, ShareIcon } from '@/components/icons'
+import { BotIcon, PhoneIcon, CheckIcon, XIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { TelegramOAuth } from '@/components/admin/TelegramOAuth'
+import { SocialMessagesCard } from '@/components/admin/SocialMessagesCard'
 
 export default function SocialPage() {
   const router = useRouter()
@@ -186,6 +187,10 @@ export default function SocialPage() {
         </div>
 
         <div className="lg:col-span-1 space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
+          {/* Повідомлення з соцмереж — дубль у кабінет, можливість відповісти */}
+          {business?.id && (
+            <SocialMessagesCard businessId={business.id} />
+          )}
           <div className="rounded-xl p-4 md:p-6 card-glass min-w-0 overflow-hidden">
             <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>
               Швидкі дії
@@ -198,6 +203,13 @@ export default function SocialPage() {
                 style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
               >
                 Налаштування Telegram
+              </button>
+              <button
+                type="button"
+                onClick={() => router.push('/dashboard/main')}
+                className="w-full px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors text-left"
+              >
+                Головна (повідомлення)
               </button>
               <button
                 type="button"

@@ -54,7 +54,7 @@ function parseWorkingHours(
   return Object.keys(result).length > 0 ? result : null
 }
 
-/** Повертає масив робочих інтервалів на день (один або два, якщо є перерва). */
+/** Повертає масив робочих інтервалів на день (один або два, якщо є перерва). Значення в годинах (дробові), щоб коректно враховувати 09:30, 18:30 тощо. */
 function getWindowsForDay(
   wh: Record<string, DayHours> | null,
   dayName: string
@@ -64,8 +64,8 @@ function getWindowsForDay(
   const start = timeToHours(d.start)
   const end = timeToHours(d.end)
   if (start >= end) return null
-  const startF = Math.max(0, Math.floor(start))
-  const endC = Math.min(24, Math.ceil(end))
+  const startClamp = Math.max(0, start)
+  const endClamp = Math.min(24, end)
   const hasBreak =
     d.breakStart != null &&
     d.breakEnd != null &&
@@ -76,12 +76,12 @@ function getWindowsForDay(
     const bEnd = timeToHours(d.breakEnd!)
     if (bStart < bEnd && bStart >= start && bEnd <= end) {
       return [
-        { start: startF, end: Math.min(endC, Math.ceil(bStart)) },
-        { start: Math.max(startF, Math.floor(bEnd)), end: endC },
+        { start: startClamp, end: bStart },
+        { start: bEnd, end: endClamp },
       ]
     }
   }
-  return [{ start: startF, end: endC }]
+  return [{ start: startClamp, end: endClamp }]
 }
 
 /** Виключення за датами: { "YYYY-MM-DD": { enabled, start?, end? } }. Якщо enabled: false — вихідний. */
@@ -133,7 +133,7 @@ function getWindowsForDate(
     const start = timeToHours(override.start)
     const end = timeToHours(override.end)
     if (start >= end) return null
-    return [{ start: Math.max(0, Math.floor(start)), end: Math.min(24, Math.ceil(end)) }]
+    return [{ start: Math.max(0, start), end: Math.min(24, end) }]
   }
   return getWindowsForDay(wh, dayName)
 }
@@ -162,14 +162,16 @@ async function getAvailableSlotsForDate(
   const windows = getWindowsForDate(dateNorm, dateOverrides, wh, dayName)
   if (!windows || windows.length === 0) return []
 
+  // Генерація слотів по 30 хв у межах робочого вікна (враховує дробові години, напр. 09:30–18:30)
   const slots: string[] = []
+  const slotStep = 0.5
   for (const win of windows) {
-    const dayStart = Math.max(0, win.start)
-    const dayEnd = Math.min(24, Math.max(dayStart + 1, win.end))
-    for (let h = dayStart; h < dayEnd; h++) {
-      for (let m = 0; m < 60; m += 30) {
-        slots.push(`${dateNorm}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
-      }
+    const startSlot = Math.ceil((Math.max(0, win.start) * 2)) / 2
+    const endSlot = Math.floor((Math.min(24, win.end) * 2)) / 2
+    for (let slot = startSlot; slot < endSlot; slot += slotStep) {
+      const h = Math.floor(slot)
+      const m = Math.round((slot % 1) * 60)
+      slots.push(`${dateNorm}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`)
     }
   }
 

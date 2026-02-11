@@ -9,6 +9,15 @@ import { toast } from '@/components/ui/toast'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { normalizeUaPhone } from '@/lib/utils/phone'
 
+/** Нормалізує час до HH:mm для коректного парсингу дати та відображення. */
+function normalizeHHmm(t: string): string {
+  const match = String(t).trim().match(/^(\d{1,2}):(\d{2})$/)
+  if (!match) return '09:00'
+  const h = Math.max(0, Math.min(23, parseInt(match[1], 10) || 0))
+  const m = Math.max(0, Math.min(59, parseInt(match[2], 10) || 0))
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+}
+
 interface CreateAppointmentFormProps {
   businessId: string
   masters: Array<{ id: string; name: string }>
@@ -51,7 +60,7 @@ export function CreateAppointmentForm({
     clientPhone: initialClientPhone,
     serviceIds: [] as string[],
     date: format(initialDate, 'yyyy-MM-dd'),
-    startTime: (initialStartTime && /^\d{1,2}:\d{2}$/.test(initialStartTime) ? initialStartTime : '09:00'),
+    startTime: (initialStartTime && /^\d{1,2}:\d{2}$/.test(initialStartTime) ? normalizeHHmm(initialStartTime) : '09:00'),
     customService: '',
     customPrice: 0,
   })

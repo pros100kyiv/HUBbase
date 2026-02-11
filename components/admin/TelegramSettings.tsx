@@ -19,6 +19,7 @@ export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) 
   const [telegramUsers, setTelegramUsers] = useState<any[]>([])
   const [activePasswords, setActivePasswords] = useState<any[]>([])
   const [clientPasswordCount, setClientPasswordCount] = useState(1)
+  const [settingPhoto, setSettingPhoto] = useState(false)
 
   const loadData = () => {
     if (business.id) {
@@ -96,15 +97,46 @@ export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) 
         }}
       />
 
-      {/* Інформація про токен */}
+      {/* Інформація про токен та логотип бота */}
       {telegramBotToken && (
-        <div className="card-candy p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
+        <div className="card-candy p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800 space-y-3">
           <p className="text-sm font-medium text-green-800 dark:text-green-200">
             ✅ Токен бота встановлено автоматично при реєстрації
           </p>
           <p className="text-xs text-green-600 dark:text-green-400 mt-1">
             Токен: {telegramBotToken.substring(0, 10)}...
           </p>
+          <div className="pt-2 border-t border-green-200 dark:border-green-800">
+            <p className="text-xs text-green-700 dark:text-green-300 mb-2">Логотип бота (як у проекті Xbase)</p>
+            <Button
+              size="sm"
+              disabled={settingPhoto}
+              onClick={async () => {
+                setSettingPhoto(true)
+                try {
+                  const res = await fetch('/api/telegram/set-bot-photo', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ businessId: business.id }),
+                  })
+                  const data = await res.json()
+                  const { toast } = await import('@/components/ui/toast')
+                  if (data.success) {
+                    toast({ title: 'Готово', description: 'Фото бота оновлено на логотип проекту.', type: 'success' })
+                  } else {
+                    toast({ title: 'Не вдалося встановити фото', description: data.error || 'Спробуйте пізніше або завантажте public/icon.png в @BotFather → Edit Bot → Edit Botpic.', type: 'error', duration: 6000 })
+                  }
+                } catch (e) {
+                  const { toast } = await import('@/components/ui/toast')
+                  toast({ title: 'Помилка', description: 'Помилка запиту', type: 'error' })
+                } finally {
+                  setSettingPhoto(false)
+                }
+              }}
+            >
+              {settingPhoto ? 'Встановлення…' : 'Встановити логотип бота'}
+            </Button>
+          </div>
         </div>
       )}
 

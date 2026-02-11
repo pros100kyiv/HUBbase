@@ -10,19 +10,40 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
     }
 
-    const integrations = await prisma.socialIntegration.findMany({
-      where: { businessId },
-      orderBy: { createdAt: 'asc' }
-    })
+    const [integrations, business] = await Promise.all([
+      prisma.socialIntegration.findMany({
+        where: { businessId },
+        orderBy: { createdAt: 'asc' }
+      }),
+      prisma.business.findUnique({
+        where: { id: businessId },
+        select: { telegramBotToken: true }
+      })
+    ])
 
-    // Формуємо список інтеграцій
-    const integrationsList = integrations.map(integration => ({
-      id: integration.platform,
-      name: integration.platform.charAt(0).toUpperCase() + integration.platform.slice(1),
-      connected: integration.isConnected,
-      username: integration.username,
-      lastSyncAt: integration.lastSyncAt
-    }))
+    const hasTelegramBot = !!business?.telegramBotToken
+    const platformNames: Record<string, string> = {
+      telegram: 'Telegram',
+      instagram: 'Instagram',
+      whatsapp: 'WhatsApp',
+      facebook: 'Facebook',
+      viber: 'Viber',
+    }
+
+    // Формуємо список інтеграцій; Telegram вважається підключеним, якщо є OAuth або налаштований бот (для повідомлень)
+    const integrationsList = ['telegram', 'instagram', 'whatsapp', 'facebook', 'viber'].map(platform => {
+      const integration = integrations.find(i => i.platform === platform)
+      const connected = platform === 'telegram'
+        ? (integration?.isConnected ?? false) || hasTelegramBot
+        : (integration?.isConnected ?? false)
+      return {
+        id: platform,
+        name: platformNames[platform] || platform.charAt(0).toUpperCase() + platform.slice(1),
+        connected,
+        username: integration?.username ?? null,
+        lastSyncAt: integration?.lastSyncAt ?? null
+      }
+    })
 
     return NextResponse.json({
       integrations: integrationsList

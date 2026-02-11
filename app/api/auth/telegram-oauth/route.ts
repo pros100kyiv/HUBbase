@@ -1,6 +1,5 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import bcrypt from 'bcryptjs'
 import { generateDeviceId, getClientIp, getUserAgent, addTrustedDevice } from '@/lib/utils/device'
 import { ensureAdminControlCenterTable } from '@/lib/database/ensure-admin-control-center'
 import { generateBusinessIdentifier } from '@/lib/utils/business-identifier'
@@ -406,9 +405,8 @@ export async function POST(request: Request) {
       counter++
     }
 
-    // Генеруємо пароль
-    const randomPassword = Math.random().toString(36).slice(-12) + Math.random().toString(36).slice(-12)
-    const hashedPassword = await bcrypt.hash(randomPassword, 10)
+    // Реєстрація через Telegram — пароль не встановлюємо; користувач створить його в налаштуваннях
+    // і зможе входити як через Telegram, так і через email + пароль
 
     // Отримуємо токен бота
     const defaultBotToken = process.env.DEFAULT_TELEGRAM_BOT_TOKEN || '8258074435:AAHTKLTw6UDd92BV0Go-2ZQ_f2g_3QTXiIo'
@@ -423,7 +421,7 @@ export async function POST(request: Request) {
           ? `${telegramData.first_name}${telegramData.last_name ? ' ' + telegramData.last_name : ''}`
           : 'Новий бізнес',
         email: email,
-        password: hashedPassword,
+        password: null,
         slug: slug,
         phone: null,
         avatar: telegramData.photo_url || null,

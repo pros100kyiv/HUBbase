@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { XIcon } from '@/components/icons'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { Button } from '@/components/ui/button'
@@ -29,29 +30,34 @@ const BUSINESS_NICHES = [
   { value: 'OTHER', label: 'Інше' },
 ]
 
+function getInitialFormData(b: any) {
+  return {
+    name: b?.name || '',
+    phone: b?.phone || '',
+    address: b?.address || '',
+    description: b?.description || '',
+    niche: b?.niche || 'OTHER',
+    customNiche: b?.customNiche || '',
+  }
+}
+
 export function ProfileSetupModal({ business, onComplete, onClose }: ProfileSetupModalProps) {
-  const [formData, setFormData] = useState({
-    name: business?.name || '',
-    phone: business?.phone || '',
-    niche: business?.niche || 'OTHER',
-    customNiche: business?.customNiche || '',
-  })
+  const [formData, setFormData] = useState(() => getInitialFormData(business))
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isSaving, setIsSaving] = useState(false)
-  const [showCustomNiche, setShowCustomNiche] = useState(false)
+  const [showCustomNiche, setShowCustomNiche] = useState(formData.niche === 'OTHER')
   const [showErrorToast, setShowErrorToast] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
 
+  // Підтягуємо дані з бізнесу при зміні пропса (наприклад після завантаження з localStorage)
   useEffect(() => {
-    // Генеруємо ідентифікатор автоматично, якщо його немає
-    if (!business?.businessIdentifier) {
-      const identifier = Math.floor(10000 + Math.random() * 90000).toString()
-      setFormData(prev => ({ ...prev, identifier }))
+    if (business) {
+      setFormData(getInitialFormData(business))
+      setShowCustomNiche((business?.niche || 'OTHER') === 'OTHER')
     }
-  }, [business])
+  }, [business?.id, business?.name, business?.phone, business?.address, business?.description, business?.niche, business?.customNiche])
 
   useEffect(() => {
-    // Показуємо поле для кастомної категорії, якщо вибрано "Інше"
     setShowCustomNiche(formData.niche === 'OTHER')
   }, [formData.niche])
 
@@ -136,6 +142,8 @@ export function ProfileSetupModal({ business, onComplete, onClose }: ProfileSetu
         body: JSON.stringify({
           name: formData.name.trim(),
           phone: normalizedPhone,
+          address: formData.address?.trim() || null,
+          description: formData.description?.trim() || null,
           niche: formData.niche,
           customNiche: formData.niche === 'OTHER' ? formData.customNiche.trim() : null,
           businessIdentifier: identifier,
@@ -182,6 +190,8 @@ export function ProfileSetupModal({ business, onComplete, onClose }: ProfileSetu
           businessIdentifier: identifier,
           name: formData.name.trim(),
           phone: normalizedPhone,
+          address: formData.address?.trim() || null,
+          description: formData.description?.trim() || null,
           niche: formData.niche,
           customNiche: formData.niche === 'OTHER' ? formData.customNiche.trim() : null,
         }
@@ -218,7 +228,7 @@ export function ProfileSetupModal({ business, onComplete, onClose }: ProfileSetu
   return (
     <ModalPortal>
       <div className="modal-overlay sm:!p-4" onClick={onClose ?? undefined} role="presentation">
-        <div className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog modal-dialog-light flex flex-col min-h-0" onClick={(e) => e.stopPropagation()}>
+        <div className="relative w-[95%] sm:w-full sm:max-w-md sm:max-h-[90vh] sm:my-auto modal-content modal-dialog modal-dialog-light flex flex-col min-h-0 overflow-hidden" onClick={(e) => e.stopPropagation()}>
         {/* Close button - завжди доступний */}
         <button
           onClick={() => {
@@ -245,11 +255,27 @@ export function ProfileSetupModal({ business, onComplete, onClose }: ProfileSetu
             Заповнення профілю
           </h2>
           <p className="text-sm text-gray-600 dark:text-gray-400">
-            Заповніть основну інформацію про ваш бізнес
+            Заповніть основну інформацію про ваш бізнес. Наявні дані підставлені автоматично.
           </p>
         </div>
 
+        <div className="flex-1 min-h-0 overflow-y-auto pr-1 -mr-1">
         <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Email (тільки відображення) */}
+          {business?.email && (
+            <div>
+              <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+                Email
+              </label>
+              <div className="w-full px-4 py-3 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 border border-gray-300 dark:border-gray-600">
+                {business.email}
+              </div>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                Змінити email можна в налаштуваннях
+              </p>
+            </div>
+          )}
+
           {/* Назва бізнесу */}
           <div>
             <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
@@ -295,6 +321,40 @@ export function ProfileSetupModal({ business, onComplete, onClose }: ProfileSetu
             <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
               Введіть номер з 0, наприклад 0671234567
             </p>
+          </div>
+
+          {/* Адреса */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+              Адреса
+            </label>
+            <input
+              type="text"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              placeholder="Місто, вулиця, будинок"
+              className={cn(
+                'w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white',
+                'placeholder-gray-400 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-candy-blue'
+              )}
+            />
+          </div>
+
+          {/* Опис бізнесу */}
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-700 dark:text-gray-300">
+              Опис бізнесу
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+              placeholder="Коротко про ваш бізнес, послуги..."
+              rows={3}
+              className={cn(
+                'w-full px-4 py-3 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white resize-none',
+                'placeholder-gray-400 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-candy-blue'
+              )}
+            />
           </div>
 
           {/* Категорія бізнесу */}
@@ -362,7 +422,15 @@ export function ProfileSetupModal({ business, onComplete, onClose }: ProfileSetu
           >
             {isSaving ? 'Збереження...' : 'Зберегти профіль'}
           </Button>
+
+          <p className="text-center text-sm text-gray-500 dark:text-gray-400">
+            Пізніше можна змінити профіль у розділі{' '}
+            <Link href="/dashboard/settings?tab=info" className="text-candy-blue dark:text-blue-400 hover:underline font-medium">
+              Налаштування → Інформація
+            </Link>
+          </p>
         </form>
+        </div>
 
         {/* Error Toast */}
         {showErrorToast && errorMessage && (

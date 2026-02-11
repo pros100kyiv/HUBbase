@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 
 const LAST_TELEGRAM_USER_KEY = 'lastTelegramUserName'
-const TELEGRAM_ORG_URL = 'https://telegram.org'
+const TELEGRAM_ORG_URL = 'https://telegram.org' // тільки для посилання «Вийти в браузері»
 
 interface TelegramAuthButtonProps {
   text?: string
@@ -79,6 +79,9 @@ export function TelegramAuthButton({ text, isRegister = false, forgotPasswordMod
         if (response.ok && data.success) {
           if (data.business) {
             localStorage.setItem('business', JSON.stringify(data.business))
+            if (!data.business.profileCompleted) {
+              localStorage.setItem('showProfileModal', '1')
+            }
             console.log('[TelegramAuthButton] Business saved')
           }
           // Зберігаємо ім'я для відображення "Увійти як ІМЯ"
@@ -145,13 +148,13 @@ export function TelegramAuthButton({ text, isRegister = false, forgotPasswordMod
     return 'Увійти через Telegram'
   }
 
+  /** Скидаємо вибір акаунту й залишаємо панель відкритою — користувач натискає кнопку Telegram з тим самим підтвердженням (новий акаунт) */
   const handleChangeAccount = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     localStorage.removeItem(LAST_TELEGRAM_USER_KEY)
     setLastUserName(null)
-    setShowPanel(false)
-    window.open(TELEGRAM_ORG_URL, '_blank', 'noopener,noreferrer')
+    setShowPanel(true) // панель залишається відкритою, віджет видно — можна одразу обрати інший акаунт
   }
 
   const handleTogglePanel = (e: React.MouseEvent) => {
@@ -216,6 +219,10 @@ export function TelegramAuthButton({ text, isRegister = false, forgotPasswordMod
               Згорнути
             </button>
           </div>
+          <p className="text-xs text-gray-500">
+            Натисніть кнопку Telegram вище щоб увійти з іншим акаунтом. Якщо потрібно вийти з Telegram в браузері —{' '}
+            <a href={TELEGRAM_ORG_URL} target="_blank" rel="noopener noreferrer" className="text-gray-400 hover:text-white underline">відкрити telegram.org</a>.
+          </p>
         </div>
       )}
       <style jsx global>{`

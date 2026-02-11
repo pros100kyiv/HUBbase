@@ -28,14 +28,23 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
   const [selectedMessage, setSelectedMessage] = useState<SocialMessage | null>(null)
   const [replyText, setReplyText] = useState('')
   const [sending, setSending] = useState(false)
+  const [replyError, setReplyError] = useState<string | null>(null)
+
+  const hasUnread = messages.some((m) => !m.isRead)
+  const pollIntervalMs = hasUnread || !collapsed ? 20_000 : 120_000
 
   useEffect(() => {
-    // First load (show skeleton only once)
     loadMessages(false)
-    // Background refresh: keep indicator up-to-date without UI flicker
-    const interval = setInterval(() => loadMessages(true), 120_000) // 2 хв — економія compute (Neon sleep)
-    return () => clearInterval(interval)
   }, [businessId])
+
+  useEffect(() => {
+    if (!collapsed) loadMessages(true)
+  }, [collapsed])
+
+  useEffect(() => {
+    const interval = setInterval(() => loadMessages(true), pollIntervalMs)
+    return () => clearInterval(interval)
+  }, [businessId, pollIntervalMs])
 
   const loadMessages = async (silent = false) => {
     try {
@@ -55,7 +64,7 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
 
   const handleReply = async () => {
     if (!selectedMessage || !replyText.trim()) return
-
+    setReplyError(null)
     try {
       setSending(true)
       const response = await fetch('/api/social-messages/reply', {
@@ -68,14 +77,18 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
           reply: replyText.trim(),
         }),
       })
-
-      if (response.ok) {
+      const data = await response.json().catch(() => ({}))
+      if (response.ok && data.success !== false) {
         setReplyText('')
         setSelectedMessage(null)
-        loadMessages()
+        setReplyError(null)
+        loadMessages(true)
+      } else {
+        setReplyError(data.error || data.details || 'Не вдалося відправити. Спробуйте ще раз.')
       }
     } catch (error) {
       console.error('Error sending reply:', error)
+      setReplyError('Помилка з\'єднання. Спробуйте ще раз.')
     } finally {
       setSending(false)
     }
@@ -146,7 +159,6 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
 
   const unreadCount = messages.filter(m => !m.isRead).length
   const hasAny = messages.length > 0
-  const hasUnread = unreadCount > 0
   const latest = messages[0]
 
   return (
@@ -224,7 +236,20 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
             {messages.map((message) => (
               <button
                 key={message.id}
-                onClick={() => setSelectedMessage(message)}
+                onClick={() => {
+                  setSelectedMessage(message)
+                  setReplyError(null)
+                  if (!message.isRead) {
+                    fetch(`/api/social-messages?businessId=${businessId}&messageId=${message.id}`, {
+                      method: 'PATCH',
+                    })
+                      .then(() => {
+                        setMessages((prev) => prev.map((m) => (m.id === message.id ? { ...m, isRead: true } : m)))
+                        loadMessages(true)
+                      })
+                      .catch(() => {})
+                  }
+                }}
                 className={cn(
                   'w-full text-left rounded-lg p-3 md:p-3 transition-colors active:scale-[0.98] touch-manipulation min-h-[64px]',
                   !message.isRead
@@ -306,12 +331,15 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
                   <div className="space-y-3">
                     <textarea
                       value={replyText}
-                      onChange={(e) => setReplyText(e.target.value)}
+                      onChange={(e) => { setReplyText(e.target.value); setReplyError(null) }}
                       placeholder="Введіть відповідь..."
                       className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder-gray-400 resize-none focus:outline-none focus:border-white/20"
                       rows={4}
                       style={{ letterSpacing: '-0.01em' }}
                     />
+                    {replyError && (
+                      <p className="text-xs text-red-400" role="alert">{replyError}</p>
+                    )}
                   </div>
                 </div>
 

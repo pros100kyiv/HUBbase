@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { BusinessCardEditor } from '@/components/admin/BusinessCardEditor'
 import { TelegramSettings } from '@/components/admin/TelegramSettings'
 import { IntegrationsSettings } from '@/components/admin/IntegrationsSettings'
+import { PasswordForLoginSection } from '@/components/admin/PasswordForLoginSection'
 import {
   ClockIcon,
   ChevronDownIcon,
@@ -21,6 +22,7 @@ import {
 import { toast } from '@/components/ui/toast'
 import { Confetti, triggerConfetti } from '@/components/ui/confetti'
 import { cn } from '@/lib/utils'
+import { normalizeUaPhone, isValidUaPhone } from '@/lib/utils/phone'
 
 interface Business {
   id: string
@@ -66,6 +68,21 @@ interface Service {
   subcategory?: string
   description?: string
 }
+
+const BUSINESS_NICHES = [
+  { value: 'SALON', label: 'Салон краси' },
+  { value: 'BARBERSHOP', label: 'Барбершоп' },
+  { value: 'STO', label: 'СТО (Станція технічного обслуговування)' },
+  { value: 'CAR_WASH', label: 'Автомийка' },
+  { value: 'SPA', label: 'СПА' },
+  { value: 'FITNESS', label: 'Фітнес тренер' },
+  { value: 'BEAUTY', label: 'Бюті сфера' },
+  { value: 'TIRE_SERVICE', label: 'Шиномонтаж' },
+  { value: 'EDUCATION', label: 'Освіта' },
+  { value: 'MEDICINE', label: 'Медицина' },
+  { value: 'RESTAURANT', label: 'Ресторан' },
+  { value: 'OTHER', label: 'Інше' },
+]
 
 const getCategoryColor = (index: number) => {
   const colors = [
@@ -330,6 +347,23 @@ export default function SettingsPage() {
     }
   }, [loadData])
 
+  // Синхронізація форми з бізнесом при зміні даних (наприклад після завантаження з API)
+  useEffect(() => {
+    if (business) {
+      setFormData(prev => ({
+        ...prev,
+        name: business.name ?? prev.name,
+        email: business.email ?? prev.email,
+        phone: business.phone ?? prev.phone ?? '',
+        address: business.address ?? prev.address ?? '',
+        description: business.description ?? prev.description ?? '',
+        niche: business.niche ?? prev.niche ?? 'OTHER',
+        customNiche: business.customNiche ?? prev.customNiche ?? '',
+        businessIdentifier: business.businessIdentifier ?? prev.businessIdentifier,
+      }))
+    }
+  }, [business?.id, business?.name, business?.email, business?.phone, business?.address, business?.description, business?.niche, business?.customNiche, business?.businessIdentifier])
+
   // Синхронізація вкладки з URL (?tab=...)
   useEffect(() => {
     if (typeof window === 'undefined') return
@@ -359,9 +393,37 @@ export default function SettingsPage() {
       return
     }
 
-    // Перевіряємо чи ID є валідним UUID
-    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
-    if (!uuidRegex.test(business.id)) {
+    // Валідація обов'язкових полів
+    if (!formData.name?.trim()) {
+      toast({ title: 'Помилка', description: 'Назва бізнесу обов\'язкова', type: 'error' })
+      return
+    }
+    if (!formData.email?.trim()) {
+      toast({ title: 'Помилка', description: 'Email обов\'язковий', type: 'error' })
+      return
+    }
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email.trim())) {
+      toast({ title: 'Помилка', description: 'Невірний формат email', type: 'error' })
+      return
+    }
+    if (!formData.phone?.trim()) {
+      toast({ title: 'Помилка', description: 'Номер телефону обов\'язковий', type: 'error' })
+      return
+    }
+    if (!isValidUaPhone(formData.phone.trim())) {
+      toast({ title: 'Помилка', description: 'Невірний формат телефону. Введіть номер з 0, наприклад 0671234567', type: 'error' })
+      return
+    }
+    if (formData.niche === 'OTHER' && !formData.customNiche?.trim()) {
+      toast({ title: 'Помилка', description: 'Вкажіть вашу категорію бізнесу', type: 'error' })
+      return
+    }
+
+    // Перевіряємо наявність валідного ID (CUID або UUID)
+    const isCuid = /^c[0-9a-z]{24}$/i.test(business.id)
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(business.id)
+    if (!business.id || (!isCuid && !isUuid)) {
       console.error('Invalid business ID format:', business.id)
       toast({ 
         title: 'Помилка', 
@@ -375,30 +437,38 @@ export default function SettingsPage() {
 
     setIsSaving(true)
     try {
-      console.log('Saving business with ID:', business.id)
-      console.log('Form data:', formData)
+      const payload = {
+        ...formData,
+        name: formData.name?.trim(),
+        email: formData.email?.trim().toLowerCase(),
+        phone: formData.phone?.trim() ? normalizeUaPhone(formData.phone.trim()) : null,
+        address: formData.address?.trim() || null,
+        description: formData.description?.trim() || null,
+        customNiche: formData.niche === 'OTHER' ? (formData.customNiche?.trim() || null) : null,
+        profileCompleted: true,
+      }
       
       const response = await fetch(`/api/business/${business.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(payload),
       })
 
       if (response.ok) {
         const updated = await response.json()
-        setBusiness(updated.business)
-        // Оновлюємо formData з новими даними
+        const saved = { ...updated.business, profileCompleted: true }
+        setBusiness(saved)
         setFormData({
-          name: updated.business.name,
-          email: updated.business.email,
-          phone: updated.business.phone || '',
-          address: updated.business.address || '',
-          description: updated.business.description || '',
-          niche: updated.business.niche || 'OTHER',
-          customNiche: updated.business.customNiche || '',
-          businessIdentifier: updated.business.businessIdentifier || '',
+          name: saved.name,
+          email: saved.email,
+          phone: saved.phone || '',
+          address: saved.address || '',
+          description: saved.description || '',
+          niche: saved.niche || 'OTHER',
+          customNiche: saved.customNiche || '',
+          businessIdentifier: saved.businessIdentifier || '',
         })
-        localStorage.setItem('business', JSON.stringify(updated.business))
+        localStorage.setItem('business', JSON.stringify(saved))
         toast({ title: 'Збережено', type: 'success', duration: 1500 })
         setShowConfetti(true)
         setTimeout(() => setShowConfetti(false), 2000)
@@ -756,38 +826,45 @@ export default function SettingsPage() {
 
         {/* Tab Content */}
         <div className="space-y-6">
-          {/* Інформація */}
+          {/* Інформація — профіль бізнесу для подальшого редагування */}
           {activeTab === 'info' && (
             <div className="rounded-xl p-4 md:p-6 card-glass">
-              <h2 className="text-lg font-bold text-white mb-6" style={{ letterSpacing: '-0.02em' }}>Основна інформація</h2>
+              <h2 className="text-lg font-bold text-white mb-2" style={{ letterSpacing: '-0.02em' }}>Основна інформація</h2>
+              <p className="text-sm text-gray-400 mb-6">
+                Редагуйте профіль бізнесу. Усі зміни зберігаються тут і в модалці заповнення профілю.
+              </p>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Назва бізнесу</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Назва бізнесу *</label>
                   <Input
                     value={formData.name || ''}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                    placeholder="Наприклад: 045 Barbershop"
                     className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Email</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Email *</label>
                   <Input
                     type="email"
                     value={formData.email || ''}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    placeholder="your@email.com"
                     className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Телефон</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Телефон *</label>
                   <Input
+                    type="tel"
                     value={formData.phone || ''}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     placeholder="0XX XXX XX XX"
                     className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                   />
+                  <p className="text-xs text-gray-500 mt-1">Введіть номер з 0, наприклад 0671234567</p>
                 </div>
 
                 <div>
@@ -795,45 +872,41 @@ export default function SettingsPage() {
                   <Input
                     value={formData.address || ''}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                    placeholder="Місто, вулиця, будинок"
                     className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Опис</label>
-                  <Input
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Опис бізнесу</label>
+                  <textarea
                     value={formData.description || ''}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Короткий опис вашого бізнесу"
-                    className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+                    placeholder="Коротко про ваш бізнес, послуги..."
+                    rows={4}
+                    className={cn(
+                      'w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 resize-none',
+                      'border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15'
+                    )}
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Категорія бізнесу</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Категорія бізнесу *</label>
                   <select
                     value={formData.niche || 'OTHER'}
                     onChange={(e) => setFormData({ ...formData, niche: e.target.value, customNiche: e.target.value !== 'OTHER' ? '' : formData.customNiche })}
                     className="w-full px-4 py-2 rounded-lg bg-white/10 text-white border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
                   >
-                    <option value="SALON">Салон краси</option>
-                    <option value="BARBERSHOP">Барбершоп</option>
-                    <option value="STO">СТО (Станція технічного обслуговування)</option>
-                    <option value="CAR_WASH">Автомийка</option>
-                    <option value="SPA">СПА</option>
-                    <option value="FITNESS">Фітнес тренер</option>
-                    <option value="BEAUTY">Бюті сфера</option>
-                    <option value="TIRE_SERVICE">Шиномонтаж</option>
-                    <option value="EDUCATION">Освіта</option>
-                    <option value="MEDICINE">Медицина</option>
-                    <option value="RESTAURANT">Ресторан</option>
-                    <option value="OTHER">Інше</option>
+                    {BUSINESS_NICHES.map((n) => (
+                      <option key={n.value} value={n.value}>{n.label}</option>
+                    ))}
                   </select>
                 </div>
 
                 {formData.niche === 'OTHER' && (
                   <div>
-                    <label className="block text-sm font-medium mb-2 text-gray-300">Вкажіть вашу категорію</label>
+                    <label className="block text-sm font-medium mb-2 text-gray-300">Вкажіть вашу категорію *</label>
                     <Input
                       value={formData.customNiche || ''}
                       onChange={(e) => setFormData({ ...formData, customNiche: e.target.value })}
@@ -861,10 +934,15 @@ export default function SettingsPage() {
                   className="w-full px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-all active:scale-[0.98]"
                   style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                 >
-                  {isSaving ? 'Збереження...' : 'Зберегти'}
+                  {isSaving ? 'Збереження...' : 'Зберегти профіль'}
                 </Button>
               </div>
             </div>
+          )}
+
+          {/* Пароль для входу по пошті (Telegram-користувачі можуть створити пароль і входити також по email) */}
+          {activeTab === 'info' && business && (
+            <PasswordForLoginSection businessId={business.id} email={business.email} />
           )}
 
           {/* Робочі години бізнесу */}

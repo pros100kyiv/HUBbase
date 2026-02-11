@@ -92,11 +92,14 @@ async function setupTelegramBotToken(businessId: string, botToken?: string) {
       console.log('   - Виберіть вашого бота')
       console.log('   - Оберіть "Edit Bot" → "Edit Domains"')
       console.log('   - Додайте домен: xbase.online\n')
-      console.log('2. Налаштуйте webhook (якщо потрібно):')
+      console.log('2. Встановіть логотип бота (як у проекті):')
+      console.log('   npm run telegram:set-photo')
+      console.log(`   або для бізнесу: npm run telegram:set-photo ${businessId}\n`)
+      console.log('3. Налаштуйте webhook (якщо потрібно):')
       console.log(`   npm run telegram:webhook ${businessId}\n`)
-      console.log('3. Відкрийте налаштування бізнесу в Xbase')
-      console.log('4. Перейдіть до вкладки "Telegram"')
-      console.log('5. Натисніть "Підключити Telegram"\n')
+      console.log('4. Відкрийте налаштування бізнесу в Xbase')
+      console.log('5. Перейдіть до вкладки "Telegram"')
+      console.log('6. Натисніть "Підключити Telegram"\n')
 
       console.log('✅ Налаштування завершено!\n')
 

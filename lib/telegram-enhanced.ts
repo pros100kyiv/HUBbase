@@ -353,6 +353,38 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     )
   })
 
+  // Будь-яке текстове повідомлення (не команда) — зберігаємо в кабінет як вхідне, щоб можна було відповісти
+  bot.on('text', async (ctx) => {
+    const text = ctx.message && 'text' in ctx.message ? ctx.message.text : ''
+    if (!text || text.startsWith('/')) return // команди вже оброблені вище
+
+    const from = ctx.from
+    const chatId = ctx.chat?.id
+    if (!from || !chatId) return
+
+    const senderName = [from.first_name, from.last_name].filter(Boolean).join(' ') || from.username || `ID ${from.id}`
+
+    try {
+      await prisma.socialInboxMessage.create({
+        data: {
+          businessId: config.businessId,
+          platform: 'telegram',
+          direction: 'inbound',
+          externalId: String(ctx.message && 'message_id' in ctx.message ? ctx.message.message_id : ''),
+          externalChatId: String(chatId),
+          senderId: String(from.id),
+          senderName,
+          message: text,
+          isRead: false,
+        },
+      })
+      await ctx.reply('✅ Дякуємо! Ваше повідомлення отримано. Ми відповімо найближчим часом.')
+    } catch (err) {
+      console.error('Error saving Telegram inbox message:', err)
+      await ctx.reply('❌ Не вдалося зберегти повідомлення. Спробуйте пізніше.')
+    }
+  })
+
   // Обробка помилок
   bot.catch((err, ctx) => {
     console.error('Telegram bot error:', err)

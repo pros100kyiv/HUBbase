@@ -86,6 +86,10 @@ function RegisterForm() {
 
       // Зберігаємо бізнес в localStorage (в продакшені використовуйте cookies)
       localStorage.setItem('business', JSON.stringify(data.business))
+      // Після реєстрації нового бізнесу — у кабінеті показати модалку заповнення профілю
+      if (!data.isLogin) {
+        localStorage.setItem('showProfileModal', '1')
+      }
       
       // Показуємо повідомлення про успіх
       if (data.isLogin) {

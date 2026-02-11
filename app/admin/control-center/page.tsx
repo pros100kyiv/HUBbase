@@ -6,6 +6,7 @@ import { format, formatDistanceToNow } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { toast } from '@/components/ui/toast'
+import { InstallAppBadges } from '@/components/layout/InstallAppBadges'
 import { 
   BuildingIcon, 
   UsersIcon, 
@@ -283,7 +284,7 @@ export default function ControlCenterPage() {
 
       {/* Header */}
       <div className="mb-4 md:mb-6 flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-3 sm:gap-4">
-        <div>
+        <div className="min-w-0 flex-1">
           <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-1 sm:mb-2" style={{ letterSpacing: '-0.02em' }}>
             🎯 Центр управління
           </h1>
@@ -291,29 +292,72 @@ export default function ControlCenterPage() {
             Управління всіма бізнесами та процесами системи · дані оновлюються в реальному часі
           </p>
         </div>
-        <div className="flex gap-2 shrink-0">
-          <button
-            type="button"
-            onClick={handleSync}
-            disabled={syncing}
-            className="flex-1 sm:flex-none px-3 sm:px-4 py-2.5 min-h-[44px] rounded-lg border border-blue-500/50 bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 disabled:opacity-50 transition-colors font-medium text-sm sm:text-base"
-            title="Синхронізувати всі акаунти з центром управління"
-          >
-            {syncing ? 'Синхр...' : 'Синхронізувати'}
-          </button>
-          <button
-            type="button"
-            onClick={handleRefresh}
-            disabled={loading}
-            className="flex-1 sm:flex-none px-3 sm:px-4 py-2.5 min-h-[44px] rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 transition-colors font-medium text-sm sm:text-base"
-          >
-            {loading ? 'Оновл...' : 'Оновити'}
-          </button>
+        <div className="flex flex-col sm:flex-row gap-3 shrink-0">
+          <div className="hidden sm:flex gap-2">
+            <button
+              type="button"
+              onClick={handleSync}
+              disabled={syncing}
+              className="px-3 sm:px-4 py-2.5 min-h-[44px] rounded-lg border border-blue-500/50 bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 disabled:opacity-50 transition-colors font-medium text-sm sm:text-base"
+              title="Синхронізувати всі акаунти з центром управління"
+            >
+              {syncing ? 'Синхр...' : 'Синхронізувати'}
+            </button>
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={loading}
+              className="px-3 sm:px-4 py-2.5 min-h-[44px] rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 transition-colors font-medium text-sm sm:text-base"
+            >
+              {loading ? 'Оновл...' : 'Оновити'}
+            </button>
+          </div>
+          <div className="sm:hidden flex gap-2">
+            <button
+              type="button"
+              onClick={handleSync}
+              disabled={syncing}
+              className="flex-1 min-h-[44px] px-3 py-2.5 rounded-lg border border-blue-500/50 bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 disabled:opacity-50 transition-colors font-medium text-sm"
+            >
+              {syncing ? 'Синхр...' : 'Синхр.'}
+            </button>
+            <button
+              type="button"
+              onClick={handleRefresh}
+              disabled={loading}
+              className="flex-1 min-h-[44px] px-3 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 transition-colors font-medium text-sm"
+            >
+              {loading ? 'Оновл...' : 'Оновити'}
+            </button>
+          </div>
+          <InstallAppBadges variant="compact" className="self-start sm:self-center" />
         </div>
       </div>
 
-      {/* Tabs */}
-      <div className="mb-6 flex flex-wrap gap-2 border-b border-white/10 overflow-x-auto">
+      {/* Tabs — мобільний вибір */}
+      <div className="mb-4 md:hidden">
+        <select
+          value={activeTab}
+          onChange={(e) => setActiveTab(e.target.value as Tab)}
+          className="w-full min-h-[48px] px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none cursor-pointer"
+          style={{ 
+            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
+            backgroundRepeat: 'no-repeat',
+            backgroundPosition: 'right 12px center',
+            backgroundSize: '20px',
+            paddingRight: '44px',
+          }}
+        >
+          {tabs.map((tab) => (
+            <option key={tab.id} value={tab.id} className="bg-[#1e293b] text-white">
+              {tab.label}
+            </option>
+          ))}
+        </select>
+      </div>
+
+      {/* Tabs — десктоп */}
+      <div className="mb-6 hidden md:flex flex-wrap gap-2 border-b border-white/10 overflow-x-auto pb-px">
         {tabs.map((tab) => {
           const Icon = tab.icon
           return (
@@ -360,7 +404,7 @@ export default function ControlCenterPage() {
         )}
 
         {activeTab === 'phones' && (
-          <PhonesTab />
+          <PhonesTab refreshTrigger={refreshTrigger} />
         )}
 
         {activeTab === 'activity' && (
@@ -1433,16 +1477,16 @@ function PhonesTab({ refreshTrigger }: { refreshTrigger?: number }) {
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">
+    <div className="space-y-6 min-w-0">
+      <h2 className="text-xl sm:text-2xl font-bold text-white">
         Телефонний довідник
       </h2>
       
-      <div className="mb-6 flex flex-wrap gap-4">
+      <div className="mb-6 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value as any)}
-          className="px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white"
+          className="min-h-[44px] px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white w-full sm:w-auto"
         >
           <option value="all">Всі категорії</option>
           <option value="BUSINESS">Бізнеси</option>
@@ -1454,7 +1498,7 @@ function PhonesTab({ refreshTrigger }: { refreshTrigger?: number }) {
           placeholder="Пошук по номеру..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 min-w-[200px] px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white placeholder-gray-400"
+          className="flex-1 min-h-[44px] min-w-0 px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white placeholder-gray-400"
         />
       </div>
 
@@ -1463,44 +1507,73 @@ function PhonesTab({ refreshTrigger }: { refreshTrigger?: number }) {
       ) : phones.length === 0 ? (
         <div className="text-center py-12 text-gray-400">Немає номерів у довіднику</div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Номер</th>
-                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Категорія</th>
-                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Назва</th>
-                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Статус</th>
-                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Останнє використання</th>
-              </tr>
-            </thead>
-            <tbody>
-              {phones.map((phone: any) => (
-                <tr key={phone.id} className="border-b border-white/10 hover:bg-white/5">
-                  <td className="py-3 px-4 font-medium text-white">{phone.phone}</td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-1 rounded text-xs ${
-                      phone.category === 'BUSINESS' ? 'bg-blue-500/20 text-blue-300' : 'bg-green-500/20 text-green-300'
-                    }`}>
-                      {phone.category === 'BUSINESS' ? 'Бізнес' : 'Клієнт'}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4 text-gray-300">{phone.businessName || phone.clientName || '-'}</td>
-                  <td className="py-3 px-4">
-                    {phone.isActive ? (
-                      <span className="px-2 py-1 rounded text-xs bg-green-500/20 text-green-300">Активний</span>
-                    ) : (
-                      <span className="px-2 py-1 rounded text-xs bg-red-500/20 text-red-300">Неактивний</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4 text-sm text-gray-400">
+        <>
+          {/* Мобільні картки */}
+          <div className="block md:hidden space-y-3">
+            {phones.map((phone: any) => (
+              <div key={phone.id} className="rounded-xl p-4 card-glass border border-white/10 space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <a href={`tel:${phone.phone}`} className="font-semibold text-white text-lg">{phone.phone}</a>
+                  <span className={`px-2 py-0.5 rounded text-xs shrink-0 ${
+                    phone.category === 'BUSINESS' ? 'bg-blue-500/20 text-blue-300' : 'bg-green-500/20 text-green-300'
+                  }`}>
+                    {phone.category === 'BUSINESS' ? 'Бізнес' : 'Клієнт'}
+                  </span>
+                </div>
+                <div className="text-sm text-gray-300">{phone.businessName || phone.clientName || '-'}</div>
+                <div className="flex items-center gap-2">
+                  {phone.isActive ? (
+                    <span className="px-2 py-0.5 rounded text-xs bg-green-500/20 text-green-300">Активний</span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded text-xs bg-red-500/20 text-red-300">Неактивний</span>
+                  )}
+                  <span className="text-xs text-gray-500">
                     {phone.lastUsedAt ? format(new Date(phone.lastUsedAt), 'dd.MM.yyyy', { locale: uk }) : 'Ніколи'}
-                  </td>
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Десктоп таблиця */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="text-left py-3 px-4 text-gray-300 font-semibold">Номер</th>
+                  <th className="text-left py-3 px-4 text-gray-300 font-semibold">Категорія</th>
+                  <th className="text-left py-3 px-4 text-gray-300 font-semibold">Назва</th>
+                  <th className="text-left py-3 px-4 text-gray-300 font-semibold">Статус</th>
+                  <th className="text-left py-3 px-4 text-gray-300 font-semibold">Останнє використання</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {phones.map((phone: any) => (
+                  <tr key={phone.id} className="border-b border-white/10 hover:bg-white/5">
+                    <td className="py-3 px-4 font-medium text-white">{phone.phone}</td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-1 rounded text-xs ${
+                        phone.category === 'BUSINESS' ? 'bg-blue-500/20 text-blue-300' : 'bg-green-500/20 text-green-300'
+                      }`}>
+                        {phone.category === 'BUSINESS' ? 'Бізнес' : 'Клієнт'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4 text-gray-300">{phone.businessName || phone.clientName || '-'}</td>
+                    <td className="py-3 px-4">
+                      {phone.isActive ? (
+                        <span className="px-2 py-1 rounded text-xs bg-green-500/20 text-green-300">Активний</span>
+                      ) : (
+                        <span className="px-2 py-1 rounded text-xs bg-red-500/20 text-red-300">Неактивний</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-gray-400">
+                      {phone.lastUsedAt ? format(new Date(phone.lastUsedAt), 'dd.MM.yyyy', { locale: uk }) : 'Ніколи'}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   )
@@ -1897,8 +1970,8 @@ function ClientsTab({ refreshTrigger }: { refreshTrigger?: number }) {
   }
 
   return (
-    <div className="space-y-6">
-      <h2 className="text-2xl font-bold text-white">
+    <div className="space-y-6 min-w-0">
+      <h2 className="text-xl sm:text-2xl font-bold text-white">
         Клієнти
       </h2>
       
@@ -1908,7 +1981,7 @@ function ClientsTab({ refreshTrigger }: { refreshTrigger?: number }) {
           placeholder="Пошук клієнтів..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="w-full px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white placeholder-gray-400"
+          className="w-full min-h-[44px] px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white placeholder-gray-400"
         />
       </div>
 
@@ -1917,36 +1990,59 @@ function ClientsTab({ refreshTrigger }: { refreshTrigger?: number }) {
       ) : clients.length === 0 ? (
         <div className="text-center py-12 text-gray-400">Немає клієнтів</div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Ім'я</th>
-                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Телефон</th>
-                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Бізнес</th>
-                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Візитів</th>
-                <th className="text-left py-3 px-4 text-gray-300 font-semibold">Витрачено</th>
-              </tr>
-            </thead>
-            <tbody>
-              {clients.map((client: any) => (
-                <tr key={client.id} className="border-b border-white/10 hover:bg-white/5">
-                  <td className="py-3 px-4 font-medium text-white">{client.name}</td>
-                  <td className="py-3 px-4 text-gray-300">{client.phone}</td>
-                  <td className="py-3 px-4 text-gray-300">{client.business?.name || '-'}</td>
-                  <td className="py-3 px-4 text-gray-300">{client.appointments?.length || 0}</td>
-                  <td className="py-3 px-4 text-white font-medium">
+        <>
+          {/* Мобільні картки */}
+          <div className="block md:hidden space-y-3">
+            {clients.map((client: any) => (
+              <div key={client.id} className="rounded-xl p-4 card-glass border border-white/10 space-y-2">
+                <div className="font-semibold text-white">{client.name}</div>
+                <a href={`tel:${client.phone}`} className="text-blue-300 text-sm">{client.phone}</a>
+                <div className="text-sm text-gray-400">{client.business?.name || '-'}</div>
+                <div className="flex items-center gap-3 text-sm">
+                  <span className="text-gray-300">{client.appointments?.length || 0} візитів</span>
+                  <span className="font-medium text-white">
                     {new Intl.NumberFormat('uk-UA', {
                       style: 'currency',
                       currency: 'UAH',
                       minimumFractionDigits: 0,
                     }).format((Number(client.totalSpent) || 0) / 100)}
-                  </td>
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Десктоп таблиця */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="text-left py-3 px-4 text-gray-300 font-semibold">Ім'я</th>
+                  <th className="text-left py-3 px-4 text-gray-300 font-semibold">Телефон</th>
+                  <th className="text-left py-3 px-4 text-gray-300 font-semibold">Бізнес</th>
+                  <th className="text-left py-3 px-4 text-gray-300 font-semibold">Візитів</th>
+                  <th className="text-left py-3 px-4 text-gray-300 font-semibold">Витрачено</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {clients.map((client: any) => (
+                  <tr key={client.id} className="border-b border-white/10 hover:bg-white/5">
+                    <td className="py-3 px-4 font-medium text-white">{client.name}</td>
+                    <td className="py-3 px-4 text-gray-300">{client.phone}</td>
+                    <td className="py-3 px-4 text-gray-300">{client.business?.name || '-'}</td>
+                    <td className="py-3 px-4 text-gray-300">{client.appointments?.length || 0}</td>
+                    <td className="py-3 px-4 text-white font-medium">
+                      {new Intl.NumberFormat('uk-UA', {
+                        style: 'currency',
+                        currency: 'UAH',
+                        minimumFractionDigits: 0,
+                      }).format((Number(client.totalSpent) || 0) / 100)}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   )
@@ -2136,9 +2232,9 @@ function AdminsTab({ refreshTrigger }: { refreshTrigger?: number }) {
   }
 
   return (
-    <div>
-      <div className="mb-6 flex justify-between items-center">
-        <h2 className="text-2xl font-bold text-white">
+    <div className="min-w-0">
+      <div className="mb-6 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+        <h2 className="text-xl sm:text-2xl font-bold text-white">
           Адміністратори
         </h2>
         <button
@@ -2154,27 +2250,27 @@ function AdminsTab({ refreshTrigger }: { refreshTrigger?: number }) {
             })
             setShowCreateModal(true)
           }}
-          className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="min-h-[44px] px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium shrink-0"
         >
           + Додати адміна
         </button>
       </div>
 
-      <div className="mb-6 flex gap-4">
-        <div className="flex-1 relative">
+      <div className="mb-6 flex flex-col sm:flex-row gap-3 sm:gap-4">
+        <div className="flex-1 relative min-w-0">
           <SearchIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
           <input
             type="text"
             placeholder="Пошук по email або імені..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-10 pr-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white"
+            className="w-full min-h-[44px] pl-10 pr-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white"
           />
         </div>
         <select
           value={roleFilter}
           onChange={(e) => setRoleFilter(e.target.value as any)}
-          className="px-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white"
+          className="min-h-[44px] px-4 py-2 border border-white/10 rounded-lg bg-white/5 backdrop-blur-sm text-white w-full sm:w-auto"
         >
           <option value="all">Всі ролі</option>
           <option value="SUPER_ADMIN">Супер адмін</option>
@@ -2186,71 +2282,116 @@ function AdminsTab({ refreshTrigger }: { refreshTrigger?: number }) {
       {loading ? (
         <div className="text-center py-12">Завантаження...</div>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-white/10">
-                <th className="text-left py-3 px-4">Email</th>
-                <th className="text-left py-3 px-4">Ім'я</th>
-                <th className="text-left py-3 px-4">Роль</th>
-                <th className="text-left py-3 px-4">Права доступу</th>
-                <th className="text-left py-3 px-4">Статус</th>
-                <th className="text-left py-3 px-4">Останній вхід</th>
-                <th className="text-left py-3 px-4">Дії</th>
-              </tr>
-            </thead>
-            <tbody>
-              {admins.map((admin: any) => (
-                <tr key={admin.id} className="border-b border-white/10 hover:bg-white/5">
-                  <td className="py-3 px-4 font-medium">{admin.email}</td>
-                  <td className="py-3 px-4">{admin.name || '-'}</td>
-                  <td className="py-3 px-4">
-                    <span className={`px-2 py-1 rounded text-xs font-medium ${
-                      admin.role === 'SUPER_ADMIN' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
-                      admin.role === 'ADMIN' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
-                      'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
-                    }`}>
-                      {admin.role === 'SUPER_ADMIN' ? 'Супер адмін' :
-                       admin.role === 'ADMIN' ? 'Адмін' :
-                       'Переглядач'}
-                    </span>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="text-sm text-gray-300">
-                      {admin.permissions?.length || 0} прав
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    {admin.isActive ? (
-                      <span className="px-2 py-1 rounded text-xs bg-green-100 text-green-800">Активний</span>
-                    ) : (
-                      <span className="px-2 py-1 rounded text-xs bg-red-100 text-red-800">Неактивний</span>
-                    )}
-                  </td>
-                  <td className="py-3 px-4 text-sm text-gray-300">
-                    {admin.lastLoginAt ? format(new Date(admin.lastLoginAt), 'dd.MM.yyyy HH:mm', { locale: uk }) : 'Ніколи'}
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="flex gap-2">
-                      <button
-                        onClick={() => handleEdit(admin)}
-                        className="text-blue-600 hover:text-blue-800 dark:text-blue-400"
-                      >
-                        Редагувати
-                      </button>
-                      <button
-                        onClick={() => handleDelete(admin.id)}
-                        className="text-red-600 hover:text-red-800 dark:text-red-400"
-                      >
-                        Видалити
-                      </button>
-                    </div>
-                  </td>
+        <>
+          {/* Мобільні картки */}
+          <div className="block md:hidden space-y-3">
+            {admins.map((admin: any) => (
+              <div key={admin.id} className="rounded-xl p-4 card-glass border border-white/10 space-y-3">
+                <div className="font-medium text-white">{admin.email}</div>
+                <div className="text-sm text-gray-400">{admin.name || '-'}</div>
+                <div className="flex flex-wrap gap-2">
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                    admin.role === 'SUPER_ADMIN' ? 'bg-purple-500/20 text-purple-300' :
+                    admin.role === 'ADMIN' ? 'bg-blue-500/20 text-blue-300' :
+                    'bg-gray-500/20 text-gray-300'
+                  }`}>
+                    {admin.role === 'SUPER_ADMIN' ? 'Супер адмін' :
+                     admin.role === 'ADMIN' ? 'Адмін' :
+                     'Переглядач'}
+                  </span>
+                  {admin.isActive ? (
+                    <span className="px-2 py-0.5 rounded text-xs bg-green-500/20 text-green-300">Активний</span>
+                  ) : (
+                    <span className="px-2 py-0.5 rounded text-xs bg-red-500/20 text-red-300">Неактивний</span>
+                  )}
+                </div>
+                <div className="text-xs text-gray-500">
+                  Останній вхід: {admin.lastLoginAt ? format(new Date(admin.lastLoginAt), 'dd.MM.yyyy HH:mm', { locale: uk }) : 'Ніколи'}
+                </div>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={() => handleEdit(admin)}
+                    className="min-h-[40px] px-3 py-2 text-blue-400 text-sm font-medium rounded-lg bg-blue-500/20 hover:bg-blue-500/30"
+                  >
+                    Редагувати
+                  </button>
+                  <button
+                    onClick={() => handleDelete(admin.id)}
+                    className="min-h-[40px] px-3 py-2 text-red-400 text-sm font-medium rounded-lg bg-red-500/20 hover:bg-red-500/30"
+                  >
+                    Видалити
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+          {/* Десктоп таблиця */}
+          <div className="hidden md:block overflow-x-auto">
+            <table className="w-full">
+              <thead>
+                <tr className="border-b border-white/10">
+                  <th className="text-left py-3 px-4">Email</th>
+                  <th className="text-left py-3 px-4">Ім'я</th>
+                  <th className="text-left py-3 px-4">Роль</th>
+                  <th className="text-left py-3 px-4">Права доступу</th>
+                  <th className="text-left py-3 px-4">Статус</th>
+                  <th className="text-left py-3 px-4">Останній вхід</th>
+                  <th className="text-left py-3 px-4">Дії</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {admins.map((admin: any) => (
+                  <tr key={admin.id} className="border-b border-white/10 hover:bg-white/5">
+                    <td className="py-3 px-4 font-medium">{admin.email}</td>
+                    <td className="py-3 px-4">{admin.name || '-'}</td>
+                    <td className="py-3 px-4">
+                      <span className={`px-2 py-1 rounded text-xs font-medium ${
+                        admin.role === 'SUPER_ADMIN' ? 'bg-purple-100 text-purple-800 dark:bg-purple-900 dark:text-purple-200' :
+                        admin.role === 'ADMIN' ? 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-200' :
+                        'bg-gray-100 text-gray-800 dark:bg-gray-700 dark:text-gray-200'
+                      }`}>
+                        {admin.role === 'SUPER_ADMIN' ? 'Супер адмін' :
+                         admin.role === 'ADMIN' ? 'Адмін' :
+                         'Переглядач'}
+                      </span>
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="text-sm text-gray-300">
+                        {admin.permissions?.length || 0} прав
+                      </div>
+                    </td>
+                    <td className="py-3 px-4">
+                      {admin.isActive ? (
+                        <span className="px-2 py-1 rounded text-xs bg-green-100 text-green-800">Активний</span>
+                      ) : (
+                        <span className="px-2 py-1 rounded text-xs bg-red-100 text-red-800">Неактивний</span>
+                      )}
+                    </td>
+                    <td className="py-3 px-4 text-sm text-gray-300">
+                      {admin.lastLoginAt ? format(new Date(admin.lastLoginAt), 'dd.MM.yyyy HH:mm', { locale: uk }) : 'Ніколи'}
+                    </td>
+                    <td className="py-3 px-4">
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEdit(admin)}
+                          className="text-blue-600 hover:text-blue-800 dark:text-blue-400"
+                        >
+                          Редагувати
+                        </button>
+                        <button
+                          onClick={() => handleDelete(admin.id)}
+                          className="text-red-600 hover:text-red-800 dark:text-red-400"
+                        >
+                          Видалити
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
 
       {/* Create/Edit Modal */}
