@@ -145,7 +145,7 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
   }
 
   return (
-    <div className="rounded-xl p-4 md:p-6 card-glass">
+    <div className="rounded-xl p-4 md:p-6 card-glass min-w-0 overflow-hidden">
       <div className="flex items-center justify-between mb-3 md:mb-4">
         <h3 className="text-base md:text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
           Календар записів
@@ -182,8 +182,8 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
         </h4>
       </div>
 
-      {/* Calendar Grid — той самий стиль, що на сторінці Записи */}
-      <div className="grid grid-cols-7 gap-1.5 md:gap-2">
+      {/* Calendar Grid — той самий стиль, що на сторінці Записи; min-w-0 щоб не вилітав за екран */}
+      <div className="grid grid-cols-7 gap-1.5 md:gap-2 min-w-0">
         {/* Day headers */}
         {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
           <div key={day} className="text-center text-xs font-semibold text-gray-400 py-1.5">

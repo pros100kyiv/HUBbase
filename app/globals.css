@@ -1020,6 +1020,37 @@
     66%, 100% { opacity: 0.3; }
   }
 
+  /* Екран завантаження: кільце навколо логотипа */
+  @keyframes loading-ring-spin {
+    to { transform: rotate(360deg); }
+  }
+  @keyframes loading-logo-pulse {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.92; transform: scale(0.98); }
+  }
+  .animate-loading-ring {
+    animation: loading-ring-spin 1.1s linear infinite;
+  }
+  .animate-loading-logo-pulse {
+    animation: loading-logo-pulse 1.8s ease-in-out infinite;
+  }
+
+  /* Плавна поява контенту — усунення моргання при завантаженні */
+  @keyframes content-fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  .animate-content-fade-in {
+    animation: content-fade-in 0.2s ease-out forwards;
+  }
+  .mounted-fade-in {
+    opacity: 0;
+    transition: opacity 0.15s ease-out;
+  }
+  .mounted-fade-in.visible {
+    opacity: 1;
+  }
+
   /* Hover Effects */
   .hover-lift {
     transition: transform 0.2s ease, box-shadow 0.2s ease;

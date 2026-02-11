@@ -150,7 +150,7 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
   const latest = messages[0]
 
   return (
-    <div className="rounded-xl p-4 md:p-6 card-glass-subtle">
+    <div className="rounded-xl p-4 md:p-6 card-glass-subtle min-w-0 overflow-hidden">
       {/* Header */}
       <button
         type="button"

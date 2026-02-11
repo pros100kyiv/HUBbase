@@ -1,6 +1,7 @@
 'use client'
 
 import { useBooking } from '@/contexts/BookingContext'
+import { InstallAppBadges } from '@/components/layout/InstallAppBadges'
 
 interface Business {
   name?: string
@@ -33,7 +34,10 @@ export function LandingStep({ business }: LandingStepProps) {
         </button>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-20 md:hidden px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2">
+      <div className="fixed bottom-0 left-0 right-0 z-20 md:hidden px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 space-y-2">
+        <div className="flex justify-center">
+          <InstallAppBadges variant="compact" />
+        </div>
         <button
           type="button"
           className="w-full min-h-[48px] py-4 rounded-lg bg-white text-black font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] text-sm touch-target"

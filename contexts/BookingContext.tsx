@@ -1,6 +1,6 @@
 'use client'
 
-import React, { createContext, useContext, useState, useCallback, ReactNode } from 'react'
+import React, { createContext, useContext, useState, useCallback, useMemo, ReactNode } from 'react'
 
 export interface Service {
   id: string
@@ -68,90 +68,106 @@ const BookingContext = createContext<BookingContextType | undefined>(undefined)
 export function BookingProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<BookingState>(initialState)
 
-  const setStep = (step: number) => {
-    setState(prev => ({ ...prev, step }))
-  }
+  const setStep = useCallback((step: number) => {
+    setState(prev => (prev.step === step ? prev : { ...prev, step }))
+  }, [])
 
-  const addService = (service: Service) => {
+  const addService = useCallback((service: Service) => {
     setState(prev => ({
       ...prev,
       selectedServices: [...prev.selectedServices, service],
     }))
-  }
+  }, [])
 
-  const removeService = (serviceId: string) => {
+  const removeService = useCallback((serviceId: string) => {
     setState(prev => ({
       ...prev,
       selectedServices: prev.selectedServices.filter(s => s.id !== serviceId),
     }))
-  }
+  }, [])
 
-  const setBookingWithoutService = (value: boolean) => {
+  const setBookingWithoutService = useCallback((value: boolean) => {
     setState(prev => ({
       ...prev,
       bookingWithoutService: value,
       ...(value ? { customServiceName: '' } : {}),
     }))
-  }
+  }, [])
 
-  const setCustomServiceName = (name: string) => {
+  const setCustomServiceName = useCallback((name: string) => {
     setState(prev => ({
       ...prev,
       customServiceName: name,
       ...(name.trim() ? { bookingWithoutService: false } : {}),
     }))
-  }
+  }, [])
 
-  const setMaster = (master: Master | null) => {
+  const setMaster = useCallback((master: Master | null) => {
     setState(prev => ({ ...prev, selectedMaster: master }))
-  }
+  }, [])
 
-  const setDate = (date: Date | null) => {
+  const setDate = useCallback((date: Date | null) => {
     setState(prev => ({ ...prev, selectedDate: date }))
-  }
+  }, [])
 
-  const setTime = (time: string | null) => {
+  const setTime = useCallback((time: string | null) => {
     setState(prev => ({ ...prev, selectedTime: time }))
-  }
+  }, [])
 
-  const setClientName = (name: string) => {
+  const setClientName = useCallback((name: string) => {
     setState(prev => ({ ...prev, clientName: name }))
-  }
+  }, [])
 
-  const setClientPhone = (phone: string) => {
+  const setClientPhone = useCallback((phone: string) => {
     setState(prev => ({ ...prev, clientPhone: phone }))
-  }
+  }, [])
 
   const setBusinessId = useCallback((id: string | null) => {
     setState(prev => {
-      // Оновлюємо тільки якщо значення змінилося
       if (prev.businessId === id) return prev
       return { ...prev, businessId: id }
     })
   }, [])
 
-  const reset = () => {
+  const reset = useCallback(() => {
     setState(initialState)
-  }
+  }, [])
+
+  const value = useMemo(
+    () => ({
+      state,
+      setBusinessId,
+      setStep,
+      addService,
+      removeService,
+      setBookingWithoutService,
+      setCustomServiceName,
+      setMaster,
+      setDate,
+      setTime,
+      setClientName,
+      setClientPhone,
+      reset,
+    }),
+    [
+      state,
+      setBusinessId,
+      setStep,
+      addService,
+      removeService,
+      setBookingWithoutService,
+      setCustomServiceName,
+      setMaster,
+      setDate,
+      setTime,
+      setClientName,
+      setClientPhone,
+      reset,
+    ]
+  )
 
   return (
-    <BookingContext.Provider
-      value={{
-        state,
-        setBusinessId,
-        setStep,
-        addService,
-        removeService,
-        setBookingWithoutService,
-        setCustomServiceName,
-        setMaster,
-        setDate,
-        setTime,
-        setClientName,
-        setClientPhone,
-        reset,
-      }}
-    >
+    <BookingContext.Provider value={value}>
       {children}
     </BookingContext.Provider>
   )

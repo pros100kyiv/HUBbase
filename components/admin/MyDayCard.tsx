@@ -582,7 +582,7 @@ export function MyDayCard({
   const dateDisplayShort = isToday ? 'Сьогодні' : format(selectedDate, 'EEE, d MMM', { locale: uk })
 
   return (
-    <div className="rounded-2xl p-4 md:p-6 card-floating text-white border border-white/10 overflow-hidden">
+    <div className="rounded-2xl p-4 md:p-6 card-floating text-white border border-white/10 overflow-hidden min-w-0">
       {/* Header: заголовок + меню */}
       <div className="flex items-center justify-between gap-3 mb-3 md:mb-4">
         <h2
@@ -672,49 +672,49 @@ export function MyDayCard({
         )}
       </div>
 
-      {/* Статистика за день */}
-      <div className="grid grid-cols-2 sm:grid-cols-5 gap-2 md:gap-3 mb-4 md:mb-5">
-        <div className="rounded-xl bg-white/5 border border-white/10 p-3">
-          <div className="text-lg md:text-xl font-bold text-white tabular-nums">{totalForDay}</div>
-          <div className="text-[10px] md:text-xs text-gray-400 mt-0.5">Записів</div>
+      {/* Статистика за день: на мобільному — 4 слоти в один ряд (менша висота), Вільні години окремо */}
+      <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 sm:gap-2 md:gap-3 mb-3 md:mb-5 min-w-0">
+        <div className="rounded-lg sm:rounded-xl bg-white/5 border border-white/10 p-2 sm:p-3">
+          <div className="text-base sm:text-lg md:text-xl font-bold text-white tabular-nums leading-tight">{totalForDay}</div>
+          <div className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 mt-0.5 leading-tight">Записів</div>
         </div>
         <button
           type="button"
           onClick={() => setSelectedStatus('confirmed')}
-          className="rounded-xl bg-white/5 border border-white/10 p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
+          className="rounded-lg sm:rounded-xl bg-white/5 border border-white/10 p-2 sm:p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
         >
-          <div className="text-lg md:text-xl font-bold text-emerald-400 tabular-nums">{confirmedForDay}</div>
-          <div className="text-[10px] md:text-xs text-gray-400 mt-0.5">Підтверджено</div>
+          <div className="text-base sm:text-lg md:text-xl font-bold text-emerald-400 tabular-nums leading-tight">{confirmedForDay}</div>
+          <div className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 mt-0.5 leading-tight">Підтверджено</div>
         </button>
         <button
           type="button"
           onClick={() => setSelectedStatus('pending')}
-          className="rounded-xl bg-white/5 border border-white/10 p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
+          className="rounded-lg sm:rounded-xl bg-white/5 border border-white/10 p-2 sm:p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
         >
-          <div className="text-lg md:text-xl font-bold text-amber-400 tabular-nums">{pendingForDay}</div>
-          <div className="text-[10px] md:text-xs text-gray-400 mt-0.5">Очікує</div>
+          <div className="text-base sm:text-lg md:text-xl font-bold text-amber-400 tabular-nums leading-tight">{pendingForDay}</div>
+          <div className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 mt-0.5 leading-tight">Очікує</div>
         </button>
         <button
           type="button"
           onClick={() => setSelectedStatus('done')}
-          className="rounded-xl bg-white/5 border border-white/10 p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
+          className="rounded-lg sm:rounded-xl bg-white/5 border border-white/10 p-2 sm:p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
         >
-          <div className="text-lg md:text-xl font-bold text-sky-400 tabular-nums">{completedForDay}</div>
-          <div className="text-[10px] md:text-xs text-gray-400 mt-0.5">Виконано</div>
+          <div className="text-base sm:text-lg md:text-xl font-bold text-sky-400 tabular-nums leading-tight">{completedForDay}</div>
+          <div className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 mt-0.5 leading-tight">Виконано</div>
         </button>
         <button
           type="button"
           onClick={() => onOpenFreeSlots?.(selectedDate)}
-          className="rounded-xl bg-white/5 border border-white/10 p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98] col-span-2 sm:col-span-1 flex items-center gap-2"
+          className="rounded-lg sm:rounded-xl bg-white/5 border border-white/10 p-2 sm:p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98] col-span-4 sm:col-span-1 flex items-center gap-2"
         >
-          <div className="w-9 h-9 rounded-lg bg-sky-500/20 border border-sky-500/30 flex items-center justify-center flex-shrink-0">
-            <svg className="w-5 h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-sky-500/20 border border-sky-500/30 flex items-center justify-center flex-shrink-0">
+            <svg className="w-4 h-4 sm:w-5 sm:h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           </div>
           <div className="min-w-0 flex-1">
-            <div className="text-sm font-semibold text-white">Вільні години</div>
-            <div className="text-[10px] text-gray-400 mt-0.5">Переглянути слоти</div>
+            <div className="text-xs sm:text-sm font-semibold text-white">Вільні години</div>
+            <div className="text-[9px] sm:text-[10px] text-gray-400 mt-0.5">Переглянути слоти</div>
           </div>
         </button>
       </div>

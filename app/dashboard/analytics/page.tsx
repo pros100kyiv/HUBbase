@@ -148,8 +148,8 @@ export default function AnalyticsPage() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto min-w-0">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0">
+    <div className="w-full max-w-7xl mx-auto min-w-0 overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0 w-full">
         <div className="lg:col-span-3 space-y-3 md:space-y-6 min-w-0">
           {/* Header - same as Dashboard */}
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
@@ -868,9 +868,9 @@ export default function AnalyticsPage() {
           )}
         </div>
 
-        <div className="lg:col-span-1 space-y-3 md:space-y-6">
+        <div className="lg:col-span-1 space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
           <MonthProgressCard stats={stats} loading={!stats} />
-          <div className="rounded-xl p-4 md:p-6 card-glass">
+          <div className="rounded-xl p-4 md:p-6 card-glass min-w-0 overflow-hidden">
             <h3 className="text-base font-semibold text-white mb-3 md:mb-4 flex items-center gap-2" style={{ letterSpacing: '-0.01em' }}>
               <LightBulbIcon className="w-5 h-5 text-purple-400" /> Інсайти
             </h3>
@@ -934,7 +934,7 @@ export default function AnalyticsPage() {
               </button>
             </div>
           </div>
-          <div className="rounded-xl p-4 md:p-6 card-glass">
+          <div className="rounded-xl p-4 md:p-6 card-glass min-w-0 overflow-hidden">
             <h3 className="text-base font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>Швидкі дії</h3>
             <div className="space-y-2">
               <button

@@ -495,10 +495,10 @@ export default function MastersPage() {
 
   if (!business || loading) {
     return (
-      <div className="w-full max-w-7xl mx-auto min-w-0">
+      <div className="w-full max-w-7xl mx-auto min-w-0 overflow-hidden">
         <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-4" />
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0">
-          <div className="lg:col-span-3 space-y-4">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0 w-full">
+          <div className="lg:col-span-3 space-y-4 min-w-0">
             <div className="h-64 rounded-xl card-glass animate-pulse" />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {[1, 2, 3].map((i) => (
@@ -506,7 +506,7 @@ export default function MastersPage() {
               ))}
             </div>
           </div>
-          <div className="space-y-4">
+          <div className="lg:col-span-1 space-y-4 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
             <div className="h-48 rounded-xl card-glass animate-pulse" />
           </div>
         </div>
@@ -515,8 +515,8 @@ export default function MastersPage() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto min-w-0">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0">
+    <div className="w-full max-w-7xl mx-auto min-w-0 overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0 w-full">
         {/* Main Content */}
         <div className="lg:col-span-3 space-y-3 md:space-y-6 min-w-0">
           {/* Header */}
@@ -1079,8 +1079,8 @@ export default function MastersPage() {
         </div>
 
         {/* Right Sidebar */}
-        <div className="lg:col-span-1 space-y-3 md:space-y-6">
-          <div className="rounded-xl p-4 md:p-6 card-glass">
+        <div className="lg:col-span-1 space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
+          <div className="rounded-xl p-4 md:p-6 card-glass min-w-0 overflow-hidden">
             <h3 className="text-base md:text-lg font-semibold text-white mb-3" style={{ letterSpacing: '-0.01em' }}>
               Швидкі дії
             </h3>

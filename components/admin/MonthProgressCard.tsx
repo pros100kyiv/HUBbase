@@ -25,7 +25,7 @@ export function MonthProgressCard({ stats, loading }: MonthProgressCardProps) {
   // Якщо дані завантажуються або відсутні
   if (loading || !stats) {
     return (
-      <div className="rounded-xl p-4 md:p-6 card-glass animate-pulse h-[200px]">
+      <div className="rounded-xl p-4 md:p-6 card-glass animate-pulse h-[200px] min-w-0 overflow-hidden">
         <div className="h-6 bg-white/10 rounded w-1/3 mb-4"></div>
         <div className="h-4 bg-white/10 rounded w-1/2 mb-8"></div>
         <div className="flex gap-4">
@@ -70,7 +70,7 @@ export function MonthProgressCard({ stats, loading }: MonthProgressCardProps) {
 
   return (
     <>
-      <div className="dashboard-card hover:border-white/20 transition-all duration-200 cursor-pointer group" onClick={() => setShowModal(true)}>
+      <div className="dashboard-card hover:border-white/20 transition-all duration-200 cursor-pointer group min-w-0 overflow-hidden" onClick={() => setShowModal(true)}>
         <div className="flex items-center justify-between mb-3 md:mb-4">
           <h3 className="dashboard-card-title">
             Прогрес місяця

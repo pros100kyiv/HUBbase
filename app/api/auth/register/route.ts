@@ -146,7 +146,7 @@ export async function POST(request: Request) {
       // Не викидаємо помилку, щоб не зламати реєстрацію
     }
 
-    // Формуємо відповідь з повними даними бізнесу
+    // Формуємо відповідь з повними даними бізнесу (той самий формат, що й при логіні)
     const businessData = {
       id: result.business.id,
       name: result.business.name,
@@ -156,16 +156,17 @@ export async function POST(request: Request) {
       address: result.business.address,
       description: result.business.description,
       logo: result.business.logo,
-      avatar: result.business.avatar,
+      avatar: result.business.avatar ?? null,
       primaryColor: result.business.primaryColor,
       secondaryColor: result.business.secondaryColor,
       backgroundColor: result.business.backgroundColor,
       surfaceColor: result.business.surfaceColor,
       isActive: result.business.isActive,
-      businessIdentifier: result.business.businessIdentifier,
-      profileCompleted: result.business.profileCompleted,
-      niche: result.business.niche,
-      customNiche: result.business.customNiche,
+      businessIdentifier: result.business.businessIdentifier ?? null,
+      profileCompleted: result.business.profileCompleted ?? false,
+      niche: result.business.niche ?? null,
+      customNiche: result.business.customNiche ?? null,
+      telegramChatId: result.business.telegramChatId ?? null,
     }
 
     // Повертаємо відповідь

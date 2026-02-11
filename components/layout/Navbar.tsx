@@ -1,17 +1,26 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useRouter, usePathname } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { useEffect, useState, useRef } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
 import { SunIcon, MoonIcon, OledIcon, MenuIcon, QRIcon } from '@/components/icons'
-import { setMobileMenuState } from '@/app/dashboard/layout'
-import { GlobalSearch } from '@/components/admin/GlobalSearch'
+import { setMobileMenuState, getMobileMenuState } from '@/app/dashboard/layout'
 import { playNotificationSound } from '@/lib/notification-sound'
 import { AccountProfileButton } from '@/components/layout/AccountProfileButton'
-import { NotificationsPanel } from '@/components/admin/NotificationsPanel'
 import { XbaseLogo } from '@/components/layout/XbaseLogo'
+
+const GlobalSearch = dynamic(
+  () => import('@/components/admin/GlobalSearch').then((m) => ({ default: m.GlobalSearch })),
+  { ssr: false }
+)
+
+const NotificationsPanel = dynamic(
+  () => import('@/components/admin/NotificationsPanel').then((m) => ({ default: m.NotificationsPanel })),
+  { ssr: false }
+)
 
 export function Navbar() {
   const router = useRouter()
@@ -82,7 +91,6 @@ export function Navbar() {
     return null
   }
 
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [showNotifications, setShowNotifications] = useState(false)
   const [pendingCount, setPendingCount] = useState(0)
@@ -116,8 +124,7 @@ export function Navbar() {
 
   // Close mobile menu when pathname changes
   useEffect(() => {
-    if (mobileMenuOpen && pathname) {
-      setMobileMenuOpen(false)
+    if (getMobileMenuState() && pathname) {
       setMobileMenuState(false)
     }
   }, [pathname])
@@ -145,11 +152,7 @@ export function Navbar() {
               {/* Left: меню (mobile) + назва бізнесу */}
               <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
                 <button
-                  onClick={() => {
-                    const newState = !mobileMenuOpen
-                    setMobileMenuOpen(newState)
-                    setMobileMenuState(newState)
-                  }}
+                  onClick={() => setMobileMenuState(!getMobileMenuState())}
                   className="md:hidden touch-target p-2.5 rounded-xl hover:bg-white/10 active:bg-white/15 transition-colors flex-shrink-0 flex items-center justify-center"
                   aria-label="Відкрити меню"
                   title="Меню"
@@ -164,19 +167,17 @@ export function Navbar() {
               {/* Right: дії — згруповані візуально */}
               <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 flex-shrink-0">
                 {/* Група: тема + іконки */}
-                <div className="flex items-center gap-1 sm:gap-1.5 md:gap-2">
-                  {mounted && (
-                    <button
-                      onClick={cycleTheme}
-                      className="touch-target p-2.5 rounded-xl hover:bg-white/10 active:bg-white/15 transition-colors border border-white/10 flex items-center justify-center flex-shrink-0"
-                      title={themeTitles[theme] || 'Тема'}
-                      aria-label={themeTitles[theme] || 'Змінити тему'}
-                    >
-                      {theme === 'light' && <MoonIcon className="w-5 h-5 text-white" />}
-                      {theme === 'dark' && <SunIcon className="w-5 h-5 text-white" />}
-                      {theme === 'oled' && <OledIcon className="w-5 h-5 text-white" />}
-                    </button>
-                  )}
+                <div className={`flex items-center gap-1 sm:gap-1.5 md:gap-2 mounted-fade-in ${mounted ? 'visible' : ''}`}>
+                  <button
+                    onClick={cycleTheme}
+                    className="touch-target p-2.5 rounded-xl hover:bg-white/10 active:bg-white/15 transition-colors border border-white/10 flex items-center justify-center flex-shrink-0 w-10 h-10"
+                    title={themeTitles[theme] || 'Тема'}
+                    aria-label={themeTitles[theme] || 'Змінити тему'}
+                  >
+                    {theme === 'light' && <MoonIcon className="w-5 h-5 text-white" />}
+                    {theme === 'dark' && <SunIcon className="w-5 h-5 text-white" />}
+                    {theme === 'oled' && <OledIcon className="w-5 h-5 text-white" />}
+                  </button>
                   {business?.slug && (
                     <button
                       onClick={() => window.open(`/qr/${business.slug}`, '_blank')}
@@ -326,20 +327,18 @@ export function Navbar() {
             )}
           </div>
 
-          <div className="flex items-center gap-2 flex-shrink-0">
+          <div className={`flex items-center gap-2 flex-shrink-0 mounted-fade-in ${mounted ? 'visible' : ''}`}>
             {/* Тема: швидке керування у верхній панелі */}
-            {mounted && (
-              <button
-                onClick={cycleTheme}
-                className="touch-target p-2 rounded-candy-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 active:scale-95 flex items-center justify-center"
-                title={themeTitles[theme] || 'Тема'}
-                aria-label={themeTitles[theme] || 'Змінити тему'}
-              >
-                {theme === 'light' && <MoonIcon className="w-4 h-4 md:w-5 md:h-5" />}
-                {theme === 'dark' && <SunIcon className="w-4 h-4 md:w-5 md:h-5" />}
-                {theme === 'oled' && <OledIcon className="w-4 h-4 md:w-5 md:h-5" />}
-              </button>
-            )}
+            <button
+              onClick={cycleTheme}
+              className="touch-target p-2 rounded-candy-sm border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 transition-all duration-200 active:scale-95 flex items-center justify-center w-9 h-9 md:w-10 md:h-10"
+              title={themeTitles[theme] || 'Тема'}
+              aria-label={themeTitles[theme] || 'Змінити тему'}
+            >
+              {theme === 'light' && <MoonIcon className="w-4 h-4 md:w-5 md:h-5" />}
+              {theme === 'dark' && <SunIcon className="w-4 h-4 md:w-5 md:h-5" />}
+              {theme === 'oled' && <OledIcon className="w-4 h-4 md:w-5 md:h-5" />}
+            </button>
             {business ? (
               <>
                 <Button

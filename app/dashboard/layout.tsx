@@ -1,22 +1,37 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
+import { useState, useEffect, useLayoutEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
 import { Sidebar } from '@/components/admin/Sidebar'
 import { MobileSidebar } from '@/components/admin/MobileSidebar'
-import { AIChatWidget } from '@/components/ai/AIChatWidget'
-import { ProfileSetupModal } from '@/components/admin/ProfileSetupModal'
-import { BlockedOverlay } from '@/components/admin/BlockedOverlay'
 import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
 
+const AIChatWidget = dynamic(
+  () => import('@/components/ai/AIChatWidget').then((m) => ({ default: m.AIChatWidget })),
+  { ssr: false }
+)
+
+const ProfileSetupModal = dynamic(
+  () => import('@/components/admin/ProfileSetupModal').then((m) => ({ default: m.ProfileSetupModal })),
+  { ssr: false }
+)
+
+const BlockedOverlay = dynamic(
+  () => import('@/components/admin/BlockedOverlay').then((m) => ({ default: m.BlockedOverlay })),
+  { ssr: false }
+)
+
 // Global state for mobile menu
-let globalMobileMenuState = { isOpen: false, setIsOpen: (open: boolean) => {} }
+let globalMobileMenuState = { isOpen: false, setIsOpen: (_open: boolean) => {} }
 
 export function setMobileMenuState(isOpen: boolean) {
-  if (globalMobileMenuState.setIsOpen) {
-    globalMobileMenuState.setIsOpen(isOpen)
-  }
+  globalMobileMenuState.setIsOpen(isOpen)
+}
+
+export function getMobileMenuState(): boolean {
+  return globalMobileMenuState.isOpen
 }
 
 export default function DashboardLayout({
@@ -78,7 +93,8 @@ export default function DashboardLayout({
       })
   }, [business?.id])
 
-  useEffect(() => {
+  // useLayoutEffect: реєструємо setter ДО малювання, щоб перший клік відразу відкривав меню (без подвійного натискання)
+  useLayoutEffect(() => {
     globalMobileMenuState = { isOpen: mobileMenuOpen, setIsOpen: setMobileMenuOpen }
   }, [mobileMenuOpen])
 
@@ -144,12 +160,14 @@ export default function DashboardLayout({
       {/* Той самий фон, що на реєстрації, вході та головній — м’які градієнтні орби */}
       <div className="fixed inset-0 pointer-events-none landing-hero-gradient" aria-hidden />
 
-      {/* Оверлей «Доступ заблоковано» — показується, коли акаунт заблоковано в центрі управління */}
+      {/* Оверлей «Доступ заблоковано» — плавна поява */}
       {mounted && isBlocked === true && (
-        <BlockedOverlay
-          blockReason={blockInfo?.reason}
-          blockedAt={blockInfo?.blockedAt}
-        />
+        <div className="mounted-fade-in visible">
+          <BlockedOverlay
+            blockReason={blockInfo?.reason}
+            blockedAt={blockInfo?.blockedAt}
+          />
+        </div>
       )}
 
       {/* Top Navbar */}
@@ -161,9 +179,9 @@ export default function DashboardLayout({
       {/* Mobile Sidebar */}
       <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       
-      {/* Main Content Area — safe-area для notch та home indicator, w-full щоб не залишати порожнього простору справа */}
+      {/* Main Content Area — плавна поява контенту без моргання */}
       <main className="relative w-full min-w-0 ml-0 md:ml-64 pt-14 md:pt-16 min-h-screen safe-bottom pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
-        <div className="w-full min-w-0 px-3 py-3 md:p-6 pb-[max(5rem,env(safe-area-inset-bottom)+3.5rem)] md:pb-6">
+        <div className="w-full min-w-0 px-3 py-3 md:p-6 pb-[max(5rem,env(safe-area-inset-bottom)+3.5rem)] md:pb-6 animate-content-fade-in">
           {children}
         </div>
       </main>
@@ -186,27 +204,33 @@ export default function DashboardLayout({
         </button>
       </div>
 
-      {/* AI Chat Widget — тільки після mount (уникнення hydration #418) */}
+      {/* AI Chat Widget — плавна поява після mount */}
       {mounted && (() => {
         try {
           const businessData = localStorage.getItem('business')
           if (businessData) {
             const business = JSON.parse(businessData)
             if (business?.id) {
-              return <AIChatWidget businessId={business.id} />
+              return (
+                <div className="mounted-fade-in visible">
+                  <AIChatWidget businessId={business.id} />
+                </div>
+              )
             }
           }
         } catch {}
         return null
       })()}
 
-      {/* Profile Setup Modal - показується тільки при першій реєстрації */}
+      {/* Profile Setup Modal — плавна поява */}
       {mounted && showProfileModal && business && !business.profileCompleted && (
-        <ProfileSetupModal
-          business={business}
-          onComplete={handleProfileComplete}
-          onClose={handleProfileModalClose}
-        />
+        <div className="mounted-fade-in visible">
+          <ProfileSetupModal
+            business={business}
+            onComplete={handleProfileComplete}
+            onClose={handleProfileModalClose}
+          />
+        </div>
       )}
     </div>
   )

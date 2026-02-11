@@ -193,7 +193,7 @@ export default function SchedulePage() {
   }
 
   return (
-    <div className="w-full max-w-4xl mx-auto min-w-0">
+    <div className="w-full max-w-4xl mx-auto min-w-0 overflow-hidden">
       {/* Заголовок */}
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 md:mb-8">
         <div>

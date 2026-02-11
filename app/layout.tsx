@@ -6,13 +6,34 @@ import { NavigationProgressProvider } from '@/contexts/NavigationProgressContext
 import { ToastContainer } from '@/components/ui/toast'
 
 export const metadata: Metadata = {
-  title: 'Xbase — Записи та клієнти в одній базі | xbase.online',
-  description: 'Xbase: ваша база для записів та клієнтів. Онлайн-бронювання, QR, Telegram. Безкоштовний старт для бізнесів.',
+  title: 'Xbase Бізнес — Запис онлайн, бронювання та клієнти | xbase.online',
+  description: 'Xbase — система записів для бізнесу: онлайн бронювання, календар записів, база клієнтів, QR-код. Салон, барбершоп, клініка. Запис онлайн без дзвінків. Telegram, безкоштовний старт.',
+  keywords: ['Xbase Бізнес', 'Запис онлайн', 'онлайн бронювання', 'система записів', 'календар записів', 'запис клієнтів', 'запис на прийом', 'онлайн запис', 'бронювання салону', 'запис барбершопу', 'xbase.online'],
   manifest: '/manifest.json',
+  icons: {
+    icon: '/icon.svg',
+    apple: '/icon.svg',
+  },
   openGraph: {
-    title: 'Xbase — Записи та клієнти в одній базі',
-    description: 'Ваша база для записів та клієнтів. Онлайн-бронювання, QR, Telegram.',
+    title: 'Xbase Бізнес — Запис онлайн та клієнти',
+    description: 'Система записів для бізнесу: онлайн бронювання, календар, QR-код. Салон, барбершоп, клініка.',
     type: 'website',
+    url: 'https://xbase.online',
+    siteName: 'Xbase',
+    locale: 'uk_UA',
+  },
+  twitter: {
+    card: 'summary',
+    title: 'Xbase Бізнес — Запис онлайн',
+    description: 'Система записів для бізнесу. Онлайн бронювання, QR-код, Telegram.',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+    },
   },
 }
 
@@ -31,7 +52,7 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="uk" suppressHydrationWarning>
+    <html lang="uk" className="dark oled" suppressHydrationWarning>
       <head>
         <script
           dangerouslySetInnerHTML={{
@@ -55,7 +76,23 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body suppressHydrationWarning>
+      <body className="bg-background overflow-x-hidden" suppressHydrationWarning>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              '@context': 'https://schema.org',
+              '@type': 'WebApplication',
+              name: 'Xbase Бізнес',
+              alternateName: 'Xbase — Запис онлайн',
+              description: 'Система записів для бізнесу: онлайн бронювання, календар записів, база клієнтів, QR-код.',
+              url: 'https://xbase.online',
+              applicationCategory: 'BusinessApplication',
+              operatingSystem: 'Web, iOS, Android',
+              offers: { '@type': 'Offer', price: '0', priceCurrency: 'UAH' },
+            }),
+          }}
+        />
         <ThemeProvider>
           <BookingProvider>
             <NavigationProgressProvider>

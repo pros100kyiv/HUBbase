@@ -1,13 +1,27 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useEffect, useState, useRef } from 'react'
 import { useParams } from 'next/navigation'
 import { useBooking } from '@/contexts/BookingContext'
 import { LandingStep } from '@/components/booking/LandingStep'
-import { ServiceStep } from '@/components/booking/ServiceStep'
-import { MasterStep } from '@/components/booking/MasterStep'
-import { TimeStep } from '@/components/booking/TimeStep'
-import { FinalStep } from '@/components/booking/FinalStep'
+
+const ServiceStep = dynamic(
+  () => import('@/components/booking/ServiceStep').then((m) => ({ default: m.ServiceStep })),
+  { ssr: false }
+)
+const MasterStep = dynamic(
+  () => import('@/components/booking/MasterStep').then((m) => ({ default: m.MasterStep })),
+  { ssr: false }
+)
+const TimeStep = dynamic(
+  () => import('@/components/booking/TimeStep').then((m) => ({ default: m.TimeStep })),
+  { ssr: false }
+)
+const FinalStep = dynamic(
+  () => import('@/components/booking/FinalStep').then((m) => ({ default: m.FinalStep })),
+  { ssr: false }
+)
 
 interface Business {
   id: string

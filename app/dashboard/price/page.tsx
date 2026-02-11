@@ -228,10 +228,10 @@ export default function PricePage() {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-4 md:p-6 min-h-screen text-white pb-[max(6rem,calc(5rem+env(safe-area-inset-bottom)))] md:pb-24">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6">
+    <div className="w-full max-w-7xl mx-auto min-w-0 overflow-hidden p-4 md:p-6 min-h-screen text-white pb-[max(6rem,calc(5rem+env(safe-area-inset-bottom)))] md:pb-24">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0 w-full">
         {/* Main content */}
-        <div className="lg:col-span-3 space-y-3 md:space-y-6">
+        <div className="lg:col-span-3 space-y-3 md:space-y-6 min-w-0">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
@@ -497,26 +497,26 @@ export default function PricePage() {
               <button
                 onClick={() => setSelectedCategory(null)}
                 className={cn(
-                  "touch-target min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
+                  "touch-target min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-shrink-0 w-[120px] overflow-hidden text-left",
                   !selectedCategory
                     ? "bg-white text-black"
                     : "bg-white/10 text-gray-300 hover:bg-white/15 border border-white/20"
                 )}
               >
-                Всі
+                <span className="block break-words line-clamp-2 leading-tight w-full min-w-0">Всі</span>
               </button>
               {categories.map(cat => (
                 <button
                   key={cat}
                   onClick={() => setSelectedCategory(cat)}
                   className={cn(
-                    "touch-target min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-colors",
+                    "touch-target min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium transition-colors flex-shrink-0 w-[120px] overflow-hidden text-left",
                     selectedCategory === cat
                       ? "bg-white text-black"
                       : "bg-white/10 text-gray-300 hover:bg-white/15 border border-white/20"
                   )}
                 >
-                  {cat}
+                  <span className="block break-words line-clamp-2 leading-tight w-full min-w-0">{cat}</span>
                 </button>
               ))}
             </div>
@@ -616,9 +616,9 @@ export default function PricePage() {
         </div>
 
         {/* Sidebar */}
-        <div className="lg:col-span-1 space-y-3 md:space-y-4">
+        <div className="lg:col-span-1 space-y-3 md:space-y-4 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
           {/* Калькулятор послуг */}
-          <div className="rounded-xl p-4 card-glass">
+          <div className="rounded-xl p-4 card-glass min-w-0 overflow-hidden">
             <h3 className="text-sm font-semibold text-white mb-3">Калькулятор послуг</h3>
             {selectedServices.length === 0 ? (
               <p className="text-gray-400 text-sm">
@@ -658,7 +658,7 @@ export default function PricePage() {
             )}
           </div>
 
-          <div className="rounded-xl p-4 card-glass">
+          <div className="rounded-xl p-4 card-glass min-w-0 overflow-hidden">
             <h3 className="text-sm font-semibold text-white mb-3">Статистика</h3>
             <div className="space-y-2 text-sm">
               <div className="flex justify-between">
@@ -671,7 +671,7 @@ export default function PricePage() {
               </div>
             </div>
           </div>
-          <div className="rounded-xl p-4 card-glass">
+          <div className="rounded-xl p-4 card-glass min-w-0 overflow-hidden">
             <h3 className="text-sm font-semibold text-white mb-3">Швидкі дії</h3>
             <div className="flex flex-col gap-2">
               <button

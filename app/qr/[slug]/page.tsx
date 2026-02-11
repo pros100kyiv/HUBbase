@@ -1,11 +1,17 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { QRCodeSVG } from 'qrcode.react'
 import { Card, CardContent } from '@/components/ui/card'
+
+const QRCodeSVG = dynamic(
+  () => import('qrcode.react').then((m) => ({ default: m.QRCodeSVG })),
+  { ssr: false }
+)
 import { Button } from '@/components/ui/button'
 import { toast } from '@/components/ui/toast'
+import { InstallAppBadges } from '@/components/layout/InstallAppBadges'
 
 export default function QRPage() {
   const params = useParams()
@@ -37,7 +43,7 @@ export default function QRPage() {
             QR КОД ДЛЯ БРОНЮВАННЯ
           </h1>
           <div className="flex justify-center mb-6">
-            <div className="relative">
+            <div className={`relative ${mounted && bookingUrl ? 'animate-content-fade-in' : ''}`}>
               {mounted && bookingUrl ? (
                 <QRCodeSVG
                   value={bookingUrl}
@@ -55,8 +61,11 @@ export default function QRPage() {
           <p className="text-center text-gray-600 dark:text-gray-400 text-sm mb-4">
             Відскануйте QR код для швидкого доступу до бронювання
           </p>
+          <div className="flex justify-center mb-4">
+            <InstallAppBadges variant="full" />
+          </div>
           {mounted && bookingUrl && (
-            <div className="bg-white dark:bg-gray-800 rounded-md p-4 text-center mb-4 space-y-2">
+            <div className="bg-white dark:bg-gray-800 rounded-md p-4 text-center mb-4 space-y-2 animate-content-fade-in">
               <p className="text-xs text-gray-500 dark:text-gray-500 mb-1">Посилання:</p>
               <p className="text-sm text-gray-700 dark:text-gray-300 break-all">{bookingUrl}</p>
               <Button

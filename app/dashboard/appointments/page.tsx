@@ -534,8 +534,8 @@ export default function AppointmentsPage() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto min-w-0">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0">
+    <div className="w-full max-w-7xl mx-auto min-w-0 overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0 w-full">
         {/* Left Column - Main Content (3 columns) - same as Dashboard */}
         <div className="lg:col-span-3 space-y-3 md:space-y-6 min-w-0">
           {/* Header - same style as Dashboard */}
@@ -684,8 +684,8 @@ export default function AppointmentsPage() {
                   ))}
                 </div>
 
-                {/* Календар — збільшений */}
-                <div className="grid grid-cols-7 gap-2 w-full">
+                {/* Календар — збільшений; min-w-0 щоб не вилітав за екран */}
+                <div className="grid grid-cols-7 gap-2 w-full min-w-0">
                   {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
                     <div key={day} className="text-center text-xs font-semibold text-gray-400 py-1.5">
                       {day}
@@ -921,9 +921,9 @@ export default function AppointmentsPage() {
         </div>
 
         {/* Right Column - Sidebar (1 column) - same as Dashboard */}
-        <div className="lg:col-span-1 space-y-3 md:space-y-6">
+        <div className="lg:col-span-1 space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
           {/* Quick Stats — за період або за обраний день (коли в календарі натиснуто дату) */}
-          <div className="rounded-xl p-4 md:p-6 card-glass">
+          <div className="rounded-xl p-4 md:p-6 card-glass min-w-0 overflow-hidden">
             <div className="mb-3 md:mb-4 flex flex-col gap-1">
               <h3 className="text-base md:text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
                 Статистика
@@ -961,7 +961,7 @@ export default function AppointmentsPage() {
           </div>
 
           {/* Повзунок: показувати дохід у календарі та списку */}
-          <div className="rounded-xl p-4 md:p-6 card-glass">
+          <div className="rounded-xl p-4 md:p-6 card-glass min-w-0 overflow-hidden">
             <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>
               Відображення
             </h3>
@@ -993,7 +993,7 @@ export default function AppointmentsPage() {
             </p>
           </div>
 
-          <div className="rounded-xl p-4 md:p-6 card-glass">
+          <div className="rounded-xl p-4 md:p-6 card-glass min-w-0 overflow-hidden">
             <div className="mb-3 md:mb-4 flex flex-col gap-1">
               <h3 className="text-base md:text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
                 Швидкі дії

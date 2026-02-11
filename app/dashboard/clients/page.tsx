@@ -605,8 +605,8 @@ export default function ClientsPage() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto min-w-0">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0">
+    <div className="w-full max-w-7xl mx-auto min-w-0 overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0 w-full">
         {/* Left Column - Main Content (3 columns) - same as Dashboard */}
         <div className="lg:col-span-3 space-y-3 md:space-y-6 min-w-0">
           {/* Header - same style as Dashboard */}
@@ -1194,8 +1194,8 @@ export default function ClientsPage() {
           )}
         </div>
 
-        <div className="lg:col-span-1 space-y-3 md:space-y-6">
-          <div className="rounded-xl p-4 md:p-6 card-glass">
+        <div className="lg:col-span-1 space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
+          <div className="rounded-xl p-4 md:p-6 card-glass min-w-0 overflow-hidden">
             <div className="mb-3 md:mb-4">
               <h3 className="text-base md:text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>Статистика</h3>
               <p className="text-xs text-gray-500 mt-0.5">За поточними фільтрами</p>
@@ -1227,7 +1227,7 @@ export default function ClientsPage() {
               </div>
             </div>
           </div>
-          <div className="rounded-xl p-4 md:p-6 card-glass">
+          <div className="rounded-xl p-4 md:p-6 card-glass min-w-0 overflow-hidden">
             <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>Швидкі дії</h3>
             <div className="space-y-2">
               <button

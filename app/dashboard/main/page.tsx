@@ -90,13 +90,13 @@ export default function MainPage() {
 
   if (!business) {
     return (
-      <div className="w-full max-w-7xl mx-auto min-w-0">
+      <div className="w-full max-w-7xl mx-auto min-w-0 overflow-hidden">
         <div className="h-8 w-48 bg-white/10 rounded animate-pulse mb-4" />
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0">
-          <div className="lg:col-span-3 space-y-3 md:space-y-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0 w-full">
+          <div className="lg:col-span-3 space-y-3 md:space-y-6 min-w-0">
             <div className="h-64 rounded-xl bg-white/5 border border-white/10 animate-pulse" />
           </div>
-          <div className="lg:col-span-1 space-y-3 md:space-y-6">
+          <div className="lg:col-span-1 space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
             <div className="h-40 rounded-xl bg-white/5 border border-white/10 animate-pulse" />
             <div className="h-40 rounded-xl bg-white/5 border border-white/10 animate-pulse" />
           </div>
@@ -112,8 +112,8 @@ export default function MainPage() {
   const todayConfirmed = todayAppointments.filter(apt => apt.status === 'Confirmed' || apt.status === 'Підтверджено').length
 
   return (
-    <div className="w-full max-w-7xl mx-auto min-w-0">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0">
+    <div className="w-full max-w-7xl mx-auto min-w-0 overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0 w-full">
         {/* Left Column - Main Content (3 columns) */}
         <div className="lg:col-span-3 space-y-3 md:space-y-6 min-w-0">
           {/* Header */}
@@ -173,7 +173,7 @@ export default function MainPage() {
         </div>
 
         {/* Right Column - Sidebar (1 column). Мобільний порядок: Соцмережі → Нотатки → Календар */}
-        <div className="lg:col-span-1 space-y-3 md:space-y-6 flex flex-col min-w-0">
+        <div className="lg:col-span-1 space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
           {/* Social Messages — першими на мобільному (швидка відповідь) */}
           {business?.id && (
             <div className="order-1">
@@ -181,15 +181,15 @@ export default function MainPage() {
             </div>
           )}
 
-          {/* Notes Card — другі (щоденні задачі) */}
+          {/* Notes Card — в самий низ на мобільному (order-3), на десктопі залишається в колонці справа */}
           {business?.id && (
-            <div className="order-2 md:order-3">
+            <div className="order-3">
               <NotesCard businessId={business.id} />
             </div>
           )}
 
-          {/* Calendar Card — третьі (огляд тижня) */}
-          <div className="order-3 md:order-2">
+          {/* Calendar Card — другі на мобільному (огляд тижня) */}
+          <div className="order-2">
             <WeeklyProcessCard businessId={business?.id} />
           </div>
         </div>
