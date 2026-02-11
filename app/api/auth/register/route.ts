@@ -36,14 +36,20 @@ export async function POST(request: Request) {
 
     // Використовуємо транзакцію для атомарності операцій
     const result = await prisma.$transaction(async (tx) => {
-      // Перевіряємо, чи email вже існує (з урахуванням регістру через insensitive search)
+      // Перевіряємо, чи email вже існує (явний select — щоб не ламатись без колонки telegramWebhookSetAt)
       const existingBusiness = await tx.business.findFirst({
         where: {
           email: {
             equals: normalizedEmail,
             mode: 'insensitive'
           }
-        }
+        },
+        select: {
+          id: true,
+          email: true,
+          password: true,
+          trustedDevices: true,
+        },
       })
 
       if (existingBusiness) {
@@ -54,11 +60,17 @@ export async function POST(request: Request) {
           : false
 
         if (passwordMatch) {
-          // Автоматичний вхід - додаємо пристрій до довірених
+          // Автоматичний вхід - додаємо пристрій до довірених (select без telegramWebhookSetAt — стійкість до відсутньої колонки)
           const updatedTrustedDevices = addTrustedDevice(existingBusiness.trustedDevices, deviceId)
           const updated = await tx.business.update({
             where: { id: existingBusiness.id },
-            data: { trustedDevices: updatedTrustedDevices }
+            data: { trustedDevices: updatedTrustedDevices },
+            select: {
+              id: true, name: true, slug: true, email: true, phone: true, address: true,
+              description: true, logo: true, avatar: true, primaryColor: true, secondaryColor: true,
+              backgroundColor: true, surfaceColor: true, isActive: true, businessIdentifier: true,
+              profileCompleted: true, niche: true, customNiche: true, telegramChatId: true,
+            },
           })
 
           return { type: 'login' as const, business: updated }
@@ -73,8 +85,8 @@ export async function POST(request: Request) {
       let finalSlug = slug
       let counter = 1
       
-      // Перевіряємо унікальність slug в транзакції
-      while (await tx.business.findUnique({ where: { slug: finalSlug } })) {
+      // Перевіряємо унікальність slug (тільки id — щоб не вибирати колонки, яких може не бути в БД)
+      while (await tx.business.findUnique({ where: { slug: finalSlug }, select: { id: true } })) {
         finalSlug = `${slug}-${counter}`
         counter++
         if (counter > 100) {
@@ -108,7 +120,7 @@ export async function POST(request: Request) {
         }
       } while (true)
 
-      // Створюємо бізнес в транзакції
+      // Створюємо бізнес в транзакції (select лише потрібні поля — стійкість до відсутньої колонки telegramWebhookSetAt)
       const business = await tx.business.create({
         data: {
           name: validated.name,
@@ -122,13 +134,23 @@ export async function POST(request: Request) {
           telegramBotToken: defaultTelegramBotToken,
           telegramNotificationsEnabled: true,
         },
+        select: {
+          id: true,
+          trustedDevices: true,
+        },
       })
 
-      // Додаємо пристрій до довірених
+      // Додаємо пристрій до довірених (select без telegramWebhookSetAt — стійкість до відсутньої колонки)
       const updatedTrustedDevices = addTrustedDevice(business.trustedDevices, deviceId)
       const updatedBusiness = await tx.business.update({
         where: { id: business.id },
-        data: { trustedDevices: updatedTrustedDevices }
+        data: { trustedDevices: updatedTrustedDevices },
+        select: {
+          id: true, name: true, slug: true, email: true, phone: true, address: true,
+          description: true, logo: true, avatar: true, primaryColor: true, secondaryColor: true,
+          backgroundColor: true, surfaceColor: true, isActive: true, businessIdentifier: true,
+          profileCompleted: true, niche: true, customNiche: true, telegramChatId: true,
+        },
       })
 
       return { type: 'register' as const, business: updatedBusiness }
