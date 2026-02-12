@@ -87,7 +87,12 @@ export async function GET(request: Request) {
     })
   } catch (error: any) {
     console.error('Error fetching activity log:', error)
-    return NextResponse.json({ error: 'Помилка отримання даних' }, { status: 500 })
+    // Якщо таблиця admin_control_center ще не створена — повертаємо порожній результат, щоб вкладка не ламалась
+    return NextResponse.json({
+      logs: [],
+      pagination: { page: 1, limit: 50, total: 0, totalPages: 0 },
+      stats: { total: 0, byType: [] },
+    })
   }
 }
 

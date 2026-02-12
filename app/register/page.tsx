@@ -6,6 +6,7 @@ import { AuthLayout } from '@/components/auth/AuthLayout'
 import { TelegramAuthButton } from '@/components/auth/TelegramAuthButton'
 import { Input } from '@/components/ui/input'
 import { ErrorToast } from '@/components/ui/error-toast'
+import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 
 function RegisterForm() {
@@ -107,17 +108,15 @@ function RegisterForm() {
         localStorage.setItem('showProfileModal', '1')
       }
       
-      // Показуємо повідомлення про успіх
-      if (data.isLogin) {
-        setErrorMessage('Успішний вхід в існуючий акаунт')
-      } else {
-        setErrorMessage('Бізнес успішно зареєстровано та синхронізовано з базою даних')
-      }
-      setShowErrorToast(true)
+      // Показуємо зелений тост про успіх (не червоний ErrorToast)
+      const successMessage = data.isLogin
+        ? 'Успішний вхід в існуючий акаунт'
+        : 'Бізнес успішно зареєстровано та синхронізовано з базою даних'
+      toast({ title: successMessage, type: 'success', duration: 4000 })
       
-      // Перенаправляємо на dashboard через невелику затримку для показу повідомлення
+      // Перенаправляємо на дашборд після короткої затримки для показу повідомлення
       setTimeout(() => {
-        router.replace('/dashboard')
+        router.replace('/dashboard/main')
       }, 1500)
     } catch (error) {
       setErrorMessage('Помилка при реєстрації. Будь ласка, спробуйте ще раз.')

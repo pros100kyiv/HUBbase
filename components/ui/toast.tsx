@@ -63,7 +63,7 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
           {icons[toast.type || 'info']}
         </div>
         <div className="flex-1 min-w-0">
-          <p className="text-sm font-black text-foreground dark:text-white">{toast.title}</p>
+          <p className={cn('text-sm font-black', toast.type === 'success' ? 'text-candy-mint' : 'text-foreground dark:text-white')}>{toast.title}</p>
           {toast.description && (
             <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{toast.description}</p>
           )}

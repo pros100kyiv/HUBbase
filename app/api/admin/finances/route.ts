@@ -75,15 +75,20 @@ export async function GET(request: Request) {
       .sort((a: any, b: any) => b.revenue - a.revenue)
       .slice(0, 10)
 
-    // Статистика по провайдерах платежів
-    const byProvider = await prisma.business.groupBy({
-      by: ['paymentProvider'],
-      where: {
-        paymentEnabled: true,
-        paymentProvider: { not: null },
-      },
-      _count: true,
-    })
+    // Статистика по провайдерах платежів (у try — якщо колонки БД відрізняються, не ламаємо весь запит)
+    let byProvider: Array<{ paymentProvider: string | null; _count: number }> = []
+    try {
+      byProvider = await prisma.business.groupBy({
+        by: ['paymentProvider'],
+        where: {
+          paymentEnabled: true,
+          paymentProvider: { not: null },
+        },
+        _count: true,
+      })
+    } catch (e) {
+      console.warn('Finances byProvider groupBy skipped:', e)
+    }
 
     return NextResponse.json({
       totalRevenue,

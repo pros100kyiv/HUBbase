@@ -7,23 +7,44 @@ import { jsonSafe } from '@/lib/utils/json'
 export const dynamic = 'force-dynamic'
 export const revalidate = 60
 
-async function getControlCenterStats() {
-  return unstable_cache(
-    async () => {
-      const [totalCount, activeCount, inactiveCount, telegramCount, googleCount, standardCount, byNiche] = await Promise.all([
-        prisma.business.count(),
-        prisma.business.count({ where: { isActive: true } }),
-        prisma.business.count({ where: { isActive: false } }),
-        prisma.business.count({ where: { telegramId: { not: null } } }),
-        prisma.business.count({ where: { googleId: { not: null } } }),
-        prisma.business.count({ where: { telegramId: null, googleId: null } }),
-        prisma.business.groupBy({ by: ['niche'], _count: true }),
-      ])
-      return { totalCount, activeCount, inactiveCount, telegramCount, googleCount, standardCount, byNiche }
-    },
-    ['control-center-stats'],
-    { revalidate: 60, tags: ['control-center'] }
-  )()
+async function getControlCenterStats(): Promise<{
+  totalCount: number
+  activeCount: number
+  inactiveCount: number
+  telegramCount: number
+  googleCount: number
+  standardCount: number
+  byNiche: Array<{ niche: string; _count: number }>
+}> {
+  try {
+    return await unstable_cache(
+      async () => {
+        const [totalCount, activeCount, inactiveCount, telegramCount, googleCount, standardCount, byNiche] = await Promise.all([
+          prisma.business.count(),
+          prisma.business.count({ where: { isActive: true } }),
+          prisma.business.count({ where: { isActive: false } }),
+          prisma.business.count({ where: { telegramId: { not: null } } }),
+          prisma.business.count({ where: { googleId: { not: null } } }),
+          prisma.business.count({ where: { telegramId: null, googleId: null } }),
+          prisma.business.groupBy({ by: ['niche'], _count: true }),
+        ])
+        return { totalCount, activeCount, inactiveCount, telegramCount, googleCount, standardCount, byNiche }
+      },
+      ['control-center-stats'],
+      { revalidate: 60, tags: ['control-center'] }
+    )()
+  } catch (e) {
+    console.error('Control center stats error:', e)
+    return {
+      totalCount: 0,
+      activeCount: 0,
+      inactiveCount: 0,
+      telegramCount: 0,
+      googleCount: 0,
+      standardCount: 0,
+      byNiche: [],
+    }
+  }
 }
 
 const EMPTY_STATS = {
@@ -90,12 +111,25 @@ export async function GET(request: Request) {
       }
     }
 
+    // Явний select без telegramWebhookSetAt — стійкість до БД, де міграція ще не застосована
     const [businessesRaw, total] = await Promise.all([
       prisma.business.findMany({
         where,
         skip,
         take: limit,
         orderBy: { createdAt: 'desc' },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          phone: true,
+          isActive: true,
+          createdAt: true,
+          businessIdentifier: true,
+          niche: true,
+          telegramId: true,
+          googleId: true,
+        },
       }),
       prisma.business.count({ where }),
     ])
@@ -190,9 +224,17 @@ export async function PATCH(request: Request) {
         await prisma.managementCenter.updateMany({ where: { businessId }, data: { isActive: false } })
         break
       case 'update':
-        if (data) {
-          await prisma.business.update({ where: { id: businessId }, data })
-          await prisma.managementCenter.updateMany({ where: { businessId }, data })
+        if (data && typeof data === 'object') {
+          // Дозволені поля для оновлення — без telegramWebhookSetAt та інших полів, яких може не бути в БД
+          const allowedKeys = ['name', 'email', 'phone', 'isActive', 'address', 'description', 'businessIdentifier', 'niche', 'customNiche', 'settings', 'profileCompleted'] as const
+          const safeData: Record<string, unknown> = {}
+          for (const key of allowedKeys) {
+            if (key in data && data[key] !== undefined) safeData[key] = data[key]
+          }
+          if (Object.keys(safeData).length > 0) {
+            await prisma.business.update({ where: { id: businessId }, data: safeData })
+            await prisma.managementCenter.updateMany({ where: { businessId }, data: safeData as any })
+          }
         }
         break
       default:
