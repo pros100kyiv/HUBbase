@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { BotIcon, PhoneIcon, CheckIcon, XIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
+import { toast } from '@/components/ui/toast'
 import { TelegramOAuth } from '@/components/admin/TelegramOAuth'
 import { SocialMessagesCard } from '@/components/admin/SocialMessagesCard'
 
@@ -15,7 +16,7 @@ const PLATFORM_META: Record<string, { icon: React.ReactNode; description: string
   },
   instagram: {
     icon: <span className="text-xl">📷</span>,
-    description: 'Скоро...',
+    description: 'Листи з Direct приходять у кабінет, можна відповідати',
   },
   whatsapp: {
     icon: <PhoneIcon className="w-5 h-5" />,
@@ -33,9 +34,23 @@ const PLATFORM_META: Record<string, { icon: React.ReactNode; description: string
 
 export default function SocialPage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [business, setBusiness] = useState<any>(null)
   const [integrations, setIntegrations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const instagram = searchParams.get('instagram')
+    const err = searchParams.get('error')
+    if (instagram === 'connected') {
+      toast({ title: 'Instagram підключено', description: 'Листи з Direct тепер приходять у кабінет.', type: 'success', duration: 5000 })
+      router.replace('/dashboard/social', { scroll: false })
+    } else if (err) {
+      const msg = err === 'no_instagram' ? 'Додайте Instagram до сторінки Facebook' : err === 'no_pages' ? 'Немає сторінок Facebook' : 'Не вдалося підключити'
+      toast({ title: 'Помилка', description: msg, type: 'error', duration: 5000 })
+      router.replace('/dashboard/social', { scroll: false })
+    }
+  }, [searchParams, router])
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -204,6 +219,20 @@ export default function SocialPage() {
                     >
                       {integration.connected ? 'Налаштувати' : 'Підключити'}
                     </button>
+                  ) : integration.id === 'instagram' ? (
+                    <a
+                      href={integration.connected ? '#' : `/api/instagram/oauth?businessId=${business?.id}`}
+                      className={cn(
+                        'block w-full px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors active:scale-[0.98] text-center',
+                        integration.connected
+                          ? 'border border-white/20 bg-white/10 text-white hover:bg-white/20 cursor-default'
+                          : 'bg-gradient-to-r from-[#f09433] via-[#e6683c] to-[#dc2743] text-white hover:opacity-90'
+                      )}
+                      style={!integration.connected ? { boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' } : {}}
+                      onClick={(e) => integration.connected && e.preventDefault()}
+                    >
+                      {integration.connected ? 'Підключено' : 'Підключити'}
+                    </a>
                   ) : (
                     <button
                       type="button"

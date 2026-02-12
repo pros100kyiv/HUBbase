@@ -71,7 +71,64 @@ export async function POST(request: Request) {
       return NextResponse.json({ success: true })
     }
 
-    // Інші платформи — поки що не реалізовані
+    if (platform === 'instagram') {
+      const integration = await prisma.socialIntegration.findFirst({
+        where: { businessId, platform: 'instagram', isConnected: true },
+        select: { accessToken: true },
+      })
+      if (!integration?.accessToken) {
+        return NextResponse.json({ error: 'Instagram not connected' }, { status: 400 })
+      }
+
+      const recipientId = inboxMessage.externalChatId
+      const replyText = reply.trim()
+      const sendRes = await fetch(
+        `https://graph.facebook.com/v18.0/me/messages?access_token=${encodeURIComponent(integration.accessToken)}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            recipient: { id: recipientId },
+            message: { text: replyText },
+          }),
+        }
+      )
+      const sendData = (await sendRes.json().catch(() => ({}))) as {
+        error?: { message: string; code?: number }
+        message_id?: string
+      }
+
+      if (sendData.error) {
+        console.error('Instagram send error:', sendData)
+        return NextResponse.json(
+          { error: 'Failed to send in Instagram', details: sendData.error?.message },
+          { status: 502 }
+        )
+      }
+
+      await prisma.socialInboxMessage.create({
+        data: {
+          businessId,
+          platform: 'instagram',
+          direction: 'outbound',
+          externalId: sendData.message_id ?? undefined,
+          externalChatId: recipientId,
+          senderId: null,
+          senderName: 'Ви',
+          message: replyText,
+          isRead: true,
+          replyToId: messageId,
+        },
+      })
+
+      await prisma.socialInboxMessage.updateMany({
+        where: { id: messageId, businessId },
+        data: { isRead: true },
+      })
+
+      return NextResponse.json({ success: true })
+    }
+
     return NextResponse.json({ error: `Reply for platform "${platform}" is not implemented yet` }, { status: 501 })
   } catch (error) {
     console.error('Error sending reply:', error)
