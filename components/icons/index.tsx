@@ -295,8 +295,34 @@ export const ArrowUpIcon = ({ className = "w-5 h-5" }: { className?: string }) =
 )
 
 export const QRIcon = ({ className = "w-5 h-5" }: { className?: string }) => (
-  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 9a2 2 0 012-2h2.586a1 1 0 01.707.293l6.414 6.414a1 1 0 01.293.707V17a2 2 0 01-2 2H5a2 2 0 01-2-2V9z M3 9v6a2 2 0 002 2h2v-2H5V9H3z M17 3h2a2 2 0 012 2v2h-2V5h-2V3z M9 3H7v2h2V3z M9 17h2v-2H9v2z M17 13h2v-2h-2v2z M17 17h2v-2h-2v2z M13 17h2v-2h-2v2z" />
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24">
+    {/* Top-left finder pattern (7x7 style) */}
+    <rect x="1" y="1" width="6" height="1" />
+    <rect x="1" y="1" width="1" height="6" />
+    <rect x="1" y="6" width="6" height="1" />
+    <rect x="6" y="1" width="1" height="6" />
+    <rect x="3" y="3" width="2" height="2" />
+    {/* Top-right finder */}
+    <rect x="17" y="1" width="6" height="1" />
+    <rect x="17" y="1" width="1" height="6" />
+    <rect x="17" y="6" width="6" height="1" />
+    <rect x="22" y="1" width="1" height="6" />
+    <rect x="19" y="3" width="2" height="2" />
+    {/* Bottom-left finder */}
+    <rect x="1" y="17" width="6" height="1" />
+    <rect x="1" y="17" width="1" height="6" />
+    <rect x="1" y="22" width="6" height="1" />
+    <rect x="6" y="17" width="1" height="6" />
+    <rect x="3" y="19" width="2" height="2" />
+    {/* Bottom-right + center data modules */}
+    <rect x="17" y="17" width="4" height="4" rx="0.5" />
+    <rect x="10" y="10" width="2" height="2" />
+    <rect x="13" y="10" width="2" height="2" />
+    <rect x="10" y="13" width="2" height="2" />
+    <rect x="16" y="10" width="2" height="2" />
+    <rect x="10" y="16" width="2" height="2" />
+    <rect x="13" y="13" width="2" height="2" />
+    <rect x="16" y="16" width="2" height="2" />
   </svg>
 )
 

@@ -50,13 +50,13 @@ type DateOverride = { enabled: boolean; start: string; end: string }
 type DateOverridesMap = Record<string, DateOverride>
 
 const DAYS = [
-  { key: 'monday', label: 'Понеділок' },
-  { key: 'tuesday', label: 'Вівторок' },
-  { key: 'wednesday', label: 'Середа' },
-  { key: 'thursday', label: 'Четвер' },
-  { key: 'friday', label: "П'ятниця" },
-  { key: 'saturday', label: 'Субота' },
-  { key: 'sunday', label: 'Неділя' },
+  { key: 'monday', label: 'Понеділок', short: 'Пн' },
+  { key: 'tuesday', label: 'Вівторок', short: 'Вт' },
+  { key: 'wednesday', label: 'Середа', short: 'Ср' },
+  { key: 'thursday', label: 'Четвер', short: 'Чт' },
+  { key: 'friday', label: "П'ятниця", short: 'Пт' },
+  { key: 'saturday', label: 'Субота', short: 'Сб' },
+  { key: 'sunday', label: 'Неділя', short: 'Нд' },
 ]
 
 const defaultDayHours = (): DayHours => ({ enabled: true, start: '09:00', end: '18:00' })
@@ -294,6 +294,17 @@ export function MasterScheduleModal({
     }
   }
 
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        onClose()
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [onClose])
+
   const monthStart = startOfMonth(monthDate)
   const monthEnd = endOfMonth(monthDate)
   const calendarStart = startOfWeek(monthStart, { weekStartsOn: 1 })
@@ -365,75 +376,97 @@ export function MasterScheduleModal({
                     Однакові години для всіх робочих днів
                   </button>
                 </div>
-                <div className="space-y-2">
+                {/* Табличний вигляд: День | Початок | Кінець */}
+                <div className="rounded-xl border border-white/10 overflow-hidden">
+                  <div className="grid grid-cols-[1fr_minmax(0,1fr)_minmax(0,1fr)] gap-x-3 gap-y-0.5 px-3 py-2 bg-white/5 border-b border-white/10 text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+                    <div>День</div>
+                    <div>Початок</div>
+                    <div>Кінець</div>
+                  </div>
                   {DAYS.map((day) => {
                     const dayHours = workingHours[day.key] || { enabled: false, start: '09:00', end: '18:00' }
                     return (
                       <div
                         key={day.key}
                         className={cn(
-                          'p-3 rounded-xl border transition-colors space-y-2',
-                          dayHours.enabled ? 'bg-white/10 border-white/20' : 'bg-white/5 border-white/10'
+                          'grid grid-cols-[1fr_minmax(0,1fr)_minmax(0,1fr)] gap-x-3 gap-y-0 items-center px-3 py-2.5 border-b border-white/5 last:border-0 transition-colors',
+                          dayHours.enabled ? 'bg-white/5' : 'bg-white/[0.02] opacity-75'
                         )}
                       >
-                        <div className="flex items-center gap-3">
+                        <label className="flex items-center gap-2 min-w-0 cursor-pointer">
                           <input
                             type="checkbox"
                             checked={dayHours.enabled}
                             onChange={() => handleDayToggle(day.key)}
-                            className="w-4 h-4 rounded border-white/30 bg-white/10 text-green-500 focus:ring-green-500/50"
+                            className="w-4 h-4 shrink-0 rounded border-white/30 bg-white/10 text-green-500 focus:ring-green-500/50"
                           />
-                          <label className="flex-1 text-sm font-medium text-white">{day.label}</label>
-                          {dayHours.enabled && (
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <input
-                                type="time"
-                                value={dayHours.start}
-                                onChange={(e) => handleTimeChange(day.key, 'start', e.target.value)}
-                                className="min-w-[8.5rem] sm:min-w-[7.5rem] w-28 pl-2 sm:pr-12 pr-2 py-1.5 text-xs rounded-lg border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-1 focus:ring-white/30"
-                              />
-                              <span className="text-gray-400 text-xs">–</span>
-                              <input
-                                type="time"
-                                value={dayHours.end}
-                                onChange={(e) => handleTimeChange(day.key, 'end', e.target.value)}
-                                className="min-w-[8.5rem] sm:min-w-[7.5rem] w-28 pl-2 sm:pr-12 pr-2 py-1.5 text-xs rounded-lg border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-1 focus:ring-white/30"
-                              />
-                            </div>
-                          )}
-                        </div>
-                        {dayHours.enabled && (
-                          <div className="flex items-center gap-2 pl-7 text-[11px]">
+                          <span className="text-sm font-medium text-white truncate">{day.label}</span>
+                        </label>
+                        {dayHours.enabled ? (
+                          <>
                             <input
-                              type="checkbox"
-                              id={`break-${day.key}`}
-                              checked={dayHours.breakStart != null && dayHours.breakEnd != null}
-                              onChange={(e) => setBreakEnabled(day.key, e.target.checked)}
-                              className="w-3.5 h-3.5 rounded border-white/30 bg-white/10 text-amber-500 focus:ring-amber-500/50"
+                              type="time"
+                              value={dayHours.start}
+                              onChange={(e) => handleTimeChange(day.key, 'start', e.target.value)}
+                              className="w-full min-w-0 px-2 py-1.5 text-xs rounded-lg border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-1 focus:ring-white/30 [&::-webkit-calendar-picker-indicator]:opacity-60"
                             />
-                            <label htmlFor={`break-${day.key}`} className="text-gray-400">Перерва</label>
-                            {dayHours.breakStart != null && dayHours.breakEnd != null && (
-                              <>
-                                <input
-                                  type="time"
-                                  value={dayHours.breakStart}
-                                  onChange={(e) => handleBreakChange(day.key, 'breakStart', e.target.value)}
-                                  className="min-w-[8.5rem] sm:min-w-[7rem] w-24 pl-1.5 sm:pr-12 pr-2 py-1 text-[11px] rounded border border-white/20 bg-white/10 text-white"
-                                />
-                                <span className="text-gray-500">–</span>
-                                <input
-                                  type="time"
-                                  value={dayHours.breakEnd}
-                                  onChange={(e) => handleBreakChange(day.key, 'breakEnd', e.target.value)}
-                                  className="min-w-[8.5rem] sm:min-w-[7rem] w-24 pl-1.5 sm:pr-12 pr-2 py-1 text-[11px] rounded border border-white/20 bg-white/10 text-white"
-                                />
-                              </>
-                            )}
-                          </div>
+                            <input
+                              type="time"
+                              value={dayHours.end}
+                              onChange={(e) => handleTimeChange(day.key, 'end', e.target.value)}
+                              className="w-full min-w-0 px-2 py-1.5 text-xs rounded-lg border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-1 focus:ring-white/30 [&::-webkit-calendar-picker-indicator]:opacity-60"
+                            />
+                          </>
+                        ) : (
+                          <>
+                            <span className="text-xs text-gray-500 col-span-2">Вихідний</span>
+                          </>
                         )}
                       </div>
                     )
                   })}
+                </div>
+                {/* Рядок перерви для кожного робочого дня */}
+                <div className="mt-3 space-y-2">
+                  <p className="text-[11px] font-medium text-gray-400">Перерви (опційно)</p>
+                  <div className="flex flex-wrap gap-x-4 gap-y-2">
+                    {DAYS.filter((d) => workingHours[d.key]?.enabled).map((day) => {
+                      const dayHours = workingHours[day.key] || { enabled: true, start: '09:00', end: '18:00' }
+                      const hasBreak = dayHours.breakStart != null && dayHours.breakEnd != null
+                      return (
+                        <div key={day.key} className="flex items-center gap-2">
+                          <input
+                            type="checkbox"
+                            id={`break-${day.key}`}
+                            checked={hasBreak}
+                            onChange={(e) => setBreakEnabled(day.key, e.target.checked)}
+                            className="w-3.5 h-3.5 rounded border-white/30 bg-white/10 text-amber-500 focus:ring-amber-500/50"
+                          />
+                          <label htmlFor={`break-${day.key}`} className="text-xs text-gray-300">{day.short}</label>
+                          {hasBreak && (
+                            <>
+                              <input
+                                type="time"
+                                value={dayHours.breakStart}
+                                onChange={(e) => handleBreakChange(day.key, 'breakStart', e.target.value)}
+                                className="w-20 px-1.5 py-1 text-[11px] rounded border border-white/20 bg-white/10 text-white [&::-webkit-calendar-picker-indicator]:opacity-60"
+                              />
+                              <span className="text-gray-500">–</span>
+                              <input
+                                type="time"
+                                value={dayHours.breakEnd}
+                                onChange={(e) => handleBreakChange(day.key, 'breakEnd', e.target.value)}
+                                className="w-20 px-1.5 py-1 text-[11px] rounded border border-white/20 bg-white/10 text-white [&::-webkit-calendar-picker-indicator]:opacity-60"
+                              />
+                            </>
+                          )}
+                        </div>
+                      )
+                    })}
+                    {DAYS.filter((d) => workingHours[d.key]?.enabled).length === 0 && (
+                      <span className="text-xs text-gray-500">Увімкніть робочі дні вище</span>
+                    )}
+                  </div>
                 </div>
               </div>
             )}

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { XIcon, ChartIcon, CheckIcon, UsersIcon, MoneyIcon } from '@/components/icons'
@@ -67,6 +67,18 @@ export function MonthProgressCard({ stats, loading }: MonthProgressCardProps) {
   const radius = 28
   const circumference = 2 * Math.PI * radius
   const dashArray = `${(successRate / 100) * circumference} ${circumference}`
+
+  useEffect(() => {
+    if (!showModal) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setShowModal(false)
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [showModal])
 
   return (
     <>

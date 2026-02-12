@@ -25,6 +25,8 @@ interface CreateAppointmentFormProps {
   selectedDate?: Date
   /** Початковий час запису (HH:mm), наприклад з «Вільні години» */
   initialStartTime?: string
+  /** Початковий майстер (ID), наприклад з «Вільні години» */
+  initialMasterId?: string
   onSuccess: () => void
   onCancel: () => void
   /** У модальному вікні — без Card і заголовка */
@@ -44,6 +46,7 @@ export function CreateAppointmentForm({
   services,
   selectedDate,
   initialStartTime,
+  initialMasterId,
   onSuccess,
   onCancel,
   embedded = false,
@@ -54,8 +57,10 @@ export function CreateAppointmentForm({
 }: CreateAppointmentFormProps) {
   const formRef = useRef<HTMLDivElement>(null)
   const initialDate = selectedDate && isValid(selectedDate) ? selectedDate : new Date()
+  const resolvedInitialMasterId =
+    initialMasterId && masters.some((m) => m.id === initialMasterId) ? initialMasterId : masters[0]?.id || ''
   const [formData, setFormData] = useState({
-    masterId: masters[0]?.id || '',
+    masterId: resolvedInitialMasterId,
     clientName: initialClientName,
     clientPhone: initialClientPhone,
     serviceIds: [] as string[],
@@ -76,12 +81,28 @@ export function CreateAppointmentForm({
     }
   }, [])
 
-  // Коли завантажився список майстрів — авто-обрати першого, якщо ще нікого не обрано
   useEffect(() => {
-    if (masters.length > 0 && !formData.masterId) {
-      setFormData((prev) => ({ ...prev, masterId: masters[0].id }))
+    if (!showServiceModal || inlineServicePicker) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setShowServiceModal(false)
+      }
     }
-  }, [masters])
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [showServiceModal, inlineServicePicker])
+
+  // Коли завантажився список майстрів — авто-обрати initialMasterId (з «Вільні години») або першого
+  useEffect(() => {
+    if (masters.length === 0) return
+    const preferredId =
+      initialMasterId && masters.some((m) => m.id === initialMasterId) ? initialMasterId : masters[0].id
+    setFormData((prev) => {
+      if (prev.masterId && masters.some((m) => m.id === prev.masterId)) return prev
+      return { ...prev, masterId: preferredId }
+    })
+  }, [masters, initialMasterId])
 
   // Клієнт з картки: підтягнути ім'я/телефон з props (форма може змонтуватись пізніше за client state)
   useEffect(() => {

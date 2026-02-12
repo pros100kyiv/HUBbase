@@ -248,6 +248,7 @@ export async function PATCH(
       reminderSmsEnabled,
       reminderEmailEnabled,
       reminderHoursBefore,
+      bookingSlots,
       // Block/Unblock
       isActive,
     } = body
@@ -326,15 +327,28 @@ export async function PATCH(
         ...(remindersEnabled !== undefined && { remindersEnabled }),
         ...(reminderSmsEnabled !== undefined && { reminderSmsEnabled }),
         ...(reminderEmailEnabled !== undefined && { reminderEmailEnabled }),
-        // reminderHoursBefore зберігається в settings JSON
-        ...(reminderHoursBefore !== undefined && (() => {
+        // reminderHoursBefore, bookingSlots зберігаються в settings JSON
+        ...((reminderHoursBefore !== undefined || bookingSlots !== undefined) && (() => {
           try {
             const prev = (currentBusiness as { settings?: string | null })?.settings
             const parsed = prev ? JSON.parse(prev) : {}
-            parsed.reminderHoursBefore = Number(reminderHoursBefore) || 24
+            if (reminderHoursBefore !== undefined) {
+              parsed.reminderHoursBefore = Number(reminderHoursBefore) || 24
+            }
+            if (bookingSlots !== undefined && bookingSlots !== null && typeof bookingSlots === 'object') {
+              const b = bookingSlots as Record<string, unknown>
+              parsed.bookingSlots = {
+                slotStepMinutes: [15, 30, 60].includes(Number(b.slotStepMinutes)) ? b.slotStepMinutes : 30,
+                bufferMinutes: Math.max(0, Math.min(30, Math.round(Number(b.bufferMinutes) || 0))),
+                minAdvanceBookingMinutes: Math.max(0, Math.min(10080, Math.round(Number(b.minAdvanceBookingMinutes) || 60))),
+                maxDaysAhead: Math.max(1, Math.min(365, Math.round(Number(b.maxDaysAhead) || 60))),
+              }
+            }
             return { settings: JSON.stringify(parsed) }
           } catch {
-            return { settings: JSON.stringify({ reminderHoursBefore: Number(reminderHoursBefore) || 24 }) }
+            const base = reminderHoursBefore !== undefined ? { reminderHoursBefore: Number(reminderHoursBefore) || 24 } : {}
+            const slots = bookingSlots !== undefined && typeof bookingSlots === 'object' ? { bookingSlots } : {}
+            return { settings: JSON.stringify({ ...base, ...slots }) }
           }
         })()),
         // Block/Unblock

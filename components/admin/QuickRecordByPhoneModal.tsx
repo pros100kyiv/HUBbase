@@ -17,6 +17,8 @@ interface QuickRecordByPhoneModalProps {
   selectedDate?: Date
   /** Початковий час запису (HH:mm), наприклад з «Вільні години» */
   initialStartTime?: string
+  /** Початковий майстер (ID), наприклад з «Вільні години» */
+  initialMasterId?: string
   /** Клієнт уже обраний (з картки клієнта) — пропускаємо крок телефону */
   initialClientPhone?: string
   initialClientName?: string
@@ -32,6 +34,7 @@ export function QuickRecordByPhoneModal({
   services,
   selectedDate,
   initialStartTime,
+  initialMasterId,
   initialClientPhone,
   initialClientName,
   initialClientId,
@@ -69,6 +72,18 @@ export function QuickRecordByPhoneModal({
     setLookupError('')
     onClose()
   }, [onClose])
+
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        handleClose()
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, handleClose])
 
   const handlePhoneNext = async () => {
     const raw = phone.trim()
@@ -255,6 +270,7 @@ export function QuickRecordByPhoneModal({
                   services={services}
                   selectedDate={selectedDate}
                   initialStartTime={initialStartTime}
+                  initialMasterId={initialMasterId}
                   onSuccess={handleAppointmentSuccess}
                   onCancel={handleClose}
                   embedded

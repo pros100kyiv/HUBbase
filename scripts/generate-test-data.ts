@@ -26,6 +26,17 @@ const masterBios = [
   'Спеціаліст з догляду за волоссям та стилізації. 7 років досвіду.'
 ]
 
+// Робочі години для майстрів (Пн-Пт 09:00-18:00, Сб-Нд вихідні)
+const DEFAULT_MASTER_WORKING_HOURS = JSON.stringify({
+  monday: { enabled: true, start: '09:00', end: '18:00' },
+  tuesday: { enabled: true, start: '09:00', end: '18:00' },
+  wednesday: { enabled: true, start: '09:00', end: '18:00' },
+  thursday: { enabled: true, start: '09:00', end: '18:00' },
+  friday: { enabled: true, start: '09:00', end: '18:00' },
+  saturday: { enabled: false, start: '09:00', end: '18:00' },
+  sunday: { enabled: false, start: '09:00', end: '18:00' },
+})
+
 const servicesNames = [
   'Чоловіча стрижка', 'Стрижка бороди', 'Комплекс (стрижка + борода)', 
   'Дитяча стрижка', 'Укладка волосся', 'Фарбування', 
@@ -129,6 +140,7 @@ async function main() {
             bio,
             rating: 4.5 + Math.random() * 0.5,
             isActive: true,
+            workingHours: DEFAULT_MASTER_WORKING_HOURS,
           },
         })
       } catch (error) {
@@ -136,6 +148,12 @@ async function main() {
       }
     }
   }
+
+  // Оновлюємо майстрів без робочих годин
+  await prisma.master.updateMany({
+    where: { businessId: business.id, workingHours: null },
+    data: { workingHours: DEFAULT_MASTER_WORKING_HOURS },
+  })
 
   const masters = await prisma.master.findMany({
     where: { businessId: business.id },

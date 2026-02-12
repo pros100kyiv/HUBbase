@@ -20,7 +20,7 @@ export interface FreeSlotsModalProps {
   businessId: string | undefined
   /** Дата, для якої показувати вільні слоти */
   date: Date
-  onBookSlot: (date: Date, time: string) => void
+  onBookSlot: (date: Date, time: string, masterId?: string) => void
 }
 
 export function FreeSlotsModal({
@@ -99,6 +99,18 @@ export function FreeSlotsModal({
       })
       .finally(() => setFreeSlotsLoading(false))
   }, [isOpen, businessId, dateStr, selectedMasterId])
+
+  useEffect(() => {
+    if (!isOpen) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        onClose()
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
 
   if (!isOpen) return null
 
@@ -224,7 +236,7 @@ export function FreeSlotsModal({
                       type="button"
                       onClick={() => {
                         onClose()
-                        onBookSlot(date, normalizeTimeHHmm(time))
+                        onBookSlot(date, normalizeTimeHHmm(time), selectedMasterId || undefined)
                       }}
                       className="flex-1 sm:flex-none px-3 py-2 rounded-lg bg-sky-500/20 border border-sky-500/40 text-sky-400 text-sm font-medium hover:bg-sky-500/30 transition-colors active:scale-[0.98]"
                     >

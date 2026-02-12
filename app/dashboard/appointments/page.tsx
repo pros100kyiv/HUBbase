@@ -9,8 +9,8 @@ import { CreateAppointmentForm } from '@/components/admin/CreateAppointmentForm'
 import { EditAppointmentForm } from '@/components/admin/EditAppointmentForm'
 import { QuickClientCard } from '@/components/admin/QuickClientCard'
 import { QuickRecordByPhoneModal } from '@/components/admin/QuickRecordByPhoneModal'
-import { ModalPortal } from '@/components/ui/modal-portal'
-import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon, FilterIcon, DownloadIcon, CheckIcon, UserIcon } from '@/components/icons'
+import { Modal } from '@/components/ui/modal'
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon, FilterIcon, CheckIcon, UserIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui/toast'
 
@@ -64,6 +64,7 @@ export default function AppointmentsPage() {
   const [services, setServices] = useState<any[]>([])
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [initialCreateTime, setInitialCreateTime] = useState<string | null>(null)
+  const [initialMasterId, setInitialMasterId] = useState<string | null>(null)
   const [initialClientPhone, setInitialClientPhone] = useState<string>('')
   const [initialClientName, setInitialClientName] = useState<string>('')
   const [showEditForm, setShowEditForm] = useState(false)
@@ -121,6 +122,19 @@ export default function AppointmentsPage() {
     }
   }, [router])
 
+  // Встановити фільтри з URL при переході з аналітики (?status=...&masterId=...)
+  useEffect(() => {
+    if (searchParams.get('create') === 'true') return
+    const statusParam = searchParams.get('status')
+    const masterParam = searchParams.get('masterId')
+    if (statusParam && ['Pending', 'Confirmed', 'Done', 'Cancelled'].includes(statusParam)) {
+      setFilterStatus(statusParam)
+    }
+    if (masterParam && typeof masterParam === 'string' && masterParam.trim()) {
+      setFilterMaster(masterParam.trim())
+    }
+  }, [searchParams])
+
   // Відкрити модалку «Записати» при переході з верхньої панелі (?create=true) або з «Вільні години» (?date=...&time=...)
   useEffect(() => {
     if (searchParams.get('create') !== 'true') return
@@ -137,6 +151,12 @@ export default function AppointmentsPage() {
     }
     if (timeParam && /^\d{1,2}:\d{2}$/.test(decodeURIComponent(timeParam))) {
       setInitialCreateTime(decodeURIComponent(timeParam))
+    }
+    const masterParam = searchParams.get('masterId')
+    if (masterParam && typeof masterParam === 'string' && masterParam.trim()) {
+      setInitialMasterId(masterParam.trim())
+    } else {
+      setInitialMasterId(null)
     }
     router.replace('/dashboard/appointments', { scroll: false })
   }, [searchParams, router])
@@ -362,50 +382,6 @@ export default function AppointmentsPage() {
     }
   }
 
-  const handleExportCSV = () => {
-    const monthForFilename = currentMonth ?? new Date()
-    const csvHeaders = ['Дата', 'Час', 'Клієнт', 'Телефон', 'Спеціаліст', 'Послуги', 'Статус', 'Сума (грн)', 'Примітки']
-    const csvRows = filteredAppointments.map(apt => {
-      const start = new Date(apt.startTime)
-      const end = new Date(apt.endTime)
-      let servicesList: string[] = []
-      try {
-        if (apt.services) {
-          const serviceIds = JSON.parse(apt.services)
-          // Конвертуємо ID в назви послуг
-          servicesList = serviceIds.map((serviceId: string) => {
-            const service = services.find(s => s.id === serviceId)
-            return service?.name || serviceId
-          })
-        }
-      } catch (e) {
-        // Ignore
-      }
-      return [
-        format(start, 'dd.MM.yyyy'),
-        `${format(start, 'HH:mm')} - ${format(end, 'HH:mm')}`,
-        apt.clientName,
-        apt.clientPhone,
-        apt.masterName || 'Невідомий',
-        servicesList.join(', '),
-        apt.status,
-        String(getAppointmentDisplayPrice(apt)),
-        (apt as any).notes || ''
-      ]
-    })
-    
-    const csvContent = [
-      csvHeaders.join(','),
-      ...csvRows.map(row => row.map(cell => `"${cell}"`).join(','))
-    ].join('\n')
-    
-    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
-    const link = document.createElement('a')
-    link.href = URL.createObjectURL(blob)
-    link.download = `записи_${format(monthForFilename, 'MM_yyyy', { locale: uk })}.csv`
-    link.click()
-  }
-
   const toggleSelectAppointment = (id: string) => {
     setSelectedAppointments(prev => {
       const next = new Set(prev)
@@ -555,44 +531,35 @@ export default function AppointmentsPage() {
             </button>
           </div>
 
-          {/* Search and Filters - stacked on mobile, row on desktop */}
+          {/* Search and Filters — все в одному рядку */}
           <div className="rounded-xl p-3 sm:p-4 md:p-6 card-glass">
             <div className="flex flex-col gap-2 md:gap-3">
-              <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
-                <div className="flex-1 relative min-w-0">
+              <div className="flex flex-row flex-wrap items-center gap-2 sm:gap-3">
+                <div className="flex-1 min-w-[140px] relative">
                   <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
                   <input
                     type="text"
                     placeholder="Пошук..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-9 pr-3 py-2.5 sm:py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15 min-h-[44px] sm:min-h-0"
+                    className="w-full pl-9 pr-3 py-2.5 text-sm border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15 min-h-[42px]"
                   />
                 </div>
                 <select
                   value={filterMaster}
                   onChange={(e) => setFilterMaster(e.target.value)}
-                  className="px-3 py-2.5 sm:py-2 text-sm border border-white/20 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30 min-h-[44px] sm:min-h-0"
+                  className="shrink-0 min-w-[140px] max-w-[200px] px-3 py-2.5 text-sm border border-white/20 rounded-lg bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30 min-h-[42px]"
                 >
                   <option value="all">Всі спеціалісти</option>
                   {masters.map((master) => (
                     <option key={master.id} value={master.id}>{master.name}</option>
                   ))}
                 </select>
-              </div>
-              <div className="flex flex-wrap gap-2 flex-shrink-0">
                 <button
                   onClick={() => setViewMode(viewMode === 'calendar' ? 'list' : 'calendar')}
                   className="touch-target min-h-[44px] px-3 py-2.5 sm:py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors active:scale-[0.98]"
                 >
                   {viewMode === 'calendar' ? 'Список' : 'Календар'}
-                </button>
-                <button
-                  onClick={handleExportCSV}
-                  className="touch-target min-h-[44px] px-3 py-2.5 sm:py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors flex items-center gap-1.5 active:scale-[0.98]"
-                >
-                  <DownloadIcon className="w-4 h-4 flex-shrink-0" />
-                  <span className="whitespace-nowrap">Експорт</span>
                 </button>
                 <button
                   onClick={() => setShowQuickClientCard(true)}
@@ -1057,6 +1024,7 @@ export default function AppointmentsPage() {
           onClose={() => {
             setShowCreateForm(false)
             setInitialCreateTime(null)
+            setInitialMasterId(null)
             setInitialClientPhone('')
             setInitialClientName('')
           }}
@@ -1065,6 +1033,7 @@ export default function AppointmentsPage() {
           services={services}
           selectedDate={selectedDate || undefined}
           initialStartTime={initialCreateTime ?? undefined}
+          initialMasterId={initialMasterId ?? undefined}
           initialClientPhone={initialClientPhone || undefined}
           initialClientName={initialClientName || undefined}
           onAppointmentCreated={handleAppointmentCreated}
@@ -1091,72 +1060,59 @@ export default function AppointmentsPage() {
       {showDonePriceModalForId && business && (() => {
         const apt = appointments.find((a) => a.id === showDonePriceModalForId)
         return (
-          <ModalPortal>
-            <div className="modal-overlay sm:!p-4" onClick={() => setShowDonePriceModalForId(null)}>
-              <div
-                className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
-                onClick={(e) => e.stopPropagation()}
-              >
+          <Modal
+            isOpen
+            onClose={() => setShowDonePriceModalForId(null)}
+            title="Вказати вартість послуги"
+            subtitle={apt ? `${apt.clientName} · ${format(new Date(apt.startTime), 'd MMM, HH:mm', { locale: uk })}` : undefined}
+            size="md"
+            footer={
+              <div className="flex gap-2">
                 <button
                   type="button"
                   onClick={() => setShowDonePriceModalForId(null)}
-                  className="modal-close touch-target text-gray-400 hover:text-white rounded-full"
-                  aria-label="Закрити"
+                  className="flex-1 px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/15"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                  </svg>
+                  Скасувати
                 </button>
-                <h3 className="modal-title pr-10 mb-1">Вказати вартість послуги</h3>
-                <p className="text-sm text-amber-400/90 mb-1">Статус не змінено. Заповніть вартість нижче, щоб позначити запис як Виконано.</p>
-                <p className="text-sm text-gray-400 mb-4">
-                  {apt ? `${apt.clientName} · ${format(new Date(apt.startTime), 'd MMM, HH:mm', { locale: uk })}` : 'Запис'}
-                </p>
-                <div className="space-y-4">
-                  <label className="block">
-                    <span className="text-xs font-medium text-gray-400 block mb-1.5">Вартість, грн</span>
-                    <input
-                      type="number"
-                      min={0}
-                      step={1}
-                      value={donePriceInputGrn === '' ? '' : donePriceInputGrn}
-                      onChange={(e) => setDonePriceInputGrn(e.target.value === '' ? '' : Number(e.target.value))}
-                      className="w-full px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
-                      placeholder="0"
-                      autoFocus
-                    />
-                  </label>
-                  <label className="block">
-                    <span className="text-xs font-medium text-gray-400 block mb-1.5">Послуга (необов'язково)</span>
-                    <input
-                      type="text"
-                      value={donePriceServiceName}
-                      onChange={(e) => setDonePriceServiceName(e.target.value)}
-                      className="w-full px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30 placeholder-gray-500"
-                      placeholder="Наприклад: Стрижка, Манікюр"
-                    />
-                  </label>
-                  <div className="flex gap-2 pt-2">
-                    <button
-                      type="button"
-                      onClick={() => setShowDonePriceModalForId(null)}
-                      className="flex-1 px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/15"
-                    >
-                      Скасувати
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handleDoneWithPriceSubmit}
-                      disabled={donePriceSaving || donePriceInputGrn === '' || Number(donePriceInputGrn) < 0}
-                      className="flex-1 px-4 py-3 rounded-xl bg-white text-black text-sm font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      {donePriceSaving ? 'Збереження...' : 'Зберегти та Виконано'}
-                    </button>
-                  </div>
-                </div>
+                <button
+                  type="button"
+                  onClick={handleDoneWithPriceSubmit}
+                  disabled={donePriceSaving || donePriceInputGrn === '' || Number(donePriceInputGrn) < 0}
+                  className="flex-1 px-4 py-3 rounded-xl bg-white text-black text-sm font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {donePriceSaving ? 'Збереження...' : 'Зберегти та Виконано'}
+                </button>
               </div>
+            }
+          >
+            <p className="text-sm text-amber-400/90 mb-4">Статус не змінено. Заповніть вартість нижче, щоб позначити запис як Виконано.</p>
+            <div className="space-y-4">
+              <label className="block">
+                <span className="text-xs font-medium text-gray-400 block mb-1.5">Вартість, грн</span>
+                <input
+                  type="number"
+                  min={0}
+                  step={1}
+                  value={donePriceInputGrn === '' ? '' : donePriceInputGrn}
+                  onChange={(e) => setDonePriceInputGrn(e.target.value === '' ? '' : Number(e.target.value))}
+                  className="w-full px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30"
+                  placeholder="0"
+                  autoFocus
+                />
+              </label>
+              <label className="block">
+                <span className="text-xs font-medium text-gray-400 block mb-1.5">Послуга (необов'язково)</span>
+                <input
+                  type="text"
+                  value={donePriceServiceName}
+                  onChange={(e) => setDonePriceServiceName(e.target.value)}
+                  className="w-full px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30 placeholder-gray-500"
+                  placeholder="Наприклад: Стрижка, Манікюр"
+                />
+              </label>
             </div>
-          </ModalPortal>
+          </Modal>
         )
       })()}
 

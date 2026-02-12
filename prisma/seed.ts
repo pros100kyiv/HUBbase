@@ -60,28 +60,40 @@ async function main() {
     },
   })
 
+  const defaultWorkingHours = JSON.stringify({
+    monday: { enabled: true, start: '09:00', end: '18:00' },
+    tuesday: { enabled: true, start: '09:00', end: '18:00' },
+    wednesday: { enabled: true, start: '09:00', end: '18:00' },
+    thursday: { enabled: true, start: '09:00', end: '18:00' },
+    friday: { enabled: true, start: '09:00', end: '18:00' },
+    saturday: { enabled: false, start: '09:00', end: '18:00' },
+    sunday: { enabled: false, start: '09:00', end: '18:00' },
+  })
+
   // Create Masters
   const master1 = await prisma.master.upsert({
     where: { id: 'master-1' },
-    update: {},
+    update: { workingHours: defaultWorkingHours },
     create: {
       id: 'master-1',
       businessId: business.id,
       name: 'Олександр',
       bio: 'Досвідчений майстер з 10-річним стажем',
       rating: 4.8,
+      workingHours: defaultWorkingHours,
     },
   })
 
   const master2 = await prisma.master.upsert({
     where: { id: 'master-2' },
-    update: {},
+    update: { workingHours: defaultWorkingHours },
     create: {
       id: 'master-2',
       businessId: business.id,
       name: 'Дмитро',
       bio: 'Спеціаліст з класичних та сучасних стрижок',
       rating: 4.9,
+      workingHours: defaultWorkingHours,
     },
   })
 

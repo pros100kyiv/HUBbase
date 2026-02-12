@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { BusinessCardEditor } from '@/components/admin/BusinessCardEditor'
+import { BookingSlotsSettings } from '@/components/admin/BookingSlotsSettings'
 import { TelegramSettings } from '@/components/admin/TelegramSettings'
 import { IntegrationsSettings } from '@/components/admin/IntegrationsSettings'
 import { PasswordForLoginSection } from '@/components/admin/PasswordForLoginSection'
@@ -945,17 +946,42 @@ export default function SettingsPage() {
             <PasswordForLoginSection businessId={business.id} email={business.email} />
           )}
 
-          {/* Робочі години бізнесу */}
+          {/* Робочі години бізнесу та налаштування слотів */}
           {activeTab === 'schedule' && business && (
-            <BusinessWorkingHoursEditor
-              businessId={business.id}
-              currentHours={business.workingHours || undefined}
-              onSave={(hours) => {
-                setBusiness(prev => prev ? { ...prev, workingHours: hours } : null)
-                setFormData(prev => ({ ...prev, workingHours: hours }))
-                toast({ title: 'Графік збережено', type: 'success', duration: 1500 })
-              }}
-            />
+            <div className="space-y-6">
+              <BusinessWorkingHoursEditor
+                businessId={business.id}
+                currentHours={business.workingHours || undefined}
+                onSave={(hours) => {
+                  setBusiness(prev => prev ? { ...prev, workingHours: hours } : null)
+                  setFormData(prev => ({ ...prev, workingHours: hours }))
+                  toast({ title: 'Графік збережено', type: 'success', duration: 1500 })
+                }}
+              />
+              <BookingSlotsSettings
+                businessId={business.id}
+                currentSettings={business.settings || undefined}
+                onSave={(config) => {
+                  try {
+                    const prev = business.settings ? JSON.parse(business.settings) : {}
+                    const updated = { ...prev, bookingSlots: config }
+                    setBusiness(prevB => prevB ? { ...prevB, settings: JSON.stringify(updated) } : null)
+                  } catch {
+                    // ignore
+                  }
+                }}
+              />
+              <div className="flex justify-end">
+                <Button
+                  onClick={() => router.push('/dashboard/schedule')}
+                  className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] inline-flex items-center gap-2"
+                  style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+                >
+                  <ClockIcon className="w-5 h-5" />
+                  Перейти до графіка та спеціалістів
+                </Button>
+              </div>
+            </div>
           )}
 
           {/* Майстри — керуються в Графік роботи */}

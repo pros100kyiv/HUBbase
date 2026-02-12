@@ -145,7 +145,7 @@ export default function MainPage() {
               pendingAppointments={todayPending}
               confirmedAppointments={todayConfirmed}
               onBookAppointment={() => router.push('/dashboard/appointments?create=true')}
-              onBookSlot={(date, time) => router.push(`/dashboard/appointments?create=true&date=${format(date, 'yyyy-MM-dd')}&time=${encodeURIComponent(time)}`)}
+              onBookSlot={(date, time, masterId) => router.push(`/dashboard/appointments?create=true&date=${format(date, 'yyyy-MM-dd')}&time=${encodeURIComponent(time)}${masterId ? `&masterId=${encodeURIComponent(masterId)}` : ''}`)}
               onOpenFreeSlots={(date) => {
                 setFreeSlotsDate(date)
                 setShowFreeSlotsModal(true)
@@ -164,10 +164,10 @@ export default function MainPage() {
             }}
             businessId={business?.id}
             date={freeSlotsDate ?? selectedDate ?? new Date()}
-            onBookSlot={(date, time) => {
+            onBookSlot={(date, time, masterId) => {
               setShowFreeSlotsModal(false)
               setFreeSlotsDate(null)
-              router.push(`/dashboard/appointments?create=true&date=${format(date, 'yyyy-MM-dd')}&time=${encodeURIComponent(time)}`)
+              router.push(`/dashboard/appointments?create=true&date=${format(date, 'yyyy-MM-dd')}&time=${encodeURIComponent(time)}${masterId ? `&masterId=${encodeURIComponent(masterId)}` : ''}`)
             }}
           />
         </div>
