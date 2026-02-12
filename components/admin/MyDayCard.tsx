@@ -7,6 +7,8 @@ import { useRouter } from 'next/navigation'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { StatusSwitcher, type StatusValue } from './StatusSwitcher'
 import { toast } from '@/components/ui/toast'
+import { cn } from '@/lib/utils'
+import { normalizeUaPhone } from '@/lib/utils/phone'
 
 interface Appointment {
   id: string
@@ -77,6 +79,48 @@ export function MyDayCard({
   const [donePriceServiceName, setDonePriceServiceName] = useState('')
   const [donePriceSaving, setDonePriceSaving] = useState(false)
 
+  /** Профіль клієнта з API (за телефоном) для вікна «Інформація про клієнта» */
+  interface ClientProfile {
+    id: string
+    name: string
+    phone: string
+    email?: string | null
+    notes?: string | null
+    status?: string | null
+    totalAppointments: number
+    totalSpent: number
+    lastAppointmentDate?: string | null
+    appointments?: Array<{ id: string; startTime: string; endTime: string; status: string; masterId?: string; customServiceName?: string | null; services?: string | null }>
+  }
+  const [clientProfile, setClientProfile] = useState<ClientProfile | null>(null)
+  const [clientProfileLoading, setClientProfileLoading] = useState(false)
+
+  /** Вікно «Історія клієнта»: повний профіль + усі записи */
+  interface ClientHistoryAppointment {
+    id: string
+    startTime: string
+    endTime: string
+    status: string
+    services?: string | null
+    customServiceName?: string | null
+    customPrice?: number | null
+    master?: { id: string; name: string } | null
+  }
+  interface ClientHistoryData {
+    id: string
+    name: string
+    phone: string
+    email?: string | null
+    notes?: string | null
+    status?: string | null
+    totalAppointments: number
+    totalSpent: number
+    appointments: ClientHistoryAppointment[]
+  }
+  const [showClientHistoryModal, setShowClientHistoryModal] = useState(false)
+  const [clientHistoryData, setClientHistoryData] = useState<ClientHistoryData | null>(null)
+  const [clientHistoryLoading, setClientHistoryLoading] = useState(false)
+
   useEffect(() => {
     if (selectedAppointment) {
       setPostVisitProcedureDone(selectedAppointment.procedureDone ?? '')
@@ -103,6 +147,41 @@ export function MyDayCard({
       .then((data) => setServicesList(Array.isArray(data) ? data : []))
       .catch(() => setServicesList([]))
   }, [businessId])
+
+  // Завантажити профіль клієнта при відкритті вікна запису (за телефоном)
+  useEffect(() => {
+    if (!selectedAppointment?.clientPhone || !businessId) {
+      setClientProfile(null)
+      return
+    }
+    setClientProfileLoading(true)
+    setClientProfile(null)
+    const phone = normalizeUaPhone(selectedAppointment.clientPhone)
+    if (!phone) {
+      setClientProfileLoading(false)
+      return
+    }
+    fetch(`/api/clients?businessId=${encodeURIComponent(businessId)}&phone=${encodeURIComponent(phone)}`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => {
+        const list = Array.isArray(data) ? data : (data?.clients ?? [])
+        const client = list[0] ?? null
+        setClientProfile(client ? {
+          id: client.id,
+          name: client.name ?? '',
+          phone: client.phone ?? '',
+          email: client.email ?? null,
+          notes: client.notes ?? null,
+          status: client.status ?? null,
+          totalAppointments: client.totalAppointments ?? 0,
+          totalSpent: client.totalSpent ?? 0,
+          lastAppointmentDate: client.lastAppointmentDate ?? null,
+          appointments: client.appointments ?? [],
+        } : null)
+      })
+      .catch(() => setClientProfile(null))
+      .finally(() => setClientProfileLoading(false))
+  }, [selectedAppointment?.id, selectedAppointment?.clientPhone, businessId])
 
   const handleTouchStart = (e: React.TouchEvent) => {
     if (e.targetTouches?.length > 0) {
@@ -190,7 +269,34 @@ export function MyDayCard({
   }
 
   const openClientHistory = (phone: string) => {
-    router.push(`/dashboard/clients?phone=${encodeURIComponent(phone)}`)
+    if (clientProfile?.id && businessId) {
+      setShowClientHistoryModal(true)
+      setClientHistoryData(null)
+      setClientHistoryLoading(true)
+      fetch(`/api/clients/${clientProfile.id}?businessId=${encodeURIComponent(businessId)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data) => {
+          if (data?.appointments) {
+            setClientHistoryData({
+              id: data.id,
+              name: data.name ?? '',
+              phone: data.phone ?? '',
+              email: data.email ?? null,
+              notes: data.notes ?? null,
+              status: data.status ?? null,
+              totalAppointments: data.totalAppointments ?? 0,
+              totalSpent: data.totalSpent ?? 0,
+              appointments: data.appointments ?? [],
+            })
+          } else {
+            setClientHistoryData(null)
+          }
+        })
+        .catch(() => setClientHistoryData(null))
+        .finally(() => setClientHistoryLoading(false))
+    } else {
+      router.push(`/dashboard/clients?phone=${encodeURIComponent(phone)}`)
+    }
   }
 
   const parseServices = (services?: string) => {
@@ -925,68 +1031,132 @@ export function MyDayCard({
                 </svg>
               </button>
 
-              {/* Шапка: ім'я + час + статус */}
-              <div className="pr-10 flex-shrink-0 pb-4 border-b border-white/10">
-                <div className="flex items-start gap-3">
-                  <div className="w-11 h-11 rounded-xl bg-white/10 border border-white/20 flex items-center justify-center flex-shrink-0 text-lg font-bold text-white">
-                    {selectedAppointment.clientName.charAt(0).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h2 className="text-lg font-bold text-white truncate" style={{ letterSpacing: '-0.02em' }}>
-                      {selectedAppointment.clientName}
-                    </h2>
-                    <p className="text-sm text-gray-400 mt-0.5 flex items-center gap-2 flex-wrap">
-                      <span className="inline-flex items-center gap-1.5 tabular-nums font-medium text-gray-300">
-                        <svg className="w-3.5 h-3.5 text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        {format(new Date(selectedAppointment.startTime), 'HH:mm')}–{format(new Date(selectedAppointment.endTime), 'HH:mm')}
-                      </span>
-                      <span>{format(new Date(selectedAppointment.startTime), 'd MMMM', { locale: uk })}</span>
-                    </p>
-                    <div className="mt-2 flex flex-wrap items-center gap-2">
-                      <div onClick={(e) => e.stopPropagation()}>
-                        <StatusSwitcher
-                          status={selectedAppointment.status}
-                          isFromBooking={selectedAppointment.isFromBooking === true}
-                          onStatusChange={handleStatusChange}
-                          appointmentId={selectedAppointment.id}
-                          size="sm"
-                          customPrice={selectedAppointment.customPrice}
-                          onDoneWithoutPrice={(id) => {
-              toast({
-                title: 'Статус не змінено',
-                description: 'Щоб позначити запис як Виконано, спочатку вкажіть вартість послуги в формі нижче.',
-                type: 'info',
-                duration: 4000,
-              })
-              setShowDonePriceModalForId(id)
-            }}
-                        />
-                      </div>
-                      {(() => {
-                        const sum = getDisplayPrice(selectedAppointment)
-                        return sum != null ? (
-                          <span className="inline-flex items-center px-2.5 py-1 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-semibold border border-emerald-500/40">
-                            {sum} грн
-                          </span>
-                        ) : null
-                      })()}
-                    </div>
-                  </div>
-                </div>
+              {/* Заголовок вікна: Інформація про клієнта */}
+              <div className="pr-10 flex-shrink-0 pb-3 border-b border-white/10">
+                <h2 className="text-base font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
+                  Інформація про клієнта
+                </h2>
+                <p className="text-xs text-gray-400 mt-0.5">Деталі клієнта та поточний запис</p>
               </div>
 
-              {/* Контент: картки інфо */}
+              {/* Контент: профіль клієнта + запис */}
               <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide py-4 space-y-3">
+                {/* Картка клієнта: аватар, ім'я, контакт, статус */}
+                <div className="rounded-xl bg-white/10 border border-white/15 p-3 flex items-start gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0 text-xl font-bold text-white">
+                    {(clientProfile?.name || selectedAppointment.clientName).charAt(0).toUpperCase()}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h3 className="text-lg font-bold text-white truncate">
+                      {clientProfile?.name ?? selectedAppointment.clientName}
+                    </h3>
+                    {selectedAppointment.clientPhone && (
+                      <p className="text-sm font-mono text-gray-400 mt-0.5">{selectedAppointment.clientPhone}</p>
+                    )}
+                    {clientProfile?.email && (
+                      <p className="text-xs text-gray-400 mt-0.5 truncate">{clientProfile.email}</p>
+                    )}
+                    {clientProfileLoading && (
+                      <p className="text-xs text-gray-500 mt-2">Завантаження профілю…</p>
+                    )}
+                    {!clientProfileLoading && clientProfile && (
+                      <div className="flex flex-wrap items-center gap-2 mt-2">
+                        {clientProfile.status && clientProfile.status !== 'new' && (
+                          <span className={cn(
+                            'px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase',
+                            clientProfile.status === 'vip' && 'bg-amber-500/25 text-amber-200 border border-amber-400/50',
+                            clientProfile.status === 'regular' && 'bg-emerald-500/25 text-emerald-200 border border-emerald-400/50',
+                            clientProfile.status === 'inactive' && 'bg-gray-500/25 text-gray-300 border border-gray-400/50',
+                            clientProfile.status === 'new' && 'bg-white/15 text-gray-300 border border-white/20'
+                          )}>
+                            {clientProfile.status === 'vip' ? 'VIP' : clientProfile.status === 'regular' ? 'Постійний' : clientProfile.status === 'inactive' ? 'Неактивний' : 'Новий'}
+                          </span>
+                        )}
+                        <span className="text-[11px] text-gray-500">
+                          Візитів: <span className="font-semibold text-purple-400 tabular-nums">{clientProfile.totalAppointments}</span>
+                        </span>
+                        <span className="text-[11px] text-gray-500">
+                          Зароблено: <span className="font-semibold text-purple-400 tabular-nums">{Math.round(clientProfile.totalSpent / 100)} грн</span>
+                        </span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Цей запис: час, майстер, послуги, статус */}
+                <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+                  <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-2">Цей запис</p>
+                  <div className="flex flex-wrap items-center gap-2 mb-2">
+                    <span className="text-sm tabular-nums text-white">
+                      {format(new Date(selectedAppointment.startTime), 'HH:mm')}–{format(new Date(selectedAppointment.endTime), 'HH:mm')}
+                    </span>
+                    <span className="text-gray-500">·</span>
+                    <span className="text-sm text-gray-300">{selectedAppointment.masterName || '—'}</span>
+                    <div onClick={(e) => e.stopPropagation()} className="ml-auto">
+                      <StatusSwitcher
+                        status={selectedAppointment.status}
+                        isFromBooking={selectedAppointment.isFromBooking === true}
+                        onStatusChange={handleStatusChange}
+                        appointmentId={selectedAppointment.id}
+                        size="sm"
+                        customPrice={selectedAppointment.customPrice}
+                        onDoneWithoutPrice={(id) => {
+                          toast({
+                            title: 'Статус не змінено',
+                            description: 'Щоб позначити запис як Виконано, спочатку вкажіть вартість послуги в формі нижче.',
+                            type: 'info',
+                            duration: 4000,
+                          })
+                          setShowDonePriceModalForId(id)
+                        }}
+                      />
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-300">
+                    {getServiceNamesList(selectedAppointment.services, selectedAppointment.customServiceName).length > 0
+                      ? getServiceNamesList(selectedAppointment.services, selectedAppointment.customServiceName).join(', ')
+                      : (selectedAppointment.customServiceName?.trim() || 'Послуга не вказана')}
+                  </p>
+                  {getDisplayPrice(selectedAppointment) != null && (
+                    <p className="text-sm font-semibold text-purple-400 mt-1">{getDisplayPrice(selectedAppointment)} грн</p>
+                  )}
+                </div>
+
+                {/* Минулі візити (якщо є профіль з історією) */}
+                {!clientProfileLoading && clientProfile?.appointments && clientProfile.appointments.length > 0 && (
+                  <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+                    <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-2">Минулі візити</p>
+                    <ul className="space-y-1.5 max-h-32 overflow-y-auto">
+                      {clientProfile.appointments
+                        .filter((a) => a.id !== selectedAppointment.id)
+                        .slice(0, 5)
+                        .map((a) => (
+                          <li key={a.id} className="text-xs text-gray-400 flex items-center justify-between gap-2">
+                            <span>{format(new Date(a.startTime), 'd MMM yyyy, HH:mm', { locale: uk })}</span>
+                            <span className={a.status === 'Done' || a.status === 'Виконано' ? 'text-emerald-400' : 'text-gray-500'}>{a.status === 'Done' || a.status === 'Виконано' ? 'Виконано' : a.status}</span>
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
+
+                {/* Нотатки клієнта з профілю */}
+                {!clientProfileLoading && clientProfile?.notes && (
+                  <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-1">Нотатки про клієнта</p>
+                    <p className="text-sm text-gray-200 whitespace-pre-wrap">{clientProfile.notes}</p>
+                  </div>
+                )}
+
+                {/* Дії: дзвінок, копіювати */}
                 {selectedAppointment.clientPhone && (
                   <div className="rounded-xl bg-white/5 border border-white/10 p-3">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-2">Телефон</p>
+                    <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-2">Контакт</p>
                     <div className="flex items-center gap-2 flex-wrap">
                       <a
                         href={`tel:${selectedAppointment.clientPhone}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-500/20 text-emerald-400 border border-emerald-500/40 text-sm font-medium hover:bg-emerald-500/30 transition-colors"
+                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium transition-colors"
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
@@ -1002,45 +1172,11 @@ export function MyDayCard({
                         }}
                         className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 text-gray-300 text-sm font-medium hover:bg-white/15 transition-colors"
                       >
-                        Копіювати
+                        Копіювати номер
                       </button>
                     </div>
-                    <p className="text-sm text-white/80 mt-1.5 font-mono">{selectedAppointment.clientPhone}</p>
                   </div>
                 )}
-
-                {selectedAppointment.masterName && (
-                  <div className="rounded-xl bg-white/5 border border-white/10 p-3">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-1">Спеціаліст</p>
-                    <p className="text-sm font-medium text-white">{selectedAppointment.masterName}</p>
-                  </div>
-                )}
-
-                <div className="rounded-xl bg-white/5 border border-white/10 p-3">
-                  <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-2">Послуги</p>
-                  {(() => {
-                    const names = getServiceNamesList(selectedAppointment.services, selectedAppointment.customServiceName)
-                    const needsPriceAfter = isCostAfterProcedure(selectedAppointment)
-                    return (
-                      <>
-                        <div className="flex flex-wrap gap-2">
-                          {names.length > 0
-                            ? names.map((name, idx) => (
-                                <span key={idx} className="px-2.5 py-1 rounded-lg bg-white/10 text-sm text-gray-200 border border-white/10">
-                                  {name}
-                                </span>
-                              ))
-                            : (
-                              <span className="text-sm text-gray-400">Послуга не вказана</span>
-                            )}
-                        </div>
-                        {needsPriceAfter && (
-                          <p className="text-xs text-gray-500 mt-2">Вартість узгоджується після процедури</p>
-                        )}
-                      </>
-                    )
-                  })()}
-                </div>
 
                 {selectedAppointment.procedureDone && (
                   <div className="rounded-xl bg-white/5 border border-white/10 p-3">
@@ -1118,6 +1254,167 @@ export function MyDayCard({
                   Редагувати запис
                 </button>
               </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
+      {/* Вікно «Історія клієнта» — детальна історія візитів */}
+      {showClientHistoryModal && (
+        <ModalPortal>
+          <div className="modal-overlay sm:!p-4" onClick={() => setShowClientHistoryModal(false)}>
+            <div
+              className="relative w-[95%] sm:w-full sm:max-w-lg sm:my-auto modal-content modal-dialog text-white max-h-[90dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button
+                type="button"
+                onClick={() => setShowClientHistoryModal(false)}
+                className="modal-close touch-target rounded-full"
+                aria-label="Закрити"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+
+              <div className="pr-10 flex-shrink-0 pb-3 border-b border-white/10">
+                <h2 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
+                  Історія клієнта
+                </h2>
+                <p className="text-xs text-gray-400 mt-0.5">Усі візити та записи</p>
+              </div>
+
+              <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide py-4 space-y-4">
+                {clientHistoryLoading && (
+                  <div className="flex items-center justify-center py-12">
+                    <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  </div>
+                )}
+
+                {!clientHistoryLoading && clientHistoryData && (
+                  <>
+                    <div className="rounded-xl bg-white/10 border border-white/15 p-3">
+                      <h3 className="text-base font-bold text-white truncate">{clientHistoryData.name}</h3>
+                      {clientHistoryData.phone && (
+                        <p className="text-sm font-mono text-gray-400 mt-0.5">{clientHistoryData.phone}</p>
+                      )}
+                      {clientHistoryData.email && (
+                        <p className="text-xs text-gray-500 mt-0.5 truncate">{clientHistoryData.email}</p>
+                      )}
+                      <div className="flex flex-wrap items-center gap-3 mt-3">
+                        <span className="text-xs text-gray-500">
+                          Візитів: <span className="font-semibold text-purple-400 tabular-nums">{clientHistoryData.totalAppointments}</span>
+                        </span>
+                        <span className="text-xs text-gray-500">
+                          Зароблено: <span className="font-semibold text-purple-400 tabular-nums">{Math.round(Number(clientHistoryData.totalSpent) / 100)} грн</span>
+                        </span>
+                        {clientHistoryData.status && clientHistoryData.status !== 'new' && (
+                          <span className={cn(
+                            'px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase',
+                            clientHistoryData.status === 'vip' && 'bg-amber-500/25 text-amber-200 border border-amber-400/50',
+                            clientHistoryData.status === 'regular' && 'bg-emerald-500/25 text-emerald-200 border border-emerald-400/50',
+                            clientHistoryData.status === 'inactive' && 'bg-gray-500/25 text-gray-300 border border-gray-400/50'
+                          )}>
+                            {clientHistoryData.status === 'vip' ? 'VIP' : clientHistoryData.status === 'regular' ? 'Постійний' : clientHistoryData.status === 'inactive' ? 'Неактивний' : 'Новий'}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    <div>
+                      <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-2">
+                        Усі записи ({clientHistoryData.appointments.length})
+                      </p>
+                      <ul className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
+                        {clientHistoryData.appointments.map((apt) => {
+                          const start = new Date(apt.startTime)
+                          const end = new Date(apt.endTime)
+                          const serviceNames = getServiceNamesList(apt.services, apt.customServiceName)
+                          const serviceDisplay = serviceNames.length > 0 ? serviceNames.join(', ') : (apt.customServiceName?.trim() || '—')
+                          const priceGrn = apt.customPrice != null && apt.customPrice > 0 ? Math.round(Number(apt.customPrice) / 100) : null
+                          const isDone = apt.status === 'Done' || apt.status === 'Виконано'
+                          return (
+                            <li
+                              key={apt.id}
+                              className={cn(
+                                'rounded-xl p-3 border text-left',
+                                isDone ? 'bg-white/5 border-white/10' : 'bg-white/[0.03] border-white/5'
+                              )}
+                            >
+                              <div className="flex items-start justify-between gap-2">
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-semibold text-white tabular-nums">
+                                    {format(start, 'd MMM yyyy', { locale: uk })} · {format(start, 'HH:mm')}–{format(end, 'HH:mm')}
+                                  </p>
+                                  <p className="text-xs text-gray-400 mt-0.5 truncate">{apt.master?.name ?? '—'}</p>
+                                  <p className="text-xs text-gray-300 mt-1 truncate">{serviceDisplay}</p>
+                                </div>
+                                <div className="flex flex-col items-end gap-0.5 shrink-0">
+                                  <span className={cn(
+                                    'text-[10px] font-medium px-2 py-0.5 rounded',
+                                    isDone && 'bg-emerald-500/20 text-emerald-400',
+                                    (apt.status === 'Confirmed' || apt.status === 'Підтверджено') && 'bg-emerald-500/15 text-emerald-300',
+                                    (apt.status === 'Pending' || apt.status === 'Очікує') && 'bg-amber-500/20 text-amber-400',
+                                    (apt.status === 'Cancelled' || apt.status === 'Скасовано') && 'bg-gray-500/20 text-gray-400'
+                                  )}>
+                                    {apt.status === 'Done' || apt.status === 'Виконано' ? 'Виконано' : apt.status === 'Confirmed' || apt.status === 'Підтверджено' ? 'Підтверджено' : apt.status === 'Pending' || apt.status === 'Очікує' ? 'Очікує' : apt.status === 'Cancelled' || apt.status === 'Скасовано' ? 'Скасовано' : apt.status}
+                                  </span>
+                                  {priceGrn != null && (
+                                    <span className="text-xs font-semibold text-purple-400 tabular-nums">{priceGrn} грн</span>
+                                  )}
+                                </div>
+                              </div>
+                            </li>
+                          )
+                        })}
+                      </ul>
+                    </div>
+
+                    {clientHistoryData.notes && (
+                      <div className="rounded-xl bg-white/5 border border-white/10 p-3">
+                        <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-1">Нотатки</p>
+                        <p className="text-sm text-gray-200 whitespace-pre-wrap">{clientHistoryData.notes}</p>
+                      </div>
+                    )}
+                  </>
+                )}
+
+                {!clientHistoryLoading && !clientHistoryData && (
+                  <div className="rounded-xl bg-white/5 border border-white/10 p-6 text-center">
+                    <p className="text-sm text-gray-400">Не вдалося завантажити історію</p>
+                    <button
+                      type="button"
+                      onClick={() => selectedAppointment?.clientPhone && router.push(`/dashboard/clients?phone=${encodeURIComponent(selectedAppointment.clientPhone)}`)}
+                      className="mt-3 px-4 py-2 rounded-lg bg-white/10 text-white text-sm font-medium hover:bg-white/15"
+                    >
+                      Відкрити в розділі Клієнти
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {!clientHistoryLoading && clientHistoryData && (
+                <div className="pt-4 border-t border-white/10 flex gap-2 flex-shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => setShowClientHistoryModal(false)}
+                    className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-sm font-medium text-white hover:bg-white/15"
+                  >
+                    Закрити
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowClientHistoryModal(false)
+                      router.push(`/dashboard/clients?phone=${encodeURIComponent(clientHistoryData.phone)}`)
+                    }}
+                    className="flex-1 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold"
+                  >
+                    Відкрити картку клієнта
+                  </button>
+                </div>
+              )}
             </div>
           </div>
         </ModalPortal>

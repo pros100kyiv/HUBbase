@@ -183,9 +183,9 @@ export default function DashboardLayout({
       {/* Mobile Sidebar */}
       <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       
-      {/* Main Content Area — плавна поява контенту без моргання */}
-      <main className="relative w-full min-w-0 ml-0 md:ml-64 pt-14 md:pt-16 min-h-screen safe-bottom pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]">
-        <div className="w-full min-w-0 px-3 py-3 md:p-6 pb-[max(5rem,env(safe-area-inset-bottom)+3.5rem)] md:pb-6 animate-content-fade-in">
+      {/* Main Content Area — плавна поява контенту без моргання; контент не виходить за межі екрану */}
+      <main className="relative w-full min-w-0 max-w-full overflow-x-hidden ml-0 md:ml-64 pt-14 md:pt-16 min-h-screen safe-bottom pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]" data-dashboard-content>
+        <div className="dashboard-content-inner w-full min-w-0 max-w-full overflow-x-hidden px-3 py-3 md:p-6 pb-[max(5rem,env(safe-area-inset-bottom)+3.5rem)] md:pb-6 animate-content-fade-in">
           {children}
         </div>
       </main>

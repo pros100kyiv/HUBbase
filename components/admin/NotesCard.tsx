@@ -125,9 +125,9 @@ export function NotesCard({ businessId }: NotesCardProps) {
 
   return (
     <>
-      <div className="rounded-xl p-4 md:p-6 card-glass min-w-0 overflow-hidden">
-        <div className="flex items-center justify-between mb-3 md:mb-4">
-          <h3 className="text-base md:text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
+      <div className="rounded-xl p-4 md:p-6 card-glass min-w-0 w-full max-w-full overflow-hidden">
+        <div className="flex items-center justify-between gap-2 mb-3 md:mb-4 min-w-0">
+          <h3 className="text-base md:text-lg font-semibold text-white truncate min-w-0" style={{ letterSpacing: '-0.01em' }}>
             Нотатки
           </h3>
           <button
@@ -142,7 +142,7 @@ export function NotesCard({ businessId }: NotesCardProps) {
         </div>
 
         {/* Date Navigation */}
-        <div className="mb-3 md:mb-4 flex items-center justify-between gap-2">
+        <div className="mb-3 md:mb-4 flex items-center justify-between gap-2 min-w-0">
           <button
             onClick={() => handleDateChange(-1)}
             className="p-1.5 hover:bg-white/10 rounded-lg transition-colors flex-shrink-0"
@@ -154,12 +154,12 @@ export function NotesCard({ businessId }: NotesCardProps) {
 
           <button
             onClick={() => setShowDatePicker(true)}
-            className="px-2 md:px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-xs md:text-sm text-white flex-1 min-w-0"
+            className="px-2 md:px-3 py-1.5 bg-white/5 hover:bg-white/10 rounded-lg transition-colors text-xs md:text-sm text-white flex-1 min-w-0 overflow-hidden text-left"
           >
             {isToday ? (
-              <span className="truncate">Сьогодні, {format(currentDate, 'd MMM', { locale: uk })}</span>
+              <span className="block truncate">Сьогодні, {format(currentDate, 'd MMM', { locale: uk })}</span>
             ) : (
-              <span className="truncate">{format(currentDate, 'EEEE, d MMM', { locale: uk })}</span>
+              <span className="block truncate">{format(currentDate, 'EEEE, d MMM', { locale: uk })}</span>
             )}
           </button>
 

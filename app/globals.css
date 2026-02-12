@@ -731,7 +731,7 @@
     @apply lg:col-span-3 space-y-3 md:space-y-6;
   }
   .dashboard-sidebar {
-    @apply lg:col-span-1 space-y-3 md:space-y-6;
+    @apply lg:col-span-1 space-y-3 md:space-y-6 min-w-0 w-full max-w-full overflow-hidden;
   }
   .dashboard-page-title {
     @apply text-xl md:text-2xl font-bold text-white tracking-dashboard-title;
@@ -759,6 +759,18 @@
   }
   .dashboard-card-title-lg {
     @apply text-lg font-bold text-white tracking-dashboard-title;
+  }
+
+  /* Кабінет: контент не виходить за межі екрану в усіх вкладках */
+  [data-dashboard-content],
+  [data-dashboard-content] .dashboard-content-inner {
+    min-width: 0;
+    max-width: 100%;
+    overflow-x: hidden;
+  }
+  [data-dashboard-content] .dashboard-content-inner > * {
+    min-width: 0;
+    max-width: 100%;
   }
 
   /* ========== Chart styles (analytics, progress, trends) ========== */
@@ -1681,7 +1693,7 @@
 
   /* Мобільна версія: поля часу — хвилини видно, нічого не перекриває */
   @media (max-width: 639px) {
-    input[type="time"] {
+    input[type="time"]:not(.time-slot-input) {
       min-width: 8.5rem !important;
       padding-left: 0.5rem !important;
       padding-right: 0.5rem !important;
@@ -1689,6 +1701,10 @@
     input[type="time"]::-webkit-date-and-time-value {
       margin-right: 0;
       padding-right: 0;
+    }
+    /* У модалці графіка (перерви тощо) слоти часу можуть стискатись, щоб не вилітати за екран */
+    .time-slot-input {
+      min-width: 0 !important;
     }
   }
 }

@@ -82,7 +82,7 @@ export function MonthProgressCard({ stats, loading }: MonthProgressCardProps) {
 
   return (
     <>
-      <div className="dashboard-card hover:border-white/20 transition-all duration-200 cursor-pointer group min-w-0 overflow-hidden" onClick={() => setShowModal(true)}>
+      <div className="dashboard-card hover:border-white/20 transition-all duration-200 cursor-pointer group min-w-0 w-full max-w-full overflow-hidden" onClick={() => setShowModal(true)}>
         <div className="flex items-center justify-between mb-3 md:mb-4">
           <h3 className="dashboard-card-title">
             Прогрес місяця

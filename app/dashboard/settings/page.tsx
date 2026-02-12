@@ -140,6 +140,7 @@ function BusinessWorkingHoursEditor({
 }) {
   const [hours, setHours] = useState<Record<string, { enabled: boolean; start: string; end: string }>>(DEFAULT_HOURS)
   const [saving, setSaving] = useState(false)
+  const [expanded, setExpanded] = useState(false)
 
   useEffect(() => {
     if (currentHours) {
@@ -179,57 +180,75 @@ function BusinessWorkingHoursEditor({
   }
 
   return (
-    <div className="rounded-xl p-4 md:p-6 card-glass">
-      <h2 className="text-lg font-bold text-white mb-4" style={{ letterSpacing: '-0.02em' }}>
-        Робочі години бізнесу
-      </h2>
-      <p className="text-sm text-gray-400 mb-6">
-        Загальний графік роботи вашого бізнесу. Клієнти бачитимуть цей графік при бронюванні.
-      </p>
-      <div className="space-y-3">
+    <div className="rounded-xl p-4 md:p-6 card-glass border border-white/10 min-w-0 overflow-hidden">
+      <button
+        type="button"
+        onClick={() => setExpanded((e) => !e)}
+        className="w-full flex items-center justify-between gap-2 text-left"
+      >
+        <div>
+          <h2 className="text-lg font-bold text-white mb-0.5" style={{ letterSpacing: '-0.02em' }}>
+            Робочі години бізнесу
+          </h2>
+          <p className="text-sm text-gray-400">
+            Загальний графік роботи вашого бізнесу. Клієнти бачитимуть цей графік при бронюванні.
+          </p>
+        </div>
+        <span className="shrink-0 text-gray-400 transition-transform" aria-hidden>
+          {expanded ? <ChevronUpIcon className="w-5 h-5" /> : <ChevronDownIcon className="w-5 h-5" />}
+        </span>
+      </button>
+      {expanded && (
+        <>
+      <div className="space-y-3 min-w-0 mt-6">
         {Object.entries(DAY_NAMES).map(([key, name]) => (
           <div
             key={key}
-            className="flex flex-wrap items-center gap-3 p-3 rounded-lg bg-white/5 border border-white/10"
+            className={cn(
+              'grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-2 sm:gap-3 sm:items-center p-3 rounded-xl bg-white/5 border border-white/10 min-w-0 overflow-hidden',
+              !hours[key]?.enabled && 'opacity-80'
+            )}
           >
-            <div className="flex items-center gap-2 min-w-[120px]">
+            <label className="flex items-center gap-2 cursor-pointer min-w-0 shrink-0 touch-target">
               <input
                 type="checkbox"
                 checked={hours[key]?.enabled ?? true}
                 onChange={(e) => updateDay(key, 'enabled', e.target.checked)}
-                className="w-4 h-4 rounded border-white/30 bg-white/10 text-white focus:ring-white/30"
+                className="w-5 h-5 shrink-0 rounded border-white/30 bg-white/10 text-emerald-500 focus:ring-emerald-500/50"
               />
-              <label className="text-sm font-medium text-white">{name}</label>
-            </div>
-            {hours[key]?.enabled && (
-              <div className="flex items-center gap-2">
+              <span className="text-sm font-medium text-white truncate">{name}</span>
+            </label>
+            {hours[key]?.enabled ? (
+              <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center min-w-0 w-full sm:max-w-[240px]">
                 <input
                   type="time"
                   value={hours[key].start}
                   onChange={(e) => updateDay(key, 'start', e.target.value)}
-                  className="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:ring-2 focus:ring-white/30"
+                  className="time-slot-input w-full min-w-0 min-h-[40px] px-3 py-2 text-sm font-medium tabular-nums rounded-lg border border-white/25 bg-white/15 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 [&::-webkit-calendar-picker-indicator]:opacity-80 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                 />
-                <span className="text-gray-400">—</span>
+                <span className="text-gray-500 text-sm shrink-0">–</span>
                 <input
                   type="time"
                   value={hours[key].end}
                   onChange={(e) => updateDay(key, 'end', e.target.value)}
-                  className="px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm focus:ring-2 focus:ring-white/30"
+                  className="time-slot-input w-full min-w-0 min-h-[40px] px-3 py-2 text-sm font-medium tabular-nums rounded-lg border border-white/25 bg-white/15 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 [&::-webkit-calendar-picker-indicator]:opacity-80 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                 />
               </div>
+            ) : (
+              <span className="text-xs text-gray-500">Вихідний</span>
             )}
-            {!hours[key]?.enabled && <span className="text-xs text-gray-500">Вихідний</span>}
           </div>
         ))}
       </div>
       <Button
         onClick={handleSave}
         disabled={saving}
-        className="mt-6 px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100"
-        style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+        className="mt-6 w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl border-0 transition-colors disabled:opacity-50"
       >
         {saving ? 'Збереження...' : 'Зберегти графік'}
       </Button>
+        </>
+      )}
     </div>
   )
 }
@@ -665,15 +684,15 @@ export default function SettingsPage() {
               </p>
             </div>
             {bookingUrl && (
-              <div className="flex items-center gap-2">
-                <code className="px-3 py-2 rounded-lg bg-white/10 text-gray-300 text-xs truncate max-w-[200px] md:max-w-xs" title={bookingUrl}>
+              <div className="flex flex-col sm:flex-row sm:items-center gap-2 w-full sm:w-auto min-w-0 max-w-full">
+                <code className="px-3 py-2 rounded-lg bg-white/10 text-gray-300 text-xs truncate min-w-0 w-full sm:max-w-[200px] md:max-w-xs" title={bookingUrl}>
                   {bookingUrl}
                 </code>
                 <Button
                   variant="outline"
                   size="sm"
                   onClick={copyBookingLink}
-                  className="shrink-0 border-white/20 bg-white/10 text-white hover:bg-white/20 text-xs"
+                  className="shrink-0 w-full sm:w-auto border-white/20 bg-white/10 text-white hover:bg-white/20 text-xs whitespace-nowrap"
                 >
                   Копіювати посилання
                 </Button>
@@ -714,23 +733,6 @@ export default function SettingsPage() {
                 <div>
                   <p className="text-xs text-gray-400">Спеціалісти</p>
                   <p className="text-sm font-bold text-white">{masters.length}</p>
-                </div>
-              </div>
-            </button>
-            <button
-              onClick={() => setTab('services')}
-              className={cn(
-                'rounded-xl p-3 text-left transition-all border',
-                activeTab === 'services' ? 'card-glass border-white/30 bg-white/15' : 'card-glass-subtle border-white/10 hover:border-white/20'
-              )}
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center">
-                  <MoneyIcon className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400">Послуги</p>
-                  <p className="text-sm font-bold text-white">{services.length}</p>
                 </div>
               </div>
             </button>
@@ -807,7 +809,7 @@ export default function SettingsPage() {
           {/* Tabs - card-glass dark theme */}
           <div className="rounded-xl p-3 card-glass-subtle">
             <div className="flex gap-2 flex-wrap">
-              {(['info', 'schedule', 'masters', 'services', 'businessCard', 'telegram', 'integrations'] as Tab[]).map((tab) => (
+              {(['info', 'schedule', 'masters', 'businessCard', 'telegram', 'integrations'] as Tab[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setTab(tab)}

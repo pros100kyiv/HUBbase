@@ -392,7 +392,7 @@ export function MasterScheduleModal({
                       <div
                         key={day.key}
                         className={cn(
-                          'grid grid-cols-1 sm:grid-cols-[1fr_minmax(0,1fr)_minmax(0,1fr)] gap-2 sm:gap-x-3 sm:gap-y-0 items-start sm:items-center px-3 py-3 sm:py-2.5 border-b border-white/5 last:border-0 transition-colors min-w-0',
+                          'grid grid-cols-1 sm:grid-cols-[1fr_minmax(0,1fr)_minmax(0,1fr)] gap-3 sm:gap-x-3 sm:gap-y-0 items-start sm:items-center px-3 py-3 sm:py-2.5 border-b border-white/5 last:border-0 transition-colors min-w-0 overflow-hidden',
                           dayHours.enabled ? 'bg-white/5' : 'bg-white/[0.02] opacity-75'
                         )}
                       >
@@ -406,26 +406,27 @@ export function MasterScheduleModal({
                           <span className="text-sm font-medium text-white truncate">{day.label}</span>
                         </label>
                         {dayHours.enabled ? (
-                          <div className="flex flex-col sm:contents gap-2 sm:gap-0 pl-8 sm:pl-0">
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 min-w-0">
-                              <span className="text-[10px] font-medium text-gray-500 shrink-0 sm:w-14">Початок</span>
-                              <input
-                                type="time"
-                                value={dayHours.start}
-                                onChange={(e) => handleTimeChange(day.key, 'start', e.target.value)}
-                                className="w-full min-w-0 max-w-full min-h-[44px] px-3 py-2.5 sm:py-1.5 text-sm rounded-xl border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30 [&::-webkit-calendar-picker-indicator]:opacity-70 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                              />
+                          /* На малих екранах: один ряд — дві колонки Початок | Кінець; на sm+ — таблиця. gap і min-width щоб не наїжджали. */
+                            <div className="pl-8 sm:pl-0 grid grid-cols-2 sm:contents gap-3 sm:gap-x-3 min-w-0 w-full overflow-hidden">
+                              <div className="flex flex-col gap-1 min-w-0 w-full overflow-hidden sm:flex-row sm:items-center sm:gap-2 sm:w-auto">
+                                <span className="text-[10px] font-medium text-gray-500 shrink-0 sm:w-14">Початок</span>
+                                <input
+                                  type="time"
+                                  value={dayHours.start}
+                                  onChange={(e) => handleTimeChange(day.key, 'start', e.target.value)}
+                                  className="time-slot-input w-full min-w-[5.5rem] max-w-full min-h-[40px] sm:min-h-[36px] sm:min-w-0 px-2 sm:px-3 py-2 text-sm font-medium tabular-nums rounded-lg border border-white/25 bg-white/15 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 [&::-webkit-calendar-picker-indicator]:opacity-80 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                />
+                              </div>
+                              <div className="flex flex-col gap-1 min-w-0 w-full overflow-hidden sm:flex-row sm:items-center sm:gap-2 sm:w-auto">
+                                <span className="text-[10px] font-medium text-gray-500 shrink-0 sm:w-14">Кінець</span>
+                                <input
+                                  type="time"
+                                  value={dayHours.end}
+                                  onChange={(e) => handleTimeChange(day.key, 'end', e.target.value)}
+                                  className="time-slot-input w-full min-w-[5.5rem] max-w-full min-h-[40px] sm:min-h-[36px] sm:min-w-0 px-2 sm:px-3 py-2 text-sm font-medium tabular-nums rounded-lg border border-white/25 bg-white/15 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 [&::-webkit-calendar-picker-indicator]:opacity-80 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                />
+                              </div>
                             </div>
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-1.5 sm:gap-2 min-w-0">
-                              <span className="text-[10px] font-medium text-gray-500 shrink-0 sm:w-14">Кінець</span>
-                              <input
-                                type="time"
-                                value={dayHours.end}
-                                onChange={(e) => handleTimeChange(day.key, 'end', e.target.value)}
-                                className="w-full min-w-0 max-w-full min-h-[44px] px-3 py-2.5 sm:py-1.5 text-sm rounded-xl border border-white/20 bg-white/10 text-white focus:outline-none focus:ring-2 focus:ring-white/30 [&::-webkit-calendar-picker-indicator]:opacity-70 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                              />
-                            </div>
-                          </div>
                         ) : (
                           <span className="text-xs text-gray-500 pl-8 sm:pl-0 sm:col-span-2">Вихідний</span>
                         )}
@@ -434,14 +435,14 @@ export function MasterScheduleModal({
                   })}
                 </div>
                 {/* Рядок перерви для кожного робочого дня */}
-                <div className="mt-4 space-y-2">
+                <div className="mt-4 space-y-3 w-full min-w-0 overflow-hidden">
                   <p className="text-[11px] font-medium text-gray-400">Перерви (опційно)</p>
-                  <div className="flex flex-wrap gap-3">
+                  <div className="flex flex-col sm:flex-row sm:flex-wrap gap-3 w-full min-w-0">
                     {DAYS.filter((d) => workingHours[d.key]?.enabled).map((day) => {
                       const dayHours = workingHours[day.key] || { enabled: true, start: '09:00', end: '18:00' }
                       const hasBreak = dayHours.breakStart != null && dayHours.breakEnd != null
                       return (
-                        <div key={day.key} className="flex items-center gap-2 min-h-[40px]">
+                        <div key={day.key} className="flex items-center gap-2 sm:gap-3 min-h-[40px] w-full max-w-full min-w-0 p-2 rounded-lg bg-white/5 border border-white/10 overflow-hidden">
                           <input
                             type="checkbox"
                             id={`break-${day.key}`}
@@ -449,21 +450,21 @@ export function MasterScheduleModal({
                             onChange={(e) => setBreakEnabled(day.key, e.target.checked)}
                             className="w-4 h-4 shrink-0 rounded border-white/30 bg-white/10 text-amber-500 focus:ring-amber-500/50"
                           />
-                          <label htmlFor={`break-${day.key}`} className="text-xs text-gray-300 cursor-pointer touch-target py-1">{day.short}</label>
+                          <label htmlFor={`break-${day.key}`} className="text-xs text-gray-300 cursor-pointer touch-target py-1 shrink-0 w-6">{day.short}</label>
                           {hasBreak && (
-                            <div className="flex items-center gap-1.5">
+                            <div className="grid grid-cols-[1fr_auto_1fr] gap-1.5 sm:gap-2 flex-1 min-w-0 items-center max-w-full">
                               <input
                                 type="time"
                                 value={dayHours.breakStart}
                                 onChange={(e) => handleBreakChange(day.key, 'breakStart', e.target.value)}
-                                className="min-h-[36px] w-20 px-2 py-1.5 text-xs rounded-lg border border-white/20 bg-white/10 text-white [&::-webkit-calendar-picker-indicator]:opacity-70 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                className="time-slot-input min-h-[36px] w-full min-w-0 max-w-full px-2 py-1.5 text-xs font-medium tabular-nums rounded-lg border border-white/25 bg-white/15 text-white focus:ring-2 focus:ring-emerald-500/50 [&::-webkit-calendar-picker-indicator]:opacity-80 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                               />
-                              <span className="text-gray-500 text-xs">–</span>
+                              <span className="text-gray-500 text-xs shrink-0 px-0.5">–</span>
                               <input
                                 type="time"
                                 value={dayHours.breakEnd}
                                 onChange={(e) => handleBreakChange(day.key, 'breakEnd', e.target.value)}
-                                className="min-h-[36px] w-20 px-2 py-1.5 text-xs rounded-lg border border-white/20 bg-white/10 text-white [&::-webkit-calendar-picker-indicator]:opacity-70 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                className="time-slot-input min-h-[36px] w-full min-w-0 max-w-full px-2 py-1.5 text-xs font-medium tabular-nums rounded-lg border border-white/25 bg-white/15 text-white focus:ring-2 focus:ring-emerald-500/50 [&::-webkit-calendar-picker-indicator]:opacity-80 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                               />
                             </div>
                           )}
@@ -559,19 +560,19 @@ export function MasterScheduleModal({
                               <span className="text-sm text-gray-300">Робочий</span>
                             </label>
                             {editOverride.enabled && (
-                              <div className="flex items-center gap-2 mb-3 flex-wrap">
+                              <div className="flex items-center gap-3 mb-3 flex-wrap min-w-0">
                                 <input
                                   type="time"
                                   value={editOverride.start}
                                   onChange={(e) => setEditOverride((o) => ({ ...o, start: e.target.value }))}
-                                  className="flex-1 min-w-0 min-h-[44px] px-3 py-2 text-sm rounded-xl bg-white/10 text-white border border-white/20 [&::-webkit-calendar-picker-indicator]:opacity-70 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                  className="time-slot-input flex-1 min-w-[5.5rem] min-h-[40px] px-3 py-2 text-sm font-medium tabular-nums rounded-lg bg-white/15 text-white border border-white/25 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 [&::-webkit-calendar-picker-indicator]:opacity-80 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                                 />
-                                <span className="text-gray-500 text-sm">–</span>
+                                <span className="text-gray-500 text-sm shrink-0">–</span>
                                 <input
                                   type="time"
                                   value={editOverride.end}
                                   onChange={(e) => setEditOverride((o) => ({ ...o, end: e.target.value }))}
-                                  className="flex-1 min-w-0 min-h-[44px] px-3 py-2 text-sm rounded-xl bg-white/10 text-white border border-white/20 [&::-webkit-calendar-picker-indicator]:opacity-70 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
+                                  className="time-slot-input flex-1 min-w-[5.5rem] min-h-[40px] px-3 py-2 text-sm font-medium tabular-nums rounded-lg bg-white/15 text-white border border-white/25 focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 [&::-webkit-calendar-picker-indicator]:opacity-80 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
                                 />
                               </div>
                             )}

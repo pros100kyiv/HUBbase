@@ -145,8 +145,8 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
   }
 
   return (
-    <div className="rounded-xl p-4 md:p-6 card-glass min-w-0 overflow-hidden">
-      <div className="flex items-center justify-between mb-3 md:mb-4">
+    <div className="rounded-xl p-4 md:p-6 card-glass min-w-0 w-full max-w-full overflow-hidden">
+      <div className="flex items-center justify-between gap-2 mb-3 md:mb-4 min-w-0">
         <h3 className="text-base md:text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>
           Календар записів
         </h3>
@@ -182,11 +182,11 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
         </h4>
       </div>
 
-      {/* Calendar Grid — той самий стиль, що на сторінці Записи; min-w-0 щоб не вилітав за екран */}
-      <div className="grid grid-cols-7 gap-1.5 md:gap-2 min-w-0">
+      {/* Calendar Grid — стискається в межах сайдбару, не вилітає за екран */}
+      <div className="grid grid-cols-7 gap-1 md:gap-1.5 min-w-0 w-full">
         {/* Day headers */}
         {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
-          <div key={day} className="text-center text-xs font-semibold text-gray-400 py-1.5">
+          <div key={day} className="text-center text-[10px] md:text-xs font-semibold text-gray-400 py-1 truncate min-w-0">
             {day}
           </div>
         ))}
@@ -203,7 +203,7 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
               key={day.toISOString()}
               onClick={() => handleDayClick(day)}
               className={cn(
-                'relative p-1.5 md:p-2 rounded-lg border transition-all min-h-[40px] md:min-h-[40px] flex flex-col items-center justify-start active:scale-[0.98] touch-manipulation',
+                'relative p-1 md:p-1.5 rounded-lg border transition-all min-h-[36px] md:min-h-[40px] flex flex-col items-center justify-start active:scale-[0.98] touch-manipulation min-w-0',
                 !isCurrentMonth && 'opacity-30',
                 isSelected
                   ? 'border-white bg-white/25 text-white shadow-lg shadow-black/20'

@@ -133,7 +133,7 @@ export default function SocialPage() {
 
   if (loading) {
     return (
-      <div className="w-full max-w-7xl mx-auto min-w-0">
+      <div className="w-full max-w-7xl mx-auto min-w-0 overflow-hidden">
         <p className="text-gray-400">Завантаження...</p>
       </div>
     )

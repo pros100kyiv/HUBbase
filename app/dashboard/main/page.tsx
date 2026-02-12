@@ -176,20 +176,20 @@ export default function MainPage() {
         <div className="lg:col-span-1 space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
           {/* Social Messages — першими на мобільному (швидка відповідь) */}
           {business?.id && (
-            <div className="order-1">
+            <div className="order-1 min-w-0 w-full max-w-full overflow-hidden">
               <SocialMessagesCard businessId={business.id} />
             </div>
           )}
 
           {/* Notes Card — в самий низ на мобільному (order-3), на десктопі залишається в колонці справа */}
           {business?.id && (
-            <div className="order-3">
+            <div className="order-3 min-w-0 w-full max-w-full overflow-hidden">
               <NotesCard businessId={business.id} />
             </div>
           )}
 
           {/* Calendar Card — другі на мобільному (огляд тижня) */}
-          <div className="order-2">
+          <div className="order-2 min-w-0 w-full max-w-full overflow-hidden">
             <WeeklyProcessCard businessId={business?.id} />
           </div>
         </div>

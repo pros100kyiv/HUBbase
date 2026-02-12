@@ -22,6 +22,9 @@ export async function GET(
       include: {
         appointments: {
           orderBy: { startTime: 'desc' },
+          include: {
+            master: { select: { id: true, name: true } },
+          },
         },
       },
     })
