@@ -56,42 +56,44 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
           Виберіть послугу
         </h2>
 
-        {/* Опції без вибору послуги з каталогу */}
-        <div className="space-y-2 mb-4">
+        {/* Записатися без послуги — світло-сіра картка */}
+        <div className="space-y-3 mb-5">
           <div
             role="button"
             tabIndex={0}
             onClick={handleWithoutService}
             onKeyDown={(e) => e.key === 'Enter' && handleWithoutService()}
             className={cn(
-              'rounded-xl p-3 sm:p-4 card-glass cursor-pointer transition-all hover:bg-white/[0.08] active:scale-[0.99] min-h-[56px] flex items-center border-2',
-              state.bookingWithoutService ? 'ring-2 ring-white/50 bg-white/[0.12] border-white/30' : 'border-transparent'
+              'rounded-xl p-4 bg-white/10 border border-white/15 cursor-pointer transition-all hover:bg-white/[0.14] active:scale-[0.99] min-h-[64px] flex items-center outline-none',
+              state.bookingWithoutService && 'ring-2 ring-white/40 border-white/25 bg-white/[0.14]'
             )}
           >
             <div className="flex-1">
-              <h3 className="text-sm sm:text-base font-semibold text-white">Записатися без послуги</h3>
+              <h3 className="text-sm sm:text-base font-bold text-white">Записатися без послуги</h3>
               <p className="text-xs text-gray-400 mt-0.5">Вартість узгоджується після процедури</p>
             </div>
           </div>
+
+          {/* Або вкажіть свою послугу — та сама світло-сіра панель */}
           <div className={cn(
-            'rounded-xl p-3 sm:p-4 card-glass min-h-[56px] border-2 transition-all',
-            state.customServiceName.trim() ? 'ring-2 ring-white/50 bg-white/[0.12] border-white/30' : 'border-transparent'
+            'rounded-xl p-4 bg-white/10 border border-white/15 min-h-[64px] transition-all outline-none',
+            state.customServiceName.trim() && 'ring-2 ring-white/40 border-white/25 bg-white/[0.14]'
           )}>
-            <label className="block text-sm font-semibold text-white mb-1.5">Або вкажіть свою послугу</label>
+            <p className="text-sm font-semibold text-white mb-2">Або вкажіть свою послугу</p>
             <input
               type="text"
               value={state.customServiceName}
               onChange={(e) => setCustomServiceName(e.target.value)}
               onFocus={handleCustomServiceFocus}
               placeholder="Наприклад: консультація, масаж спини..."
-              className="w-full px-4 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/30 text-sm"
+              className="w-full px-4 py-2.5 rounded-xl border border-white/15 bg-white/10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/[0.14] text-sm"
             />
-            <p className="text-xs text-gray-400 mt-1">Вартість визначиться після процедури</p>
+            <p className="text-xs text-gray-400 mt-1.5">Вартість визначиться після процедури</p>
           </div>
         </div>
 
-        <p className="text-xs text-gray-400 mb-2 px-0.5">Або оберіть з каталогу:</p>
-        <div className="space-y-2 sm:space-y-2 mb-4">
+        <p className="text-sm text-white mb-2">Або оберіть з каталогу:</p>
+        <div className="space-y-2 mb-5">
           {services.map((service) => (
             <div
               key={service.id}
@@ -100,18 +102,18 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
               onClick={() => toggleService(service)}
               onKeyDown={(e) => e.key === 'Enter' && toggleService(service)}
               className={cn(
-                'rounded-xl p-3 sm:p-4 card-glass cursor-pointer transition-all hover:bg-white/[0.08] active:scale-[0.99] min-h-[56px] touch-target flex items-center',
-                isSelected(service.id) && 'ring-2 ring-white/50 bg-white/[0.12]'
+                'rounded-xl p-4 bg-white/[0.07] border border-white/10 cursor-pointer transition-all hover:bg-white/[0.10] active:scale-[0.99] min-h-[64px] touch-target flex items-center outline-none',
+                isSelected(service.id) && 'ring-2 ring-white/40 bg-white/[0.12] border-white/20'
               )}
             >
-              <div className="flex justify-between items-center w-full gap-2">
+              <div className="flex justify-between items-center w-full gap-3">
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-sm sm:text-base font-semibold mb-0.5 truncate text-white">{service.name}</h3>
-                  {service.category && <p className="text-xs text-gray-400 truncate">{service.category}</p>}
+                  <h3 className="text-sm sm:text-base font-bold truncate text-white">{service.name}</h3>
+                  {service.category && <p className="text-xs text-gray-400 truncate mt-0.5">{service.category}</p>}
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-sm sm:text-base font-semibold text-purple-400">{Math.round(service.price)} ₴</p>
-                  <p className="text-xs text-gray-400">{service.duration} хв</p>
+                  <p className="text-sm font-semibold text-purple-400">{Math.round(service.price)} ₴</p>
+                  <p className="text-xs text-purple-400/90">{service.duration} хв</p>
                 </div>
               </div>
             </div>
@@ -119,12 +121,12 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
         </div>
 
         {state.selectedServices.length > 0 && (
-          <div className="rounded-xl p-4 mb-4 card-glass">
+          <div className="rounded-xl p-4 mb-4 bg-white/10 border border-white/15">
             <div className="flex justify-between items-center mb-3">
               <span className="text-sm font-medium text-gray-300">Всього:</span>
               <div className="text-right">
                 <p className="text-lg font-bold text-purple-400">{Math.round(totalPrice)} ₴</p>
-                <p className="text-xs text-gray-400">{totalDuration} хв</p>
+                <p className="text-xs text-purple-400/90">{totalDuration} хв</p>
               </div>
             </div>
             <div className="space-y-1.5">
@@ -139,7 +141,7 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
         )}
 
         {(state.bookingWithoutService || state.customServiceName.trim()) && (
-          <div className="rounded-xl p-4 mb-4 card-glass">
+          <div className="rounded-xl p-4 mb-4 bg-white/10 border border-white/15">
             <p className="text-sm text-gray-300">
               {state.bookingWithoutService ? 'Запис без послуги — вартість узгоджується після процедури.' : `Своя послуга: «${state.customServiceName.trim()}» — вартість після процедури.`}
             </p>
@@ -147,16 +149,20 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
           </div>
         )}
 
-        <div className="flex gap-2 sm:gap-3">
-          <button type="button" onClick={() => setStep(0)} className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors active:scale-[0.98]">
+        <div className="flex gap-3">
+          <button
+            type="button"
+            onClick={() => setStep(0)}
+            className="touch-target flex-1 min-h-[52px] py-3 rounded-xl bg-white/10 border border-white/15 text-white text-sm font-semibold hover:bg-white/20 transition-colors active:scale-[0.98] outline-none"
+          >
             Назад
           </button>
           <button
             type="button"
             onClick={() => setStep(2)}
             disabled={!canProceed}
-            className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}
+            className="touch-target flex-1 min-h-[52px] py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed outline-none"
+            style={{ boxShadow: '0 2px 8px rgba(16, 185, 129, 0.3)' }}
           >
             Далі
           </button>

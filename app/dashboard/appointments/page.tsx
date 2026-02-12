@@ -146,7 +146,7 @@ export default function AppointmentsPage() {
     }
   }, [searchParams])
 
-  // Відкрити модалку «Записати» при переході з верхньої панелі (?create=true) або з «Вільні години» (?date=...&time=...)
+  // Відкрити модалку «Записати» при переході з верхньої панелі (?create=true), з Клієнтів (clientPhone, clientName) або з «Вільні години» (?date=...&time=...)
   useEffect(() => {
     if (searchParams.get('create') !== 'true') return
     setShowCreateForm(true)
@@ -168,6 +168,18 @@ export default function AppointmentsPage() {
       setInitialMasterId(masterParam.trim())
     } else {
       setInitialMasterId(null)
+    }
+    const phoneParam = searchParams.get('clientPhone')
+    const nameParam = searchParams.get('clientName')
+    if (phoneParam && typeof phoneParam === 'string') {
+      setInitialClientPhone(decodeURIComponent(phoneParam.trim()))
+    } else {
+      setInitialClientPhone('')
+    }
+    if (nameParam && typeof nameParam === 'string') {
+      setInitialClientName(decodeURIComponent(nameParam.trim()))
+    } else {
+      setInitialClientName('')
     }
     router.replace('/dashboard/appointments', { scroll: false })
   }, [searchParams, router])

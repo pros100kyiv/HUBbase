@@ -7,6 +7,7 @@ import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { isValidUaPhone } from '@/lib/utils/phone'
 import { toast } from '@/components/ui/toast'
+import { ModalPortal } from '@/components/ui/modal-portal'
 
 interface FinalStepProps {
   businessId?: string
@@ -17,6 +18,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
   const [errors, setErrors] = useState<{ name?: string; phone?: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
 
   const validate = () => {
     const newErrors: { name?: string; phone?: string } = {}
@@ -48,7 +50,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
       return
     }
     if (!state.selectedMaster?.id) {
-      toast({ title: 'Помилка', description: 'Спеціаліст не обрано. Поверніться назад та оберіть майстра.', type: 'error' })
+      toast({ title: 'Помилка', description: 'Спеціаліст не обрано. Поверніться назад та оберіть спеціаліста.', type: 'error' })
       return
     }
 
@@ -84,15 +86,8 @@ export function FinalStep({ businessId }: FinalStepProps) {
 
       if (response.ok) {
         reset()
-        toast({ title: 'Запис створено!', description: 'Ми чекаємо на вас.', type: 'success', duration: 3000 })
-        const confirmed = window.confirm('Запис успішно створено! Хочете створити ще один?')
-        if (confirmed) {
-          setStep(0)
-        } else {
-          if (typeof window !== 'undefined') {
-            window.location.href = '/'
-          }
-        }
+        toast({ title: 'Запис створено!', description: 'Ми чекаємо на вас.', type: 'success', duration: 4000 })
+        setShowSuccessModal(true)
       } else {
         let msg = 'Помилка при створенні запису'
         let isSlotTaken = false
@@ -180,7 +175,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
         <div className="rounded-xl p-4 mb-4 card-glass">
           <h3 className="text-base font-semibold mb-3 text-white">Деталі запису:</h3>
           <div className="space-y-1.5 text-sm">
-            <div className="flex justify-between"><span className="text-gray-400">Майстер:</span><span className="font-medium text-white">{state.selectedMaster?.name}</span></div>
+            <div className="flex justify-between"><span className="text-gray-400">Спеціаліст:</span><span className="font-medium text-white">{state.selectedMaster?.name}</span></div>
             <div className="flex justify-between"><span className="text-gray-400">Дата та час:</span><span className="font-medium text-white">{state.selectedDate && format(state.selectedDate, 'd MMMM yyyy', { locale: uk })}, {state.selectedTime}</span></div>
             <div className="flex justify-between"><span className="text-gray-400">Послуги:</span><span className="font-medium text-white text-right max-w-[60%]">
               {isPriceAfterProcedure
@@ -204,6 +199,48 @@ export function FinalStep({ businessId }: FinalStepProps) {
           </button>
         </div>
       </div>
+
+      {/* Модалка після успішного створення запису */}
+      {showSuccessModal && typeof document !== 'undefined' && (
+        <ModalPortal>
+          <div
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm"
+            onClick={(e) => e.target === e.currentTarget && setShowSuccessModal(false)}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="success-modal-title"
+          >
+            <div
+              className="w-full max-w-sm rounded-2xl p-6 bg-white/10 border border-white/20 shadow-xl text-white text-center animate-in fade-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="w-14 h-14 mx-auto mb-4 rounded-full bg-emerald-500/30 border border-emerald-400/50 flex items-center justify-center">
+                <svg className="w-8 h-8 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                </svg>
+              </div>
+              <h2 id="success-modal-title" className="text-xl font-bold mb-2">Ваш запис створено!</h2>
+              <p className="text-sm text-gray-300 mb-6">Ми чекаємо на вас. Хочете записатися ще на одну послугу?</p>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <button
+                  type="button"
+                  onClick={() => { setShowSuccessModal(false); setStep(0) }}
+                  className="flex-1 min-h-[48px] py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-colors active:scale-[0.98]"
+                >
+                  Так, створити ще один запис
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setShowSuccessModal(false); if (typeof window !== 'undefined') window.location.href = '/' }}
+                  className="flex-1 min-h-[48px] py-2.5 rounded-xl border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors active:scale-[0.98]"
+                >
+                  Готово
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
     </div>
   )
 }

@@ -25,7 +25,7 @@ interface CreateAppointmentFormProps {
   selectedDate?: Date
   /** Початковий час запису (HH:mm), наприклад з «Вільні години» */
   initialStartTime?: string
-  /** Початковий майстер (ID), наприклад з «Вільні години» */
+  /** Початковий спеціаліст (ID), наприклад з «Вільні години» */
   initialMasterId?: string
   onSuccess: () => void
   onCancel: () => void
@@ -34,7 +34,7 @@ interface CreateAppointmentFormProps {
   /** Початкові дані клієнта (наприклад після пошуку за телефоном або створення картки) */
   initialClientName?: string
   initialClientPhone?: string
-  /** Клієнт уже обраний (перехід з картки клієнта) — не показувати поля телефону/імені, тільки дата, час, майстер, послуги */
+  /** Клієнт уже обраний (перехід з картки клієнта) — не показувати поля телефону/імені, тільки дата, час, спеціаліст, послуги */
   clientLocked?: boolean
   /** Уникнути модалки в модалці: вибір послуг показувати inline у тій самій модалці */
   inlineServicePicker?: boolean
@@ -126,7 +126,7 @@ export function CreateAppointmentForm({
     return total > 0 ? total : 30
   }, [formData.serviceIds, services])
 
-  // Завантаження вільних слотів при зміні дати, майстра або тривалості
+  // Завантаження вільних слотів при зміні дати, спеціаліста або тривалості
   useEffect(() => {
     if (!businessId || !formData.masterId || !formData.date) {
       setAvailableSlots([])

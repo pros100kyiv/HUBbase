@@ -21,13 +21,14 @@ const sizeClasses = {
 
 /**
  * Об'ємний значок: X із заповнених смуг + тінь для глибини. Кольори без змін.
+ * opacity-100 — щоб на темній темі лого завжди було видиме.
  */
 function XbaseIcon({ className, size = 'sm' }: { className?: string; size?: 'sm' | 'md' | 'lg' }) {
   const id = useId().replace(/:/g, '')
   const iconSize = sizeClasses[size].icon
   return (
     <svg
-      className={cn(iconSize, 'flex-shrink-0', className)}
+      className={cn(iconSize, 'flex-shrink-0 opacity-100', className)}
       viewBox="0 0 28 28"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"

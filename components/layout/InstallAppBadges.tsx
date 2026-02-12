@@ -83,6 +83,8 @@ export function InstallAppBadges({ variant = 'compact', className }: InstallAppB
   const showDesktop = platform === 'desktop' && deferredPrompt
   if (!showAndroid && !showIOS && !showDesktop) return null
 
+  const fullVariantButtonClass = 'flex items-center gap-2 px-4 py-2.5 rounded-xl text-white text-sm font-medium transition-colors border border-white/20 bg-white/10 hover:bg-white/20'
+
   if (variant === 'full') {
     return (
       <div className={cn('flex flex-col gap-3', className)}>
@@ -92,7 +94,7 @@ export function InstallAppBadges({ variant = 'compact', className }: InstallAppB
             <button
               type="button"
               onClick={handleInstall}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-900 dark:bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors border border-gray-600 dark:border-gray-700"
+              className={fullVariantButtonClass}
             >
               <GooglePlayIcon className="w-5 h-5" />
               <span>Встановити для Android</span>
@@ -102,7 +104,7 @@ export function InstallAppBadges({ variant = 'compact', className }: InstallAppB
             <button
               type="button"
               onClick={() => setShowIOSInstructions(true)}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-900 dark:bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors border border-gray-600 dark:border-gray-700"
+              className={fullVariantButtonClass}
             >
               <AppleIcon className="w-5 h-5" />
               <span>Додати на головний екран</span>
@@ -112,7 +114,7 @@ export function InstallAppBadges({ variant = 'compact', className }: InstallAppB
             <button
               type="button"
               onClick={handleInstall}
-              className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gray-900 dark:bg-black text-white text-sm font-medium hover:bg-gray-800 transition-colors border border-gray-600 dark:border-gray-700"
+              className={fullVariantButtonClass}
             >
               <span>Встановити додаток</span>
             </button>

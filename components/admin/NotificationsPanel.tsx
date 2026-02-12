@@ -66,42 +66,38 @@ function AppointmentCard({ appointment, servicesMap, onConfirm, onReschedule, on
   const [showReschedule, setShowReschedule] = useState(false)
 
   return (
-    <article className="rounded-2xl p-4 sm:p-5 card-glass border border-white/10 shadow-lg shadow-black/10">
-      {/* Заголовок картки: клієнт + дата/час */}
-      <div className="flex flex-wrap items-start justify-between gap-2 mb-4">
-        <div>
-          <h3 className="text-base sm:text-lg font-semibold text-white leading-tight">{fixMojibake(appointment.clientName)}</h3>
-          <p className="text-sm text-gray-400 flex items-center gap-1.5 mt-0.5">
+    <article className="rounded-2xl p-4 sm:p-5 bg-white/[0.06] border border-white/10 outline-none">
+      {/* Клієнт і час — на перший план */}
+      <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
+        <div className="min-w-0">
+          <h3 className="text-base sm:text-lg font-bold text-white leading-tight truncate">{fixMojibake(appointment.clientName)}</h3>
+          <a href={`tel:${appointment.clientPhone}`} className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 mt-0.5">
             <PhoneIcon className="w-3.5 h-3.5 flex-shrink-0" />
-            <a href={`tel:${appointment.clientPhone}`} className="hover:text-white transition-colors">{appointment.clientPhone}</a>
-          </p>
+            {appointment.clientPhone}
+          </a>
         </div>
-        <div className="text-right text-sm text-gray-300 flex items-center gap-1.5">
-          <ClockIcon className="w-4 h-4 flex-shrink-0" />
-          {format(startTime, 'd MMM', { locale: uk })}, {format(startTime, 'HH:mm', { locale: uk })} – {format(endTime, 'HH:mm', { locale: uk })}
+        <div className="text-sm text-gray-300 flex items-center gap-1.5 flex-shrink-0">
+          <ClockIcon className="w-4 h-4 flex-shrink-0 text-gray-500" />
+          <span>{format(startTime, 'd MMM', { locale: uk })}, {format(startTime, 'HH:mm', { locale: uk })} – {format(endTime, 'HH:mm', { locale: uk })}</span>
         </div>
       </div>
 
-      {/* Деталі: майстер, послуги, вартість */}
-      <div className="space-y-2 text-sm mb-4">
-        <p className="text-gray-400">
-          <span className="text-gray-500">Майстер:</span> {appointment.masterName ?? '—'}
-        </p>
+      {/* Деталі — компактний список без зайвих міток */}
+      <div className="space-y-1 text-sm mb-4 text-gray-300">
+        <p><span className="text-gray-500">Спеціаліст:</span> <span className="text-white/90">{appointment.masterName ?? '—'}</span></p>
         {serviceNames.length > 0 && (
-          <p className="text-white">
-            <span className="text-gray-500">Послуги:</span> {serviceNames.join(', ')}
-          </p>
+          <p><span className="text-gray-500">Послуги:</span> <span className="text-white/90">{serviceNames.join(', ')}</span></p>
         )}
         {displayPriceGrn != null && displayPriceGrn > 0 && (
-          <p className="font-semibold text-white">{displayPriceGrn} ₴</p>
+          <p className="font-semibold text-white pt-0.5">{displayPriceGrn} ₴</p>
         )}
         {appointment.notes && (
-          <p className="text-gray-400 italic text-xs">{appointment.notes}</p>
+          <p className="text-gray-400 italic text-xs pt-0.5">{appointment.notes}</p>
         )}
       </div>
 
       {showReschedule ? (
-        <div className="space-y-3 p-3 rounded-xl bg-white/5 border border-white/10">
+        <div className="space-y-3 p-3 rounded-xl bg-white/[0.06] border border-white/10">
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
             <input
               type="date"
@@ -147,8 +143,8 @@ function AppointmentCard({ appointment, servicesMap, onConfirm, onReschedule, on
           </div>
         </div>
       ) : (
-        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 min-w-0">
-          <div className="w-full sm:w-auto min-w-0 shrink-0">
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 min-w-0 pt-0.5">
+          <div className="w-full sm:w-auto min-w-0 shrink-0 flex items-center">
             <StatusSwitcher
               status={appointment.status}
               isFromBooking={true}
@@ -156,6 +152,7 @@ function AppointmentCard({ appointment, servicesMap, onConfirm, onReschedule, on
               onStatusChange={onStatusChange}
               size="sm"
               customPrice={appointment.customPrice}
+              hasServicesFromPriceList={serviceIds.length > 0}
               onDoneWithoutPrice={onDoneWithoutPrice}
             />
           </div>
@@ -164,7 +161,7 @@ function AppointmentCard({ appointment, servicesMap, onConfirm, onReschedule, on
               type="button"
               onClick={() => onConfirm(appointment.id)}
               disabled={processing === appointment.id}
-              className="touch-target flex-1 min-w-0 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-semibold bg-white text-black hover:bg-gray-100 hover:text-gray-900 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 whitespace-nowrap"
+              className="touch-target flex-1 min-w-0 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-semibold bg-white text-black hover:bg-gray-100 hover:text-gray-900 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 whitespace-nowrap outline-none"
               style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}
             >
               <CheckIcon className="w-4 h-4 flex-shrink-0" />
@@ -174,7 +171,7 @@ function AppointmentCard({ appointment, servicesMap, onConfirm, onReschedule, on
               type="button"
               onClick={() => setShowReschedule(true)}
               disabled={processing === appointment.id}
-              className="touch-target flex-shrink-0 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
+              className="touch-target flex-shrink-0 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium bg-white/10 text-white hover:bg-white/20 transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap outline-none border-0"
             >
               <ClockIcon className="w-4 h-4 flex-shrink-0" />
               Перенести
@@ -240,7 +237,7 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
 
       const withMasters = (data || []).map((apt: Appointment) => {
         const master = masters.find((m: { id: string }) => m.id === apt.masterId)
-        return { ...apt, masterName: master?.name || 'Невідомий майстер' }
+        return { ...apt, masterName: master?.name || 'Невідомий спеціаліст' }
       })
       setAppointments(withMasters)
     } catch (error) {

@@ -47,7 +47,7 @@ export function MastersList({ businessId }: MastersListProps) {
           onClick={() => router.push('/dashboard/settings')}
           className="px-4 py-2 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-all active:scale-95"
         >
-          Додати майстра
+          Додати спеціаліста
         </button>
       </div>
     )

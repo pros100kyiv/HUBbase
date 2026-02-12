@@ -105,7 +105,7 @@ export function MobileAppointmentCard({
           </span>
         </div>
 
-        {/* Клієнт, послуга, майстер, сума */}
+        {/* Клієнт, послуга, спеціаліст, сума */}
         <div className="flex-1 min-w-0 flex flex-col justify-center">
           <div className="flex items-center gap-2 mb-0.5">
             <h5 className="text-sm font-bold text-white truncate leading-tight">
@@ -165,6 +165,7 @@ export function MobileAppointmentCard({
             disabled={!onStatusChange}
             size="sm"
             customPrice={appointment.customPrice}
+            hasServicesFromPriceList={serviceIds.length > 0}
             onDoneWithoutPrice={onDoneWithoutPrice}
           />
           {onEdit && (

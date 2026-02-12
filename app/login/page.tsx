@@ -20,6 +20,29 @@ function LoginForm() {
   const [showErrorToast, setShowErrorToast] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [needsRegistration, setNeedsRegistration] = useState(false)
+  const [checkingSession, setCheckingSession] = useState(true)
+
+  // Якщо вхід вже є — одразу відкриваємо головну дашборду
+  useEffect(() => {
+    const businessData = localStorage.getItem('business')
+    if (businessData) {
+      try {
+        const parsed = JSON.parse(businessData)
+        if (parsed?.id && parsed?.name) {
+          router.replace('/dashboard/main')
+          return
+        }
+      } catch {
+        // невалідні дані — показуємо форму входу
+      }
+    }
+    setCheckingSession(false)
+  }, [router])
+
+  // Підвантажити головну дашборду в фоні — при прийнятті форми перехід буде швидшим
+  useEffect(() => {
+    if (!checkingSession) router.prefetch('/dashboard/main')
+  }, [checkingSession, router])
 
   useEffect(() => {
     const error = searchParams.get('error')
@@ -81,10 +104,8 @@ function LoginForm() {
       setErrorMessage('Успішний вхід')
       setShowErrorToast(true)
       
-      // Перенаправляємо на dashboard через невелику затримку
-      setTimeout(() => {
-        router.replace('/dashboard')
-      }, 1000)
+      // Одразу переходимо на головну дашборду (без проміжної сторінки /dashboard)
+      router.replace('/dashboard/main')
     } catch (error) {
       setErrorMessage('Помилка при вході. Будь ласка, спробуйте ще раз.')
       setShowErrorToast(true)
@@ -96,6 +117,17 @@ function LoginForm() {
 
   const baseInputClass = 'w-full min-h-[48px] px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/20 focus:border-white/20 transition-colors'
   const errorInputClass = 'border-red-500/70 focus:ring-red-500/50'
+
+  if (checkingSession) {
+    return (
+      <AuthLayout title="Вхід">
+        <div className="flex flex-col items-center justify-center py-12 gap-3">
+          <div className="h-8 w-8 rounded-full border-2 border-white/20 border-t-white animate-spin" aria-hidden />
+          <p className="text-sm text-gray-400">Перевірка сесії...</p>
+        </div>
+      </AuthLayout>
+    )
+  }
 
   return (
     <AuthLayout title="Вхід">

@@ -178,7 +178,7 @@ export function StatisticsDetailModal({
         
         setDailyStats(daily)
 
-        // Розраховуємо статистику по майстрах
+        // Розраховуємо статистику по спеціалістах
         const masterMap = new Map<string, { count: number; revenue: number }>()
         appts.forEach((apt: Appointment) => {
           const existing = masterMap.get(apt.masterId) || { count: 0, revenue: 0 }
@@ -358,7 +358,7 @@ export function StatisticsDetailModal({
                 </div>
               )}
 
-              {/* Статистика по майстрах (тільки для записів, не для клієнтів) */}
+              {/* Статистика по спеціалістах (тільки для записів, не для клієнтів) */}
               {metricType !== 'clients' && masterStats.length > 0 && (
                 <div>
                   <h3 className="text-sm font-semibold text-gray-300 mb-3">Розподіл по спеціалістах</h3>
@@ -369,7 +369,7 @@ export function StatisticsDetailModal({
                         <div key={stat.masterId} className="flex items-center justify-between p-3 rounded-lg bg-white/5 border border-white/10">
                           <div className="flex items-center gap-3">
                             <UsersIcon className="w-4 h-4 text-gray-400" />
-                            <span className="text-sm">{master?.name || 'Невідомий майстер'}</span>
+                            <span className="text-sm">{master?.name || 'Невідомий спеціаліст'}</span>
                           </div>
                           <div className="flex items-center gap-4">
                             <span className="text-sm font-semibold">{stat.count} записів</span>
@@ -464,7 +464,7 @@ export function StatisticsDetailModal({
                                     </a>
                                   </div>
                                   {master && (
-                                    <div className="text-xs text-gray-500 mt-1">Майстер: {master.name}</div>
+                                    <div className="text-xs text-gray-500 mt-1">Спеціаліст: {master.name}</div>
                                   )}
                                 </div>
                                 <div className={cn('px-2 py-1 rounded text-xs font-medium border', getStatusColor(apt.status))}>

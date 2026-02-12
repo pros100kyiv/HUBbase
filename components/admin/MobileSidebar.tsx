@@ -82,7 +82,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   const navItems: NavItem[] = [
     { id: 'main', label: 'Головна', icon: <HomeIcon />, path: '/dashboard/main' },
     { id: 'appointments', label: 'Записи', icon: <CalendarIcon />, path: '/dashboard/appointments', badge: showAppointmentsBadge ? pendingCount : undefined },
-    { id: 'price', label: 'Прайс', icon: <MoneyIcon />, path: '/dashboard/price' },
+    { id: 'price', label: 'Послуги та ціни', icon: <MoneyIcon />, path: '/dashboard/price' },
     { id: 'clients', label: 'Клієнти', icon: <UsersIcon />, path: '/dashboard/clients' },
     { id: 'schedule', label: 'Графік роботи', icon: <ClockIcon />, path: '/dashboard/schedule' },
     { id: 'social', label: 'Соцмережі', icon: <ShareIcon />, path: '/dashboard/social' },
@@ -138,7 +138,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
             className="flex items-center gap-2 rounded-xl hover:bg-white/10 active:bg-white/15 transition-colors -ml-1 p-2"
             aria-label="На головну"
           >
-            <XbaseLogo size="sm" />
+            <XbaseLogo size="sm" variant="light" />
           </button>
           <button
             onClick={onClose}

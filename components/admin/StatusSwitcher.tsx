@@ -24,13 +24,15 @@ interface StatusSwitcherProps {
   /** Якщо вартість не вказана і користувач обирає «Виконано» — викликається замість onStatusChange (відкрити модалку введення вартості) */
   customPrice?: number | null
   onDoneWithoutPrice?: (id: string) => void
+  /** true = при записі вибрано послуги з прайсу — модалку «Вказати вартість» не показувати */
+  hasServicesFromPriceList?: boolean
 }
 
 const STATUS_CONFIG: Record<StatusValue, { label: string; labelShort: string; dotClass: string; chipClass: string }> = {
-  Pending: { label: 'Очікує', labelShort: 'Очік.', dotClass: 'bg-amber-400', chipClass: 'bg-amber-500/15 text-amber-400 border-amber-500/40' },
-  Confirmed: { label: 'Підтверджено', labelShort: 'Підт.', dotClass: 'bg-emerald-400', chipClass: 'bg-emerald-500/15 text-emerald-400 border-emerald-500/40' },
-  Done: { label: 'Виконано', labelShort: 'Вик.', dotClass: 'bg-sky-400', chipClass: 'bg-sky-500/15 text-sky-400 border-sky-500/40' },
-  Cancelled: { label: 'Скасовано', labelShort: 'Скас.', dotClass: 'bg-rose-400', chipClass: 'bg-rose-500/15 text-rose-400 border-rose-500/40' },
+  Pending: { label: 'Очікує', labelShort: 'Очік.', dotClass: 'bg-amber-400', chipClass: 'bg-amber-500/20 text-amber-300 border-transparent' },
+  Confirmed: { label: 'Підтверджено', labelShort: 'Підт.', dotClass: 'bg-emerald-400', chipClass: 'bg-emerald-500/20 text-emerald-300 border-transparent' },
+  Done: { label: 'Виконано', labelShort: 'Вик.', dotClass: 'bg-sky-400', chipClass: 'bg-sky-500/20 text-sky-300 border-transparent' },
+  Cancelled: { label: 'Скасовано', labelShort: 'Скас.', dotClass: 'bg-rose-400', chipClass: 'bg-rose-500/20 text-rose-300 border-transparent' },
 }
 
 function normalizeStatus(s: string): StatusValue {
@@ -50,6 +52,7 @@ export function StatusSwitcher({
   size = 'md',
   customPrice,
   onDoneWithoutPrice,
+  hasServicesFromPriceList = false,
 }: StatusSwitcherProps) {
   const [open, setOpen] = useState(false)
   const [position, setPosition] = useState<{ top: number; left: number; openUp: boolean } | null>(null)
@@ -69,7 +72,7 @@ export function StatusSwitcher({
   const options = allOptions.filter((o) => o.show && o.value !== currentStatus)
 
   const effectiveSize = size ?? 'md'
-  const cfg = STATUS_CONFIG[currentStatus] ?? { label: status, labelShort: status.slice(0, 4), dotClass: 'bg-gray-400', chipClass: 'bg-white/10 text-gray-400 border-white/10' }
+  const cfg = STATUS_CONFIG[currentStatus] ?? { label: status, labelShort: status.slice(0, 4), dotClass: 'bg-gray-400', chipClass: 'bg-white/10 text-gray-400 border-transparent' }
   const buttonLabel = effectiveSize === 'xs' ? null : effectiveSize === 'sm' ? cfg.labelShort : cfg.label
 
   useEffect(() => {
@@ -117,7 +120,8 @@ export function StatusSwitcher({
 
   const handleSelect = (value: StatusValue) => {
     setOpen(false)
-    if (value === 'Done' && (customPrice == null || customPrice <= 0) && onDoneWithoutPrice) {
+    // Модалку «Вказати вартість» показувати тільки коли при записі не було вибрано послуг з прайсу
+    if (value === 'Done' && (customPrice == null || customPrice <= 0) && !hasServicesFromPriceList && onDoneWithoutPrice) {
       onDoneWithoutPrice(appointmentId)
       return
     }
@@ -172,12 +176,12 @@ export function StatusSwitcher({
         title={cfg.label}
         aria-label={`Статус: ${cfg.label}. Змінити`}
         className={cn(
-          'inline-flex items-center rounded-md border font-medium transition-all touch-manipulation',
-          'hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-white/30 focus:ring-offset-1 focus:ring-offset-[#1A1A1A]',
+          'inline-flex items-center rounded-xl font-medium transition-all touch-manipulation outline-none',
+          'hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-white/20 focus:ring-inset',
           disabled && 'opacity-60 cursor-not-allowed',
           effectiveSize === 'xs' && 'p-1.5 min-w-0',
-          effectiveSize === 'sm' && 'gap-1 px-1.5 py-0.5 text-[10px] min-h-[28px]',
-          effectiveSize === 'md' && 'gap-1.5 px-2 py-1 text-xs min-h-[32px]',
+          effectiveSize === 'sm' && 'gap-1 px-2 py-1 text-[10px] min-h-[32px]',
+          effectiveSize === 'md' && 'gap-1.5 px-2.5 py-1.5 text-xs min-h-[36px]',
           cfg.chipClass
         )}
       >

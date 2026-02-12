@@ -288,7 +288,7 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
                         </div>
                         <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-gray-500 truncate">
                           <UserIcon className="w-3 h-3 flex-shrink-0" />
-                          <span>{apt.master?.name || 'Невідомий майстер'}</span>
+                          <span>{apt.master?.name || 'Невідомий спеціаліст'}</span>
                         </div>
                       </div>
                       <div className={cn(

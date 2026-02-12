@@ -244,7 +244,7 @@ export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalS
                       >
                         <div className="text-sm font-medium text-white">{fixMojibake(apt.clientName)}</div>
                         <div className="text-xs text-gray-400 tabular-nums">
-                          {format(new Date(apt.startTime), 'd MMMM yyyy, HH:mm', { locale: uk })} • {apt.master?.name || 'Невідомий майстер'}
+                          {format(new Date(apt.startTime), 'd MMMM yyyy, HH:mm', { locale: uk })} • {apt.master?.name || 'Невідомий спеціаліст'}
                         </div>
                       </button>
                     ))}
@@ -293,7 +293,7 @@ export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalS
               {/* Masters */}
               {results.masters.length > 0 && (
                 <div>
-                  <h3 className="text-xs font-semibold text-gray-400 uppercase mb-2 px-2">Майстри</h3>
+                  <h3 className="text-xs font-semibold text-gray-400 uppercase mb-2 px-2">Спеціалісти</h3>
                   <div className="space-y-1">
                     {results.masters.map((master) => (
                       <button

@@ -1672,7 +1672,7 @@ function GraphTab() {
       <div className="card-glass rounded-xl p-8 text-center">
         <LinkIcon className="w-16 h-16 mx-auto mb-4 text-blue-400/50" />
         <p className="text-gray-300 mb-2">
-          Візуалізація зв'язків між бізнесами, клієнтами та майстрами
+          Візуалізація зв'язків між бізнесами, клієнтами та спеціалістами
         </p>
         <p className="text-sm text-gray-500">
           Модуль у розробці. Тут буде інтерактивний граф: бізнеси — майстри — клієнти — записи.

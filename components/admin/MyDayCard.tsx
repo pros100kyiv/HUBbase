@@ -679,6 +679,7 @@ export function MyDayCard({
               appointmentId={apt.id}
               size="xs"
               customPrice={apt.customPrice}
+              hasServicesFromPriceList={(parseServices(apt.services) as string[]).length > 0}
               onDoneWithoutPrice={(id) => {
               toast({
                 title: 'Статус не змінено',
@@ -699,54 +700,6 @@ export function MyDayCard({
 
   return (
     <div className="rounded-2xl p-4 md:p-6 card-floating text-white border border-white/10 overflow-hidden min-w-0">
-      {/* Header: заголовок + меню */}
-      <div className="flex items-center justify-between gap-3 mb-3 md:mb-4">
-        <h2
-          className="text-lg md:text-xl font-bold text-white"
-          style={{ letterSpacing: '-0.02em' }}
-        >
-          Мій день
-        </h2>
-        <div className="flex items-center gap-1 md:gap-2 flex-shrink-0 relative" ref={menuRef}>
-          {shareFeedback && (
-            <span className="absolute -top-8 right-0 px-2 py-1 bg-white/90 text-black text-xs rounded whitespace-nowrap z-10">
-              {shareFeedback === 'share' ? 'Поділено' : 'Не підтримується'}
-            </span>
-          )}
-          <button
-            type="button"
-            onClick={(e) => { e.stopPropagation(); setShowMenu((v) => !v) }}
-            className="p-2 hover:bg-white/10 rounded-lg transition-colors"
-            aria-label="Меню"
-            aria-expanded={showMenu}
-          >
-            <svg className="w-4 h-4 md:w-5 md:h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z" />
-            </svg>
-          </button>
-          {showMenu && (
-            <div
-              className="absolute right-0 top-full mt-1 py-1 min-w-[180px] max-h-[min(70vh,calc(100dvh-6rem))] overflow-y-auto dropdown-theme rounded-lg shadow-xl z-[150]"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                type="button"
-                onClick={async () => {
-                  setShowMenu(false)
-                  await handleShare()
-                }}
-                className="w-full px-3 py-2 text-left text-sm text-white hover:bg-white/10 flex items-center gap-2"
-              >
-                <svg className="w-4 h-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 11l5-5m0 0l5 5m-5-5v12" />
-                </svg>
-                Поділитися
-              </button>
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Дата */}
       <div className="flex items-center gap-2 mb-4 md:mb-5 p-3 md:p-3.5 rounded-xl bg-white/5 border border-white/10">
         <button
@@ -1106,7 +1059,7 @@ export function MyDayCard({
                   </div>
                 </div>
 
-                {/* Цей запис: час, майстер, послуги, статус */}
+                {/* Цей запис: час, спеціаліст, послуги, статус */}
                 <div className="rounded-xl bg-white/5 border border-white/10 p-3">
                   <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-2">Цей запис</p>
                   <div className="flex flex-wrap items-center gap-2 mb-2">
@@ -1123,6 +1076,7 @@ export function MyDayCard({
                         appointmentId={selectedAppointment.id}
                         size="sm"
                         customPrice={selectedAppointment.customPrice}
+                        hasServicesFromPriceList={(parseServices(selectedAppointment.services) as string[]).length > 0}
                         onDoneWithoutPrice={(id) => {
                           toast({
                             title: 'Статус не змінено',

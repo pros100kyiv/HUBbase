@@ -69,7 +69,7 @@ export function MasterStep({ businessId }: MasterStepProps) {
     <div className="min-h-screen py-4 sm:py-6 px-3 md:px-6 pb-[env(safe-area-inset-bottom)]">
       <div className="max-w-4xl mx-auto">
         <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 text-center text-white" style={{ letterSpacing: '-0.02em' }}>
-          Оберіть майстра
+          Оберіть спеціаліста
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 sm:gap-3 mb-4">

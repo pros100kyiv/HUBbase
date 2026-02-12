@@ -17,7 +17,7 @@ interface QuickRecordByPhoneModalProps {
   selectedDate?: Date
   /** Початковий час запису (HH:mm), наприклад з «Вільні години» */
   initialStartTime?: string
-  /** Початковий майстер (ID), наприклад з «Вільні години» */
+  /** Початковий спеціаліст (ID), наприклад з «Вільні години» */
   initialMasterId?: string
   /** Клієнт уже обраний (з картки клієнта) — пропускаємо крок телефону */
   initialClientPhone?: string

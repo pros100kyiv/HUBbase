@@ -76,31 +76,34 @@ export default function DashboardLayout({
     }
   }, [])
 
-  // Перевірка статусу блокування при завантаженні бізнесу
+  // Перевірка статусу блокування — відкладаємо після першого малювання, щоб не гальмувати завантаження
   useEffect(() => {
     if (!business?.id) {
       setIsBlocked(null)
       setBlockInfo(null)
       return
     }
-    fetch(`/api/business/block?businessId=${encodeURIComponent(business.id)}`)
-      .then((res) => res.json())
-      .then((data) => {
-        if (data?.business?.isActive === false && data?.blockInfo) {
-          setIsBlocked(true)
-          setBlockInfo({
-            reason: data.blockInfo.reason,
-            blockedAt: data.blockInfo.blockedAt,
-          })
-        } else {
+    const id = setTimeout(() => {
+      fetch(`/api/business/block?businessId=${encodeURIComponent(business.id)}`)
+        .then((res) => res.json())
+        .then((data) => {
+          if (data?.business?.isActive === false && data?.blockInfo) {
+            setIsBlocked(true)
+            setBlockInfo({
+              reason: data.blockInfo.reason,
+              blockedAt: data.blockInfo.blockedAt,
+            })
+          } else {
+            setIsBlocked(false)
+            setBlockInfo(null)
+          }
+        })
+        .catch(() => {
           setIsBlocked(false)
           setBlockInfo(null)
-        }
-      })
-      .catch(() => {
-        setIsBlocked(false)
-        setBlockInfo(null)
-      })
+        })
+    }, 0)
+    return () => clearTimeout(id)
   }, [business?.id])
 
   // useLayoutEffect: реєструємо setter ДО малювання, щоб перший клік відразу відкривав меню (без подвійного натискання)

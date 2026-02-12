@@ -986,7 +986,7 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Майстри — керуються в Графік роботи */}
+          {/* Спеціалісти — керуються в Графік роботи */}
           {activeTab === 'masters' && (
             <div className="space-y-6">
               <h2 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.02em' }}>Спеціалісти</h2>

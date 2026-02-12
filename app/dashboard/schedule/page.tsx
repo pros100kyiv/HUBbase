@@ -67,7 +67,7 @@ function parseDateOverrides(overrides?: string | null): Record<string, { enabled
   }
 }
 
-/** Повертає графік майстра на сьогодні: спочатку виключення за датою, потім тижневий графік */
+/** Повертає графік спеціаліста на сьогодні: спочатку виключення за датою, потім тижневий графік */
 function getMasterScheduleToday(master: Master): { enabled: boolean; start: string; end: string } | null {
   const todayKey = getTodayDateKey()
   const dayKey = getTodayDayKey()

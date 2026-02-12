@@ -651,7 +651,7 @@ export default function ClientsPage() {
 
   if (!business || loading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="min-h-[60vh] flex items-center justify-center outline-none">
         <p className="text-gray-500">Завантаження...</p>
       </div>
     )
@@ -914,6 +914,7 @@ export default function ClientsPage() {
                         </td>
                         <td className="p-3">
                           <div className="flex gap-1 justify-center">
+                            <button onClick={() => { setViewMode('cards'); setExpandedClient(client.id) }} className="p-1.5 text-white hover:bg-white/10 rounded-lg transition-colors" title="Відкрити картку клієнта" aria-label="Відкрити картку клієнта"><UserIcon className="w-4 h-4" /></button>
                             <button onClick={() => window.open(`tel:${client.phone}`)} className="p-1.5 text-blue-400 hover:bg-white/10 rounded-lg transition-colors" title="Дзвінок"><PhoneIcon className="w-4 h-4" /></button>
                             <button onClick={() => router.push(`/dashboard/appointments?create=true&clientPhone=${encodeURIComponent(client.phone)}&clientName=${encodeURIComponent(client.name || '')}`)} className="p-1.5 text-green-400 hover:bg-white/10 rounded-lg transition-colors" title="Записати"><CalendarIcon className="w-4 h-4" /></button>
                             <button onClick={() => handleEditClient(client)} className="touch-target min-h-[44px] min-w-[44px] p-2 text-gray-300 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center" title="Редагувати" aria-label="Редагувати"><SettingsIcon className="w-4 h-4" /></button>
@@ -982,11 +983,12 @@ export default function ClientsPage() {
                         <div className="text-[10px] text-gray-400 leading-tight">Зароблено</div>
                       </div>
                       <div className="flex gap-1">
+                        <button onClick={() => handleClientClick(client)} className="p-1.5 text-white hover:bg-white/10 rounded-lg transition-colors" title="Відкрити картку клієнта" aria-label="Відкрити картку клієнта"><UserIcon className="w-4 h-4" /></button>
                         <button onClick={() => window.open(`tel:${client.phone}`)} className="p-1.5 text-blue-400 hover:bg-white/10 rounded-lg transition-colors" title="Дзвінок"><PhoneIcon className="w-4 h-4" /></button>
                         <button onClick={() => router.push(`/dashboard/appointments?create=true&clientPhone=${encodeURIComponent(client.phone)}&clientName=${encodeURIComponent(client.name || '')}`)} className="p-1.5 text-green-400 hover:bg-white/10 rounded-lg transition-colors" title="Записати"><CalendarIcon className="w-4 h-4" /></button>
                         <button onClick={() => handleEditClient(client)} className="touch-target min-h-[44px] min-w-[44px] p-2 text-gray-300 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center" title="Редагувати" aria-label="Редагувати"><SettingsIcon className="w-4 h-4" /></button>
                         <button onClick={() => handleDeleteClient(client.id)} className="touch-target min-h-[44px] min-w-[44px] p-2 text-red-400 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center" title="Видалити" aria-label="Видалити"><XIcon className="w-4 h-4" /></button>
-                        <button onClick={() => handleClientClick(client)} className="p-1.5 text-gray-400 hover:bg-white/10 rounded-lg transition-colors">
+                        <button onClick={() => handleClientClick(client)} className="p-1.5 text-gray-400 hover:bg-white/10 rounded-lg transition-colors" title={isExpanded ? 'Згорнути' : 'Розгорнути'}>
                           {isExpanded ? <ChevronUpIcon className="w-4 h-4" /> : <ChevronDownIcon className="w-4 h-4" />}
                         </button>
                       </div>
@@ -1087,7 +1089,7 @@ export default function ClientsPage() {
                                   type="text"
                                   value={historySearchQuery}
                                   onChange={(e) => setHistorySearchQuery(e.target.value)}
-                                  placeholder="Пошук (послуга, майстер, нотатки...)"
+                                  placeholder="Пошук (послуга, спеціаліст, нотатки...)"
                                   className="w-full pl-9 pr-3 py-2 text-xs border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30"
                                 />
                               </div>
@@ -1402,7 +1404,7 @@ export default function ClientsPage() {
                                 type="text"
                                 value={historySearchQuery}
                                 onChange={(e) => setHistorySearchQuery(e.target.value)}
-                                placeholder="Пошук (послуга, майстер...)"
+                                placeholder="Пошук (послуга, спеціаліст...)"
                                 className="w-full pl-9 pr-3 py-2.5 text-sm rounded-xl bg-white/10 border border-white/20 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30"
                               />
                             </div>

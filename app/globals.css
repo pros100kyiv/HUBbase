@@ -323,6 +323,7 @@
   .oled .card-floating textarea {
     color: #f1f5f9 !important;
     border-color: rgba(255, 255, 255, 0.15) !important;
+    background-color: rgba(255, 255, 255, 0.08) !important;
   }
   .dark .card-glass input::placeholder,
   .dark .card-glass textarea::placeholder,
@@ -643,6 +644,22 @@
   .sidebar-theme .border-t { border-color: rgba(255, 255, 255, 0.1); }
   .light .sidebar-theme .border-b,
   .light .sidebar-theme .border-t { border-color: rgba(0, 0, 0, 0.08); }
+  /* Темна/OLED тема: логотип у сайдбарі завжди видимий */
+  .dark .sidebar-theme [aria-label="Xbase"],
+  .oled .sidebar-theme [aria-label="Xbase"] {
+    opacity: 1 !important;
+  }
+  .dark .sidebar-theme [aria-label="Xbase"] svg,
+  .oled .sidebar-theme [aria-label="Xbase"] svg {
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
+  .dark .sidebar-theme [aria-label="Xbase"] span,
+  .oled .sidebar-theme [aria-label="Xbase"] span {
+    color: #ffffff !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+  }
 
   /* Xbase: базовий пункт навігації сайдбару (заокруглення, відступи) */
   .nav-item-base {
@@ -769,13 +786,14 @@
     @apply text-lg font-bold text-white tracking-dashboard-title;
   }
 
-  /* Кабінет: контент не виходить за межі екрану в усіх вкладках */
+  /* Кабінет: контент не виходить за межі екрану в усіх вкладках; без обведення під час завантаження */
   [data-dashboard-content],
   [data-dashboard-content] .dashboard-content-inner {
     min-width: 0;
     max-width: 100%;
     overflow-x: hidden;
     box-sizing: border-box;
+    outline: none;
   }
   [data-dashboard-content] .dashboard-content-inner > * {
     min-width: 0;

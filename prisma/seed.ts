@@ -78,7 +78,7 @@ async function main() {
       id: 'master-1',
       businessId: business.id,
       name: 'Олександр',
-      bio: 'Досвідчений майстер з 10-річним стажем',
+      bio: 'Досвідчений спеціаліст з 10-річним стажем',
       rating: 4.8,
       workingHours: defaultWorkingHours,
     },

@@ -62,7 +62,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
 
   const bid = typeof effectiveBusinessId === 'string' ? effectiveBusinessId.trim() : ''
 
-  // Робочі дні тижня майстра (для блокування вихідних в календарі)
+  // Робочі дні тижня спеціаліста (для блокування вихідних в календарі)
   useEffect(() => {
     if (!masterId || !bid) {
       setWorkingWeekdays([])
@@ -254,10 +254,10 @@ export function TimeStep({ businessId }: TimeStepProps) {
   const noSlotsText = loadError
     ? 'Не вдалося завантажити доступні години. Перевірте зʼєднання та спробуйте ще раз або оберіть іншу дату.'
     : reason === 'day_off'
-      ? 'Вихідний у майстра. Оберіть інший день у календарі.'
-      : reason === 'all_occupied'
+? 'Вихідний у спеціаліста. Оберіть інший день у календарі.'
+        : reason === 'all_occupied'
         ? 'Усі години на цей день зайняті записами. Оберіть іншу дату в календарі або спробуйте рекомендовані слоти вище.'
-        : 'Графік майстра на цей день не налаштовано або немає робочого часу. Увімкніть день і години в кабінеті (Графік роботи). Оберіть іншу дату.'
+        : 'Графік спеціаліста на цей день не налаштовано або немає робочого часу. Увімкніть день і години в кабінеті (Графік роботи). Оберіть іншу дату.'
 
   const formatRecommendedLabel = (rec: RecommendedSlot) => {
     try {
@@ -385,7 +385,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
                           if (!isDisabled) setDate(new Date(day.getTime()))
                         }}
                         disabled={isDisabled}
-                        title={dayOff ? 'Вихідний у майстра' : undefined}
+                        title={dayOff ? 'Вихідний у спеціаліста' : undefined}
                         className={cn(
                           'w-full h-8 sm:h-9 flex items-center justify-center rounded-md text-[11px] sm:text-xs font-medium transition-colors active:scale-95 min-w-0',
                           isSelected && 'bg-white text-black shadow-md ring-2 ring-white/50',
@@ -417,7 +417,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
             {!loading && (slots.length > 0 || busySlots.length > 0) && (
               <>
                 <h3 className="text-sm font-semibold text-white mb-2">
-                  Оберіть час (за графіком майстра):
+                  Оберіть час (за графіком спеціаліста):
                 </h3>
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5 sm:gap-2">
                   {(() => {

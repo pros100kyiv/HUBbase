@@ -22,6 +22,21 @@ function RegisterForm() {
   const [showErrorToast, setShowErrorToast] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [showLoginLinkInToast, setShowLoginLinkInToast] = useState(false)
+
+  // Якщо вхід вже є — перенаправляємо на головну дашборду
+  useEffect(() => {
+    const businessData = localStorage.getItem('business')
+    if (businessData) {
+      try {
+        const parsed = JSON.parse(businessData)
+        if (parsed?.id && parsed?.name) {
+          router.replace('/dashboard/main')
+        }
+      } catch {
+        // невалідні дані — залишаємо на реєстрації
+      }
+    }
+  }, [router])
   
   // Перевіряємо параметри URL на наявність помилок
   useEffect(() => {

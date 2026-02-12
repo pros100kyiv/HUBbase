@@ -83,8 +83,8 @@ export function LoadingScreen({ variant = 'full', label = 'Завантажує�
     <div
       className={
         isFull
-          ? 'fixed inset-0 z-50 flex items-center justify-center bg-[#0A0A0A] animate-content-fade-in'
-          : 'flex items-center justify-center min-h-[280px] p-8 animate-content-fade-in'
+          ? 'fixed inset-0 z-50 flex items-center justify-center bg-[#0A0A0A] animate-content-fade-in outline-none'
+          : 'flex items-center justify-center min-h-[280px] p-8 animate-content-fade-in outline-none'
       }
     >
       <div className="flex flex-col items-center gap-8">
