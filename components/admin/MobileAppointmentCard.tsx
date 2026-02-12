@@ -2,6 +2,7 @@
 
 import { format, isValid } from 'date-fns'
 import { UserIcon, PhoneIcon, EditIcon } from '@/components/icons'
+import { fixMojibake } from '@/lib/utils'
 import { StatusSwitcher } from './StatusSwitcher'
 
 interface Appointment {
@@ -108,7 +109,7 @@ export function MobileAppointmentCard({
         <div className="flex-1 min-w-0 flex flex-col justify-center">
           <div className="flex items-center gap-2 mb-0.5">
             <h5 className="text-sm font-bold text-white truncate leading-tight">
-              {appointment.clientName}
+              {fixMojibake(appointment.clientName)}
             </h5>
             {appointment.clientPhone && (
               <>

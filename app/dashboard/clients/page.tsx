@@ -606,9 +606,9 @@ export default function ClientsPage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto min-w-0 overflow-hidden">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0 w-full">
+      <div className="grid grid-cols-dashboard-main lg:grid-cols-dashboard-main-lg gap-3 md:gap-6 min-w-0 w-full">
         {/* Left Column - Main Content (3 columns) - same as Dashboard */}
-        <div className="lg:col-span-3 space-y-3 md:space-y-6 min-w-0">
+        <div className="space-y-3 md:space-y-6 min-w-0 overflow-hidden">
           {/* Header - same style as Dashboard */}
           <div className="flex items-center justify-between gap-3">
             <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
@@ -1194,7 +1194,7 @@ export default function ClientsPage() {
           )}
         </div>
 
-        <div className="lg:col-span-1 space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
+        <div className="dashboard-sidebar-col space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
           <div className="rounded-xl p-4 md:p-6 card-glass min-w-0 overflow-hidden">
             <div className="mb-3 md:mb-4">
               <h3 className="text-base md:text-lg font-semibold text-white" style={{ letterSpacing: '-0.01em' }}>Статистика</h3>

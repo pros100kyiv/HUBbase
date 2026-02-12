@@ -503,13 +503,13 @@ export function MasterScheduleModal({
                   </button>
                 </div>
                 <p className="text-[11px] text-gray-400 leading-relaxed">Клік по дню — змінити години або вихідний. Без виключення = графік тижня.</p>
-                <div className="grid grid-cols-7 gap-1 mb-1">
+                <div className="grid grid-cols-7 gap-1 mb-1 min-w-0" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
                   {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((d) => (
-                    <div key={d} className="text-center text-[10px] font-semibold text-gray-500 py-1">{d}</div>
+                    <div key={d} className="text-center text-[10px] font-semibold text-gray-500 py-1 truncate min-w-0">{d}</div>
                   ))}
                 </div>
-                <div className="grid grid-cols-7 gap-1 mb-3">
-                  {calendarDays.map((day) => {
+                <div className="grid grid-cols-7 gap-1 mb-3 min-w-0" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
+                  {calendarDays.map((day, dayIndex) => {
                     const inMonth = isSameMonth(day, monthDate)
                     const dateKey = format(day, 'yyyy-MM-dd')
                     const override = getOverrideForDate(dateKey)
@@ -548,7 +548,15 @@ export function MasterScheduleModal({
                           {inMonth && <span className="text-[8px] sm:text-[7px] opacity-80 truncate max-w-full">{label}</span>}
                         </button>
                         {isEditing && inMonth && (
-                          <div className="absolute left-1/2 -translate-x-1/2 top-full z-20 mt-2 p-4 rounded-xl bg-[#1f1f1f] border border-white/20 shadow-2xl min-w-[240px] max-w-[min(100vw-2rem,320px)] sm:left-0 sm:translate-x-0">
+                          <>
+                            <div
+                              className="fixed inset-0 bg-black/50 z-[55]"
+                              aria-hidden
+                              onClick={() => setEditingDate(null)}
+                            />
+                            <div
+                              className="fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 z-[60] p-4 rounded-xl bg-[#1f1f1f] border border-white/20 shadow-2xl w-[min(calc(100vw-2rem),300px)] max-h-[min(85vh,400px)] overflow-y-auto overscroll-contain"
+                            >
                             <div className="text-sm font-medium text-white mb-3">{format(day, 'd MMM yyyy', { locale: uk })}</div>
                             <label className="flex items-center gap-2 mb-3 min-h-[44px] cursor-pointer touch-target">
                               <input
@@ -576,11 +584,11 @@ export function MasterScheduleModal({
                                 />
                               </div>
                             )}
-                            <div className="flex gap-2 mt-2">
+                            <div className="flex flex-wrap gap-2 mt-2">
                               <button
                                 type="button"
                                 onClick={() => setOverrideForDate(dateKey, editOverride)}
-                                className="flex-1 min-h-[44px] px-3 py-2.5 text-sm font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white touch-target"
+                                className="flex-1 min-w-0 min-h-[44px] px-3 py-2.5 text-sm font-semibold rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white touch-target"
                               >
                                 Зберегти
                               </button>
@@ -591,8 +599,17 @@ export function MasterScheduleModal({
                               >
                                 Як у тижні
                               </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingDate(null)}
+                                className="min-h-[44px] px-3 py-2.5 text-sm rounded-xl border border-white/20 text-gray-400 hover:bg-white/10 touch-target"
+                                aria-label="Закрити"
+                              >
+                                Закрити
+                              </button>
                             </div>
                           </div>
+                          </>
                         )}
                       </div>
                     )
@@ -642,7 +659,7 @@ export function MasterScheduleModal({
             )}
             </div>
 
-            <div className="flex gap-3 px-4 sm:px-6 py-4 border-t border-white/10 bg-black/20 flex-shrink-0">
+            <div className="flex gap-3 px-4 sm:px-6 py-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-white/10 bg-black/20 flex-shrink-0">
               <button
                 type="button"
                 onClick={onClose}

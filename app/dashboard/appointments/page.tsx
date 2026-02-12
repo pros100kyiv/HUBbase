@@ -1,18 +1,29 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, eachDayOfInterval, isValid } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
-import { CreateAppointmentForm } from '@/components/admin/CreateAppointmentForm'
-import { EditAppointmentForm } from '@/components/admin/EditAppointmentForm'
 import { QuickClientCard } from '@/components/admin/QuickClientCard'
-import { QuickRecordByPhoneModal } from '@/components/admin/QuickRecordByPhoneModal'
 import { Modal } from '@/components/ui/modal'
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon, FilterIcon, CheckIcon, UserIcon } from '@/components/icons'
-import { cn } from '@/lib/utils'
+import { cn, fixMojibake } from '@/lib/utils'
 import { toast } from '@/components/ui/toast'
+
+const CreateAppointmentForm = dynamic(
+  () => import('@/components/admin/CreateAppointmentForm').then((m) => ({ default: m.CreateAppointmentForm })),
+  { ssr: false }
+)
+const EditAppointmentForm = dynamic(
+  () => import('@/components/admin/EditAppointmentForm').then((m) => ({ default: m.EditAppointmentForm })),
+  { ssr: false }
+)
+const QuickRecordByPhoneModal = dynamic(
+  () => import('@/components/admin/QuickRecordByPhoneModal').then((m) => ({ default: m.QuickRecordByPhoneModal })),
+  { ssr: false }
+)
 
 interface Appointment {
   id: string
@@ -511,9 +522,9 @@ export default function AppointmentsPage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto min-w-0 overflow-hidden">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0 w-full">
-        {/* Left Column - Main Content (3 columns) - same as Dashboard */}
-        <div className="lg:col-span-3 space-y-3 md:space-y-6 min-w-0">
+      <div className="grid grid-cols-dashboard-main lg:grid-cols-dashboard-main-lg gap-3 md:gap-6 min-w-0 w-full">
+        {/* Left Column - Main Content */}
+        <div className="space-y-3 md:space-y-6 min-w-0 overflow-hidden">
           {/* Header - same style as Dashboard */}
           <div className="flex items-center justify-between gap-3">
             <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
@@ -888,7 +899,7 @@ export default function AppointmentsPage() {
         </div>
 
         {/* Right Column - Sidebar (1 column) - same as Dashboard */}
-        <div className="lg:col-span-1 space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
+        <div className="dashboard-sidebar-col space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
           {/* Quick Stats — за період або за обраний день (коли в календарі натиснуто дату) */}
           <div className="rounded-xl p-4 md:p-6 card-glass min-w-0 overflow-hidden">
             <div className="mb-3 md:mb-4 flex flex-col gap-1">
@@ -1064,7 +1075,7 @@ export default function AppointmentsPage() {
             isOpen
             onClose={() => setShowDonePriceModalForId(null)}
             title="Вказати вартість послуги"
-            subtitle={apt ? `${apt.clientName} · ${format(new Date(apt.startTime), 'd MMM, HH:mm', { locale: uk })}` : undefined}
+            subtitle={apt ? `${fixMojibake(apt.clientName)} · ${format(new Date(apt.startTime), 'd MMM, HH:mm', { locale: uk })}` : undefined}
             size="md"
             footer={
               <div className="flex gap-2">

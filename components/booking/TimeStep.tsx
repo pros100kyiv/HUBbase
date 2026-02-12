@@ -32,6 +32,7 @@ interface RecommendedSlot {
 export function TimeStep({ businessId }: TimeStepProps) {
   const { state, setDate, setTime, setStep } = useBooking()
   const [slots, setSlots] = useState<string[]>([])
+  const [busySlots, setBusySlots] = useState<string[]>([])
   const [scheduleNotConfigured, setScheduleNotConfigured] = useState(false)
   const [reason, setReason] = useState<string | null>(null)
   const [loadError, setLoadError] = useState(false)
@@ -151,11 +152,14 @@ export function TimeStep({ businessId }: TimeStepProps) {
         if (data.error) {
           setLoadError(true)
           setSlots([])
+          setBusySlots([])
           return
         }
         const raw = Array.isArray(data.availableSlots) ? data.availableSlots : []
+        const busy = Array.isArray(data.busySlots) ? data.busySlots : []
         setScheduleNotConfigured(Boolean(data.scheduleNotConfigured))
         setReason(typeof data.reason === 'string' ? data.reason : null)
+        setBusySlots(busy)
 
         const now = new Date()
         const today = todayRef.current ? startOfDay(todayRef.current) : startOfDay(new Date())
@@ -186,6 +190,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
         if (requestIdRef.current !== id) return
         setLoadError(true)
         setSlots([])
+        setBusySlots([])
         setScheduleNotConfigured(false)
         setReason(null)
         setTime('')
@@ -313,19 +318,29 @@ export function TimeStep({ businessId }: TimeStepProps) {
             </div>
           ) : (
             <>
-              <div className="rounded-xl p-2.5 sm:p-3 mb-2 card-glass">
-                <div className="flex items-center justify-between gap-1">
-                  <button
-                    type="button"
-                    onClick={() => setCurrentMonth(subMonths(currentMonth!, 1))}
-                    className="touch-target min-h-[40px] min-w-[40px] px-2 py-2 border border-white/20 bg-white/10 text-white rounded-lg text-xs font-medium hover:bg-white/20 transition-colors flex items-center justify-center"
-                    title="Попередній місяць"
-                  >
-                    ←
-                  </button>
-                  <h4 className="text-xs sm:text-sm font-semibold text-white truncate flex-1 text-center px-1">
-                    {format(currentMonth!, 'MMMM yyyy', { locale: uk })}
-                  </h4>
+              <div className="rounded-xl p-2 sm:p-3 mb-2 card-glass w-full max-w-full">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => setCurrentMonth(subMonths(currentMonth!, 1))}
+                      className="touch-target min-h-[36px] min-w-[36px] px-2 py-1.5 border border-white/20 bg-white/10 text-white rounded-lg text-xs font-medium hover:bg-white/20 transition-colors flex items-center justify-center flex-shrink-0"
+                      title="Попередній місяць"
+                    >
+                      ←
+                    </button>
+                    <h4 className="text-xs sm:text-sm font-semibold text-white truncate text-center px-1 min-w-0 capitalize">
+                      {format(currentMonth!, 'MMMM yyyy', { locale: uk })}
+                    </h4>
+                    <button
+                      type="button"
+                      onClick={() => setCurrentMonth(addMonths(currentMonth!, 1))}
+                      className="touch-target min-h-[36px] min-w-[36px] px-2 py-1.5 border border-white/20 bg-white/10 text-white rounded-lg text-xs font-medium hover:bg-white/20 transition-colors flex items-center justify-center flex-shrink-0"
+                      title="Наступний місяць"
+                    >
+                      →
+                    </button>
+                  </div>
                   <button
                     type="button"
                     onClick={() => {
@@ -334,31 +349,23 @@ export function TimeStep({ businessId }: TimeStepProps) {
                         setDate(startOfDay(todayRef.current))
                       }
                     }}
-                    className="touch-target min-h-[40px] px-2 sm:px-2.5 py-2 bg-white text-black rounded-lg text-xs font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors flex-shrink-0"
+                    className="touch-target min-h-[36px] px-3 sm:px-4 py-1.5 bg-white text-black rounded-lg text-xs font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors flex-shrink-0"
                     style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                     title="Сьогодні"
                   >
                     Сьогодні
                   </button>
-                  <button
-                    type="button"
-                    onClick={() => setCurrentMonth(addMonths(currentMonth!, 1))}
-                    className="touch-target min-h-[40px] min-w-[40px] px-2 py-2 border border-white/20 bg-white/10 text-white rounded-lg text-xs font-medium hover:bg-white/20 transition-colors flex items-center justify-center"
-                    title="Наступний місяць"
-                  >
-                    →
-                  </button>
                 </div>
               </div>
-              <div className="rounded-xl p-2 card-glass w-full max-w-[320px] sm:max-w-xs mx-auto">
-                <div className="grid grid-cols-7 gap-0.5 mb-1.5">
+              <div className="rounded-xl p-2 sm:p-3 card-glass w-full max-w-full box-border">
+                <div className="grid grid-cols-7 gap-0.5 sm:gap-1 mb-1" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
                   {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((d) => (
-                    <div key={d} className="text-center text-[10px] font-semibold text-gray-400">
+                    <div key={d} className="text-center text-[10px] sm:text-xs font-semibold text-gray-400 truncate min-w-0 py-0.5">
                       {d}
                     </div>
                   ))}
                 </div>
-                <div className="grid grid-cols-7 gap-0.5 sm:gap-1">
+                <div className="grid grid-cols-7 gap-0.5 sm:gap-1 min-w-0" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
                   {calendarDays.map((day) => {
                     const isInMonth = day >= monthStart! && day <= monthEnd!
                     const isPastDate =
@@ -369,6 +376,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
                       state.selectedDate && isSameDay(day, state.selectedDate)
                     const isToday =
                       todayRef.current && isSameDay(day, todayRef.current)
+                    const isOtherMonth = !isInMonth
                     return (
                       <button
                         key={day.toISOString()}
@@ -379,11 +387,12 @@ export function TimeStep({ businessId }: TimeStepProps) {
                         disabled={isDisabled}
                         title={dayOff ? 'Вихідний у майстра' : undefined}
                         className={cn(
-                          'aspect-square min-h-[36px] sm:min-h-[32px] w-full flex items-center justify-center rounded-md text-[10px] sm:text-[10px] font-medium transition-colors active:scale-95',
+                          'w-full h-8 sm:h-9 flex items-center justify-center rounded-md text-[11px] sm:text-xs font-medium transition-colors active:scale-95 min-w-0',
                           isSelected && 'bg-white text-black shadow-md ring-2 ring-white/50',
                           isToday && isInMonth && !isSelected && !dayOff && 'ring-1 ring-white/30 bg-white/20 text-white',
-                          (isPastDate || !isInMonth) && 'text-white/20 cursor-not-allowed bg-white/5',
-                          dayOff && 'text-white/30 cursor-not-allowed bg-white/5 line-through',
+                          isPastDate && 'text-white/20 cursor-not-allowed bg-white/5',
+                          isOtherMonth && 'text-white/25 bg-transparent cursor-default',
+                          dayOff && isInMonth && 'text-white/30 cursor-not-allowed bg-white/5 line-through',
                           !isSelected && !isPastDate && isInMonth && !isToday && !dayOff && 'bg-white/10 border border-white/10 text-white hover:bg-white/20'
                         )}
                       >
@@ -405,29 +414,38 @@ export function TimeStep({ businessId }: TimeStepProps) {
                 <p className="text-xs text-gray-400 mt-1">{noSlotsText}</p>
               </div>
             )}
-            {!loading && slots.length > 0 && (
+            {!loading && (slots.length > 0 || busySlots.length > 0) && (
               <>
                 <h3 className="text-sm font-semibold text-white mb-2">
                   Оберіть час (за графіком майстра):
                 </h3>
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5 sm:gap-2">
-                  {slots.map((slotStr) => {
-                    const time = String(slotStr).slice(11, 16)
-                    const isSelected = state.selectedTime === time
-                    return (
-                      <button
-                        key={slotStr}
-                        type="button"
-                        onClick={() => handleTimeSelect(time)}
-                        className={cn(
-                          'min-h-[44px] sm:min-h-0 px-2 sm:px-3 py-2.5 sm:py-2.5 rounded-lg transition-colors text-xs font-medium active:scale-[0.98] bg-white/10 border border-white/10 text-white hover:bg-white/20',
-                          isSelected && 'bg-white text-black shadow-md ring-2 ring-white/50'
-                        )}
-                      >
-                        {time}
-                      </button>
-                    )
-                  })}
+                  {(() => {
+                    const allKeys = Array.from(new Set([...slots, ...busySlots])).sort()
+                    return allKeys.map((slotStr) => {
+                      const time = String(slotStr).slice(11, 16)
+                      const isBusy = busySlots.includes(slotStr)
+                      const isSelected = !isBusy && state.selectedTime === time
+                      return (
+                        <button
+                          key={slotStr}
+                          type="button"
+                          disabled={isBusy}
+                          onClick={() => !isBusy && handleTimeSelect(time)}
+                          title={isBusy ? 'Зайнято' : undefined}
+                          className={cn(
+                            'min-h-[44px] sm:min-h-0 px-2 sm:px-3 py-2.5 sm:py-2.5 rounded-lg transition-colors text-xs font-medium',
+                            isBusy && 'bg-white/5 border border-white/10 text-white/40 cursor-not-allowed line-through',
+                            !isBusy && 'active:scale-[0.98] bg-white/10 border border-white/10 text-white hover:bg-white/20',
+                            isSelected && 'bg-white text-black shadow-md ring-2 ring-white/50'
+                          )}
+                        >
+                          {time}
+                          {isBusy && <span className="sr-only"> (зайнято)</span>}
+                        </button>
+                      )
+                    })
+                  })()}
                 </div>
               </>
             )}

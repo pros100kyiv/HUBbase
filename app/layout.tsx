@@ -54,6 +54,7 @@ export default function RootLayout({
   return (
     <html lang="uk" className="dark oled" suppressHydrationWarning>
       <head>
+        <meta charSet="utf-8" />
         <script
           dangerouslySetInnerHTML={{
             __html: `

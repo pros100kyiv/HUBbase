@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { StatusSwitcher, type StatusValue } from './StatusSwitcher'
 import { toast } from '@/components/ui/toast'
-import { cn } from '@/lib/utils'
+import { cn, fixMojibake } from '@/lib/utils'
 import { normalizeUaPhone } from '@/lib/utils/phone'
 
 interface Appointment {
@@ -353,7 +353,7 @@ export function MyDayCard({
       appointmentsForSelectedDay.forEach((apt) => {
         const start = format(new Date(apt.startTime), 'HH:mm')
         const end = format(new Date(apt.endTime), 'HH:mm')
-        text += `• ${apt.clientName} ${start}–${end} — ${apt.status}\n`
+        text += `• ${fixMojibake(apt.clientName)} ${start}–${end} — ${apt.status}\n`
       })
     }
     return text
@@ -624,7 +624,7 @@ export function MyDayCard({
             <div className="flex-1 min-w-0 py-0.5">
               <div className="flex items-center gap-2 mb-0.5 flex-wrap">
                 <h5 className="text-sm font-bold text-white truncate leading-tight">
-                  {apt.clientName}
+                  {fixMojibake(apt.clientName)}
                 </h5>
                 {displayPrice != null && (
                   <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 text-[11px] font-semibold border border-emerald-500/30 flex-shrink-0">
@@ -778,16 +778,16 @@ export function MyDayCard({
         )}
       </div>
 
-      {/* Статистика за день: на мобільному — 4 слоти в один ряд (менша висота), Вільні години окремо */}
-      <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5 sm:gap-2 md:gap-3 mb-3 md:mb-5 min-w-0">
-        <div className="rounded-lg sm:rounded-xl bg-white/5 border border-white/10 p-2 sm:p-3">
+      {/* Статистика за день: flex-wrap щоб картки переносились і завжди поміщались */}
+      <div className="flex flex-wrap gap-1.5 sm:gap-2 md:gap-3 mb-3 md:mb-5 min-w-0">
+        <div className="rounded-lg sm:rounded-xl bg-white/5 border border-white/10 p-2 sm:p-3 flex-1 min-w-[85px] shrink-0">
           <div className="text-base sm:text-lg md:text-xl font-bold text-white tabular-nums leading-tight">{totalForDay}</div>
           <div className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 mt-0.5 leading-tight">Записів</div>
         </div>
         <button
           type="button"
           onClick={() => setSelectedStatus('confirmed')}
-          className="rounded-lg sm:rounded-xl bg-white/5 border border-white/10 p-2 sm:p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
+          className="rounded-lg sm:rounded-xl bg-white/5 border border-white/10 p-2 sm:p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98] flex-1 min-w-[85px] shrink-0"
         >
           <div className="text-base sm:text-lg md:text-xl font-bold text-emerald-400 tabular-nums leading-tight">{confirmedForDay}</div>
           <div className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 mt-0.5 leading-tight">Підтверджено</div>
@@ -795,7 +795,7 @@ export function MyDayCard({
         <button
           type="button"
           onClick={() => setSelectedStatus('pending')}
-          className="rounded-lg sm:rounded-xl bg-white/5 border border-white/10 p-2 sm:p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
+          className="rounded-lg sm:rounded-xl bg-white/5 border border-white/10 p-2 sm:p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98] flex-1 min-w-[85px] shrink-0"
         >
           <div className="text-base sm:text-lg md:text-xl font-bold text-amber-400 tabular-nums leading-tight">{pendingForDay}</div>
           <div className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 mt-0.5 leading-tight">Очікує</div>
@@ -803,7 +803,7 @@ export function MyDayCard({
         <button
           type="button"
           onClick={() => setSelectedStatus('done')}
-          className="rounded-lg sm:rounded-xl bg-white/5 border border-white/10 p-2 sm:p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98]"
+          className="rounded-lg sm:rounded-xl bg-white/5 border border-white/10 p-2 sm:p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98] flex-1 min-w-[85px] shrink-0"
         >
           <div className="text-base sm:text-lg md:text-xl font-bold text-sky-400 tabular-nums leading-tight">{completedForDay}</div>
           <div className="text-[9px] sm:text-[10px] md:text-xs text-gray-400 mt-0.5 leading-tight">Виконано</div>
@@ -811,7 +811,7 @@ export function MyDayCard({
         <button
           type="button"
           onClick={() => onOpenFreeSlots?.(selectedDate)}
-          className="rounded-lg sm:rounded-xl bg-white/5 border border-white/10 p-2 sm:p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98] col-span-4 sm:col-span-1 flex items-center gap-2"
+          className="rounded-lg sm:rounded-xl bg-white/5 border border-white/10 p-2 sm:p-3 hover:bg-white/10 transition-colors text-left active:scale-[0.98] flex-1 min-w-[85px] shrink-0 flex items-center gap-2"
         >
           <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-sky-500/20 border border-sky-500/30 flex items-center justify-center flex-shrink-0">
             <svg className="w-4 h-4 sm:w-5 sm:h-5 text-sky-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -1044,11 +1044,11 @@ export function MyDayCard({
                 {/* Картка клієнта: аватар, ім'я, контакт, статус */}
                 <div className="rounded-xl bg-white/10 border border-white/15 p-3 flex items-start gap-3">
                   <div className="w-12 h-12 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0 text-xl font-bold text-white">
-                    {(clientProfile?.name || selectedAppointment.clientName).charAt(0).toUpperCase()}
+                    {fixMojibake(clientProfile?.name || selectedAppointment.clientName).charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
                     <h3 className="text-lg font-bold text-white truncate">
-                      {clientProfile?.name ?? selectedAppointment.clientName}
+                      {fixMojibake(clientProfile?.name ?? selectedAppointment.clientName)}
                     </h3>
                     {selectedAppointment.clientPhone && (
                       <p className="text-sm font-mono text-gray-400 mt-0.5">{selectedAppointment.clientPhone}</p>
@@ -1443,7 +1443,7 @@ export function MyDayCard({
                 <h3 className="modal-title pr-10 mb-1">Вказати вартість послуги</h3>
                 <p className="text-sm text-amber-400/90 mb-1">Статус не змінено. Заповніть вартість нижче, щоб позначити запис як Виконано.</p>
                 <p className="text-sm text-gray-400 mb-4">
-                  {apt ? `${apt.clientName} · ${format(new Date(apt.startTime), 'd MMM, HH:mm', { locale: uk })}` : 'Запис'}
+                  {apt ? `${fixMojibake(apt.clientName)} · ${format(new Date(apt.startTime), 'd MMM, HH:mm', { locale: uk })}` : 'Запис'}
                 </p>
                 <div className="space-y-4">
                   <label className="block">

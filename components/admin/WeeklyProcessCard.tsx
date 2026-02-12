@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, eachDayOfInterval, isSameMonth } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { useRouter } from 'next/navigation'
-import { cn } from '@/lib/utils'
+import { cn, fixMojibake } from '@/lib/utils'
 import { UserIcon, ClockIcon } from '@/components/icons'
 
 interface WeeklyProcessCardProps {
@@ -284,7 +284,7 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
                       </div>
                       <div className="flex-1 min-w-0 py-0.5">
                         <div className="text-sm font-bold text-white truncate leading-tight">
-                          {apt.clientName}
+                          {fixMojibake(apt.clientName)}
                         </div>
                         <div className="flex items-center gap-1.5 text-[10px] md:text-xs text-gray-500 truncate">
                           <UserIcon className="w-3 h-3 flex-shrink-0" />

@@ -1,6 +1,7 @@
 'use client'
 
 import { format, differenceInMinutes, isValid } from 'date-fns'
+import { fixMojibake } from '@/lib/utils'
 
 const getStatusLabel = (status: string) => {
   switch (status) {
@@ -66,7 +67,7 @@ export function AppointmentCard({
       style={{ height: `${rowSpan * 100}%`, zIndex: 10 }}
     >
       <div className="font-semibold text-secondary mb-1">
-        {appointment.clientName}
+        {fixMojibake(appointment.clientName)}
       </div>
       <div className="text-secondary/70 text-[10px] mb-1 tabular-nums">
         {format(startTime, 'HH:mm')}–{format(endTime, 'HH:mm')}

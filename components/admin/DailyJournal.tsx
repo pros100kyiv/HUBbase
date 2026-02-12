@@ -6,6 +6,7 @@ import { format, startOfDay, addMinutes, isSameDay } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { MobileAppointmentCard } from './MobileAppointmentCard'
 import { ModalPortal } from '@/components/ui/modal-portal'
+import { fixMojibake } from '@/lib/utils'
 import { toast } from '@/components/ui/toast'
 
 interface Master {
@@ -304,7 +305,7 @@ export function DailyJournal({ businessId }: DailyJournalProps) {
                 <h3 className="modal-title pr-10 mb-1">Вказати вартість послуги</h3>
                 <p className="text-sm text-amber-400/90 mb-1">Статус не змінено. Заповніть вартість нижче, щоб позначити запис як Виконано.</p>
                 <p className="text-sm text-gray-400 mb-4">
-                  {apt ? `${apt.clientName} · ${format(new Date(apt.startTime), 'd MMM, HH:mm', { locale: uk })}` : 'Запис'}
+                  {apt ? `${fixMojibake(apt.clientName)} · ${format(new Date(apt.startTime), 'd MMM, HH:mm', { locale: uk })}` : 'Запис'}
                 </p>
                 <div className="space-y-4">
                   <label className="block">

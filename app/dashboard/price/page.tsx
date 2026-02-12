@@ -229,9 +229,9 @@ export default function PricePage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto min-w-0 overflow-hidden p-4 md:p-6 min-h-screen text-white pb-[max(6rem,calc(5rem+env(safe-area-inset-bottom)))] md:pb-24">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0 w-full">
+      <div className="grid grid-cols-dashboard-main lg:grid-cols-dashboard-main-lg gap-3 md:gap-6 min-w-0 w-full">
         {/* Main content */}
-        <div className="lg:col-span-3 space-y-3 md:space-y-6 min-w-0">
+        <div className="space-y-3 md:space-y-6 min-w-0 overflow-hidden">
           <div className="flex items-center justify-between gap-3">
             <div>
               <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
@@ -616,7 +616,7 @@ export default function PricePage() {
         </div>
 
         {/* Sidebar */}
-        <div className="lg:col-span-1 space-y-3 md:space-y-4 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
+        <div className="dashboard-sidebar-col space-y-3 md:space-y-4 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
           {/* Калькулятор послуг */}
           <div className="rounded-xl p-4 card-glass min-w-0 overflow-hidden">
             <h3 className="text-sm font-semibold text-white mb-3">Калькулятор послуг</h3>

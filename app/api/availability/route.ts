@@ -250,7 +250,7 @@ async function getAvailableSlotsForDate(
   const steps = Math.ceil(durationMinutes / slotStepMinutes)
   const inAnyWindow = (hours: number) =>
     windows.some((w) => hours >= w.start && hours < w.end)
-  return slots
+  const available = slots
     .filter((slotStr) => {
       if (typeof slotStr !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(slotStr)) return false
       const slotDate = new Date(slotStr)
@@ -267,6 +267,8 @@ async function getAvailableSlotsForDate(
       return true
     })
     .filter((s) => s.startsWith(dateNorm))
+  const busySlots = slots.filter((s) => s.startsWith(dateNorm) && occupied.has(s))
+  return { available, busySlots }
 }
 
 export async function GET(request: Request) {
@@ -359,7 +361,7 @@ export async function GET(request: Request) {
       for (let d = 0; d < days && recommendedSlots.length < limit; d++) {
         const date = addDays(new Date(fromYear, fromMonth, fromDay), d)
         const dateNorm = format(date, 'yyyy-MM-dd')
-        const daySlots = await getAvailableSlotsForDate(
+        const { available: daySlots } = await getAvailableSlotsForDate(
           master,
           dateNorm,
           businessId,
@@ -417,7 +419,7 @@ export async function GET(request: Request) {
     }
 
     const now = new Date()
-    const availableSlots = await getAvailableSlotsForDate(
+    const { available: availableSlots, busySlots } = await getAvailableSlotsForDate(
       master,
       dateNorm,
       businessId,
@@ -429,6 +431,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       availableSlots,
+      busySlots: busySlots || [],
       scheduleNotConfigured: false,
       ...(availableSlots.length === 0 && { reason: 'all_occupied' }),
     })

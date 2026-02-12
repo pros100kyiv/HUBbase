@@ -2,11 +2,19 @@
 
 import dynamic from 'next/dynamic'
 import { useState, useEffect, useLayoutEffect } from 'react'
-import { useRouter, usePathname } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
-import { Sidebar } from '@/components/admin/Sidebar'
-import { MobileSidebar } from '@/components/admin/MobileSidebar'
 import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
+
+const Sidebar = dynamic(
+  () => import('@/components/admin/Sidebar').then((m) => ({ default: m.Sidebar })),
+  { ssr: false, loading: () => <div className="hidden md:block fixed left-0 top-14 bottom-0 w-64 bg-white/5 animate-pulse" aria-hidden /> }
+)
+
+const MobileSidebar = dynamic(
+  () => import('@/components/admin/MobileSidebar').then((m) => ({ default: m.MobileSidebar })),
+  { ssr: false }
+)
 
 const AIChatWidget = dynamic(
   () => import('@/components/ai/AIChatWidget').then((m) => ({ default: m.AIChatWidget })),
@@ -40,7 +48,6 @@ export default function DashboardLayout({
   children: React.ReactNode
 }) {
   const router = useRouter()
-  const pathname = usePathname()
   const { startNavigation } = useNavigationProgress()
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [business, setBusiness] = useState<any>(null)
@@ -48,7 +55,6 @@ export default function DashboardLayout({
   const [mounted, setMounted] = useState(false)
   const [isBlocked, setIsBlocked] = useState<boolean | null>(null)
   const [blockInfo, setBlockInfo] = useState<{ reason?: string; blockedAt?: string } | null>(null)
-
   useEffect(() => {
     setMounted(true)
     const businessData = localStorage.getItem('business')
@@ -160,7 +166,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="relative min-h-screen w-full max-w-[100vw] overflow-x-hidden">
+    <div className="relative min-h-screen w-full min-w-0 max-w-full overflow-x-hidden" style={{ maxWidth: '100vw' }}>
       {/* Той самий фон, що на реєстрації, вході та головній — м’які градієнтні орби */}
       <div className="fixed inset-0 pointer-events-none landing-hero-gradient" aria-hidden />
 
@@ -183,8 +189,8 @@ export default function DashboardLayout({
       {/* Mobile Sidebar */}
       <MobileSidebar isOpen={mobileMenuOpen} onClose={() => setMobileMenuOpen(false)} />
       
-      {/* Main Content Area — плавна поява контенту без моргання; контент не виходить за межі екрану */}
-      <main className="relative w-full min-w-0 max-w-full overflow-x-hidden ml-0 md:ml-64 pt-14 md:pt-16 min-h-screen safe-bottom pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]" data-dashboard-content>
+      {/* Main Content Area — на десктопі ширина = viewport − сайдбар, щоб контент не виходив за екран */}
+      <main className="relative w-full min-w-0 max-w-full overflow-x-hidden ml-0 md:ml-64 md:w-[calc(100vw-16rem)] pt-14 md:pt-16 min-h-screen safe-bottom pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]" data-dashboard-content>
         <div className="dashboard-content-inner w-full min-w-0 max-w-full overflow-x-hidden px-3 py-3 md:p-6 pb-[max(5rem,env(safe-area-inset-bottom)+3.5rem)] md:pb-6 animate-content-fade-in">
           {children}
         </div>

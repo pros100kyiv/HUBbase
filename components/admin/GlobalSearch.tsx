@@ -4,6 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { format } from 'date-fns'
 import { ModalPortal } from '@/components/ui/modal-portal'
+import { fixMojibake } from '@/lib/utils'
 import { uk } from 'date-fns/locale'
 
 interface SearchResult {
@@ -241,7 +242,7 @@ export function GlobalSearch({ businessId, isOpen, onClose, anchorRef }: GlobalS
                         onClick={() => handleAppointmentClick(apt.id)}
                         className="touch-target w-full text-left px-3 py-3 rounded-lg hover:bg-white/10 transition-colors min-h-[44px]"
                       >
-                        <div className="text-sm font-medium text-white">{apt.clientName}</div>
+                        <div className="text-sm font-medium text-white">{fixMojibake(apt.clientName)}</div>
                         <div className="text-xs text-gray-400 tabular-nums">
                           {format(new Date(apt.startTime), 'd MMMM yyyy, HH:mm', { locale: uk })} • {apt.master?.name || 'Невідомий майстер'}
                         </div>

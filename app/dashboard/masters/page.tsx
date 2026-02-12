@@ -1,15 +1,20 @@
 'use client'
 
+import dynamic from 'next/dynamic'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { format, differenceInDays } from 'date-fns'
 import { uk } from 'date-fns/locale'
-import { cn } from '@/lib/utils'
+import { cn, fixMojibake } from '@/lib/utils'
 import { UserIcon, SearchIcon, DownloadIcon, FilterIcon, CheckIcon, CalendarIcon, PhoneIcon, SettingsIcon, XIcon, StarIcon, MoneyIcon, UsersIcon, ChevronDownIcon, ChevronUpIcon, EditIcon, TrashIcon } from '@/components/icons'
 import { QuickMasterCard } from '@/components/admin/QuickMasterCard'
-import { MasterScheduleModal } from '@/components/admin/MasterScheduleModal'
 import { DateRangePicker } from '@/components/admin/DateRangePicker'
 import { toast } from '@/components/ui/toast'
+
+const MasterScheduleModal = dynamic(
+  () => import('@/components/admin/MasterScheduleModal').then((m) => ({ default: m.MasterScheduleModal })),
+  { ssr: false }
+)
 
 interface Master {
   id: string
@@ -497,8 +502,8 @@ export default function MastersPage() {
     return (
       <div className="w-full max-w-7xl mx-auto min-w-0 overflow-hidden">
         <div className="h-8 w-48 bg-gray-200 rounded animate-pulse mb-4" />
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0 w-full">
-          <div className="lg:col-span-3 space-y-4 min-w-0">
+        <div className="grid grid-cols-dashboard-main lg:grid-cols-dashboard-main-lg gap-3 md:gap-6 min-w-0 w-full">
+          <div className="space-y-4 min-w-0 overflow-hidden">
             <div className="h-64 rounded-xl card-glass animate-pulse" />
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {[1, 2, 3].map((i) => (
@@ -506,7 +511,7 @@ export default function MastersPage() {
               ))}
             </div>
           </div>
-          <div className="lg:col-span-1 space-y-4 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
+          <div className="dashboard-sidebar-col space-y-4 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
             <div className="h-48 rounded-xl card-glass animate-pulse" />
           </div>
         </div>
@@ -516,9 +521,9 @@ export default function MastersPage() {
 
   return (
     <div className="w-full max-w-7xl mx-auto min-w-0 overflow-hidden">
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-3 md:gap-6 min-w-0 w-full">
+      <div className="grid grid-cols-dashboard-main lg:grid-cols-dashboard-main-lg gap-3 md:gap-6 min-w-0 w-full">
         {/* Main Content */}
-        <div className="lg:col-span-3 space-y-3 md:space-y-6 min-w-0">
+        <div className="space-y-3 md:space-y-6 min-w-0 overflow-hidden">
           {/* Header */}
           <div className="flex items-center justify-between gap-3">
             <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
@@ -1048,7 +1053,7 @@ export default function MastersPage() {
                                         {format(start, 'dd.MM.yyyy HH:mm')}
                                       </div>
                                       <div className="text-xs text-gray-400 truncate">
-                                        {appointment.clientName}
+                                        {fixMojibake(appointment.clientName)}
                                       </div>
                                     </div>
                                     <span className={cn(
@@ -1079,7 +1084,7 @@ export default function MastersPage() {
         </div>
 
         {/* Right Sidebar */}
-        <div className="lg:col-span-1 space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
+        <div className="dashboard-sidebar-col space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
           <div className="rounded-xl p-4 md:p-6 card-glass min-w-0 overflow-hidden">
             <h3 className="text-base md:text-lg font-semibold text-white mb-3" style={{ letterSpacing: '-0.01em' }}>
               Швидкі дії

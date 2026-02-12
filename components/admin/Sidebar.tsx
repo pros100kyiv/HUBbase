@@ -42,23 +42,28 @@ export function Sidebar({ className }: SidebarProps) {
   }, [])
 
   useEffect(() => {
-    if (business?.id) {
-      const fetchPendingCount = async () => {
-        try {
-          const response = await fetch(`/api/appointments?businessId=${business.id}&status=Pending`)
-          if (response.ok) {
-            const data = await response.json()
-            setPendingCount(Array.isArray(data) ? data.length : 0)
-          }
-        } catch (error) {
-          console.error('Error fetching pending count:', error)
+    if (!business?.id) return
+    let cancelled = false
+    const fetchPendingCount = async () => {
+      try {
+        const response = await fetch(`/api/appointments?businessId=${business.id}&status=Pending`)
+        if (cancelled) return
+        if (response.ok) {
+          const data = await response.json()
+          const count = Array.isArray(data) ? data.length : 0
+          if (!cancelled) setPendingCount(count)
         }
+      } catch {
+        if (!cancelled) setPendingCount(0)
       }
-      fetchPendingCount()
-      const interval = setInterval(fetchPendingCount, 120_000) // 2 хв — економія compute (Neon sleep)
-      return () => clearInterval(interval)
     }
-  }, [business])
+    fetchPendingCount()
+    const interval = setInterval(fetchPendingCount, 120_000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
+  }, [business?.id])
 
   // Індикатор біля «Записи» зникає, коли користувач вже на сторінці записів
   const showAppointmentsBadge = pendingCount > 0 && pathname !== '/dashboard/appointments'
@@ -75,12 +80,11 @@ export function Sidebar({ className }: SidebarProps) {
   ]
 
   const handleNotificationUpdate = () => {
-    if (business?.id) {
-      fetch(`/api/appointments?businessId=${business.id}&status=Pending`)
-        .then((res) => res.json())
-        .then((data) => setPendingCount(Array.isArray(data) ? data.length : 0))
-        .catch((error) => console.error('Error fetching pending count:', error))
-    }
+    if (!business?.id) return
+    fetch(`/api/appointments?businessId=${business.id}&status=Pending`)
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data) => setPendingCount(Array.isArray(data) ? data.length : 0))
+      .catch(() => setPendingCount(0))
   }
 
   const renderNavItem = (item: NavItem) => {

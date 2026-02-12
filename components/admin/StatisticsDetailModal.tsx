@@ -5,7 +5,7 @@ import { ModalPortal } from '@/components/ui/modal-portal'
 import { XIcon, CalendarIcon, CheckIcon, UsersIcon, MoneyIcon, ClockIcon } from '@/components/icons'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
-import { cn } from '@/lib/utils'
+import { cn, fixMojibake } from '@/lib/utils'
 
 interface StatisticsDetailModalProps {
   isOpen: boolean
@@ -453,7 +453,7 @@ export function StatisticsDetailModal({
                                       {format(startTime, 'd MMM', { locale: uk })}
                                     </span>
                                   </div>
-                                  <div className="text-sm font-medium text-white mb-1">{apt.clientName}</div>
+                                  <div className="text-sm font-medium text-white mb-1">{fixMojibake(apt.clientName)}</div>
                                   <div className="text-xs text-gray-400 flex items-center gap-2 flex-wrap">
                                     {apt.clientPhone}
                                     <a

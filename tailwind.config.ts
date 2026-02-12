@@ -136,6 +136,10 @@ const config = {
       backdropBlur: {
         xs: '2px',
       },
+      gridTemplateColumns: {
+        'dashboard-main': '1fr',
+        'dashboard-main-lg': 'minmax(0, 1fr) minmax(0, 360px)',
+      },
     },
   },
   plugins: [require("tailwindcss-animate")],

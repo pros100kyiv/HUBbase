@@ -7,7 +7,7 @@ import { XIcon, CheckIcon, ClockIcon, PhoneIcon } from '@/components/icons'
 import { StatusSwitcher, type StatusValue } from './StatusSwitcher'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { toast } from '@/components/ui/toast'
-import { cn } from '@/lib/utils'
+import { cn, fixMojibake } from '@/lib/utils'
 
 interface Appointment {
   id: string
@@ -70,7 +70,7 @@ function AppointmentCard({ appointment, servicesMap, onConfirm, onReschedule, on
       {/* Заголовок картки: клієнт + дата/час */}
       <div className="flex flex-wrap items-start justify-between gap-2 mb-4">
         <div>
-          <h3 className="text-base sm:text-lg font-semibold text-white leading-tight">{appointment.clientName}</h3>
+          <h3 className="text-base sm:text-lg font-semibold text-white leading-tight">{fixMojibake(appointment.clientName)}</h3>
           <p className="text-sm text-gray-400 flex items-center gap-1.5 mt-0.5">
             <PhoneIcon className="w-3.5 h-3.5 flex-shrink-0" />
             <a href={`tel:${appointment.clientPhone}`} className="hover:text-white transition-colors">{appointment.clientPhone}</a>
@@ -470,7 +470,7 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
                 <h3 className="modal-title pr-10 mb-1">Вказати вартість послуги</h3>
                 <p className="text-sm text-amber-400/90 mb-1">Статус не змінено. Заповніть вартість нижче, щоб позначити запис як Виконано.</p>
                 <p className="text-sm text-gray-400 mb-4">
-                  {apt ? `${apt.clientName} · ${format(new Date(apt.startTime), 'd MMM, HH:mm', { locale: uk })}` : 'Запис'}
+                  {apt ? `${fixMojibake(apt.clientName)} · ${format(new Date(apt.startTime), 'd MMM, HH:mm', { locale: uk })}` : 'Запис'}
                 </p>
                 <div className="space-y-4">
 <label className="block">
