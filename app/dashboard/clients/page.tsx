@@ -1,6 +1,6 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { format, isAfter, differenceInDays } from 'date-fns'
 import { uk } from 'date-fns/locale'
@@ -97,6 +97,7 @@ export default function ClientsPage() {
   const [loadingMore, setLoadingMore] = useState(false)
   const INITIAL_VISIBLE_COUNT = 10
   const searchParams = useSearchParams()
+  const openedClientIdFromUrlRef = useRef<string | null>(null)
 
   useEffect(() => {
     const businessData = localStorage.getItem('business')
@@ -229,23 +230,75 @@ export default function ClientsPage() {
 
   // Якщо в URL є phone= або id= — автоматично відкрити вікно клієнта з історією
   useEffect(() => {
-    if (!clients.length || loading) return
     const idFromUrl = searchParams.get('id')
     const phoneFromUrl = searchParams.get('phone')
+    if (!idFromUrl && !phoneFromUrl) {
+      openedClientIdFromUrlRef.current = null
+      return
+    }
+
     if (idFromUrl) {
       const found = clients.find((c) => c.id === idFromUrl)
       if (found) {
+        openedClientIdFromUrlRef.current = idFromUrl
         setClientByPhoneModal(found)
         setPhoneSearchInput(found.phone)
+        return
       }
-    } else if (phoneFromUrl) {
+      // Клієнта немає в поточному списку (пагінація/фільтри) — підвантажити по id
+      if (!business || loading || openedClientIdFromUrlRef.current === idFromUrl) return
+      openedClientIdFromUrlRef.current = idFromUrl
+      fetch(`/api/clients/${idFromUrl}?businessId=${encodeURIComponent(business.id)}`)
+        .then((res) => (res.ok ? res.json() : null))
+        .then((data: any) => {
+          if (!data?.id) return
+          const appts = Array.isArray(data.appointments) ? data.appointments : []
+          const appointmentsDesc = [...appts].sort(
+            (a: any, b: any) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime()
+          )
+          let totalSpent = 0
+          appts.forEach((apt: any) => {
+            if (apt.status === 'Done') {
+              try {
+                const aptServices = typeof apt.services === 'string' ? JSON.parse(apt.services) : apt.services || []
+                aptServices.forEach((serviceId: string) => {
+                  const service = services.find((s: any) => s.id === serviceId || s.name === serviceId)
+                  if (service) totalSpent += service.price || 0
+                })
+                if (apt.customPrice) totalSpent += Number(apt.customPrice) / 100
+              } catch (_) {}
+            }
+          })
+          const client: Client = {
+            id: data.id,
+            name: data.name ?? '',
+            phone: data.phone ?? '',
+            email: data.email ?? null,
+            notes: data.notes ?? null,
+            tags: data.tags ?? null,
+            metadata: data.metadata ?? null,
+            status: data.status ?? null,
+            totalAppointments: appts.length,
+            totalSpent,
+            appointments: appointmentsDesc,
+            firstAppointmentDate: appointmentsDesc.length > 0 ? appointmentsDesc[appointmentsDesc.length - 1]?.startTime : null,
+            lastAppointmentDate: appointmentsDesc.length > 0 ? appointmentsDesc[0]?.startTime : null,
+          }
+          setClientByPhoneModal(client)
+          setPhoneSearchInput(client.phone)
+        })
+        .catch(() => { openedClientIdFromUrlRef.current = null })
+      return
+    }
+
+    if (phoneFromUrl && !loading && clients.length > 0) {
       const found = findClientByPhoneNumber(clients, phoneFromUrl)
       if (found) {
         setClientByPhoneModal(found)
         setPhoneSearchInput(found.phone)
       }
     }
-  }, [clients, loading, searchParams])
+  }, [business, clients, loading, searchParams, services])
 
   // Кешуємо деталі клієнта при відкритті модалки за номером
   useEffect(() => {

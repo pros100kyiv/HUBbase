@@ -5,6 +5,7 @@ import { format, addDays, subDays, isSameDay, startOfDay } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { useRouter } from 'next/navigation'
 import { ModalPortal } from '@/components/ui/modal-portal'
+import { ClockIcon, UserIcon } from '@/components/icons'
 import { StatusSwitcher, type StatusValue } from './StatusSwitcher'
 import { toast } from '@/components/ui/toast'
 import { cn, fixMojibake } from '@/lib/utils'
@@ -266,6 +267,15 @@ export function MyDayCard({
   const handleAppointmentClick = (id: string) => {
     const apt = appointmentsForSelectedDay.find((a) => a.id === id) ?? appointments.find((a) => a.id === id) ?? null
     setSelectedAppointment(apt)
+  }
+
+  /** Відкрити картку (профіль) клієнта на сторінці клієнтів */
+  const openClientProfile = (phone: string) => {
+    if (clientProfile?.id) {
+      router.push(`/dashboard/clients?id=${encodeURIComponent(clientProfile.id)}`)
+    } else {
+      router.push(`/dashboard/clients?phone=${encodeURIComponent(phone)}`)
+    }
   }
 
   const openClientHistory = (phone: string) => {
@@ -1047,9 +1057,22 @@ export function MyDayCard({
                     {fixMojibake(clientProfile?.name || selectedAppointment.clientName).charAt(0).toUpperCase()}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <h3 className="text-lg font-bold text-white truncate">
-                      {fixMojibake(clientProfile?.name ?? selectedAppointment.clientName)}
-                    </h3>
+                    <div className="flex items-center gap-2">
+                      <h3 className="text-lg font-bold text-white truncate">
+                        {fixMojibake(clientProfile?.name ?? selectedAppointment.clientName)}
+                      </h3>
+                      {selectedAppointment.clientPhone && (
+                        <button
+                          type="button"
+                          onClick={(e) => { e.stopPropagation(); openClientProfile(selectedAppointment.clientPhone) }}
+                          className="flex-shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/15 transition-colors touch-target"
+                          title="Відкрити профіль клієнта"
+                          aria-label="Відкрити профіль клієнта"
+                        >
+                          <UserIcon className="w-5 h-5" />
+                        </button>
+                      )}
+                    </div>
                     {selectedAppointment.clientPhone && (
                       <p className="text-sm font-mono text-gray-400 mt-0.5">{selectedAppointment.clientPhone}</p>
                     )}
@@ -1241,8 +1264,9 @@ export function MyDayCard({
                   <button
                     type="button"
                     onClick={() => openClientHistory(selectedAppointment.clientPhone)}
-                    className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-sm font-medium text-white hover:bg-white/15 transition-colors active:scale-[0.98]"
+                    className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-sm font-medium text-white hover:bg-white/15 transition-colors active:scale-[0.98] inline-flex items-center justify-center gap-2"
                   >
+                    <ClockIcon className="w-4 h-4 flex-shrink-0" />
                     Історія клієнта
                   </button>
                 )}
@@ -1407,7 +1431,7 @@ export function MyDayCard({
                     type="button"
                     onClick={() => {
                       setShowClientHistoryModal(false)
-                      router.push(`/dashboard/clients?phone=${encodeURIComponent(clientHistoryData.phone)}`)
+                      router.push(`/dashboard/clients?id=${encodeURIComponent(clientHistoryData.id)}`)
                     }}
                     className="flex-1 px-4 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold"
                   >
