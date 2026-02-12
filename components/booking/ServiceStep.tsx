@@ -110,7 +110,7 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
                   {service.category && <p className="text-xs text-gray-400 truncate">{service.category}</p>}
                 </div>
                 <div className="text-right flex-shrink-0">
-                  <p className="text-sm sm:text-base font-semibold text-white">{Math.round(service.price)} ₴</p>
+                  <p className="text-sm sm:text-base font-semibold text-purple-400">{Math.round(service.price)} ₴</p>
                   <p className="text-xs text-gray-400">{service.duration} хв</p>
                 </div>
               </div>
@@ -123,7 +123,7 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
             <div className="flex justify-between items-center mb-3">
               <span className="text-sm font-medium text-gray-300">Всього:</span>
               <div className="text-right">
-                <p className="text-lg font-bold text-white">{Math.round(totalPrice)} ₴</p>
+                <p className="text-lg font-bold text-purple-400">{Math.round(totalPrice)} ₴</p>
                 <p className="text-xs text-gray-400">{totalDuration} хв</p>
               </div>
             </div>
@@ -131,7 +131,7 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
               {state.selectedServices.map((service) => (
                 <div key={service.id} className="flex justify-between text-sm">
                   <span className="text-gray-300">{service.name}</span>
-                  <span className="text-white font-medium">{Math.round(service.price)} ₴</span>
+                  <span className="text-purple-400 font-medium">{Math.round(service.price)} ₴</span>
                 </div>
               ))}
             </div>
@@ -155,8 +155,8 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
             type="button"
             onClick={() => setStep(2)}
             disabled={!canProceed}
-            className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg bg-white text-black text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+            className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}
           >
             Далі
           </button>

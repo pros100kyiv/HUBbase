@@ -128,12 +128,14 @@
     min-height: 100dvh;
     min-height: -webkit-fill-available;
     -webkit-text-size-adjust: 100%;
+    overflow-x: hidden;
   }
   
   body {
     min-height: 100vh;
     min-height: 100dvh;
     min-height: -webkit-fill-available;
+    overflow-x: hidden;
     background: #0A0A0A;
     background-image:
       radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),

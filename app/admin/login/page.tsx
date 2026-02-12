@@ -91,8 +91,8 @@ export default function AdminLoginPage() {
           <button
             type="submit"
             disabled={isLoading}
-            className="w-full px-6 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
-            style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+            className="w-full px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all active:scale-[0.98]"
+            style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}
           >
             {isLoading ? 'Вхід...' : 'Увійти'}
           </button>

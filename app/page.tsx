@@ -80,7 +80,7 @@ export default function Home() {
           </button>
           <button
             onClick={() => router.push('/register')}
-            className="text-sm font-semibold text-white bg-white/15 hover:bg-white/25 border border-white/20 px-4 py-2 rounded-lg transition-colors"
+            className="text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg transition-colors"
           >
             Реєстрація
           </button>
@@ -105,7 +105,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center landing-animate-in landing-animate-in-3">
             <button
               onClick={() => router.push('/register')}
-              className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-all active:scale-[0.98] shadow-lg shadow-black/20"
+              className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-black/20"
             >
               Почати безкоштовно
             </button>
@@ -129,7 +129,7 @@ export default function Home() {
                 key={i}
                 className="card-glass rounded-2xl p-5 sm:p-6 text-center landing-card-hover border border-white/10"
               >
-                <div className="text-xl sm:text-2xl font-bold text-white mb-1">{item.value}</div>
+                <div className="text-xl sm:text-2xl font-bold text-purple-400 mb-1">{item.value}</div>
                 <div className="text-sm text-gray-400">{item.label}</div>
               </div>
             ))}
@@ -217,7 +217,7 @@ export default function Home() {
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <button
                 onClick={() => router.push('/register')}
-                className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 bg-white text-black font-semibold rounded-xl hover:bg-gray-100 transition-all active:scale-[0.98] shadow-lg shadow-black/20"
+                className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-black/20"
               >
                 Зареєструвати бізнес
               </button>

@@ -468,8 +468,8 @@ export function TimeStep({ businessId }: TimeStepProps) {
             type="button"
             onClick={() => setStep(4)}
             disabled={!state.selectedDate || !state.selectedTime}
-            className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg bg-white text-black text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+            className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}
           >
             Далі
           </button>

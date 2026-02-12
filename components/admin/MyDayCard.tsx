@@ -787,7 +787,7 @@ export function MyDayCard({
       {appointmentsForSelectedDay.length > 0 && dayTotalRevenue > 0 && (
         <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-sm">
           <span className="text-gray-400">Дохід за день</span>
-          <span className="font-semibold text-emerald-400 tabular-nums">{dayTotalRevenue} грн</span>
+          <span className="font-semibold text-purple-400 tabular-nums">{dayTotalRevenue} грн</span>
         </div>
       )}
 

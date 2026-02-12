@@ -37,6 +37,7 @@
     "test-data:clean": "tsx scripts/clean-test-data.ts",
     "test-clients:add": "tsx scripts/add-test-clients.ts",
     "test-clients:remove": "tsx scripts/remove-test-clients.ts",
+    "test:api": "tsx scripts/api-integration-tests.ts",
     "auto-dev": "node scripts/auto-run-dev.js",
     "business:update-identifiers": "tsx scripts/update-business-identifiers.ts",
     "business:block": "tsx scripts/block-business.ts",

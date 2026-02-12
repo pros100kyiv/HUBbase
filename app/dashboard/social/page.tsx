@@ -198,9 +198,9 @@ export default function SocialPage() {
                         'w-full px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors active:scale-[0.98]',
                         integration.connected
                           ? 'border border-white/20 bg-white/10 text-white hover:bg-white/20'
-                          : 'bg-white text-black hover:bg-gray-100 hover:text-gray-900'
+                          : 'bg-emerald-600 hover:bg-emerald-500 text-white'
                       )}
-                      style={!integration.connected ? { boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' } : {}}
+                      style={!integration.connected ? { boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' } : {}}
                     >
                       {integration.connected ? 'Налаштувати' : 'Підключити'}
                     </button>
@@ -232,8 +232,8 @@ export default function SocialPage() {
               <button
                 type="button"
                 onClick={() => router.push('/dashboard/settings?tab=telegram')}
-                className="w-full px-3 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] text-left"
-                style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+                className="w-full px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-semibold transition-colors active:scale-[0.98] text-left"
+                style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}
               >
                 Налаштування Telegram
               </button>

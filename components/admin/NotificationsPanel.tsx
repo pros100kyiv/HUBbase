@@ -147,35 +147,39 @@ function AppointmentCard({ appointment, servicesMap, onConfirm, onReschedule, on
           </div>
         </div>
       ) : (
-        <div className="flex flex-wrap items-center gap-2">
-          <StatusSwitcher
-            status={appointment.status}
-            isFromBooking={true}
-            appointmentId={appointment.id}
-            onStatusChange={onStatusChange}
-            size="sm"
-            customPrice={appointment.customPrice}
-            onDoneWithoutPrice={onDoneWithoutPrice}
-          />
-          <button
-            type="button"
-            onClick={() => onConfirm(appointment.id)}
-            disabled={processing === appointment.id}
-            className="touch-target flex-1 min-w-[100px] min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-semibold bg-white text-black hover:bg-gray-100 hover:text-gray-900 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
-            style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}
-          >
-            <CheckIcon className="w-4 h-4" />
-            {processing === appointment.id ? 'Підтвердження...' : 'Підтвердити'}
-          </button>
-          <button
-            type="button"
-            onClick={() => setShowReschedule(true)}
-            disabled={processing === appointment.id}
-            className="touch-target min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors flex items-center justify-center gap-1.5"
-          >
-            <ClockIcon className="w-4 h-4" />
-            Перенести
-          </button>
+        <div className="flex flex-col sm:flex-row sm:flex-wrap gap-2 min-w-0">
+          <div className="w-full sm:w-auto min-w-0 shrink-0">
+            <StatusSwitcher
+              status={appointment.status}
+              isFromBooking={true}
+              appointmentId={appointment.id}
+              onStatusChange={onStatusChange}
+              size="sm"
+              customPrice={appointment.customPrice}
+              onDoneWithoutPrice={onDoneWithoutPrice}
+            />
+          </div>
+          <div className="flex gap-2 min-w-0">
+            <button
+              type="button"
+              onClick={() => onConfirm(appointment.id)}
+              disabled={processing === appointment.id}
+              className="touch-target flex-1 min-w-0 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-semibold bg-white text-black hover:bg-gray-100 hover:text-gray-900 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 whitespace-nowrap"
+              style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}
+            >
+              <CheckIcon className="w-4 h-4 flex-shrink-0" />
+              <span className="truncate">{processing === appointment.id ? 'Підтвердження...' : 'Підтвердити'}</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowReschedule(true)}
+              disabled={processing === appointment.id}
+              className="touch-target flex-shrink-0 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors flex items-center justify-center gap-1.5 whitespace-nowrap"
+            >
+              <ClockIcon className="w-4 h-4 flex-shrink-0" />
+              Перенести
+            </button>
+          </div>
         </div>
       )}
     </article>

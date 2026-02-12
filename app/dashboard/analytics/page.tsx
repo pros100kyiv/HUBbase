@@ -7,6 +7,7 @@ import { cn } from '@/lib/utils'
 import { format, subDays } from 'date-fns'
 import { MonthProgressCard } from '@/components/admin/MonthProgressCard'
 import { Modal } from '@/components/ui/modal'
+import { toast } from '@/components/ui/toast'
 
 type DetailSection = {
   title?: string
@@ -382,7 +383,7 @@ export default function AnalyticsPage() {
                     <span className="text-xs text-gray-400">Прогноз на наступний період</span>
                     <ChevronRightIcon className="w-4 h-4 text-gray-500 group-hover:text-white shrink-0" />
                   </div>
-                  <div className="text-xl md:text-2xl font-bold text-green-400 mt-1">{formatCurrency(advancedStats.forecastNextPeriod || 0)}</div>
+                  <div className="text-xl md:text-2xl font-bold text-purple-400 mt-1">{formatCurrency(advancedStats.forecastNextPeriod || 0)}</div>
                   <div className="text-xs text-gray-500 mt-1">
                     {advancedStats.forecastGrowth > 0 ? <span className="text-green-400">+{advancedStats.forecastGrowth}%</span> : <span className="text-red-400">{advancedStats.forecastGrowth}%</span>}
                   </div>
@@ -542,7 +543,7 @@ export default function AnalyticsPage() {
                         <span className="text-xs text-gray-400 uppercase tracking-wide">Виконано</span>
                         <ChevronRightIcon className="w-3.5 h-3.5 text-gray-500 group-hover:text-white shrink-0" />
                       </div>
-                      <div className="text-xl font-bold text-green-400 tabular-nums mt-1">{advancedStats.conversionFunnel.completed ?? 0} <span className="text-sm font-medium text-gray-400">({Math.round(advancedStats.conversionFunnel.completionRate ?? 0)}%)</span></div>
+                      <div className="text-xl font-bold text-purple-400 tabular-nums mt-1">{advancedStats.conversionFunnel.completed ?? 0} <span className="text-sm font-medium text-gray-400">({Math.round(advancedStats.conversionFunnel.completionRate ?? 0)}%)</span></div>
                     </button>
                     <button
                       type="button"
@@ -712,7 +713,7 @@ export default function AnalyticsPage() {
                         <span className="text-xs text-gray-400">На наступний період</span>
                         <ChevronRightIcon className="w-4 h-4 text-gray-500 group-hover:text-white shrink-0" />
                       </div>
-                      <div className="text-xl font-bold text-green-400 mt-1">{formatCurrency(advancedStats.forecastNextPeriod || 0)}</div>
+                      <div className="text-xl font-bold text-purple-400 mt-1">{formatCurrency(advancedStats.forecastNextPeriod || 0)}</div>
                       {advancedStats.forecastGrowth !== 0 && (
                         <div className={`text-sm mt-1 ${advancedStats.forecastGrowth > 0 ? 'text-green-400' : 'text-red-400'}`}>
                           {advancedStats.forecastGrowth > 0 ? '↑' : '↓'} {Math.abs(advancedStats.forecastGrowth)}%
@@ -797,7 +798,7 @@ export default function AnalyticsPage() {
                       <span className="text-xs text-gray-400">Утримання клієнтів</span>
                       <ChevronRightIcon className="w-4 h-4 text-gray-500 group-hover:text-white shrink-0" />
                     </div>
-                    <div className="text-2xl font-bold text-green-400 mt-1">{Math.round(advancedStats.retentionRate ?? 0)}%</div>
+                    <div className="text-2xl font-bold text-purple-400 mt-1">{Math.round(advancedStats.retentionRate ?? 0)}%</div>
                   </button>
                   <button
                     type="button"
@@ -945,7 +946,7 @@ export default function AnalyticsPage() {
                               <div className="text-sm text-gray-400">{master.appointments ?? 0} записів</div>
                             </div>
                             <div className="text-right flex items-center gap-1">
-                              <div className="font-semibold text-blue-400">{formatCurrency(master.revenue ?? 0)}</div>
+                              <div className="font-semibold text-purple-400">{formatCurrency(master.revenue ?? 0)}</div>
                               <ChevronRightIcon className="w-4 h-4 text-gray-500 group-hover:text-white shrink-0" />
                             </div>
                           </div>
@@ -1065,7 +1066,7 @@ export default function AnalyticsPage() {
                 <ChevronRightIcon className="w-4 h-4 text-gray-500 group-hover:text-white shrink-0" />
               </div>
               <div className="text-xs text-gray-400">Загальний дохід</div>
-              <div className="text-xl font-bold text-white">{formatCurrency(stats?.totalRevenue || 0)}</div>
+              <div className="text-xl font-bold text-purple-400">{formatCurrency(stats?.totalRevenue || 0)}</div>
             </button>
             <button
               type="button"
@@ -1298,7 +1299,7 @@ export default function AnalyticsPage() {
             <div className="space-y-2">
               <button
                 onClick={() => router.push('/dashboard/appointments')}
-                className="w-full px-3 py-2.5 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-all active:scale-[0.98] flex items-center gap-2"
+                className="w-full px-3 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-semibold transition-all active:scale-[0.98] flex items-center gap-2"
                 style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                 title="Відкрити сторінку записів"
               >
@@ -1344,11 +1345,20 @@ export default function AnalyticsPage() {
             <button
               type="button"
               onClick={() => {
-                router.push(detailSlot!.action!.url)
-                setDetailSlot(null)
+                const url = detailSlot?.action?.url
+                if (url && typeof url === 'string' && url.startsWith('/')) {
+                  try {
+                    router.push(url)
+                    setDetailSlot(null)
+                  } catch {
+                    toast({ title: 'В розробці', description: 'Перехід тимчасово недоступний. Спробуйте пізніше.', type: 'error' })
+                  }
+                } else {
+                  toast({ title: 'В розробці', description: 'Цей розділ готується до запуску.', type: 'error' })
+                }
               }}
-              className="w-full px-4 py-2.5 rounded-lg bg-white text-black text-sm font-semibold hover:bg-gray-100 transition-colors flex items-center justify-center gap-2"
-              style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+              className="w-full px-4 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-colors flex items-center justify-center gap-2"
+              style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}
             >
               <CalendarIcon className="w-4 h-4" />
               {detailSlot.action.label}

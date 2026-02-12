@@ -242,8 +242,8 @@ export default function PricePage() {
             <button
               type="button"
               onClick={() => { setCreateForm({ name: '', price: '', duration: '', category: '' }); setShowCreateModal(true) }}
-              className="touch-target px-4 py-2.5 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] flex-shrink-0"
-              style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+              className="touch-target px-4 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-semibold transition-colors active:scale-[0.98] flex-shrink-0"
+              style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}
             >
               Додати до прайсу
             </button>
@@ -376,8 +376,8 @@ export default function PricePage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 px-4 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+                    className="flex-1 px-4 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}
                   >
                     {isSubmitting ? 'Збереження...' : 'Додати'}
                   </button>
@@ -479,7 +479,7 @@ export default function PricePage() {
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="flex-1 px-4 py-3 bg-white text-black font-semibold rounded-lg hover:bg-gray-100 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-4 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
                   >
                     {isSubmitting ? 'Збереження...' : 'Зберегти'}
@@ -538,8 +538,8 @@ export default function PricePage() {
               <button
                 type="button"
                 onClick={() => { setCreateForm({ name: '', price: '', duration: '', category: '' }); setShowCreateModal(true) }}
-                className="touch-target min-h-[44px] px-5 py-2.5 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
-                style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+                className="touch-target min-h-[44px] px-5 py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-semibold transition-colors active:scale-[0.98]"
+                style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}
               >
                 Додати до прайсу
               </button>
@@ -595,7 +595,7 @@ export default function PricePage() {
                   </div>
                   <div className="mt-2 flex items-center justify-between text-xs">
                     <span className="text-gray-400">{service.duration} хв</span>
-                    <span className="font-bold text-white">{Math.round(service.price)} ₴</span>
+                    <span className="font-bold text-purple-400">{Math.round(service.price)} ₴</span>
                   </div>
                 </div>
               ))}
@@ -631,7 +631,7 @@ export default function PricePage() {
                     <li key={s.id} className="flex items-center justify-between gap-2 text-sm">
                       <span className="text-white truncate flex-1 min-w-0" title={s.name}>{s.name}</span>
                       <span className="text-gray-400 flex-shrink-0">{s.duration} хв</span>
-                      <span className="font-medium text-white flex-shrink-0 w-14 text-right">{Math.round(s.price)} ₴</span>
+                      <span className="font-medium text-purple-400 flex-shrink-0 w-14 text-right">{Math.round(s.price)} ₴</span>
                     </li>
                   ))}
                 </ul>
@@ -644,7 +644,7 @@ export default function PricePage() {
                   </div>
                   <div className="flex justify-between items-baseline">
                     <span className="text-gray-400">Разом</span>
-                    <span className="text-xl font-bold text-white">{Math.round(totalPrice)} ₴</span>
+                    <span className="text-xl font-bold text-purple-400">{Math.round(totalPrice)} ₴</span>
                   </div>
                 </div>
                 <button
@@ -677,7 +677,7 @@ export default function PricePage() {
               <button
                 type="button"
                 onClick={() => { setCreateForm({ name: '', price: '', duration: '', category: '' }); setShowCreateModal(true) }}
-                className="touch-target w-full min-h-[44px] px-3 py-2 rounded-lg bg-white/10 border border-white/20 text-white text-sm font-medium hover:bg-white/15 transition-colors text-left"
+                className="touch-target w-full min-h-[44px] px-3 py-2 rounded-lg bg-emerald-600/80 hover:bg-emerald-500 text-white text-sm font-medium transition-colors text-left"
               >
                 Додати послугу
               </button>

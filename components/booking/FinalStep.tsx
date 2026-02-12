@@ -5,7 +5,8 @@ import { useBooking } from '@/contexts/BookingContext'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
-import { normalizeUaPhone, isValidUaPhone } from '@/lib/utils/phone'
+import { isValidUaPhone } from '@/lib/utils/phone'
+import { toast } from '@/components/ui/toast'
 
 interface FinalStepProps {
   businessId?: string
@@ -15,6 +16,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
   const { state, setClientName, setClientPhone, setStep, reset } = useBooking()
   const [errors, setErrors] = useState<{ name?: string; phone?: string }>({})
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitError, setSubmitError] = useState<string | null>(null)
 
   const validate = () => {
     const newErrors: { name?: string; phone?: string } = {}
@@ -34,18 +36,19 @@ export function FinalStep({ businessId }: FinalStepProps) {
   }
 
   const handleSubmit = async () => {
+    setSubmitError(null)
     if (!validate()) return
     if (!state.selectedDate || !state.selectedTime) {
-      alert('Оберіть дату та час запису.')
+      toast({ title: 'Оберіть дату та час запису', type: 'error' })
       return
     }
     const bid = businessId || state.businessId
     if (!bid) {
-      alert('Помилка: бізнес не визначено. Оновіть сторінку та спробуйте знову.')
+      toast({ title: 'Помилка', description: 'Бізнес не визначено. Оновіть сторінку та спробуйте знову.', type: 'error' })
       return
     }
     if (!state.selectedMaster?.id) {
-      alert('Помилка: спеціаліст не обрано. Поверніться назад та оберіть спеціаліста.')
+      toast({ title: 'Помилка', description: 'Спеціаліст не обрано. Поверніться назад та оберіть майстра.', type: 'error' })
       return
     }
 
@@ -81,32 +84,39 @@ export function FinalStep({ businessId }: FinalStepProps) {
 
       if (response.ok) {
         reset()
+        toast({ title: 'Запис створено!', description: 'Ми чекаємо на вас.', type: 'success', duration: 3000 })
         const confirmed = window.confirm('Запис успішно створено! Хочете створити ще один?')
         if (confirmed) {
           setStep(0)
         } else {
-          // Повертаємося на головну
           if (typeof window !== 'undefined') {
             window.location.href = '/'
           }
         }
       } else {
         let msg = 'Помилка при створенні запису'
+        let isSlotTaken = false
         try {
           const text = await response.text()
           if (text) {
             const data = JSON.parse(text)
             msg = data.error || msg
-            if (data.details) msg += `\n\n(${data.details})`
+            isSlotTaken = response.status === 409 || /already booked|зайнят/i.test(msg)
           }
         } catch {
           // ignore
         }
-        alert(msg)
+        if (isSlotTaken || response.status === 409) {
+          const slotTakenMsg = 'Цей час уже зайнятий іншим клієнтом. Поверніться та оберіть інший час.'
+          setSubmitError(slotTakenMsg)
+          toast({ title: 'Час зайнятий', description: slotTakenMsg, type: 'error', duration: 5000 })
+        } else {
+          toast({ title: 'Помилка', description: msg, type: 'error' })
+        }
       }
     } catch (error) {
       const errMsg = error instanceof Error ? error.message : 'Помилка при створенні запису'
-      alert(errMsg)
+      toast({ title: 'Помилка', description: errMsg, type: 'error' })
     } finally {
       setIsSubmitting(false)
     }
@@ -154,6 +164,19 @@ export function FinalStep({ businessId }: FinalStepProps) {
           </div>
         </div>
 
+        {submitError && (
+          <div className="rounded-xl p-4 mb-4 card-glass border-2 border-amber-500/50 bg-amber-500/10">
+            <p className="text-sm font-medium text-amber-200 mb-3">{submitError}</p>
+            <button
+              type="button"
+              onClick={() => { setSubmitError(null); setStep(3) }}
+              className="w-full min-h-[44px] py-2.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-100 text-sm font-semibold hover:bg-amber-500/30 transition-colors"
+            >
+              ← Назад до вибору часу
+            </button>
+          </div>
+        )}
+
         <div className="rounded-xl p-4 mb-4 card-glass">
           <h3 className="text-base font-semibold mb-3 text-white">Деталі запису:</h3>
           <div className="space-y-1.5 text-sm">
@@ -164,7 +187,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
                 ? (state.customServiceName?.trim() ? state.customServiceName.trim() : 'Без послуги — вартість після процедури')
                 : state.selectedServices.map(s => s.name).join(', ')}
             </span></div>
-            <div className="flex justify-between pt-2 border-t border-white/10"><span className="font-semibold text-white">Всього:</span><span className="text-lg font-bold text-white">{isPriceAfterProcedure ? 'Вартість узгоджується після процедури' : `${Math.round(totalPrice)} ₴`}</span></div>
+            <div className="flex justify-between pt-2 border-t border-white/10"><span className="font-semibold text-white">Всього:</span><span className="text-lg font-bold text-purple-400">{isPriceAfterProcedure ? 'Вартість узгоджується після процедури' : `${Math.round(totalPrice)} ₴`}</span></div>
           </div>
         </div>
 
@@ -174,8 +197,8 @@ export function FinalStep({ businessId }: FinalStepProps) {
             type="button"
             onClick={handleSubmit}
             disabled={isSubmitting || !state.selectedDate || !state.selectedTime}
-            className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg bg-white text-black text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
-            style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+            className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}
           >
             {isSubmitting ? 'Відправка...' : 'Підтвердити запис'}
           </button>

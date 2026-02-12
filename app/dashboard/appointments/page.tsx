@@ -736,7 +736,7 @@ export default function AppointmentsPage() {
                   {showRevenue && dayRevenue > 0 && (
                     <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-500/15 border border-emerald-500/30">
                       <span className="text-sm text-gray-300">Дохід за день</span>
-                      <span className="text-lg font-bold text-emerald-400">{dayRevenue} грн</span>
+                      <span className="text-lg font-bold text-purple-400">{dayRevenue} грн</span>
                     </div>
                   )}
                   <div className="flex flex-wrap gap-1">
@@ -922,7 +922,7 @@ export default function AppointmentsPage() {
               </div>
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
                 <span className="text-sm text-gray-300">{dayStats ? 'Дохід за день' : 'Дохід за період'}</span>
-                <span className="text-sm font-semibold text-emerald-400">{dayStats ? dayStats.revenue : stats.revenue} грн</span>
+                <span className="text-sm font-semibold text-purple-400">{dayStats ? dayStats.revenue : stats.revenue} грн</span>
               </div>
             </div>
           </div>

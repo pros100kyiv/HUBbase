@@ -298,7 +298,7 @@ export default function ControlCenterPage() {
               type="button"
               onClick={handleSync}
               disabled={syncing}
-              className="px-3 sm:px-4 py-2.5 min-h-[44px] rounded-lg border border-blue-500/50 bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 disabled:opacity-50 transition-colors font-medium text-sm sm:text-base"
+              className="px-3 sm:px-4 py-2.5 min-h-[44px] rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50 transition-colors font-medium text-sm sm:text-base"
               title="Синхронізувати всі акаунти з центром управління"
             >
               {syncing ? 'Синхр...' : 'Синхронізувати'}
@@ -317,7 +317,7 @@ export default function ControlCenterPage() {
               type="button"
               onClick={handleSync}
               disabled={syncing}
-              className="flex-1 min-h-[44px] px-3 py-2.5 rounded-lg border border-blue-500/50 bg-blue-500/20 text-blue-300 hover:bg-blue-500/30 disabled:opacity-50 transition-colors font-medium text-sm"
+              className="flex-1 min-h-[44px] px-3 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50 transition-colors font-medium text-sm"
             >
               {syncing ? 'Синхр...' : 'Синхр.'}
             </button>
@@ -993,8 +993,8 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
             </select>
             <button
               onClick={handleBulkAction}
-              className="min-h-[44px] px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 hover:text-gray-900 transition-colors font-semibold shrink-0"
-              style={{ letterSpacing: '-0.01em', boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+              className="min-h-[44px] px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg transition-colors font-semibold shrink-0"
+              style={{ letterSpacing: '-0.01em', boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}
             >
               Застосувати ({selectedBusinesses.length})
             </button>
@@ -1032,8 +1032,8 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
             link.download = `businesses-${new Date().toISOString().split('T')[0]}.csv`
             link.click()
           }}
-          className="min-h-[44px] px-4 py-2 bg-white text-black rounded-lg hover:bg-gray-100 hover:text-gray-900 flex items-center justify-center gap-2 font-semibold transition-colors shrink-0 w-full sm:w-auto"
-          style={{ letterSpacing: '-0.01em', boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+          className="min-h-[44px] px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg flex items-center justify-center gap-2 font-semibold transition-colors shrink-0 w-full sm:w-auto"
+          style={{ letterSpacing: '-0.01em', boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}
         >
           <DownloadIcon className="w-5 h-5 shrink-0" />
           <span>Експорт CSV</span>

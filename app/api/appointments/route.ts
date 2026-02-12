@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
-import { normalizeUaPhone } from '@/lib/utils/phone'
+import { normalizeUaPhone, isValidUaPhone } from '@/lib/utils/phone'
 
 function normalizeServicesToJsonArrayString(services: unknown): string | null {
   // В БД зберігаємо JSON-рядок масиву ID послуг: '["id1","id2"]' або '[]' (без послуги / своя послуга)
@@ -28,7 +28,7 @@ function checkConflict(
         masterId,
         startTime: { lt: endTime },
         endTime: { gt: startTime },
-        status: { not: 'Cancelled' },
+        status: { notIn: ['Cancelled', 'Скасовано'] },
         ...(excludeId && { id: { not: excludeId } }),
       },
       select: { id: true },
@@ -87,6 +87,12 @@ export async function POST(request: Request) {
     }
 
     const normalizedPhone = normalizeUaPhone(String(clientPhone))
+    if (!isValidUaPhone(normalizedPhone)) {
+      return NextResponse.json(
+        { error: 'Невірний формат телефону. Введіть український номер, наприклад 0671234567' },
+        { status: 400 }
+      )
+    }
     const normalizedClientName = String(clientName ?? '').trim()
     const normalizedClientEmail =
       typeof clientEmail === 'string' && clientEmail.trim() ? clientEmail.trim() : null

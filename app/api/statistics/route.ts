@@ -134,7 +134,7 @@ export async function GET(request: Request) {
       completedAppointments,
       cancelledAppointments,
       uniqueClients,
-      totalRevenue: Math.round(totalRevenue),
+      totalRevenue: Math.round(totalRevenue * 100) / 100,
       serviceStats,
       masterStats
     })

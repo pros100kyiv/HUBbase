@@ -220,7 +220,7 @@ async function getAvailableSlotsForDate(
         masterId,
         startTime: { lt: endOfDayDate },
         endTime: { gt: startOfDayDate },
-        status: { not: 'Cancelled' },
+        status: { notIn: ['Cancelled', 'Скасовано'] },
       },
       select: { startTime: true, endTime: true },
     })

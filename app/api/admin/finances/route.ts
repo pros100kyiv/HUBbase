@@ -35,11 +35,11 @@ export async function GET(request: Request) {
         startDate = new Date(now.getFullYear(), now.getMonth(), 1)
     }
 
-    // Отримуємо всі платежі за період
+    // Отримуємо всі платежі за період (Payment.status: succeeded = успішна оплата)
     const payments = await prisma.payment.findMany({
       where: {
         createdAt: { gte: startDate },
-        status: 'completed',
+        status: 'succeeded',
       },
       include: {
         business: {
@@ -51,9 +51,10 @@ export async function GET(request: Request) {
       },
     })
 
-    const totalRevenue = payments.reduce((sum, p) => sum + Number(p.amount) / 100, 0)
+    const totalRevenueRaw = payments.reduce((sum, p) => sum + Number(p.amount) / 100, 0)
+    const totalRevenue = Math.round(totalRevenueRaw * 100) / 100
 
-    // Топ бізнеси за доходами
+    // Топ бізнеси за доходами (суми з точністю до копійки)
     const topByRevenue = payments.reduce((acc: any, payment) => {
       const businessId = payment.businessId
       if (!acc[businessId]) {
@@ -70,6 +71,7 @@ export async function GET(request: Request) {
     }, {})
 
     const topBusinesses = Object.values(topByRevenue)
+      .map((b: any) => ({ ...b, revenue: Math.round(b.revenue * 100) / 100 }))
       .sort((a: any, b: any) => b.revenue - a.revenue)
       .slice(0, 10)
 

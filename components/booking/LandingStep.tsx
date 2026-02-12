@@ -26,8 +26,8 @@ export function LandingStep({ business }: LandingStepProps) {
         </p>
         <button
           type="button"
-          className="px-6 md:px-8 py-3 md:py-4 rounded-lg bg-white text-black font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] hidden md:inline-flex text-sm md:text-base"
-          style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+          className="px-6 md:px-8 py-3 md:py-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-colors active:scale-[0.98] hidden md:inline-flex text-sm md:text-base"
+          style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}
           onClick={() => setStep(1)}
         >
           Запис онлайн
@@ -40,8 +40,8 @@ export function LandingStep({ business }: LandingStepProps) {
         </div>
         <button
           type="button"
-          className="w-full min-h-[48px] py-4 rounded-lg bg-white text-black font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] text-sm touch-target"
-          style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
+          className="w-full min-h-[48px] py-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-colors active:scale-[0.98] text-sm touch-target"
+          style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}
           onClick={() => setStep(1)}
         >
           Запис онлайн

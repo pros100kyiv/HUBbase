@@ -1,13 +1,13 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { format, isValid } from 'date-fns'
 import { toast } from '@/components/ui/toast'
 import { ModalPortal } from '@/components/ui/modal-portal'
-import { normalizeUaPhone } from '@/lib/utils/phone'
+import { normalizeUaPhone, isValidUaPhone } from '@/lib/utils/phone'
 
 /** Нормалізує час до HH:mm для коректного парсингу дати та відображення. */
 function normalizeHHmm(t: string): string {
@@ -74,6 +74,8 @@ export function CreateAppointmentForm({
   const [serviceSearchQuery, setServiceSearchQuery] = useState('')
   const [clientLookupStatus, setClientLookupStatus] = useState<'idle' | 'loading' | 'found' | 'not_found'>('idle')
   const lookupAbortRef = useRef<AbortController | null>(null)
+  const [availableSlots, setAvailableSlots] = useState<string[]>([])
+  const [slotsLoading, setSlotsLoading] = useState(false)
 
   useEffect(() => {
     if (formRef.current) {
@@ -114,6 +116,62 @@ export function CreateAppointmentForm({
       }))
     }
   }, [clientLocked, initialClientPhone, initialClientName])
+
+  // Тривалість: сума обраних послуг або 30 хв
+  const durationMinutes = useMemo(() => {
+    const total = formData.serviceIds.reduce((sum, id) => {
+      const s = services.find((x) => x.id === id)
+      return sum + (s?.duration ?? 30)
+    }, 0)
+    return total > 0 ? total : 30
+  }, [formData.serviceIds, services])
+
+  // Завантаження вільних слотів при зміні дати, майстра або тривалості
+  useEffect(() => {
+    if (!businessId || !formData.masterId || !formData.date) {
+      setAvailableSlots([])
+      return
+    }
+    const dateMatch = /^\d{4}-\d{2}-\d{2}$/.test(formData.date)
+    if (!dateMatch) {
+      setAvailableSlots([])
+      return
+    }
+    let cancelled = false
+    setSlotsLoading(true)
+    const params = new URLSearchParams({
+      businessId,
+      masterId: formData.masterId,
+      date: formData.date,
+      durationMinutes: String(durationMinutes),
+    })
+    fetch(`/api/availability?${params.toString()}`)
+      .then((res) => (res.ok ? res.json() : { availableSlots: [] }))
+      .then((data) => {
+        if (cancelled) return
+        const raw: unknown[] = Array.isArray(data?.availableSlots) ? data.availableSlots : []
+        const times = raw
+          .filter((s: unknown): s is string => typeof s === 'string')
+          .map((s: string) => {
+            const t = s.includes('T') ? s.slice(11, 16) : s
+            return /^\d{1,2}:\d{2}$/.test(t) ? t : null
+          })
+          .filter((t): t is string => Boolean(t))
+        setAvailableSlots(times)
+        setFormData((prev) => {
+          const current = prev.startTime
+          if (times.includes(current)) return prev
+          return { ...prev, startTime: times[0] || '09:00' }
+        })
+      })
+      .catch(() => {
+        if (!cancelled) setAvailableSlots([])
+      })
+      .finally(() => {
+        if (!cancelled) setSlotsLoading(false)
+      })
+    return () => { cancelled = true }
+  }, [businessId, formData.masterId, formData.date, durationMinutes])
 
   // Пошук клієнта за телефоном: якщо є в базі — підтягнути ім'я; якщо немає — залишити поле для вводу (при створенні запису клієнт створиться через API)
   useEffect(() => {
@@ -181,8 +239,31 @@ export function CreateAppointmentForm({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSubmitting(true)
 
+    // Валідація: обов'язкові поля та формат телефону
+    if (!clientLocked) {
+      const name = formData.clientName?.trim() ?? ''
+      const phone = formData.clientPhone?.trim() ?? ''
+      if (!name) {
+        toast({ title: 'Помилка', description: "Введіть ім'я клієнта", type: 'error' })
+        return
+      }
+      if (!phone) {
+        toast({ title: 'Помилка', description: 'Введіть номер телефону клієнта', type: 'error' })
+        return
+      }
+      if (!isValidUaPhone(phone)) {
+        toast({ title: 'Помилка', description: 'Введіть коректний український номер (наприклад 0671234567)', type: 'error' })
+        return
+      }
+    }
+
+    if (!formData.masterId) {
+      toast({ title: 'Помилка', description: 'Оберіть спеціаліста', type: 'error' })
+      return
+    }
+
+    setIsSubmitting(true)
     try {
       const startDateTime = new Date(`${formData.date}T${formData.startTime}`)
       const selectedServices = services.filter((s) => formData.serviceIds.includes(s.id))
@@ -545,25 +626,36 @@ export function CreateAppointmentForm({
               />
             </div>
 
-            {/* Start Time */}
+            {/* Start Time — тільки вільні слоти (заблоковані зайняті) */}
             <div>
               <label className={`block font-medium text-foreground ${embedded ? 'text-xs mb-0.5' : 'text-sm mb-2'}`}>
                 Час початку *
               </label>
-              <Input
-                type="time"
-                value={formData.startTime}
-                onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                required
-                className={embedded ? embeddedFieldClass : undefined}
-              />
+              {slotsLoading ? (
+                <p className="text-sm text-muted-foreground py-2">Завантаження вільних слотів…</p>
+              ) : availableSlots.length === 0 ? (
+                <p className="text-sm text-amber-600 dark:text-amber-400 py-2">
+                  Немає вільних слотів на цей день. Оберіть іншу дату або спеціаліста.
+                </p>
+              ) : (
+                <select
+                  value={formData.startTime}
+                  onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                  required
+                  className={embedded ? embeddedFieldClass : 'w-full px-3 py-2.5 sm:py-2 min-h-[48px] sm:min-h-0 border border-gray-300 dark:border-gray-700 rounded-candy-sm bg-white dark:bg-gray-800 text-foreground'}
+                >
+                  {availableSlots.map((slot) => (
+                    <option key={slot} value={slot}>{slot}</option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {/* Actions */}
             <div className={`flex flex-col sm:flex-row gap-1.5 sm:gap-2 ${embedded ? 'pt-0.5' : 'pt-2'}`}>
               <button
                 type="submit"
-                disabled={isSubmitting || !formData.masterId || !formData.clientName || !formData.clientPhone}
+                disabled={isSubmitting || !formData.masterId || !formData.clientName || !formData.clientPhone || availableSlots.length === 0}
                 className={embedded ? 'dashboard-btn-primary flex-1 min-h-[34px] py-1.5 text-sm rounded-md' : 'dashboard-btn-primary flex-1 min-h-[48px] touch-target'}
               >
                 {isSubmitting ? 'Створення...' : 'Створити запис'}
