@@ -311,8 +311,8 @@ export function MyDayCard({
   }
 
   /** Повертає масив назв послуг за JSON-рядком з масивом ID послуг або customServiceName */
-  const getServiceNamesList = (servicesJson?: string, customServiceName?: string | null): string[] => {
-    const ids = parseServices(servicesJson) as string[]
+  const getServiceNamesList = (servicesJson?: string | null, customServiceName?: string | null): string[] => {
+    const ids = parseServices(servicesJson ?? undefined) as string[]
     if (ids.length > 0) {
       return ids.map((id) => {
         const service = servicesList.find((s) => s.id === id)
@@ -326,7 +326,7 @@ export function MyDayCard({
   /** Сума за запис: customPrice (копійки) / 100 або сума цін послуг */
   const getDisplayPrice = (apt: Appointment): number | null => {
     if (apt.customPrice != null && apt.customPrice > 0) return Math.round(apt.customPrice / 100)
-    const ids = parseServices(apt.services) as string[]
+    const ids = parseServices(apt.services ?? undefined) as string[]
     if (ids.length === 0) return null
     let sum = 0
     for (const id of ids) {
