@@ -96,7 +96,7 @@ export default function MainPage() {
           <div className="lg:col-span-3 space-y-3 md:space-y-6 min-w-0">
             <div className="h-64 rounded-xl bg-white/5 border border-white/10 animate-pulse" />
           </div>
-          <div className="lg:col-span-1 space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
+          <div className="dashboard-sidebar-col lg:col-span-1 space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
             <div className="h-40 rounded-xl bg-white/5 border border-white/10 animate-pulse" />
             <div className="h-40 rounded-xl bg-white/5 border border-white/10 animate-pulse" />
           </div>
@@ -173,7 +173,7 @@ export default function MainPage() {
         </div>
 
         {/* Right Column - Sidebar (1 column). Мобільний порядок: Соцмережі → Нотатки → Календар */}
-        <div className="lg:col-span-1 space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
+        <div className="dashboard-sidebar-col lg:col-span-1 space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
           {/* Social Messages — першими на мобільному (швидка відповідь) */}
           {business?.id && (
             <div className="order-1 min-w-0 w-full max-w-full overflow-hidden">

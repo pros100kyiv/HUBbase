@@ -182,8 +182,8 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
         </h4>
       </div>
 
-      {/* Calendar Grid — стискається в межах сайдбару, не вилітає за екран */}
-      <div className="grid grid-cols-7 gap-1 md:gap-1.5 min-w-0 w-full">
+      {/* Calendar Grid — стискається в межах сайдбару, не вилітає за екран (minmax(0,1fr) щоб колонки могли стискатись) */}
+      <div className="grid gap-1 md:gap-1.5 min-w-0 w-full" style={{ gridTemplateColumns: 'repeat(7, minmax(0, 1fr))' }}>
         {/* Day headers */}
         {['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд'].map((day) => (
           <div key={day} className="text-center text-[10px] md:text-xs font-semibold text-gray-400 py-1 truncate min-w-0">

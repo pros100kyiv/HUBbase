@@ -767,10 +767,17 @@
     min-width: 0;
     max-width: 100%;
     overflow-x: hidden;
+    box-sizing: border-box;
   }
   [data-dashboard-content] .dashboard-content-inner > * {
     min-width: 0;
     max-width: 100%;
+    box-sizing: border-box;
+  }
+  /* Права колонка дашборду: жорстке обмеження, щоб календар і нотатки не роздували ширину */
+  [data-dashboard-content] .dashboard-content-inner .dashboard-sidebar-col {
+    min-width: 0;
+    overflow: hidden;
   }
 
   /* ========== Chart styles (analytics, progress, trends) ========== */

@@ -193,9 +193,9 @@ export function NotesCard({ businessId }: NotesCardProps) {
                 <div
                   key={note.id}
                   onClick={() => handleEdit(note)}
-                  className="flex items-center gap-2 md:gap-3 cursor-pointer hover:bg-white/10 rounded-lg p-2 -mx-2 transition-colors active:scale-[0.98] touch-manipulation min-h-[44px]"
+                  className="flex items-center gap-2 md:gap-3 cursor-pointer hover:bg-white/10 rounded-lg p-2 -mx-2 transition-colors active:scale-[0.98] touch-manipulation min-h-[44px] min-w-0"
                 >
-                  <span className="text-xs md:text-sm flex-1 text-gray-200">{note.text}</span>
+                  <span className="text-xs md:text-sm flex-1 text-gray-200 min-w-0 break-words line-clamp-2">{note.text}</span>
                 </div>
               ))
             )}

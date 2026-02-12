@@ -160,7 +160,7 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="relative min-h-screen overflow-x-hidden">
+    <div className="relative min-h-screen w-full max-w-[100vw] overflow-x-hidden">
       {/* Той самий фон, що на реєстрації, вході та головній — м’які градієнтні орби */}
       <div className="fixed inset-0 pointer-events-none landing-hero-gradient" aria-hidden />
 
