@@ -179,20 +179,21 @@ async function getAvailableSlotsForDate(
   durationMinutes: number,
   now: Date,
   options: BookingSlotsOptions = DEFAULT_BOOKING_OPTIONS
-): Promise<string[]> {
+): Promise<{ available: string[]; busySlots: string[] }> {
+  const empty = { available: [] as string[], busySlots: [] as string[] }
   const parts = dateNorm.split('-')
-  if (parts.length !== 3) return []
+  if (parts.length !== 3) return empty
   const year = parseInt(parts[0], 10)
   const month = parseInt(parts[1], 10) - 1
   const day = parseInt(parts[2], 10)
-  if (isNaN(year) || isNaN(month) || isNaN(day) || month < 0 || month > 11 || day < 1 || day > 31) return []
+  if (isNaN(year) || isNaN(month) || isNaN(day) || month < 0 || month > 11 || day < 1 || day > 31) return empty
 
   const dayOfWeek = getDayOfWeekUTC(year, month, day)
   const dayName = DAY_NAMES[dayOfWeek]
   const wh = parseWorkingHours(master.workingHours)
   const dateOverrides = parseScheduleDateOverrides(master.scheduleDateOverrides)
   const windows = getWindowsForDate(dateNorm, dateOverrides, wh, dayName)
-  if (!windows || windows.length === 0) return []
+  if (!windows || windows.length === 0) return empty
 
   const { slotStepMinutes, bufferMinutes, minAdvanceBookingMinutes } = options
   const slotStepHours = slotStepMinutes / 60
