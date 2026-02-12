@@ -33,8 +33,8 @@ export interface MyDayCardProps {
   confirmedAppointments: number
   totalRevenue?: number
   onBookAppointment?: () => void
-  /** Вибір вільного слота: дата + час (HH:mm) для переходу на запис */
-  onBookSlot?: (date: Date, time: string) => void
+  /** Вибір вільного слота: дата + час (HH:mm) + опційно masterId для переходу на запис */
+  onBookSlot?: (date: Date, time: string, masterId?: string) => void
   /** Відкрити модалку «Вільні години» (рендериться на батьківській сторінці) */
   onOpenFreeSlots?: (date: Date) => void
   selectedDate?: Date
