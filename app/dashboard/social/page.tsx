@@ -8,6 +8,9 @@ import { toast } from '@/components/ui/toast'
 import { TelegramOAuth } from '@/components/admin/TelegramOAuth'
 import { SocialMessagesCard } from '@/components/admin/SocialMessagesCard'
 
+// Telegram тимчасово вимкнено — не викликає /api/telegram/* на цій сторінці
+const SHOW_TELEGRAM = false
+
 // Метадані платформ для іконок та опису (API повертає лише id, name, connected)
 const PLATFORM_META: Record<string, { icon: React.ReactNode; description: string }> = {
   telegram: {
@@ -165,8 +168,8 @@ export default function SocialPage() {
             </h1>
           </div>
 
-          {/* Telegram OAuth Section */}
-          {business && (
+          {/* Telegram OAuth — показується тільки якщо SHOW_TELEGRAM = true */}
+          {SHOW_TELEGRAM && business && (
             <div className="rounded-xl p-4 md:p-6 card-glass">
               <TelegramOAuth businessId={business.id} onConnected={handleTelegramConnected} />
             </div>
@@ -208,16 +211,10 @@ export default function SocialPage() {
                   {integration.id === 'telegram' ? (
                     <button
                       type="button"
-                      onClick={() => router.push('/dashboard/settings?tab=telegram')}
-                      className={cn(
-                        'w-full px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors active:scale-[0.98]',
-                        integration.connected
-                          ? 'border border-white/20 bg-white/10 text-white hover:bg-white/20'
-                          : 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                      )}
-                      style={!integration.connected ? { boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' } : {}}
+                      disabled
+                      className="w-full px-3 py-1.5 rounded-lg text-xs font-medium border border-white/10 bg-white/5 text-gray-500 cursor-not-allowed"
                     >
-                      {integration.connected ? 'Налаштувати' : 'Підключити'}
+                      Скоро
                     </button>
                   ) : integration.id === 'instagram' ? (
                     <a

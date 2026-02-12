@@ -55,6 +55,10 @@ export default function RootLayout({
     <html lang="uk" className="dark oled" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
+        {/* Підтвердження домену для Meta Business Suite: додайте META_DOMAIN_VERIFICATION у Vercel зі значенням content з тега, який покаже Meta */}
+        {process.env.META_DOMAIN_VERIFICATION ? (
+          <meta name="facebook-domain-verification" content={process.env.META_DOMAIN_VERIFICATION} />
+        ) : null}
         <script
           dangerouslySetInnerHTML={{
             __html: `
