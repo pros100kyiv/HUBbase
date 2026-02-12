@@ -76,7 +76,7 @@ export async function GET(request: Request) {
       .slice(0, 10)
 
     // Статистика по провайдерах платежів (у try — якщо колонки БД відрізняються, не ламаємо весь запит)
-    let byProvider: Array<{ paymentProvider: string | null; _count: number }> = []
+    let byProvider: Array<{ paymentProvider: string | null; _count: { _all: number } }> = []
     try {
       byProvider = await prisma.business.groupBy({
         by: ['paymentProvider'],
@@ -85,7 +85,8 @@ export async function GET(request: Request) {
           paymentProvider: { not: null },
         },
         _count: true,
-      })
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      } as any)
     } catch (e) {
       console.warn('Finances byProvider groupBy skipped:', e)
     }
