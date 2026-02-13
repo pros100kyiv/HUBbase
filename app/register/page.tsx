@@ -109,7 +109,10 @@ function RegisterForm() {
 
       // Перевіряємо чи є всі необхідні поля
       if (!data.business || !data.business.id || !data.business.name) {
-        setErrors({ submit: 'Невірні дані бізнесу' })
+        const msg = 'Невірні дані бізнесу'
+        setErrorMessage(msg)
+        setShowErrorToast(true)
+        setErrors({ submit: msg })
         setIsLoading(false)
         return
       }
@@ -132,9 +135,14 @@ function RegisterForm() {
         router.replace('/dashboard/main')
       }, 1500)
     } catch (error) {
-      setErrorMessage('Помилка при реєстрації. Будь ласка, спробуйте ще раз.')
+      const err = error instanceof Error ? error : new Error(String(error))
+      const isNetworkError = err instanceof TypeError && (err.message === 'Failed to fetch' || err.message.includes('fetch'))
+      const msg = isNetworkError
+        ? 'Помилка з\'єднання. Перевірте інтернет і спробуйте ще раз.'
+        : 'Помилка при реєстрації. Будь ласка, спробуйте ще раз.'
+      setErrorMessage(msg)
       setShowErrorToast(true)
-      setErrors({ submit: 'Помилка при реєстрації' })
+      setErrors({ submit: msg })
     } finally {
       setIsLoading(false)
     }

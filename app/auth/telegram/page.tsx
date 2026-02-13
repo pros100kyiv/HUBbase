@@ -16,28 +16,49 @@ function TelegramAuthContent() {
   const [message, setMessage] = useState('Обробка авторизації...')
 
   useEffect(() => {
-    // Отримуємо дані з URL параметрів (Telegram передає через hash)
-    const hash = window.location.hash.substring(1)
-    const params = new URLSearchParams(hash)
-    
-    // Telegram передає дані через window.opener
-    const telegramData = searchParams.get('data')
-      ? JSON.parse(decodeURIComponent(searchParams.get('data') || '{}'))
-      : null
+    // 1) Telegram при redirect передає дані в hash: #id=...&first_name=...&last_name=...&username=...&photo_url=...&auth_date=...&hash=...
+    const hash = typeof window !== 'undefined' ? window.location.hash.substring(1) : ''
+    const hashParams = new URLSearchParams(hash)
+    const idFromHash = hashParams.get('id')
 
-    if (!telegramData || !telegramData.id) {
-      // Спробуємо отримати з window.opener (якщо відкрито через popup)
-      if (window.opener && (window.opener as any).telegramAuthData) {
-        const data = (window.opener as any).telegramAuthData
-        handleTelegramAuth(data)
-      } else {
-        setStatus('error')
-        setMessage('Не вдалося отримати дані від Telegram')
+    let telegramData: Record<string, unknown> | null = null
+
+    if (idFromHash) {
+      telegramData = {
+        id: idFromHash,
+        first_name: hashParams.get('first_name') || undefined,
+        last_name: hashParams.get('last_name') || undefined,
+        username: hashParams.get('username') || undefined,
+        photo_url: hashParams.get('photo_url') || undefined,
+        auth_date: hashParams.get('auth_date') || undefined,
+        hash: hashParams.get('hash') || undefined,
       }
+    }
+
+    // 2) Або дані в query (data=...) як JSON
+    if (!telegramData && searchParams.get('data')) {
+      try {
+        const decoded = JSON.parse(decodeURIComponent(searchParams.get('data') || '{}'))
+        if (decoded && decoded.id) telegramData = decoded
+      } catch {
+        // ігноруємо невалідний JSON
+      }
+    }
+
+    if (telegramData && telegramData.id) {
+      handleTelegramAuth(telegramData)
       return
     }
 
-    handleTelegramAuth(telegramData)
+    // 3) Popup: дані з window.opener
+    if (typeof window !== 'undefined' && window.opener && (window.opener as any).telegramAuthData) {
+      const data = (window.opener as any).telegramAuthData
+      handleTelegramAuth(data)
+      return
+    }
+
+    setStatus('error')
+    setMessage('Не вдалося отримати дані від Telegram')
   }, [searchParams])
 
   const handleTelegramAuth = async (telegramData: any) => {
@@ -45,7 +66,6 @@ function TelegramAuthContent() {
       setStatus('loading')
       setMessage('Авторизація через Telegram...')
 
-      // Викликаємо API для автоматичної реєстрації/входу
       const response = await fetch('/api/auth/telegram-oauth', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -54,17 +74,20 @@ function TelegramAuthContent() {
         })
       })
 
-      const data = await response.json()
+      let data: { success?: boolean; business?: unknown; action?: string; error?: string }
+      try {
+        data = await response.json()
+      } catch {
+        setStatus('error')
+        setMessage(response.ok ? 'Невірна відповідь від сервера' : `Помилка ${response.status}. Спробуйте ще раз.`)
+        return
+      }
 
       if (response.ok && data.success) {
         setStatus('success')
-        
-        // Зберігаємо бізнес в localStorage
         if (data.business) {
           localStorage.setItem('business', JSON.stringify(data.business))
         }
-
-        // Показуємо повідомлення
         if (data.action === 'register') {
           setMessage('Бізнес автоматично створено! Перенаправлення...')
         } else if (data.action === 'login') {
@@ -72,19 +95,17 @@ function TelegramAuthContent() {
         } else {
           setMessage('Підключення успішне! Перенаправлення...')
         }
-
-        // Перенаправляємо на dashboard
         setTimeout(() => {
           router.push('/dashboard')
         }, 1500)
       } else {
         setStatus('error')
-        setMessage(data.error || 'Помилка авторизації')
+        setMessage(data?.error || 'Помилка авторизації')
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Telegram auth error:', error)
       setStatus('error')
-      setMessage(error.message || 'Помилка при обробці авторизації')
+      setMessage(error instanceof Error ? error.message : 'Помилка при обробці авторизації')
     }
   }
 

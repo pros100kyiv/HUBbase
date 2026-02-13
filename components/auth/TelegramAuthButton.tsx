@@ -65,16 +65,22 @@ export function TelegramAuthButton({ text, isRegister = false, forgotPasswordMod
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 
             telegramData: user,
-            deviceId: pendingDeviceId,
-            businessId: pendingBusinessId
+            deviceId: pendingDeviceId || undefined,
+            businessId: pendingBusinessId || undefined
           })
         })
         
-        // Очищаємо збережені дані після використання
         if (pendingDeviceId) localStorage.removeItem('pendingDeviceId')
         if (pendingBusinessId) localStorage.removeItem('pendingBusinessId')
         
-        const data = await response.json()
+        let data: { success?: boolean; business?: unknown; action?: string; error?: string }
+        try {
+          data = await response.json()
+        } catch {
+          const msg = response.ok ? 'Невірна відповідь від сервера' : `Помилка ${response.status}. Спробуйте ще раз.`
+          window.location.replace(`/register?error=${encodeURIComponent(msg)}`)
+          return
+        }
         
         if (response.ok && data.success) {
           if (data.business) {
@@ -93,9 +99,8 @@ export function TelegramAuthButton({ text, isRegister = false, forgotPasswordMod
           console.log('[TelegramAuthButton] Redirecting to dashboard...')
           window.location.replace('/dashboard')
         } else {
-          console.error('[TelegramAuthButton] Error:', data.error)
-          // Якщо помилка - перенаправляємо на сторінку реєстрації з повідомленням
-          const errorMsg = data.error || 'Помилка авторизації через Telegram'
+          console.error('[TelegramAuthButton] Error:', data?.error)
+          const errorMsg = data?.error || 'Помилка авторизації через Telegram'
           window.location.replace(`/register?error=${encodeURIComponent(errorMsg)}`)
         }
       } catch (error) {
@@ -106,6 +111,8 @@ export function TelegramAuthButton({ text, isRegister = false, forgotPasswordMod
         } else {
           window.location.replace(`/register?error=${encodeURIComponent(errorMsg)}`)
         }
+      } finally {
+        setIsLoading(false)
       }
     }
 

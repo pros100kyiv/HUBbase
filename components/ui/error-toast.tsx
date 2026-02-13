@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface ErrorToastProps {
   message: string
@@ -14,15 +14,17 @@ interface ErrorToastProps {
 
 export function ErrorToast({ message, onClose, needsRegistration, onRegister, showLoginLink, onLogin }: ErrorToastProps) {
   const [isVisible, setIsVisible] = useState(true)
+  const onCloseRef = useRef(onClose)
+  onCloseRef.current = onClose
 
   useEffect(() => {
     const timer = setTimeout(() => {
       setIsVisible(false)
-      setTimeout(onClose, 300) // Чекаємо завершення анімації
+      setTimeout(() => onCloseRef.current(), 300) // Чекаємо завершення анімації
     }, 5000) // Автоматично закривається через 5 секунд
 
     return () => clearTimeout(timer)
-  }, [onClose])
+  }, [])
 
   const handleClose = () => {
     setIsVisible(false)
