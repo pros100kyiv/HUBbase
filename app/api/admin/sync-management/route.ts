@@ -1,4 +1,6 @@
 import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+import { withDbRetry } from '@/lib/db-retry'
 import { verifyAdminToken } from '@/lib/middleware/admin-auth'
 import { syncAllBusinessesToManagementCenter } from '@/lib/services/management-center'
 
@@ -6,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 /**
  * POST: Синхронізує всі бізнеси з Business в ManagementCenter
- * Включає вже створені акаунти — всі дані будуть відображатися в центрі управління
+ * Спочатку "прокидає" БД (Neon cold start), потім виконує синхронізацію.
  */
 export async function POST(request: Request) {
   const auth = verifyAdminToken(request as any)
@@ -15,6 +17,7 @@ export async function POST(request: Request) {
   }
 
   try {
+    await withDbRetry(() => prisma.$queryRaw`SELECT 1`, { maxAttempts: 3, delayMs: 2500 })
     const result = await syncAllBusinessesToManagementCenter()
     return NextResponse.json({
       success: true,
