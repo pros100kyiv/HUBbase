@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { XbaseLogo } from '@/components/layout/XbaseLogo'
 
 const features = [
@@ -46,7 +47,7 @@ const steps = [
 const demos = [
   { label: 'Тестовий потік', desc: 'Перегляньте інтерфейс без реєстрації', path: '/test-flow', emoji: '🧪' },
   { label: 'Приклад бронювання', desc: 'Як виглядає запис для відвідувача', path: '/booking/045-barbershop', emoji: '📅' },
-  { label: 'Приклад QR', desc: 'QR-код і посилання для вашого бізнесу', path: '/qr/045-barbershop', emoji: '📱' },
+  { label: 'Приклад QR', desc: 'QR-код і посилання для записів', path: '/qr/045-barbershop', emoji: '📱' },
 ]
 
 const stats = [
@@ -79,58 +80,62 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen overflow-x-hidden">
+      {/* Доступність: skip link — перехід до основного контенту */}
+      <a href="#main-content" className="skip-link">
+        Перейти до основного контенту
+      </a>
       {/* Decorative hero gradient */}
       <div className="fixed inset-0 pointer-events-none landing-hero-gradient" aria-hidden />
 
       {/* Header */}
       <header className="relative z-20 flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
-        <a href="/" className="flex items-center min-h-[44px] min-w-[44px]" aria-label="Xbase — на головну">
+        <Link href="/" className="flex items-center min-h-[44px] min-w-[44px] rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 focus-visible:outline-offset-2" aria-label="Xbase — на головну">
           <XbaseLogo size="lg" variant="light" />
-        </a>
-        <nav className="flex items-center gap-2 sm:gap-3">
-          <button
-            onClick={() => router.push('/login')}
-            className="text-sm font-medium text-gray-300 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition-colors"
+        </Link>
+        <nav className="flex items-center gap-2 sm:gap-3" aria-label="Головна навігація">
+          <Link
+            href="/login"
+            className="text-sm font-medium text-gray-300 hover:text-white px-3 py-2 rounded-lg hover:bg-white/10 transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 focus-visible:outline-offset-2"
           >
             Вхід
-          </button>
-          <button
-            onClick={() => router.push('/register')}
-            className="text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg transition-colors"
+          </Link>
+          <Link
+            href="/register"
+            className="text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 focus-visible:outline-offset-2"
           >
             Реєстрація
-          </button>
+          </Link>
         </nav>
       </header>
 
-      <main className="relative z-10">
+      <main id="main-content" className="relative z-10" role="main" tabIndex={-1}>
         {/* Hero */}
-        <section className="px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 pb-16 sm:pb-24 text-center">
-          <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-gray-300 border border-white/10 mb-6 landing-animate-in">
+        <section className="px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 pb-16 sm:pb-24 text-center" aria-labelledby="hero-heading">
+          <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-gray-300 border border-white/10 mb-6 landing-animate-in" role="status">
             Безкоштовний старт
           </span>
-          <h1 className="landing-hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white max-w-4xl mx-auto mb-4 sm:mb-6 landing-animate-in landing-animate-in-1">
+          <h1 id="hero-heading" className="landing-hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white max-w-4xl mx-auto mb-4 sm:mb-6 landing-animate-in landing-animate-in-1">
             Відвідувачі записуються самі. Ви — керуєте.
           </h1>
           <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-2 landing-animate-in landing-animate-in-2">
             Посилання або QR-код — відвідувачі обирають час без дзвінків. Всі записи в одній панелі.
           </p>
           <p className="text-sm text-gray-500 max-w-xl mx-auto mb-8 sm:mb-10 landing-animate-in landing-animate-in-2">
-            Салон, шиномонтаж, клініка, автосервіс — для будь-якого бізнесу з записами
+            Салон, шиномонтаж, клініка, автосервіс — запис онлайн у кілька кліків
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center landing-animate-in landing-animate-in-3">
-            <button
-              onClick={() => router.push('/register')}
-              className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-black/20"
+            <Link
+              href="/register"
+              className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-black/20 inline-flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 focus-visible:outline-offset-2"
             >
               Почати безкоштовно
-            </button>
-            <button
-              onClick={() => router.push('/login')}
-              className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 border border-white/25 bg-white/10 text-white font-medium rounded-xl hover:bg-white/20 transition-all active:scale-[0.98]"
+            </Link>
+            <Link
+              href="/login"
+              className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 border border-white/25 bg-white/10 text-white font-medium rounded-xl hover:bg-white/20 transition-all active:scale-[0.98] inline-flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 focus-visible:outline-offset-2"
             >
               Вже маю акаунт — увійти
-            </button>
+            </Link>
           </div>
           <p className="mt-4 text-sm text-gray-500 landing-animate-in landing-animate-in-4">
             Без картки. Налаштування за кілька хвилин.
@@ -153,8 +158,8 @@ export default function Home() {
         </section>
 
         {/* Features */}
-        <section className="px-4 sm:px-6 lg:px-8 py-12 sm:py-20" id="features">
-          <h2 className="landing-hero-title text-3xl sm:text-4xl font-bold text-white text-center mb-4">
+        <section className="px-4 sm:px-6 lg:px-8 py-12 sm:py-20" id="features" aria-labelledby="features-heading">
+          <h2 id="features-heading" className="landing-hero-title text-3xl sm:text-4xl font-bold text-white text-center mb-4">
             Все, що потрібно для записів
           </h2>
           <p className="text-gray-400 text-center max-w-xl mx-auto mb-12 sm:mb-16">
@@ -199,8 +204,8 @@ export default function Home() {
         </section>
 
         {/* Demo / Try it */}
-        <section className="px-4 sm:px-6 lg:px-8 py-12 sm:py-20">
-          <h2 className="landing-hero-title text-3xl sm:text-4xl font-bold text-white text-center mb-4">
+        <section className="px-4 sm:px-6 lg:px-8 py-12 sm:py-20" aria-labelledby="demo-heading">
+          <h2 id="demo-heading" className="landing-hero-title text-3xl sm:text-4xl font-bold text-white text-center mb-4">
             Спробуйте зараз
           </h2>
           <p className="text-gray-400 text-center max-w-xl mx-auto mb-12 sm:mb-16">
@@ -208,89 +213,78 @@ export default function Home() {
           </p>
           <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
             {demos.map((d, i) => (
-              <button
+              <Link
                 key={i}
-                onClick={() => router.push(d.path)}
-                className="card-glass rounded-2xl p-5 sm:p-6 border border-white/10 landing-card-hover text-left"
+                href={d.path}
+                className="card-glass rounded-2xl p-5 sm:p-6 border border-white/10 landing-card-hover text-left block focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 focus-visible:outline-offset-2"
               >
-                <span className="text-2xl mb-3 block">{d.emoji}</span>
+                <span className="text-2xl mb-3 block" aria-hidden>{d.emoji}</span>
                 <span className="text-base font-semibold text-white block mb-1">{d.label}</span>
                 <span className="text-sm text-gray-400">{d.desc}</span>
-              </button>
+              </Link>
             ))}
           </div>
         </section>
 
         {/* Final CTA */}
-        <section className="px-4 sm:px-6 lg:px-8 py-16 sm:py-24">
+        <section className="px-4 sm:px-6 lg:px-8 py-16 sm:py-24" aria-labelledby="cta-heading">
           <div className="max-w-3xl mx-auto card-glass-elevated rounded-3xl p-8 sm:p-12 text-center border border-white/10">
-            <h2 className="landing-hero-title text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">
+            <h2 id="cta-heading" className="landing-hero-title text-2xl sm:text-3xl md:text-4xl font-bold text-white mb-4">
               Готові керувати записами онлайн?
             </h2>
             <p className="text-gray-400 mb-8">
               Приєднуйтесь до бізнесів, які вже використовують Xbase для бронювань.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <button
-                onClick={() => router.push('/register')}
-                className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-black/20"
+              <Link
+                href="/register"
+                className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-black/20 inline-flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 focus-visible:outline-offset-2"
               >
-                Зареєструвати бізнес
-              </button>
-              <button
-                onClick={() => router.push('/login')}
-                className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 border border-white/25 bg-white/10 text-white font-medium rounded-xl hover:bg-white/20 transition-all"
+                Зареєструватися
+              </Link>
+              <Link
+                href="/login"
+                className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 border border-white/25 bg-white/10 text-white font-medium rounded-xl hover:bg-white/20 transition-all inline-flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 focus-visible:outline-offset-2"
               >
                 Увійти
-              </button>
+              </Link>
             </div>
           </div>
         </section>
 
         {/* Footer */}
-        <footer className="relative border-t border-white/10 px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+        <footer className="relative border-t border-white/10 px-4 sm:px-6 lg:px-8 py-8 sm:py-10" role="contentinfo">
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
-            <a href="/" className="flex items-center" aria-label="Xbase">
+            <Link href="/" className="flex items-center rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 focus-visible:outline-offset-2" aria-label="Xbase — на головну">
               <XbaseLogo size="md" variant="light" />
-            </a>
-            <div className="flex items-center gap-6 text-sm">
-              <button
-                onClick={() => router.push('/login')}
-                className="text-gray-400 hover:text-white transition-colors"
-              >
+            </Link>
+            <nav className="flex items-center gap-6 text-sm" aria-label="Навігація по сайту">
+              <Link href="/login" className="text-gray-400 hover:text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 focus-visible:outline-offset-2 rounded">
                 Вхід
-              </button>
-              <button
-                onClick={() => router.push('/register')}
-                className="text-gray-400 hover:text-white transition-colors"
-              >
+              </Link>
+              <Link href="/register" className="text-gray-400 hover:text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 focus-visible:outline-offset-2 rounded">
                 Реєстрація
-              </button>
-              <button type="button" onClick={scrollToFeatures} className="text-gray-400 hover:text-white transition-colors">
+              </Link>
+              <button
+                type="button"
+                onClick={scrollToFeatures}
+                className="text-gray-400 hover:text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 focus-visible:outline-offset-2 rounded"
+              >
                 Можливості
               </button>
-            </div>
+            </nav>
           </div>
           <div className="max-w-6xl mx-auto mt-6 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4">
-            <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-sm">
-              <a
-                href="/privacy"
-                className="text-gray-400 hover:text-white transition-colors"
-              >
+            <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-sm" aria-label="Юридичні документи">
+              <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 focus-visible:outline-offset-2 rounded">
                 Політика конфіденційності
-              </a>
-              <a
-                href="/terms"
-                className="text-gray-400 hover:text-white transition-colors"
-              >
+              </Link>
+              <Link href="/terms" className="text-gray-400 hover:text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 focus-visible:outline-offset-2 rounded">
                 Умови використання
-              </a>
-              <a
-                href="/data-deletion"
-                className="text-gray-400 hover:text-white transition-colors"
-              >
+              </Link>
+              <Link href="/data-deletion" className="text-gray-400 hover:text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 focus-visible:outline-offset-2 rounded">
                 Видалення даних (Facebook/Instagram)
-              </a>
+              </Link>
             </nav>
           </div>
           <p className="max-w-6xl mx-auto mt-4 text-center text-xs text-gray-500">

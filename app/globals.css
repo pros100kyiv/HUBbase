@@ -169,6 +169,35 @@
     padding-bottom: env(safe-area-inset-bottom, 0);
   }
   
+  /* Доступність: skip link (при фокусі видимий), видимий фокус для клавіатури */
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    z-index: 9999;
+    padding: 0.75rem 1.25rem;
+    background: #fff;
+    color: #0a0a0a;
+    font-weight: 600;
+    border-radius: 0 0 0.5rem 0;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+  }
+  .skip-link:focus {
+    left: 0;
+    outline: 2px solid #10b981;
+    outline-offset: 2px;
+  }
+  /* Видимий фокус для інтерактивних елементів (WCAG 2.4.7) */
+  .focus-ring:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.8);
+    outline-offset: 2px;
+  }
+  a:focus-visible,
+  button:focus-visible {
+    outline: 2px solid rgba(255, 255, 255, 0.7);
+    outline-offset: 2px;
+  }
+
   /* Panel background - semi-transparent dark with blur */
   .panel-bg {
     background-color: rgba(20, 20, 20, 0.85);

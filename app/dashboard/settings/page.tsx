@@ -188,10 +188,10 @@ function BusinessWorkingHoursEditor({
       >
         <div>
           <h2 className="text-lg font-bold text-white mb-0.5" style={{ letterSpacing: '-0.02em' }}>
-            Робочі години бізнесу
+            Робочі години
           </h2>
           <p className="text-sm text-gray-400">
-            Загальний графік роботи вашого бізнесу. Клієнти бачитимуть цей графік при бронюванні.
+            Загальний графік роботи. Клієнти бачитимуть його при бронюванні.
           </p>
         </div>
         <span className="shrink-0 text-gray-400 transition-transform" aria-hidden>
@@ -367,7 +367,7 @@ export default function SettingsPage() {
     }
   }, [loadData])
 
-  // Синхронізація форми з бізнесом при зміні даних (наприклад після завантаження з API)
+  // Синхронізація форми з даними акаунту при зміні (наприклад після завантаження з API)
   useEffect(() => {
     if (business) {
       setFormData(prev => ({
@@ -409,13 +409,13 @@ export default function SettingsPage() {
     }
 
     if (!business.id) {
-      toast({ title: 'Помилка', description: 'ID бізнесу відсутній', type: 'error' })
+      toast({ title: 'Помилка', description: 'ID акаунту відсутній', type: 'error' })
       return
     }
 
     // Валідація обов'язкових полів
     if (!formData.name?.trim()) {
-      toast({ title: 'Помилка', description: 'Назва бізнесу обов\'язкова', type: 'error' })
+      toast({ title: 'Помилка', description: 'Назва обов\'язкова', type: 'error' })
       return
     }
     if (!formData.email?.trim()) {
@@ -436,7 +436,7 @@ export default function SettingsPage() {
       return
     }
     if (formData.niche === 'OTHER' && !formData.customNiche?.trim()) {
-      toast({ title: 'Помилка', description: 'Вкажіть вашу категорію бізнесу', type: 'error' })
+      toast({ title: 'Помилка', description: 'Вкажіть категорію', type: 'error' })
       return
     }
 
@@ -447,7 +447,7 @@ export default function SettingsPage() {
       console.error('Invalid business ID format:', business.id)
       toast({ 
         title: 'Помилка', 
-        description: 'Невірний формат ID бізнесу. Будь ласка, увійдіть знову.', 
+        description: 'Невірний формат ID. Будь ласка, увійдіть знову.', 
         type: 'error' 
       })
       localStorage.removeItem('business')
@@ -829,16 +829,16 @@ export default function SettingsPage() {
 
         {/* Tab Content */}
         <div className="space-y-6">
-          {/* Інформація — профіль бізнесу для подальшого редагування */}
+          {/* Інформація — профіль для подальшого редагування */}
           {activeTab === 'info' && (
             <div className="rounded-xl p-4 md:p-6 card-glass">
               <h2 className="text-lg font-bold text-white mb-2" style={{ letterSpacing: '-0.02em' }}>Основна інформація</h2>
               <p className="text-sm text-gray-400 mb-6">
-                Редагуйте профіль бізнесу. Усі зміни зберігаються тут і в модалці заповнення профілю.
+                Редагуйте профіль. Усі зміни зберігаються тут і в модалці заповнення профілю.
               </p>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Назва бізнесу *</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Назва *</label>
                   <Input
                     value={formData.name || ''}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -881,11 +881,11 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Опис бізнесу</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Опис</label>
                   <textarea
                     value={formData.description || ''}
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Коротко про ваш бізнес, послуги..."
+                    placeholder="Коротко про послуги, формат роботи..."
                     rows={4}
                     className={cn(
                       'w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 resize-none',
@@ -895,7 +895,7 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Категорія бізнесу *</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Категорія *</label>
                   <select
                     value={formData.niche || 'OTHER'}
                     onChange={(e) => setFormData({ ...formData, niche: e.target.value, customNiche: e.target.value !== 'OTHER' ? '' : formData.customNiche })}
@@ -920,14 +920,14 @@ export default function SettingsPage() {
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Ідентифікатор бізнесу</label>
+                  <label className="block text-sm font-medium mb-2 text-gray-300">Ідентифікатор</label>
                   <div className="px-4 py-2 rounded-lg bg-white/10 border border-white/20">
                     <p className="text-lg font-bold text-blue-400">
                       {formData.businessIdentifier || 'Не встановлено'}
                     </p>
                   </div>
                   <p className="text-xs text-gray-400 mt-1">
-                    Унікальний ідентифікатор вашого бізнесу (не можна змінити)
+                    Унікальний ідентифікатор посилання (не можна змінити)
                   </p>
                 </div>
 
@@ -948,7 +948,7 @@ export default function SettingsPage() {
             <PasswordForLoginSection businessId={business.id} email={business.email} />
           )}
 
-          {/* Робочі години бізнесу та налаштування слотів */}
+          {/* Робочі години та налаштування слотів */}
           {activeTab === 'schedule' && business && (
             <div className="space-y-6">
               <BusinessWorkingHoursEditor

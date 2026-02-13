@@ -153,7 +153,7 @@ export default function TestFlowPage() {
                     className="flex-1 h-10 px-4 py-2 border border-primary text-primary rounded-md hover:bg-primary/10 transition-all active:scale-95"
                     type="button"
                   >
-                    Реєстрація нового бізнесу
+                    Реєстрація
                   </button>
                   <button
                     onClick={handleQuickLogin}
@@ -185,7 +185,7 @@ export default function TestFlowPage() {
                   В налаштуваннях можна:
                 </p>
                 <ul className="text-sm text-gray-600 dark:text-gray-400 list-disc list-inside space-y-1 ml-4">
-                  <li>Змінити інформацію про бізнес</li>
+                  <li>Змінити профіль</li>
                   <li>Додати/редагувати майстрів</li>
                   <li>Додати/редагувати послуги</li>
                   <li>Налаштувати кольори</li>

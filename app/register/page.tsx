@@ -47,7 +47,7 @@ function RegisterForm() {
       window.history.replaceState({}, '', newUrl)
       const decoded = decodeURIComponent(error)
       const friendlyMessages: Record<string, string> = {
-        not_registered: 'Цей email не зареєстровано. Зареєструйте бізнес нижче.',
+        not_registered: 'Цей email не зареєстровано. Зареєструйтеся нижче.',
       }
       const message = friendlyMessages[decoded] || decoded || 'Помилка при реєстрації. Спробуйте ще раз.'
       setErrorMessage(message)
@@ -134,7 +134,7 @@ function RegisterForm() {
     <AuthLayout title="Реєстрація">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-2 text-gray-300">Назва бізнесу *</label>
+          <label className="block text-sm font-medium mb-2 text-gray-300">Назва *</label>
           <Input
             type="text"
             value={formData.name}

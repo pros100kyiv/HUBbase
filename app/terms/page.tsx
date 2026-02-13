@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 export const metadata: Metadata = {
   title: 'Умови використання | Xbase',
-  description: 'Умови використання сервісу Xbase — запис онлайн та керування бізнесом.',
+  description: 'Умови використання сервісу Xbase — запис онлайн та керування кабінетом.',
   robots: { index: true, follow: true },
 }
 
@@ -25,7 +25,7 @@ export default function TermsPage() {
             <h2 className="text-lg font-semibold text-white mb-2">1. Загальні положення</h2>
             <p>
               Сервіс Xbase (далі — «Сервіс») надає можливість керувати записами, клієнтами та
-              бізнес-процесами онлайн. Використовуючи Сервіс, ви погоджуєтесь з цими умовами.
+              записами та клієнтами онлайн. Використовуючи Сервіс, ви погоджуєтесь з цими умовами.
             </p>
           </section>
           <section>

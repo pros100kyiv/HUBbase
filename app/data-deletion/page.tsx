@@ -74,7 +74,7 @@ export default async function DataDeletionPage({
                 {CONTACT_EMAIL}
               </a>{' '}
               із темою «Запит на видалення даних Facebook/Instagram». Вкажіть email, з яким ви
-              реєструвались у Xbase, або назву бізнесу. Ми видалимо зв’язок з Facebook/Instagram та
+              реєструвались у Xbase, або назву вашого проєкту/організації. Ми видалимо зв’язок з Facebook/Instagram та
               пов’язані дані у строк до 30 днів.
             </p>
           </section>
@@ -82,7 +82,7 @@ export default async function DataDeletionPage({
           <section>
             <h2 className="text-lg font-semibold text-white mb-2">3. Які дані видаляються</h2>
             <p>
-              Після вашого запиту ми відключаємо інтеграцію Instagram для вашого бізнесу (токени
+              Після вашого запиту ми відключаємо інтеграцію Instagram для вашого акаунту (токени
               доступу, ідентифікатори профілю Instagram/Facebook). Історія листів у кабінеті може
               зберігатися для історії листування з клієнтами; за потреби можна додатково замовити
               повне видалення цих записів через email.

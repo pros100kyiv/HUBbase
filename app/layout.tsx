@@ -6,17 +6,17 @@ import { NavigationProgressProvider } from '@/contexts/NavigationProgressContext
 import { ToastContainer } from '@/components/ui/toast'
 
 export const metadata: Metadata = {
-  title: 'Xbase Бізнес — Запис онлайн, бронювання та клієнти | xbase.online',
-  description: 'Xbase — система записів для бізнесу: онлайн бронювання, календар записів, база клієнтів, QR-код. Салон, барбершоп, клініка. Запис онлайн без дзвінків. Telegram, безкоштовний старт.',
-  keywords: ['Xbase Бізнес', 'Запис онлайн', 'онлайн бронювання', 'система записів', 'календар записів', 'запис клієнтів', 'запис на прийом', 'онлайн запис', 'бронювання салону', 'запис барбершопу', 'xbase.online'],
+  title: 'Xbase — Запис онлайн, бронювання та клієнти | xbase.online',
+  description: 'Xbase — сервіс записів онлайн: календар, бронювання, база клієнтів, QR-код. Салон, барбершоп, клініка. Запис без дзвінків. Telegram, безкоштовний старт.',
+  keywords: ['Xbase', 'Запис онлайн', 'онлайн бронювання', 'система записів', 'календар записів', 'запис клієнтів', 'запис на прийом', 'онлайн запис', 'бронювання салону', 'запис барбершопу', 'xbase.online'],
   manifest: '/manifest.json',
   icons: {
     icon: '/icon.svg',
     apple: '/icon.svg',
   },
   openGraph: {
-    title: 'Xbase Бізнес — Запис онлайн та клієнти',
-    description: 'Система записів для бізнесу: онлайн бронювання, календар, QR-код. Салон, барбершоп, клініка.',
+    title: 'Xbase — Запис онлайн та клієнти',
+    description: 'Сервіс записів онлайн: бронювання, календар, QR-код. Салон, барбершоп, клініка.',
     type: 'website',
     url: 'https://xbase.online',
     siteName: 'Xbase',
@@ -24,8 +24,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary',
-    title: 'Xbase Бізнес — Запис онлайн',
-    description: 'Система записів для бізнесу. Онлайн бронювання, QR-код, Telegram.',
+    title: 'Xbase — Запис онлайн',
+    description: 'Сервіс записів онлайн. Бронювання, QR-код, Telegram.',
   },
   robots: {
     index: true,
@@ -88,9 +88,9 @@ export default function RootLayout({
             __html: JSON.stringify({
               '@context': 'https://schema.org',
               '@type': 'WebApplication',
-              name: 'Xbase Бізнес',
+              name: 'Xbase',
               alternateName: 'Xbase — Запис онлайн',
-              description: 'Система записів для бізнесу: онлайн бронювання, календар записів, база клієнтів, QR-код.',
+              description: 'Сервіс записів онлайн: бронювання, календар записів, база клієнтів, QR-код.',
               url: 'https://xbase.online',
               applicationCategory: 'BusinessApplication',
               operatingSystem: 'Web, iOS, Android',

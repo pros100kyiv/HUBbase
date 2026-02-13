@@ -107,7 +107,7 @@ function ForgotPasswordForm() {
   return (
     <AuthLayout title="Відновлення паролю">
       <p className="text-sm text-gray-400 text-center mb-6">
-        Введіть email вашого бізнес-акаунту, і ми надішлемо вам інструкції для відновлення паролю.
+        Введіть email вашого акаунту, і ми надішлемо інструкції для відновлення паролю.
       </p>
 
       <form onSubmit={handleSubmit} className="space-y-4">

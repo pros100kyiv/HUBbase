@@ -93,7 +93,7 @@ function LoginForm() {
 
       // Перевіряємо чи є всі необхідні поля
       if (!data.business || !data.business.id || !data.business.name) {
-        setErrors({ submit: 'Невірні дані бізнесу' })
+        setErrors({ submit: 'Невірний email або пароль' })
         return
       }
 
