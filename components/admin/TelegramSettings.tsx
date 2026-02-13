@@ -49,7 +49,15 @@ export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) 
     }
     fetch(`/api/telegram/webhook?businessId=${business.id}`)
       .then((res) => res.json())
-      .then((data) => setWebhookSet(!!data?.webhook?.url || !!data?.telegramWebhookSetAt))
+      .then((data) => {
+        // Вважаємо webhook активним лише коли він прив'язаний саме до цього бізнесу
+        if (typeof data?.isCurrentBusinessWebhook === 'boolean') {
+          setWebhookSet(data.isCurrentBusinessWebhook)
+          return
+        }
+        // backward-compatible fallback для старішої відповіді API
+        setWebhookSet(!!data?.webhook?.url || !!data?.telegramWebhookSetAt)
+      })
       .catch(() => setWebhookSet(false))
   }, [business.id, business.telegramBotToken])
 

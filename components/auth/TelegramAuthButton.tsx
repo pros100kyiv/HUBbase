@@ -32,7 +32,7 @@ export function TelegramAuthButton({ text, isRegister = false, forgotPasswordMod
   useEffect(() => {
     if (typeof window === 'undefined' || !containerRef.current) return
 
-    const botName = 'xbasesbot'
+    const botName = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME || 'xbasesbot'
 
     // Telegram widget (iframe) іноді кидає SecurityError при зверненні до contentWindow (cross-origin).
     // Ігноруємо цю помилку, щоб вона не ламала сторінку та реєстрацію.

@@ -4,6 +4,8 @@ import { generateDeviceId, getClientIp, getUserAgent, addTrustedDevice } from '@
 import { ensureAdminControlCenterTable } from '@/lib/database/ensure-admin-control-center'
 import { generateBusinessIdentifier } from '@/lib/utils/business-identifier'
 import { getTrialEndDate } from '@/lib/subscription'
+import { isValidTelegramLoginData } from '@/lib/utils/telegram-auth'
+import { checkRateLimit } from '@/lib/utils/rate-limit'
 
 /**
  * API для автоматичної реєстрації/входу через Telegram OAuth
@@ -13,6 +15,19 @@ export async function POST(request: Request) {
   let telegramData: any = null
   
   try {
+    const rateLimitIp = getClientIp(request) || 'unknown'
+    const rateLimit = checkRateLimit({
+      key: `telegram-oauth:${rateLimitIp}`,
+      maxRequests: 20,
+      windowMs: 5 * 60 * 1000,
+    })
+    if (rateLimit.limited) {
+      return NextResponse.json(
+        { error: 'Too many requests. Please try again later.' },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSec) } }
+      )
+    }
+
     // Перевіряємо та створюємо таблицю admin_control_center, якщо вона не існує
     await ensureAdminControlCenterTable()
     
@@ -22,6 +37,18 @@ export async function POST(request: Request) {
     
     if (!telegramData || !telegramData.id) {
       return NextResponse.json({ error: 'Telegram data is required' }, { status: 400 })
+    }
+
+    const botToken =
+      process.env.DEFAULT_TELEGRAM_BOT_TOKEN ||
+      process.env.TELEGRAM_BOT_TOKEN ||
+      ''
+    if (!botToken) {
+      return NextResponse.json({ error: 'Telegram bot is not configured' }, { status: 500 })
+    }
+
+    if (!isValidTelegramLoginData(telegramData, botToken)) {
+      return NextResponse.json({ error: 'Invalid Telegram signature' }, { status: 401 })
     }
 
     const telegramId = BigInt(telegramData.id)
@@ -435,9 +462,6 @@ export async function POST(request: Request) {
     // Реєстрація через Telegram — пароль не встановлюємо; користувач створить його в налаштуваннях
     // і зможе входити як через Telegram, так і через email + пароль
 
-    // Отримуємо токен бота
-    const defaultBotToken = process.env.DEFAULT_TELEGRAM_BOT_TOKEN || '8258074435:AAHTKLTw6UDd92BV0Go-2ZQ_f2g_3QTXiIo'
-    
     // Генеруємо унікальний ідентифікатор бізнесу
     const businessIdentifier = await generateBusinessIdentifier()
 
@@ -453,7 +477,7 @@ export async function POST(request: Request) {
         phone: null,
         avatar: telegramData.photo_url || null,
         telegramId: telegramId,
-        telegramBotToken: defaultBotToken,
+        telegramBotToken: botToken,
         telegramChatId: telegramData.id.toString(),
         telegramNotificationsEnabled: true,
         smsProvider: 'smsc',
@@ -517,7 +541,7 @@ export async function POST(request: Request) {
     // Налаштовуємо webhook
     try {
       const webhookUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'}/api/telegram/webhook?businessId=${newBusiness.id}`
-      await fetch(`https://api.telegram.org/bot${defaultBotToken}/setWebhook`, {
+      await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ url: webhookUrl })
@@ -605,8 +629,9 @@ export async function POST(request: Request) {
       }, { status: 409 })
     }
     
-    return NextResponse.json({ 
-      error: error.message || 'Помилка обробки Telegram OAuth' 
-    }, { status: 500 })
+    return NextResponse.json(
+      { error: 'Помилка обробки Telegram OAuth' },
+      { status: 500 }
+    )
   }
 }

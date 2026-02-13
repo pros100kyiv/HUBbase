@@ -18,7 +18,11 @@ export function verifyAdminToken(request: NextRequest | Request): AdminAuthResul
       return { valid: false }
     }
 
-    const secret = process.env.JWT_SECRET || 'xbase-admin-secret-key-change-in-production'
+    const secret = process.env.JWT_SECRET
+    if (!secret) {
+      console.error('JWT_SECRET is not configured for admin auth')
+      return { valid: false }
+    }
     const decoded = jwt.verify(token, secret) as any
     
     // Перевіряємо роль (developer, SUPER_ADMIN, ADMIN, VIEWER)

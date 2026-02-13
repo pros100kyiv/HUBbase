@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import crypto from 'crypto'
+import { isValidTelegramLoginData } from '@/lib/utils/telegram-auth'
+import { getClientIp } from '@/lib/utils/device'
+import { checkRateLimit } from '@/lib/utils/rate-limit'
 
 /**
  * Відновлення паролю через Telegram: підтверджуємо особу через Telegram OAuth,
@@ -8,6 +11,19 @@ import crypto from 'crypto'
  */
 export async function POST(request: Request) {
   try {
+    const clientIp = getClientIp(request) || 'unknown'
+    const rateLimit = checkRateLimit({
+      key: `forgot-password-telegram:${clientIp}`,
+      maxRequests: 10,
+      windowMs: 15 * 60 * 1000,
+    })
+    if (rateLimit.limited) {
+      return NextResponse.json(
+        { error: 'Забагато запитів. Спробуйте трохи пізніше.' },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSec) } }
+      )
+    }
+
     const body = await request.json()
     const telegramData = body.telegramData
 
@@ -15,6 +31,24 @@ export async function POST(request: Request) {
       return NextResponse.json(
         { error: 'Дані Telegram не надано' },
         { status: 400 }
+      )
+    }
+
+    const botToken =
+      process.env.DEFAULT_TELEGRAM_BOT_TOKEN ||
+      process.env.TELEGRAM_BOT_TOKEN ||
+      ''
+    if (!botToken) {
+      return NextResponse.json(
+        { error: 'Telegram бот не налаштований' },
+        { status: 500 }
+      )
+    }
+
+    if (!isValidTelegramLoginData(telegramData, botToken)) {
+      return NextResponse.json(
+        { error: 'Невірний підпис Telegram' },
+        { status: 401 }
       )
     }
 

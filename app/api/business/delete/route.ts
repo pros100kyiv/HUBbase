@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { resolveBusinessId } from '@/lib/utils/business-identifier'
 import { verifyAdminToken } from '@/lib/middleware/admin-auth'
+import { generateDeviceId, getClientIp, getUserAgent, isDeviceTrusted } from '@/lib/utils/device'
 
 async function deleteBusiness(identifier: string) {
   const businessId = await resolveBusinessId(identifier)
@@ -77,10 +78,6 @@ async function deleteBusiness(identifier: string) {
  * DELETE /api/business/delete?businessIdentifier=56836 — приймає ID у query
  */
 export async function POST(request: Request) {
-  const auth = verifyAdminToken(request as any)
-  if (!auth.valid) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
-  }
   try {
     const body = await request.json().catch(() => ({}))
     const { businessId: paramBusinessId, businessIdentifier } = body as {
@@ -88,7 +85,35 @@ export async function POST(request: Request) {
       businessIdentifier?: string
     }
 
-    const identifier = paramBusinessId || businessIdentifier
+    const auth = verifyAdminToken(request as any)
+    const isAdminRequest = auth.valid
+
+    // Self-delete з кабінету: дозволяємо тільки по businessId (без businessIdentifier).
+    // Видалення по businessIdentifier залишається адмінською операцією.
+    if (!isAdminRequest && !paramBusinessId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Для self-delete обов'язково перевіряємо довірений пристрій.
+    // Це не дає видалити акаунт лише за знанням businessId.
+    if (!isAdminRequest && paramBusinessId) {
+      const businessForDeviceCheck = await prisma.business.findUnique({
+        where: { id: paramBusinessId },
+        select: { trustedDevices: true },
+      })
+
+      const deviceId = generateDeviceId(getClientIp(request), getUserAgent(request))
+      const isTrustedDevice = isDeviceTrusted(
+        businessForDeviceCheck?.trustedDevices || null,
+        deviceId
+      )
+
+      if (!businessForDeviceCheck || !isTrustedDevice) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+    }
+
+    const identifier = isAdminRequest ? (paramBusinessId || businessIdentifier) : paramBusinessId
     if (!identifier) {
       return NextResponse.json(
         { error: 'Потрібен businessId або businessIdentifier' },

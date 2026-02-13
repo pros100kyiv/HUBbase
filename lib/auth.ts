@@ -30,7 +30,7 @@ export async function createBusiness(data: {
   const normalizedEmail = data.email.toLowerCase().trim()
   
   // Автоматично встановлюємо токен Telegram бота при реєстрації
-  const defaultTelegramBotToken = process.env.DEFAULT_TELEGRAM_BOT_TOKEN || '8258074435:AAHTKLTw6UDd92BV0Go-2ZQ_f2g_3QTXiIo'
+  const defaultTelegramBotToken = process.env.DEFAULT_TELEGRAM_BOT_TOKEN || null
   
   // Генеруємо businessIdentifier якщо не вказано
   const businessIdentifier = data.businessIdentifier || await generateBusinessIdentifier()

@@ -1,12 +1,44 @@
 import { NextRequest, NextResponse } from 'next/server'
+import crypto from 'crypto'
 import { prisma } from '@/lib/prisma'
+import { getClientIp } from '@/lib/utils/device'
+import { checkRateLimit } from '@/lib/utils/rate-limit'
 
-const VERIFY_TOKEN = process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN || 'xbase-instagram-verify'
+const VERIFY_TOKEN = process.env.INSTAGRAM_WEBHOOK_VERIFY_TOKEN
+const APP_SECRET = process.env.META_APP_SECRET
+
+function isValidMetaSignature(rawBody: string, signatureHeader: string | null, appSecret: string): boolean {
+  if (!signatureHeader || !signatureHeader.startsWith('sha256=')) {
+    return false
+  }
+
+  const providedHex = signatureHeader.slice('sha256='.length)
+  if (!providedHex) {
+    return false
+  }
+
+  const expectedHex = crypto
+    .createHmac('sha256', appSecret)
+    .update(rawBody, 'utf8')
+    .digest('hex')
+
+  const provided = Buffer.from(providedHex, 'hex')
+  const expected = Buffer.from(expectedHex, 'hex')
+  if (provided.length !== expected.length) {
+    return false
+  }
+
+  return crypto.timingSafeEqual(provided, expected)
+}
 
 /**
  * GET — перевірка підписки Meta (hub.mode=subscribe, hub.verify_token, hub.challenge).
  */
 export async function GET(request: NextRequest) {
+  if (!VERIFY_TOKEN) {
+    return NextResponse.json({ error: 'Instagram webhook verify token is not configured' }, { status: 503 })
+  }
+
   const { searchParams } = new URL(request.url)
   const mode = searchParams.get('hub.mode')
   const token = searchParams.get('hub.verify_token')
@@ -27,8 +59,31 @@ export async function GET(request: NextRequest) {
  * Payload: { object: 'instagram', entry: [ { id: ig_account_id, time, messaging: [ { sender: { id }, recipient: { id }, message: { mid, text } } ] } ] }
  */
 export async function POST(request: NextRequest) {
+  if (!APP_SECRET) {
+    return NextResponse.json({ error: 'Instagram webhook app secret is not configured' }, { status: 503 })
+  }
+
   try {
-    const body = await request.json() as {
+    const clientIp = getClientIp(request) || 'unknown'
+    const rateLimit = checkRateLimit({
+      key: `instagram-webhook:${clientIp}`,
+      maxRequests: 240,
+      windowMs: 60 * 1000,
+    })
+    if (rateLimit.limited) {
+      return NextResponse.json(
+        { error: 'Rate limit exceeded' },
+        { status: 429, headers: { 'Retry-After': String(rateLimit.retryAfterSec) } }
+      )
+    }
+
+    const rawBody = await request.text()
+    const signature = request.headers.get('x-hub-signature-256')
+    if (!isValidMetaSignature(rawBody, signature, APP_SECRET)) {
+      return NextResponse.json({ error: 'Invalid webhook signature' }, { status: 403 })
+    }
+
+    const body = JSON.parse(rawBody) as {
       object?: string
       entry?: Array<{
         id: string
@@ -82,6 +137,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true })
   } catch (e) {
     console.error('Instagram webhook POST error:', e)
-    return NextResponse.json({ ok: true })
+    return NextResponse.json({ error: 'Invalid webhook payload' }, { status: 400 })
   }
 }
