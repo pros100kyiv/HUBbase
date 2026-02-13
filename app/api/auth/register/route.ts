@@ -286,18 +286,30 @@ export async function POST(request: Request) {
       const msg = error.message
       // Немає з'єднання з БД або інші помилки інфраструктури
       if (msg.includes("Can't reach database") || msg.includes('database server') || msg.includes('ECONNREFUSED') || msg.includes('ETIMEDOUT') || msg.includes('Connection') || msg.includes('neon.tech')) {
-        console.error('Database connection error:', error)
+        console.error('[register 503] Database connection:', msg)
         return NextResponse.json(
           { error: safeServiceUnavailable },
           { status: 503 }
         )
       }
-      // Таблиця не існує
-      if (msg.includes('does not exist') || msg.includes('admin_control_center')) {
-        console.error('Database table missing:', error)
+      // Таблиця/relation не існує (не плутати з "column does not exist" — це вже 500 і міграції)
+      const isTableMissing =
+        msg.includes('relation') && msg.includes('does not exist') ||
+        msg.includes('table') && msg.includes('does not exist') ||
+        (msg.includes('does not exist') && msg.includes('admin_control_center'))
+      if (isTableMissing) {
+        console.error('[register 503] Database table missing:', msg)
         return NextResponse.json(
           { error: safeServiceUnavailable },
           { status: 503 }
+        )
+      }
+      // Колонка відсутня в БД (потрібні міграції) — не 503, а 500 + лог
+      if (msg.includes('column') && msg.includes('does not exist')) {
+        console.error('[register 500] Schema mismatch (column missing), run migrations:', msg)
+        return NextResponse.json(
+          { error: 'Помилка при реєстрації. Будь ласка, спробуйте ще раз або зверніться до підтримки.' },
+          { status: 500 }
         )
       }
       // Користувач не зареєстрований (бізнес-логіка)
