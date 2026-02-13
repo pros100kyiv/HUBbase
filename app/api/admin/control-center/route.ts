@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { unstable_cache } from 'next/cache'
 import { addDays } from 'date-fns'
 import { prisma } from '@/lib/prisma'
+import { withDbRetry } from '@/lib/db-retry'
 import { verifyAdminToken } from '@/lib/middleware/admin-auth'
 import { jsonSafe } from '@/lib/utils/json'
 import type { SubscriptionPlan } from '@prisma/client'
@@ -114,84 +115,93 @@ export async function GET(request: Request) {
     }
 
     // Select без колонок підписки — щоб працювало в БД, де міграція subscription ще не застосована (P3005 / column missing)
-    const [businessesRaw, total] = await Promise.all([
-      prisma.business.findMany({
-        where,
-        skip,
-        take: limit,
-        orderBy: { createdAt: 'desc' },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          phone: true,
-          isActive: true,
-          createdAt: true,
-          businessIdentifier: true,
-          niche: true,
-          telegramId: true,
-          googleId: true,
-        },
-      }),
-      prisma.business.count({ where }),
-    ])
+    // withDbRetry: повтор при тимчасовій недоступності БД (наприклад Neon cold start)
+    const { businesses, pagination, stats } = await withDbRetry(
+      async () => {
+        const [businessesRaw, total] = await Promise.all([
+          prisma.business.findMany({
+            where,
+            skip,
+            take: limit,
+            orderBy: { createdAt: 'desc' },
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+              isActive: true,
+              createdAt: true,
+              businessIdentifier: true,
+              niche: true,
+              telegramId: true,
+              googleId: true,
+            },
+          }),
+          prisma.business.count({ where }),
+        ])
 
-    const mcMap = new Map<string, { lastLoginAt: Date | null; lastSeenAt: Date | null; registrationType: string }>()
-    if (businessesRaw.length > 0) {
-      const mcList = await prisma.managementCenter.findMany({
-        where: { businessId: { in: businessesRaw.map((b) => b.id) } },
-        select: { businessId: true, lastLoginAt: true, lastSeenAt: true, registrationType: true },
-      })
-      for (const mc of mcList) {
-        mcMap.set(mc.businessId, mc)
-      }
-    }
+        const mcMap = new Map<string, { lastLoginAt: Date | null; lastSeenAt: Date | null; registrationType: string }>()
+        if (businessesRaw.length > 0) {
+          const mcList = await prisma.managementCenter.findMany({
+            where: { businessId: { in: businessesRaw.map((b) => b.id) } },
+            select: { businessId: true, lastLoginAt: true, lastSeenAt: true, registrationType: true },
+          })
+          for (const mc of mcList) {
+            mcMap.set(mc.businessId, mc)
+          }
+        }
 
-    const businesses = businessesRaw.map((b) => {
-      const mc = mcMap.get(b.id)
-      const regType = (mc?.registrationType as 'telegram' | 'google' | 'standard') || getRegistrationType(b)
-      return {
-        id: b.id,
-        businessId: b.id,
-        name: b.name,
-        email: b.email,
-        phone: b.phone,
-        isActive: b.isActive,
-        registeredAt: b.createdAt,
-        lastLoginAt: mc?.lastLoginAt ?? null,
-        lastSeenAt: mc?.lastSeenAt ?? null,
-        registrationType: regType,
-        businessIdentifier: b.businessIdentifier,
-        niche: b.niche,
-        subscriptionPlan: 'FREE',
-        trialEndsAt: null,
-        subscriptionStatus: null,
-        subscriptionCurrentPeriodEnd: null,
-      }
-    })
+        const businessesList = businessesRaw.map((b) => {
+          const mc = mcMap.get(b.id)
+          const regType = (mc?.registrationType as 'telegram' | 'google' | 'standard') || getRegistrationType(b)
+          return {
+            id: b.id,
+            businessId: b.id,
+            name: b.name,
+            email: b.email,
+            phone: b.phone,
+            isActive: b.isActive,
+            registeredAt: b.createdAt,
+            lastLoginAt: mc?.lastLoginAt ?? null,
+            lastSeenAt: mc?.lastSeenAt ?? null,
+            registrationType: regType,
+            businessIdentifier: b.businessIdentifier,
+            niche: b.niche,
+            subscriptionPlan: 'FREE',
+            trialEndsAt: null,
+            subscriptionStatus: null,
+            subscriptionCurrentPeriodEnd: null,
+          }
+        })
 
-    const { totalCount, activeCount, inactiveCount, telegramCount, googleCount, standardCount, byNiche } = await getControlCenterStats()
+        const { totalCount, activeCount, inactiveCount, telegramCount, googleCount, standardCount, byNiche } =
+          await getControlCenterStats()
 
-    const stats = {
-      total: totalCount,
-      active: activeCount,
-      inactive: inactiveCount,
-      telegram: telegramCount,
-      google: googleCount,
-      standard: standardCount,
-      byNiche: byNiche || [],
-    }
+        const statsData = {
+          total: totalCount,
+          active: activeCount,
+          inactive: inactiveCount,
+          telegram: telegramCount,
+          google: googleCount,
+          standard: standardCount,
+          byNiche: byNiche || [],
+        }
 
-    return NextResponse.json(jsonSafe({
-      businesses,
-      pagination: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit) || 1,
+        return {
+          businesses: businessesList,
+          pagination: {
+            page,
+            limit,
+            total,
+            totalPages: Math.ceil(total / limit) || 1,
+          },
+          stats: statsData,
+        }
       },
-      stats,
-    }))
+      { maxAttempts: 3, delayMs: 2500 }
+    )
+
+    return NextResponse.json(jsonSafe({ businesses, pagination, stats }))
   } catch (error: unknown) {
     console.error('Control center API error:', error)
     return NextResponse.json(

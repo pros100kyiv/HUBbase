@@ -275,11 +275,17 @@ export default function ControlCenterPage() {
     <div className="min-h-screen p-3 sm:p-4 md:p-6 pb-[max(1rem,env(safe-area-inset-bottom))] bg-[#0F172A]" style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}>
       <div className="max-w-7xl mx-auto w-full">
       {loadError && (
-        <div className="mb-4 rounded-xl p-4 bg-red-500/20 border border-red-500/50 flex items-center justify-between gap-4">
-          <span className="text-red-300">{loadError}</span>
+        <div className="mb-4 rounded-xl p-4 bg-red-500/20 border border-red-500/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+          <div className="min-w-0">
+            <p className="text-red-300">
+              {/can't reach database|connection refused|database server/i.test(loadError)
+                ? 'База даних тимчасово недоступна (наприклад, після паузи). Спробуйте «Повторити» через кілька секунд.'
+                : loadError}
+            </p>
+          </div>
           <button
             onClick={() => { setLoadError(null); loadData(); }}
-            className="px-4 py-2 bg-red-500/30 hover:bg-red-500/50 text-white rounded-lg font-medium"
+            className="px-4 py-2 bg-red-500/30 hover:bg-red-500/50 text-white rounded-lg font-medium shrink-0"
           >
             Повторити
           </button>
