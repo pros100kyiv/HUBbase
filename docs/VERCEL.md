@@ -58,4 +58,12 @@
 - `"build": "prisma generate && next build"`
 - `"postinstall": "prisma generate"`
 
-У `vercel.json` вказано той самий build-команду. Для продакшну потрібна PostgreSQL (наприклад, Vercel Postgres, Neon, Supabase). Локальний `prisma/dev.db` на Vercel не використовується.
+У `vercel.json` build-команда: `prisma generate && next build` (без `migrate deploy`, щоб уникнути помилки P3005, коли БД вже має схему).
+
+**Міграції:** під час збірки на Vercel міграції не запускаються. Якщо додали нову міграцію — один раз виконайте локально з продакшн-URL:
+```bash
+DATABASE_URL="postgresql://..." npx prisma migrate deploy
+```
+або `npm run db:migrate-deploy`, встановивши в середовищі `DATABASE_URL` на продакшн-базу.
+
+Для продакшну потрібна PostgreSQL (наприклад, Neon, Supabase). Локальний `prisma/dev.db` на Vercel не використовується.
