@@ -4,7 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
-import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, ShareIcon, MoneyIcon, ClockIcon } from '@/components/icons'
+import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, ShareIcon, MoneyIcon, ClockIcon, CreditCardIcon } from '@/components/icons'
 import { XbaseLogo } from '@/components/layout/XbaseLogo'
 import { NotificationsPanel } from './NotificationsPanel'
 
@@ -156,23 +156,42 @@ export function Sidebar({ className }: SidebarProps) {
             <p className="px-3 mb-2 text-[11px] font-semibold uppercase tracking-wider text-gray-500">
               Система
             </p>
-            <button
-              onClick={() => { startNavigation(); router.push('/dashboard/settings') }}
-              className={cn(
-                'nav-item-base w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-all duration-200',
-                pathname === '/dashboard/settings'
-                  ? 'nav-item-active'
-                  : 'text-gray-300 hover:bg-white/10 hover:text-white'
-              )}
-              title="Налаштування"
-            >
-              <div className={cn('w-5 h-5 flex-shrink-0', pathname === '/dashboard/settings' ? 'text-white' : 'text-gray-400')}>
-                <SettingsIcon />
-              </div>
-              <span className={cn("text-sm font-medium", pathname === '/dashboard/settings' ? 'text-white' : 'text-gray-300')}>
-                Налаштування
-              </span>
-            </button>
+            <div className="space-y-0.5">
+              <button
+                onClick={() => { startNavigation(); router.push('/dashboard/subscription') }}
+                className={cn(
+                  'nav-item-base w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-all duration-200',
+                  pathname === '/dashboard/subscription'
+                    ? 'nav-item-active'
+                    : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                )}
+                title="Підписка"
+              >
+                <div className={cn('w-5 h-5 flex-shrink-0', pathname === '/dashboard/subscription' ? 'text-white' : 'text-gray-400')}>
+                  <CreditCardIcon />
+                </div>
+                <span className={cn("text-sm font-medium", pathname === '/dashboard/subscription' ? 'text-white' : 'text-gray-300')}>
+                  Підписка
+                </span>
+              </button>
+              <button
+                onClick={() => { startNavigation(); router.push('/dashboard/settings') }}
+                className={cn(
+                  'nav-item-base w-full flex items-center gap-3 px-4 py-2.5 rounded-xl text-left transition-all duration-200',
+                  pathname === '/dashboard/settings'
+                    ? 'nav-item-active'
+                    : 'text-gray-300 hover:bg-white/10 hover:text-white'
+                )}
+                title="Налаштування"
+              >
+                <div className={cn('w-5 h-5 flex-shrink-0', pathname === '/dashboard/settings' ? 'text-white' : 'text-gray-400')}>
+                  <SettingsIcon />
+                </div>
+                <span className={cn("text-sm font-medium", pathname === '/dashboard/settings' ? 'text-white' : 'text-gray-300')}>
+                  Налаштування
+                </span>
+              </button>
+            </div>
           </div>
         </nav>
       </aside>

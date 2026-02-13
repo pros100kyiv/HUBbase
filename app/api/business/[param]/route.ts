@@ -72,6 +72,10 @@ const businessSelect = {
   reminderSmsEnabled: true,
   reminderEmailEnabled: true,
   settings: true,
+  subscriptionPlan: true,
+  trialEndsAt: true,
+  subscriptionStatus: true,
+  subscriptionCurrentPeriodEnd: true,
 }
 
 type BusinessSelect = typeof businessSelect

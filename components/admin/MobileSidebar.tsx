@@ -4,7 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 import { cn } from '@/lib/utils'
 import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
-import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, BellIcon, XIcon, ShareIcon, MoneyIcon, ClockIcon } from '@/components/icons'
+import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, BellIcon, XIcon, ShareIcon, MoneyIcon, ClockIcon, CreditCardIcon } from '@/components/icons'
 import { XbaseLogo } from '@/components/layout/XbaseLogo'
 import { NotificationsPanel } from './NotificationsPanel'
 
@@ -88,6 +88,7 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     { id: 'social', label: 'Соцмережі', icon: <ShareIcon />, path: '/dashboard/social' },
     { id: 'analytics', label: 'Аналітика', icon: <ChartIcon />, path: '/dashboard/analytics' },
     { id: 'notifications', label: 'Сповіщення', icon: <BellIcon />, path: '#', badge: pendingCount > 0 ? pendingCount : undefined, onClick: () => setShowNotifications(true) },
+    { id: 'subscription', label: 'Підписка', icon: <CreditCardIcon />, path: '/dashboard/subscription' },
     { id: 'settings', label: 'Налаштування', icon: <SettingsIcon />, path: '/dashboard/settings' },
   ]
 
