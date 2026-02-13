@@ -30,6 +30,7 @@
     "db:cleanup": "tsx scripts/cleanup-database.ts",
     "db:sync-management": "tsx scripts/sync-all-businesses-to-management-center.ts",
     "db:migrate-neon": "tsx scripts/migrate-neon-account.ts",
+    "db:verify": "tsx scripts/verify-neon-connection.ts",
     "db:apply-rls": "tsx scripts/apply-rls-manual.ts",
     "db:diagnose": "tsx scripts/diagnose-and-fix-database.ts",
     "db:create-email-index": "tsx scripts/create-email-index.ts",

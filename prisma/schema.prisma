@@ -5,6 +5,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// DATABASE_URL — pooled (Neon: -pooler). Для міграцій на Neon додай DIRECT_URL (без -pooler) в .env
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
