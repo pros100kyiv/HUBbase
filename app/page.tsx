@@ -271,7 +271,29 @@ export default function Home() {
               </button>
             </div>
           </div>
-          <p className="max-w-6xl mx-auto mt-6 text-center text-xs text-gray-500">
+          <div className="max-w-6xl mx-auto mt-6 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4">
+            <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-sm">
+              <a
+                href="/privacy"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                Політика конфіденційності
+              </a>
+              <a
+                href="/terms"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                Умови використання
+              </a>
+              <a
+                href="/data-deletion"
+                className="text-gray-400 hover:text-white transition-colors"
+              >
+                Видалення даних (Facebook/Instagram)
+              </a>
+            </nav>
+          </div>
+          <p className="max-w-6xl mx-auto mt-4 text-center text-xs text-gray-500">
             Xbase — записи та відвідувачі в одній базі · xbase.online
           </p>
         </footer>
