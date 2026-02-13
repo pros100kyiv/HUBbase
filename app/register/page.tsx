@@ -172,6 +172,7 @@ function RegisterForm() {
             id="register-name"
             name="name"
             type="text"
+            autoComplete="name"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
             placeholder="Наприклад: 045 Barbershop"
@@ -187,6 +188,7 @@ function RegisterForm() {
             id="register-email"
             name="email"
             type="email"
+            autoComplete="email"
             inputMode="email"
             value={formData.email}
             onChange={(e) => {
@@ -207,6 +209,7 @@ function RegisterForm() {
             id="register-password"
             name="password"
             type="password"
+            autoComplete="new-password"
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             placeholder="Мінімум 6 символів"
@@ -222,6 +225,7 @@ function RegisterForm() {
             id="register-slug"
             name="slug"
             type="text"
+            autoComplete="off"
             value={formData.slug}
             onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
             placeholder="045-barbershop"

@@ -34,6 +34,17 @@ export function TelegramAuthButton({ text, isRegister = false, forgotPasswordMod
 
     const botName = 'xbasesbot'
 
+    // Telegram widget (iframe) іноді кидає SecurityError при зверненні до contentWindow (cross-origin).
+    // Ігноруємо цю помилку, щоб вона не ламала сторінку та реєстрацію.
+    const onError = (event: ErrorEvent) => {
+      if (event.message?.includes('Blocked a frame with origin') || event.message?.includes('SecurityError')) {
+        event.preventDefault()
+        event.stopPropagation()
+      }
+    }
+    window.addEventListener('error', onError)
+    const cleanupError = () => window.removeEventListener('error', onError)
+
     // Глобальна функція для обробки авторизації
     ;(window as any).onTelegramAuth = async (user: any) => {
       try {
@@ -136,6 +147,7 @@ export function TelegramAuthButton({ text, isRegister = false, forgotPasswordMod
     }
 
     return () => {
+      cleanupError()
       if (containerRef.current) {
         containerRef.current.innerHTML = ''
       }

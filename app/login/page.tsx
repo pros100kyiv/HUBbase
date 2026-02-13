@@ -133,9 +133,12 @@ function LoginForm() {
     <AuthLayout title="Вхід">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-2 text-gray-300">Email *</label>
+          <label htmlFor="login-email" className="block text-sm font-medium mb-2 text-gray-300">Email *</label>
           <Input
+            id="login-email"
+            name="email"
             type="email"
+            autoComplete="email"
             value={formData.email}
             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
             placeholder="your@email.com"
@@ -147,7 +150,7 @@ function LoginForm() {
 
         <div>
           <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-medium text-gray-300">Пароль *</label>
+            <label htmlFor="login-password" className="block text-sm font-medium text-gray-300">Пароль *</label>
             <button
                 type="button"
                 onClick={() => router.push('/forgot-password')}
@@ -157,7 +160,10 @@ function LoginForm() {
               </button>
           </div>
           <Input
+            id="login-password"
+            name="password"
             type="password"
+            autoComplete="current-password"
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             placeholder="Ваш пароль"
