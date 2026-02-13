@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { resolveBusinessId } from '@/lib/utils/business-identifier'
+import { verifyAdminToken } from '@/lib/middleware/admin-auth'
 import { z } from 'zod'
 
 const blockSchema = z.object({
@@ -10,10 +11,14 @@ const blockSchema = z.object({
 })
 
 /**
- * Блокування/розблоковування акаунту за businessIdentifier
+ * Блокування/розблоковування акаунту за businessIdentifier (тільки для адмінів)
  * POST /api/business/block
  */
 export async function POST(request: Request) {
+  const auth = verifyAdminToken(request as Request)
+  if (!auth.valid) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   try {
     const body = await request.json()
     const validated = blockSchema.parse(body)

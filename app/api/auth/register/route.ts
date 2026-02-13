@@ -16,27 +16,32 @@ const registerSchema = z.object({
   phone: z.string().optional(),
 })
 
+function isConnectionError(e: unknown): boolean {
+  const msg = e instanceof Error ? e.message : String(e)
+  const t = msg.toLowerCase()
+  return t.includes("can't reach database") || t.includes('database server') || t.includes('econnrefused') || t.includes('etimedout') || t.includes('connection') || t.includes('neon.tech')
+}
+
+const DB_RETRY_ATTEMPTS = 3
+const DB_RETRY_DELAY_MS = 2000
+
 export async function POST(request: Request) {
-  // Зберігаємо body для використання в обробці помилок
   let requestBody: any = null
 
   try {
-    // Перевіряємо та створюємо таблицю admin_control_center, якщо вона не існує
-    await ensureAdminControlCenterTable()
-    
     requestBody = await request.json()
     const validated = registerSchema.parse(requestBody)
-    
-    // Генеруємо deviceId для перевірки пристрою
+
     const clientIp = getClientIp(request)
     const userAgent = getUserAgent(request)
     const deviceId = generateDeviceId(clientIp, userAgent)
-
-    // Нормалізуємо email один раз
     const normalizedEmail = validated.email.toLowerCase().trim()
 
-    // Використовуємо транзакцію для атомарності операцій
-    const result = await prisma.$transaction(async (tx) => {
+    let lastError: unknown = null
+    for (let attempt = 0; attempt < DB_RETRY_ATTEMPTS; attempt++) {
+      try {
+        await ensureAdminControlCenterTable()
+        const result = await prisma.$transaction(async (tx) => {
       // Перевіряємо, чи email вже існує (явний select — щоб не ламатись без колонки telegramWebhookSetAt)
       const existingBusiness = await tx.business.findFirst({
         where: {
@@ -210,6 +215,14 @@ export async function POST(request: Request) {
         isLogin: false
       }, { status: 201 })
     }
+      } catch (e) {
+        lastError = e
+        if (!isConnectionError(e) || attempt === DB_RETRY_ATTEMPTS - 1) break
+        console.warn(`Registration DB attempt ${attempt + 1} failed (connection?), retrying in ${DB_RETRY_DELAY_MS}ms...`, e)
+        await new Promise((r) => setTimeout(r, DB_RETRY_DELAY_MS))
+      }
+    }
+    if (lastError) throw lastError
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(

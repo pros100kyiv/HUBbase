@@ -223,7 +223,10 @@ export async function PATCH(request: Request) {
   }
 
   try {
-    const body = await request.json()
+    const body = await request.json().catch(() => null)
+    if (!body || typeof body !== 'object') {
+      return NextResponse.json({ error: 'Невірний формат даних (очікується JSON)' }, { status: 400 })
+    }
     const { businessId, action, data } = body
 
     if (!businessId || !action) {

@@ -42,10 +42,16 @@ export async function POST(request: NextRequest) {
       botCache.set(businessId, bot)
     }
 
-    // Отримуємо оновлення від Telegram
-    const update = await request.json()
+    let update: unknown
+    try {
+      update = await request.json()
+    } catch {
+      return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 })
+    }
+    if (!update || typeof update !== 'object') {
+      return NextResponse.json({ error: 'Invalid update payload' }, { status: 400 })
+    }
 
-    // Обробляємо оновлення через бота
     await bot.handleUpdate(update)
 
     return NextResponse.json({ ok: true })
