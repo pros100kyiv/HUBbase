@@ -233,14 +233,35 @@ async function cleanupDatabase() {
     })
     console.log(`✅ Видалено Telegram логів: ${deletedTelegramLogs.count}`)
     
-    // 17. Видаляємо бізнеси без telegramId, googleId та password (старі тестові дані)
-    // Залишаємо тільки валідні бізнеси (Telegram OAuth, Google OAuth, стандартна реєстрація)
+    // 17. Перед видаленням бізнесів знімаємо Telegram webhook, щоб той самий акаунт міг зареєструватися знову
+    const toDeleteBusinesses = await prisma.business.findMany({
+      where: {
+        AND: [
+          { telegramId: null },
+          { googleId: null },
+          { password: null }
+        ]
+      },
+      select: { id: true, name: true, telegramBotToken: true }
+    })
+    for (const b of toDeleteBusinesses) {
+      if (b.telegramBotToken) {
+        try {
+          await fetch(`https://api.telegram.org/bot${b.telegramBotToken}/deleteWebhook`, { method: 'POST' })
+          console.log(`   📤 Webhook знято для бізнесу: ${b.name}`)
+        } catch (e) {
+          console.warn(`   ⚠️ Не вдалося зняти webhook для ${b.name}:`, e)
+        }
+      }
+    }
+    
+    // 18. Видаляємо бізнеси без telegramId, googleId та password (старі тестові дані)
     const deletedBusinesses = await prisma.business.deleteMany({
       where: {
         AND: [
-          { telegramId: null },    // Немає Telegram ID
-          { googleId: null },      // Немає Google ID
-          { password: null }       // Немає пароля (не стандартна реєстрація)
+          { telegramId: null },
+          { googleId: null },
+          { password: null }
         ]
       }
     })

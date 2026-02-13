@@ -267,19 +267,28 @@ export async function POST(request: Request) {
       )
     }
 
-    // Обробка помилок бази даних
+    // Обробка помилок бази даних — ніколи не віддаємо клієнту технічні деталі
+    const safeServiceUnavailable = 'Сервіс тимчасово недоступний. Спробуйте через кілька хвилин.'
     if (error instanceof Error) {
-      // Якщо таблиця не існує - дружнє повідомлення
-      if (error.message.includes('does not exist') || error.message.includes('admin_control_center')) {
-        console.error('Database table missing:', error)
+      const msg = error.message
+      // Немає з'єднання з БД або інші помилки інфраструктури
+      if (msg.includes("Can't reach database") || msg.includes('database server') || msg.includes('ECONNREFUSED') || msg.includes('ETIMEDOUT') || msg.includes('Connection') || msg.includes('neon.tech')) {
+        console.error('Database connection error:', error)
         return NextResponse.json(
-          { error: 'Система тимчасово недоступна. Будь ласка, спробуйте пізніше або зверніться до підтримки.' },
+          { error: safeServiceUnavailable },
           { status: 503 }
         )
       }
-      
-      // Якщо користувач не зареєстрований
-      if (error.message.includes('not found') || error.message.includes('does not exist')) {
+      // Таблиця не існує
+      if (msg.includes('does not exist') || msg.includes('admin_control_center')) {
+        console.error('Database table missing:', error)
+        return NextResponse.json(
+          { error: safeServiceUnavailable },
+          { status: 503 }
+        )
+      }
+      // Користувач не зареєстрований (бізнес-логіка)
+      if (msg.includes('not found')) {
         return NextResponse.json(
           { error: 'Ви ще не зареєстровані. Будь ласка, зареєструйтесь спочатку.' },
           { status: 404 }

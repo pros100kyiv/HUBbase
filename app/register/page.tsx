@@ -9,6 +9,17 @@ import { ErrorToast } from '@/components/ui/error-toast'
 import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 
+const FALLBACK_ERROR = 'Помилка при реєстрації. Спробуйте ще раз.'
+/** Не показувати клієнту технічні повідомлення (БД, Prisma, хости). */
+function sanitizeErrorMessage(raw: string | undefined): string {
+  if (!raw) return FALLBACK_ERROR
+  const t = raw.toLowerCase()
+  if (t.includes('prisma') || t.includes('findunique') || t.includes('database server') || t.includes('invocation') || t.includes('neon.tech') || t.includes("can't reach")) {
+    return 'Сервіс тимчасово недоступний. Спробуйте через кілька хвилин.'
+  }
+  return raw
+}
+
 function RegisterForm() {
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -49,7 +60,7 @@ function RegisterForm() {
       const friendlyMessages: Record<string, string> = {
         not_registered: 'Цей email не зареєстровано. Зареєструйтеся нижче.',
       }
-      const message = friendlyMessages[decoded] || decoded || 'Помилка при реєстрації. Спробуйте ще раз.'
+      const message = sanitizeErrorMessage(friendlyMessages[decoded] || decoded || FALLBACK_ERROR)
       setErrorMessage(message)
       setShowErrorToast(true)
       setErrors({ submit: message })
@@ -99,10 +110,11 @@ function RegisterForm() {
       }
 
       if (!response.ok) {
-        setErrorMessage(data?.error || 'Помилка при реєстрації')
+        const msg = sanitizeErrorMessage(data?.error) || FALLBACK_ERROR
+        setErrorMessage(msg)
         setShowLoginLinkInToast(response.status === 409)
         setShowErrorToast(true)
-        setErrors({ submit: data?.error || 'Помилка при реєстрації' })
+        setErrors({ submit: msg })
         setIsLoading(false)
         return
       }

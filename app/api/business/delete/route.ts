@@ -11,14 +11,49 @@ async function deleteBusiness(identifier: string) {
 
   const business = await prisma.business.findUnique({
     where: { id: businessId },
-    select: { id: true, name: true, email: true, businessIdentifier: true },
+    select: { id: true, name: true, email: true, businessIdentifier: true, telegramBotToken: true },
   })
 
   if (!business) {
     return { error: 'Бізнес не знайдено', status: 404 }
   }
 
+  // Знімаємо webhook у Telegram, щоб бот не отримував оновлення і той самий акаунт міг зареєструватися знову
+  const botToken = business.telegramBotToken
+  if (botToken) {
+    try {
+      await fetch(`https://api.telegram.org/bot${botToken}/deleteWebhook`, { method: 'POST' })
+    } catch (e) {
+      console.warn('Telegram deleteWebhook failed for business', businessId, e)
+    }
+  }
+
   await prisma.$transaction(async (tx) => {
+    // Порядок: спочатку залежні від бізнесу та інших сутностей, потім сам бізнес
+    await tx.sMSMessage.deleteMany({ where: { businessId } })
+    await tx.aIChatMessage.deleteMany({ where: { businessId } })
+    await tx.payment.deleteMany({ where: { businessId } })
+    await tx.broadcast.deleteMany({ where: { businessId } })
+    await tx.appointment.deleteMany({ where: { businessId } })
+    await tx.telegramReminder.deleteMany({ where: { businessId } })
+    await tx.clientSegment.deleteMany({ where: { businessId } })
+    await tx.analyticsReport.deleteMany({ where: { businessId } })
+    await tx.dataImport.deleteMany({ where: { businessId } })
+    await tx.dataExport.deleteMany({ where: { businessId } })
+    await tx.note.deleteMany({ where: { businessId } })
+    await tx.socialInboxMessage.deleteMany({ where: { businessId } })
+    await tx.businessModule.deleteMany({ where: { businessId } })
+    await tx.businessUser.deleteMany({ where: { businessId } })
+    await tx.telegramBroadcast.deleteMany({ where: { businessId } })
+    await tx.telegramUser.deleteMany({ where: { businessId } })
+    await tx.socialIntegration.deleteMany({ where: { businessId } })
+    const masterIds = (await tx.master.findMany({ where: { businessId }, select: { id: true } })).map((m) => m.id)
+    if (masterIds.length > 0) {
+      await tx.masterUtilization.deleteMany({ where: { masterId: { in: masterIds } } })
+    }
+    await tx.master.deleteMany({ where: { businessId } })
+    await tx.service.deleteMany({ where: { businessId } })
+    await tx.client.deleteMany({ where: { businessId } })
     await tx.managementCenter.deleteMany({ where: { businessId } })
     await tx.telegramLog.deleteMany({ where: { businessId } })
     await tx.telegramVerification.deleteMany({ where: { businessId } })
