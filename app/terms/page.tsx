@@ -18,7 +18,7 @@ export default function TermsPage() {
           ← На головну
         </Link>
         <h1 className="text-2xl font-bold text-white mb-2">Умови використання</h1>
-        <p className="text-sm text-gray-500 mb-8">Останнє оновлення: 2025</p>
+        <p className="text-sm text-gray-500 mb-8">Останнє оновлення: 13 лютого 2026</p>
 
         <div className="space-y-6 text-gray-300 text-sm leading-relaxed">
           <section>

@@ -83,6 +83,23 @@ export async function GET(request: NextRequest) {
     const igAccount = pageWithIg.instagram_business_account
     const pageAccessToken = pageWithIg.access_token
 
+    // Отримуємо Facebook user ID для підтримки Data Deletion Callback (Meta App Review)
+    let facebookUserId: string | null = null
+    try {
+      const meRes = await fetch(
+        `${META_GRAPH_BASE}/me?fields=id&access_token=${encodeURIComponent(accessToken)}`
+      )
+      const meData = (await meRes.json()) as { id?: string }
+      if (meData.id) facebookUserId = meData.id
+    } catch {
+      /* ignore */
+    }
+
+    const metadata =
+      facebookUserId != null
+        ? JSON.stringify({ facebookUserId })
+        : null
+
     await prisma.socialIntegration.upsert({
       where: {
         businessId_platform: { businessId, platform: 'instagram' },
@@ -94,6 +111,7 @@ export async function GET(request: NextRequest) {
         accessToken: pageAccessToken,
         userId: igAccount.id,
         username: igAccount.username ?? null,
+        metadata,
         lastSyncAt: new Date(),
       },
       update: {
@@ -101,6 +119,7 @@ export async function GET(request: NextRequest) {
         accessToken: pageAccessToken,
         userId: igAccount.id,
         username: igAccount.username ?? null,
+        metadata,
         lastSyncAt: new Date(),
       },
     })

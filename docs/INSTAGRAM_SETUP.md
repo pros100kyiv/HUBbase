@@ -35,3 +35,14 @@ INSTAGRAM_WEBHOOK_VERIFY_TOKEN=xbase-instagram-verify
 - Користувач у кабінеті натискає **Підключити** біля Instagram → редірект на Facebook OAuth → підтвердження → повертається в кабінет, статус «Підключено».
 - Вхідні повідомлення в Direct надходять на webhook і зберігаються в кабінеті (разом з Telegram).
 - Відповіді з кабінету відправляються в Instagram через Graph API.
+
+## Meta App Review (публікація додатка)
+
+Для проходження перевірки та публікації додатка вкажіть у Meta:
+
+- **Privacy Policy URL:** `https://xbase.online/privacy`
+- **Terms of Service URL:** `https://xbase.online/terms`
+- **User Data Deletion Instructions:** `https://xbase.online/data-deletion`
+- **Data Deletion Request URL** (Настройки → Дополнительно): `https://xbase.online/api/facebook/data-deletion`
+
+Детально: [docs/META_APP_REVIEW.md](./META_APP_REVIEW.md).

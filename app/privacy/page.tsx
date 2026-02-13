@@ -18,7 +18,7 @@ export default function PrivacyPage() {
           ← На головну
         </Link>
         <h1 className="text-2xl font-bold text-white mb-2">Політика конфіденційності</h1>
-        <p className="text-sm text-gray-500 mb-8">Останнє оновлення: 2025</p>
+        <p className="text-sm text-gray-500 mb-8">Останнє оновлення: 13 лютого 2026</p>
 
         <div className="space-y-6 text-gray-300 text-sm leading-relaxed">
           <section>
@@ -41,8 +41,12 @@ export default function PrivacyPage() {
             <h2 className="text-lg font-semibold text-white mb-2">3. Видалення даних</h2>
             <p>
               Ви можете видалити обліковий запис та пов&apos;язані дані через налаштування кабінету або
-              звернувшись до нас. Після видалення дані видаляються у встановлені терміни згідно з
-              нашими процедурами.
+              звернувшись до нас. Для даних, отриманих через Facebook або Instagram (вхід через
+              Facebook, підключення Instagram), діють окремі інструкції:{' '}
+              <Link href="/data-deletion" className="text-white underline hover:no-underline">
+                видалення даних Facebook/Instagram
+              </Link>
+              . Після видалення дані видаляються у встановлені терміни згідно з нашими процедурами.
             </p>
           </section>
           <section>
