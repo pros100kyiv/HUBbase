@@ -1,12 +1,16 @@
 import { PrismaClient } from '@prisma/client'
 import * as bcrypt from 'bcryptjs'
+import { addDays } from 'date-fns'
 
 const prisma = new PrismaClient()
 
+const TRIAL_DAYS = 14
+
 async function main() {
-  // Create Business
+  // Create Business (всі поля для роботи входу/реєстрації)
   const hashedPassword = await bcrypt.hash('password123', 10)
-  
+  const trialEndsAt = addDays(new Date(), TRIAL_DAYS)
+
   const business = await prisma.business.upsert({
     where: { id: 'business-1' },
     update: {},
@@ -17,6 +21,11 @@ async function main() {
       email: 'admin@045barbershop.com',
       password: hashedPassword,
       description: 'Професійна стрижка та догляд за бородою',
+      niche: 'OTHER',
+      businessIdentifier: '045001',
+      trialEndsAt,
+      subscriptionStatus: 'trial',
+      telegramNotificationsEnabled: true,
     },
   })
 

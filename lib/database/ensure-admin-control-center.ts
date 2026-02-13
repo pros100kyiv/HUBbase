@@ -18,10 +18,10 @@ export async function ensureAdminControlCenterTable() {
     if (!tableExists[0]?.exists) {
       console.log('📦 Створення таблиці admin_control_center...')
       
-      // Створюємо таблицю
+      // Створюємо таблицю (gen_random_uuid() — вбудовано в PostgreSQL 13+, не потребує extension)
       await prisma.$executeRawUnsafe(`
         CREATE TABLE admin_control_center (
-          id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+          id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
           business_id TEXT NOT NULL,
           business_phone TEXT,
           business_email TEXT,

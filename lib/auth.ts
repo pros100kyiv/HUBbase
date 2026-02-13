@@ -105,7 +105,10 @@ export async function authenticateBusiness(email: string, password: string) {
         socialMedia: true,
         workingHours: true,
         location: true,
-        businessIdentifier: true, // Додаємо businessIdentifier
+        businessIdentifier: true,
+        profileCompleted: true,
+        niche: true,
+        customNiche: true,
       },
     })
 
@@ -153,7 +156,12 @@ export async function authenticateBusiness(email: string, password: string) {
             isActive: true,
             password: true,
             googleId: true,
-            businessIdentifier: true, // Додаємо businessIdentifier
+            businessIdentifier: true,
+            profileCompleted: true,
+            niche: true,
+            customNiche: true,
+            telegramChatId: true,
+            avatar: true,
             createdAt: true,
             updatedAt: true,
           },
