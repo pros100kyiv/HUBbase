@@ -1,9 +1,63 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
+import Image from 'next/image'
 import { XbaseLogo } from '@/components/layout/XbaseLogo'
+
+// Порядок файлів зіставлено з вмістом скріншотів (не з часом створення)
+const screenshotFiles = [
+  'Знімок екрана 2026-02-13 030055.png', // Аналітика
+  'Знімок екрана 2026-02-13 025733.png', // Головна (дашборд)
+  'Знімок екрана 2026-02-13 025859.png', // Записи (календар)
+  'Знімок екрана 2026-02-13 025919.png', // Прайс-лист
+  'Знімок екрана 2026-02-13 025959.png', // Клієнти
+  'Знімок екрана 2026-02-13 030033.png', // Соцмережі
+]
+const screenshots = [
+  { title: 'Аналітика', desc: 'Прибуток, конверсія, прогноз та воронка записів' },
+  { title: 'Головна', desc: 'Дашборд на сьогодні, календар та нотатки' },
+  { title: 'Записи', desc: 'Календар записів та статистика за період' },
+  { title: 'Прайс-лист', desc: 'Послуги, ціни та калькулятор' },
+  { title: 'Клієнти', desc: 'База клієнтів, історія візитів та дохід' },
+  { title: 'Соцмережі', desc: 'Telegram, Instagram — листи в одній панелі' },
+].map((item, i) => ({ ...item, src: `/landing/${encodeURIComponent(screenshotFiles[i])}` }))
+
+function ScreenshotBlock({ src, title, desc, featured = false }: { src: string; title: string; desc: string; featured?: boolean }) {
+  const [error, setError] = useState(false)
+  const figClass = `rounded-2xl overflow-hidden border border-white/10 shadow-xl shadow-black/20 ${featured ? 'md:col-span-2' : ''} w-full aspect-video relative`
+  if (error) {
+    return (
+      <figure className={`${figClass} bg-gradient-to-br from-white/5 to-white/[0.02] flex flex-col items-center justify-center gap-2 min-h-[220px]`}>
+        <span className="text-4xl opacity-50">📷</span>
+        <figcaption className="text-center px-4">
+          <span className="font-semibold text-white block">{title}</span>
+          <span className="text-sm text-gray-500">{desc}</span>
+        </figcaption>
+      </figure>
+    )
+  }
+  return (
+    <figure className={`group ${figClass}`}>
+      <div className="absolute inset-0">
+        <Image
+          src={src}
+          alt={title}
+          fill
+          className="object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]"
+          sizes={featured ? '(max-width: 768px) 100vw, 80vw' : '(max-width: 768px) 100vw, 50vw'}
+          onError={() => setError(true)}
+        />
+      </div>
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+      <figcaption className="absolute bottom-0 left-0 right-0 p-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
+        <span className="font-semibold block">{title}</span>
+        <span className="text-sm text-white/80">{desc}</span>
+      </figcaption>
+    </figure>
+  )
+}
 
 const features = [
   {
@@ -39,15 +93,22 @@ const features = [
 ]
 
 const steps = [
-  { num: '1', title: 'Зареєструйтесь', text: 'Створіть бізнес за хвилину: назва, email, пароль. Або увійдіть через Google чи Telegram.' },
+  { num: '1', title: 'Зареєструйтесь', text: 'Створіть акаунт за хвилину: назва, email, пароль. Або увійдіть через Google чи Telegram.' },
   { num: '2', title: 'Налаштуйте графік і послуги', text: 'Додайте спеціалістів, робочі години та прайс. Система підкаже вільні слоти.' },
   { num: '3', title: 'Клієнти записуються онлайн', text: 'Поділіться посиланням або QR. Клієнти обирають послугу, спеціаліста й час самостійно.' },
 ]
 
-const demos = [
-  { label: 'Тестовий потік', desc: 'Перегляньте інтерфейс без реєстрації', path: '/test-flow', emoji: '🧪' },
-  { label: 'Приклад бронювання', desc: 'Як виглядає запис для відвідувача', path: '/booking/045-barbershop', emoji: '📅' },
-  { label: 'Приклад QR', desc: 'QR-код і посилання для записів', path: '/qr/045-barbershop', emoji: '📱' },
+const integrations = [
+  { name: 'Telegram', icon: '✈️', desc: 'Вхід через Telegram, нагадування клієнтам, сповіщення. Бот під ваш кабінет — один клік.' },
+  { name: 'Instagram', icon: '📷', desc: 'Листи з Direct у єдиній панелі. Підключіть профіль — відповідайте клієнтам з кабінету.' },
+  { name: 'Google', icon: '🔐', desc: 'Швидкий вхід через Google. Без зайвих паролів — зручно і безпечно.' },
+]
+
+const whyUs = [
+  { title: 'Єдина панель', desc: 'Записи, клієнти, календар, прайс і соцмережі в одному місці. Нічого не губиться.' },
+  { title: 'Без прив\'язки картки', desc: 'Старт без оплати. Налаштуйте все і працюйте — перевірте спочатку.' },
+  { title: 'Швидкий старт', desc: 'Від реєстрації до першого запису — хвилини. Графік, послуги, посилання — і вперед.' },
+  { title: 'Ваші дані під контролем', desc: 'Прозора політика конфіденційності та можливість видалення даних. Ми не продаємо ваші контакти.' },
 ]
 
 const stats = [
@@ -157,6 +218,24 @@ export default function Home() {
           </div>
         </section>
 
+        {/* Інтерфейс — скріншоти панелі (Аналітика перша) */}
+        <section className="px-4 sm:px-6 lg:px-8 py-12 sm:py-20 bg-white/[0.02]" aria-labelledby="interface-heading">
+          <h2 id="interface-heading" className="landing-hero-title text-3xl sm:text-4xl font-bold text-white text-center mb-4">
+            Зручна панель у вас під рукою
+          </h2>
+          <p className="text-gray-400 text-center max-w-xl mx-auto mb-12 sm:mb-16">
+            Аналітика, записи, клієнти та листи з соцмереж — у одному інтерфейсі. Швидко та зрозуміло.
+          </p>
+          <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+            <ScreenshotBlock src={screenshots[0].src} title={screenshots[0].title} desc={screenshots[0].desc} featured />
+            <ScreenshotBlock src={screenshots[1].src} title={screenshots[1].title} desc={screenshots[1].desc} />
+            <ScreenshotBlock src={screenshots[2].src} title={screenshots[2].title} desc={screenshots[2].desc} />
+            <ScreenshotBlock src={screenshots[3].src} title={screenshots[3].title} desc={screenshots[3].desc} />
+            <ScreenshotBlock src={screenshots[4].src} title={screenshots[4].title} desc={screenshots[4].desc} />
+            <ScreenshotBlock src={screenshots[5].src} title={screenshots[5].title} desc={screenshots[5].desc} featured />
+          </div>
+        </section>
+
         {/* Features */}
         <section className="px-4 sm:px-6 lg:px-8 py-12 sm:py-20" id="features" aria-labelledby="features-heading">
           <h2 id="features-heading" className="landing-hero-title text-3xl sm:text-4xl font-bold text-white text-center mb-4">
@@ -203,25 +282,44 @@ export default function Home() {
           </div>
         </section>
 
-        {/* Demo / Try it */}
-        <section className="px-4 sm:px-6 lg:px-8 py-12 sm:py-20" aria-labelledby="demo-heading">
-          <h2 id="demo-heading" className="landing-hero-title text-3xl sm:text-4xl font-bold text-white text-center mb-4">
-            Спробуйте зараз
+        {/* Інтеграції з соцмережами */}
+        <section className="px-4 sm:px-6 lg:px-8 py-12 sm:py-20 bg-white/[0.02]" aria-labelledby="integrations-heading">
+          <h2 id="integrations-heading" className="landing-hero-title text-3xl sm:text-4xl font-bold text-white text-center mb-4">
+            Інтеграції з соцмережами
           </h2>
-          <p className="text-gray-400 text-center max-w-xl mx-auto mb-12 sm:mb-16">
-            Тестовий потік, приклад бронювання та QR — без реєстрації.
+          <p className="text-gray-400 text-center max-w-2xl mx-auto mb-12 sm:mb-16">
+            Всі листи та сповіщення в одній панелі. Підключайте Telegram, Instagram та вхід через Google — керуйте записами і листуванням з одного місця.
           </p>
           <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-6">
-            {demos.map((d, i) => (
-              <Link
-                key={i}
-                href={d.path}
-                className="card-glass rounded-2xl p-5 sm:p-6 border border-white/10 landing-card-hover text-left block focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 focus-visible:outline-offset-2"
-              >
-                <span className="text-2xl mb-3 block" aria-hidden>{d.emoji}</span>
-                <span className="text-base font-semibold text-white block mb-1">{d.label}</span>
-                <span className="text-sm text-gray-400">{d.desc}</span>
-              </Link>
+            {integrations.map((item, i) => (
+              <div key={i} className="card-glass rounded-2xl p-5 sm:p-6 border border-white/10 landing-card-hover">
+                <div className="text-2xl mb-3">{item.icon}</div>
+                <h3 className="text-lg font-semibold text-white mb-2">{item.name}</h3>
+                <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Чому обирають Xbase */}
+        <section className="px-4 sm:px-6 lg:px-8 py-12 sm:py-20" id="why" aria-labelledby="why-heading">
+          <h2 id="why-heading" className="landing-hero-title text-3xl sm:text-4xl font-bold text-white text-center mb-4">
+            Чому обирають Xbase
+          </h2>
+          <p className="text-gray-400 text-center max-w-xl mx-auto mb-12 sm:mb-16">
+            Простий старт, повний контроль і зручні інтеграції — без зайвих умов.
+          </p>
+          <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6">
+            {whyUs.map((item, i) => (
+              <div key={i} className="card-glass rounded-2xl p-5 sm:p-6 border border-white/10 landing-card-hover flex gap-4">
+                <div className="w-10 h-10 rounded-xl bg-emerald-500/20 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold shrink-0">
+                  {i + 1}
+                </div>
+                <div>
+                  <h3 className="text-base font-semibold text-white mb-1">{item.title}</h3>
+                  <p className="text-sm text-gray-400 leading-relaxed">{item.desc}</p>
+                </div>
+              </div>
             ))}
           </div>
         </section>
@@ -233,7 +331,7 @@ export default function Home() {
               Готові керувати записами онлайн?
             </h2>
             <p className="text-gray-400 mb-8">
-              Приєднуйтесь до бізнесів, які вже використовують Xbase для бронювань.
+              Приєднуйтесь до тих, хто вже веде записи через Xbase.
             </p>
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
