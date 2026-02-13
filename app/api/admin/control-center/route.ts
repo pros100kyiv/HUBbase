@@ -113,7 +113,7 @@ export async function GET(request: Request) {
       }
     }
 
-    // Явний select без telegramWebhookSetAt — стійкість до БД, де міграція ще не застосована
+    // Select без колонок підписки — щоб працювало в БД, де міграція subscription ще не застосована (P3005 / column missing)
     const [businessesRaw, total] = await Promise.all([
       prisma.business.findMany({
         where,
@@ -131,10 +131,6 @@ export async function GET(request: Request) {
           niche: true,
           telegramId: true,
           googleId: true,
-          subscriptionPlan: true,
-          trialEndsAt: true,
-          subscriptionStatus: true,
-          subscriptionCurrentPeriodEnd: true,
         },
       }),
       prisma.business.count({ where }),
@@ -154,12 +150,6 @@ export async function GET(request: Request) {
     const businesses = businessesRaw.map((b) => {
       const mc = mcMap.get(b.id)
       const regType = (mc?.registrationType as 'telegram' | 'google' | 'standard') || getRegistrationType(b)
-      const raw = b as typeof b & {
-        subscriptionPlan?: string
-        trialEndsAt?: Date | null
-        subscriptionStatus?: string | null
-        subscriptionCurrentPeriodEnd?: Date | null
-      }
       return {
         id: b.id,
         businessId: b.id,
@@ -173,10 +163,10 @@ export async function GET(request: Request) {
         registrationType: regType,
         businessIdentifier: b.businessIdentifier,
         niche: b.niche,
-        subscriptionPlan: raw.subscriptionPlan ?? 'FREE',
-        trialEndsAt: raw.trialEndsAt ?? null,
-        subscriptionStatus: raw.subscriptionStatus ?? null,
-        subscriptionCurrentPeriodEnd: raw.subscriptionCurrentPeriodEnd ?? null,
+        subscriptionPlan: 'FREE',
+        trialEndsAt: null,
+        subscriptionStatus: null,
+        subscriptionCurrentPeriodEnd: null,
       }
     })
 

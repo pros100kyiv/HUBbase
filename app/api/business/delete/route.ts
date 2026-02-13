@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { resolveBusinessId } from '@/lib/utils/business-identifier'
+import { verifyAdminToken } from '@/lib/middleware/admin-auth'
 
 async function deleteBusiness(identifier: string) {
   const businessId = await resolveBusinessId(identifier)
@@ -41,6 +42,10 @@ async function deleteBusiness(identifier: string) {
  * DELETE /api/business/delete?businessIdentifier=56836 — приймає ID у query
  */
 export async function POST(request: Request) {
+  const auth = verifyAdminToken(request as any)
+  if (!auth.valid) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   try {
     const body = await request.json().catch(() => ({}))
     const { businessId: paramBusinessId, businessIdentifier } = body as {
@@ -80,6 +85,10 @@ export async function POST(request: Request) {
  * DELETE /api/business/delete?businessIdentifier=56836 — видалення за query-параметром
  */
 export async function DELETE(request: Request) {
+  const auth = verifyAdminToken(request as any)
+  if (!auth.valid) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
   try {
     const { searchParams } = new URL(request.url)
     const businessIdentifier = searchParams.get('businessIdentifier')

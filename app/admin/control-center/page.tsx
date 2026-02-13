@@ -852,13 +852,14 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
         setSelectedBusiness(null)
         setDeleteConfirm('')
         onDataChanged?.()
+        toast({ title: 'Акаунт видалено', description: 'Бізнес та всі пов’язані дані видалено назавжди.', type: 'success' })
       } else {
         const data = await response.json()
-        alert(data.error || 'Помилка при видаленні')
+        toast({ title: data.error || 'Помилка при видаленні', type: 'error' })
       }
     } catch (error) {
       console.error('Error deleting business:', error)
-      alert('Помилка при видаленні акаунту')
+      toast({ title: 'Помилка при видаленні акаунту', type: 'error' })
     } finally {
       setIsDeleting(false)
     }
@@ -1420,6 +1421,60 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
         </ModalPortal>
       )}
 
+      {/* Modal видалення акаунту */}
+      {deleteModalOpen && selectedBusiness && (
+        <ModalPortal>
+          <div className="modal-overlay sm:!p-4" onClick={() => { if (!isDeleting) { setDeleteModalOpen(false); setSelectedBusiness(null); setDeleteConfirm('') } }}>
+            <div className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+              <h3 className="text-xl font-bold mb-2 text-white" style={{ letterSpacing: '-0.02em' }}>
+                Видалити акаунт назавжди
+              </h3>
+              <p className="text-sm text-red-300/90 mb-3">
+                Цю дію не можна скасувати. Буде безповоротно видалено:
+              </p>
+              <ul className="text-sm text-gray-300 mb-4 list-disc list-inside space-y-1">
+                <li>профіль бізнесу та налаштування</li>
+                <li>всі записи, клієнти, спеціалісти, послуги</li>
+                <li>дані в центрі управління, Telegram-лог</li>
+              </ul>
+              <div className="mb-4 p-3 rounded-lg bg-white/5 border border-white/10">
+                <p className="text-sm text-gray-300"><span className="text-gray-500">Бізнес:</span> <span className="font-semibold text-white">{selectedBusiness.name}</span></p>
+                <p className="text-sm text-gray-300"><span className="text-gray-500">Email:</span> <span className="text-white">{selectedBusiness.email}</span></p>
+                <p className="text-sm text-gray-300"><span className="text-gray-500">ID:</span> <span className="font-mono text-blue-400">{selectedBusiness.businessIdentifier || '-'}</span></p>
+              </div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">
+                Введіть <span className="font-mono font-bold text-white">ВИДАЛИТИ</span> для підтвердження:
+              </label>
+              <input
+                type="text"
+                value={deleteConfirm}
+                onChange={(e) => setDeleteConfirm(e.target.value)}
+                placeholder="ВИДАЛИТИ"
+                className="w-full px-4 py-2.5 border border-white/10 rounded-lg bg-white/5 text-white placeholder-gray-500 focus:outline-none focus:border-red-500/50"
+                disabled={isDeleting}
+                autoComplete="off"
+              />
+              <div className="flex gap-2 justify-end mt-5">
+                <button
+                  onClick={() => { if (!isDeleting) { setDeleteModalOpen(false); setSelectedBusiness(null); setDeleteConfirm('') } }}
+                  disabled={isDeleting}
+                  className="px-4 py-2 border border-white/10 rounded-lg text-gray-300 hover:bg-white/10 transition-colors bg-white/5 disabled:opacity-50"
+                >
+                  Скасувати
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  disabled={isDeleting || deleteConfirm !== 'ВИДАЛИТИ'}
+                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed font-semibold transition-colors"
+                >
+                  {isDeleting ? 'Видалення...' : 'Видалити назавжди'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
       {/* Modal деталей бізнесу */}
       {detailModalBusiness && (
         <ModalPortal>
@@ -1448,6 +1503,17 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                 <button onClick={async () => { await handleUnblock(detailModalBusiness); setDetailModalBusiness(null); onDataChanged?.(); }} className="min-h-[44px] px-4 py-2 bg-green-500/20 text-green-400 rounded-lg hover:bg-green-500/30">Розблокувати</button>
               )}
               <button onClick={() => { const id = detailModalBusiness.businessIdentifier || ''; navigator.clipboard.writeText(id); toast({ title: id ? 'ID скопійовано' : 'ID відсутній', type: id ? 'success' : 'info' }); }} className="min-h-[44px] px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20">Копіювати ID</button>
+              <button
+                onClick={() => {
+                  setSelectedBusiness(detailModalBusiness)
+                  setDeleteConfirm('')
+                  setDetailModalBusiness(null)
+                  setDeleteModalOpen(true)
+                }}
+                className="min-h-[44px] px-4 py-2 bg-gray-500/20 text-gray-300 rounded-lg hover:bg-red-500/20 hover:text-red-400 border border-gray-500/30"
+              >
+                Видалити акаунт
+              </button>
             </div>
             </div>
           </div>
