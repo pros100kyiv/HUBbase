@@ -17,7 +17,7 @@ export async function POST(request: Request) {
   }
 
   try {
-    await withDbRetry(() => prisma.$queryRaw`SELECT 1`, { maxAttempts: 3, delayMs: 2500 })
+    await withDbRetry(() => prisma.$queryRaw`SELECT 1`, { maxAttempts: 5, delayMs: 3000 })
     const result = await syncAllBusinessesToManagementCenter()
     return NextResponse.json({
       success: true,
@@ -27,9 +27,11 @@ export async function POST(request: Request) {
     })
   } catch (error: any) {
     console.error('Sync management error:', error)
-    return NextResponse.json(
-      { error: error?.message || 'Помилка синхронізації' },
-      { status: 500 }
-    )
+    const msg = error?.message || ''
+    const isDbUnreachable = /can't reach database|connection refused|database server/i.test(msg)
+    const userMessage = isDbUnreachable
+      ? 'База даних ще прокидається. Зачекайте 15–20 секунд і натисніть «Синхронізувати» знову.'
+      : msg || 'Помилка синхронізації'
+    return NextResponse.json({ error: userMessage }, { status: 500 })
   }
 }
