@@ -19,11 +19,20 @@ const registerSchema = z.object({
 function isConnectionError(e: unknown): boolean {
   const msg = e instanceof Error ? e.message : String(e)
   const t = msg.toLowerCase()
-  return t.includes("can't reach database") || t.includes('database server') || t.includes('econnrefused') || t.includes('etimedout') || t.includes('connection') || t.includes('neon.tech')
+  return (
+    t.includes("can't reach database") ||
+    t.includes('database server') ||
+    t.includes('econnrefused') ||
+    t.includes('etimedout') ||
+    t.includes('connection') ||
+    t.includes('neon.tech') ||
+    t.includes('timed out') ||
+    t.includes('timeout')
+  )
 }
 
-const DB_RETRY_ATTEMPTS = 3
-const DB_RETRY_DELAY_MS = 2000
+const DB_RETRY_ATTEMPTS = 5
+const DB_RETRY_DELAY_MS = 3000
 
 export async function POST(request: Request) {
   let requestBody: any = null
@@ -37,10 +46,14 @@ export async function POST(request: Request) {
     const deviceId = generateDeviceId(clientIp, userAgent)
     const normalizedEmail = validated.email.toLowerCase().trim()
 
+    // Не блокуємо реєстрацію на створенні admin_control_center — запускаємо у фоні
+    ensureAdminControlCenterTable().catch((err) =>
+      console.warn('ensureAdminControlCenterTable (background):', (err as Error)?.message)
+    )
+
     let lastError: unknown = null
     for (let attempt = 0; attempt < DB_RETRY_ATTEMPTS; attempt++) {
       try {
-        await ensureAdminControlCenterTable()
         const result = await prisma.$transaction(async (tx) => {
       // Перевіряємо, чи email вже існує (явний select — щоб не ламатись без колонки telegramWebhookSetAt)
       const existingBusiness = await tx.business.findFirst({
@@ -163,8 +176,8 @@ export async function POST(request: Request) {
 
       return { type: 'register' as const, business: updatedBusiness }
     }, {
-      timeout: 10000, // 10 секунд таймаут
-      isolationLevel: 'Serializable', // Найвищий рівень ізоляції для уникнення race conditions
+      timeout: 20000, // 20 с — даємо Neon час на cold start (Vercel serverless)
+      isolationLevel: 'Serializable',
     })
 
     // Синхронізуємо з ManagementCenter (після транзакції)
