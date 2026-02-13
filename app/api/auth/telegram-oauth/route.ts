@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { generateDeviceId, getClientIp, getUserAgent, addTrustedDevice } from '@/lib/utils/device'
 import { ensureAdminControlCenterTable } from '@/lib/database/ensure-admin-control-center'
 import { generateBusinessIdentifier } from '@/lib/utils/business-identifier'
+import { getTrialEndDate } from '@/lib/subscription'
 
 /**
  * API для автоматичної реєстрації/входу через Telegram OAuth
@@ -463,6 +464,8 @@ export async function POST(request: Request) {
         niche: 'OTHER',
         customNiche: null,
         trustedDevices: JSON.stringify([currentDeviceId]), // Додаємо поточний пристрій до довірених
+        trialEndsAt: getTrialEndDate(),
+        subscriptionStatus: 'trial',
       },
       select: { id: true, name: true, slug: true, email: true, phone: true, address: true, description: true, logo: true, avatar: true, primaryColor: true, secondaryColor: true, backgroundColor: true, surfaceColor: true, isActive: true, businessIdentifier: true, profileCompleted: true, niche: true, customNiche: true },
     })

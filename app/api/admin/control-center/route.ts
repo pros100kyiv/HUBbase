@@ -1,8 +1,10 @@
 import { NextResponse } from 'next/server'
 import { unstable_cache } from 'next/cache'
+import { addDays } from 'date-fns'
 import { prisma } from '@/lib/prisma'
 import { verifyAdminToken } from '@/lib/middleware/admin-auth'
 import { jsonSafe } from '@/lib/utils/json'
+import type { SubscriptionPlan } from '@prisma/client'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 60
@@ -129,6 +131,10 @@ export async function GET(request: Request) {
           niche: true,
           telegramId: true,
           googleId: true,
+          subscriptionPlan: true,
+          trialEndsAt: true,
+          subscriptionStatus: true,
+          subscriptionCurrentPeriodEnd: true,
         },
       }),
       prisma.business.count({ where }),
@@ -148,6 +154,12 @@ export async function GET(request: Request) {
     const businesses = businessesRaw.map((b) => {
       const mc = mcMap.get(b.id)
       const regType = (mc?.registrationType as 'telegram' | 'google' | 'standard') || getRegistrationType(b)
+      const raw = b as typeof b & {
+        subscriptionPlan?: string
+        trialEndsAt?: Date | null
+        subscriptionStatus?: string | null
+        subscriptionCurrentPeriodEnd?: Date | null
+      }
       return {
         id: b.id,
         businessId: b.id,
@@ -161,6 +173,10 @@ export async function GET(request: Request) {
         registrationType: regType,
         businessIdentifier: b.businessIdentifier,
         niche: b.niche,
+        subscriptionPlan: raw.subscriptionPlan ?? 'FREE',
+        trialEndsAt: raw.trialEndsAt ?? null,
+        subscriptionStatus: raw.subscriptionStatus ?? null,
+        subscriptionCurrentPeriodEnd: raw.subscriptionCurrentPeriodEnd ?? null,
       }
     })
 
@@ -234,6 +250,41 @@ export async function PATCH(request: Request) {
           if (Object.keys(safeData).length > 0) {
             await prisma.business.update({ where: { id: businessId }, data: safeData })
             await prisma.managementCenter.updateMany({ where: { businessId }, data: safeData as any })
+          }
+        }
+        break
+      case 'updateSubscription':
+        if (data && typeof data === 'object') {
+          const updateData: {
+            subscriptionPlan?: SubscriptionPlan
+            trialEndsAt?: Date | null
+            subscriptionStatus?: string | null
+          } = {}
+          const plan = data.subscriptionPlan
+          if (plan === 'FREE' || plan === 'START' || plan === 'BUSINESS' || plan === 'PRO') {
+            updateData.subscriptionPlan = plan
+          }
+          if (typeof data.trialEndsAt === 'string') {
+            updateData.trialEndsAt = new Date(data.trialEndsAt)
+          } else if (data.trialEndsAt === null) {
+            updateData.trialEndsAt = null
+          }
+          if (typeof data.extendTrialDays === 'number' && data.extendTrialDays > 0) {
+            const business = await prisma.business.findUnique({
+              where: { id: businessId },
+              select: { trialEndsAt: true },
+            })
+            const from = business?.trialEndsAt && new Date(business.trialEndsAt) > new Date()
+              ? new Date(business.trialEndsAt)
+              : new Date()
+            updateData.trialEndsAt = addDays(from, data.extendTrialDays)
+            updateData.subscriptionStatus = 'trial'
+          }
+          if (data.subscriptionStatus === 'trial' || data.subscriptionStatus === 'active' || data.subscriptionStatus === 'expired' || data.subscriptionStatus === 'cancelled') {
+            updateData.subscriptionStatus = data.subscriptionStatus
+          }
+          if (Object.keys(updateData).length > 0) {
+            await prisma.business.update({ where: { id: businessId }, data: updateData })
           }
         }
         break

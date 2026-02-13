@@ -26,6 +26,14 @@ enum BusinessNiche {
   OTHER // Інше
 }
 
+// Тарифи підписки
+enum SubscriptionPlan {
+  FREE     // Безкоштовний / після trial без оплати
+  START    // Старт — 1 майстер, базовий функціонал
+  BUSINESS // Бізнес — кілька майстрів, аналітика, Telegram
+  PRO      // Про — все включено, Instagram, AI
+}
+
 // Ролі користувачів
 enum UserRole {
   OWNER // Власник
@@ -99,6 +107,11 @@ model Business {
   remindersEnabled             Boolean             @default(false)
   reminderSmsEnabled           Boolean             @default(false)
   reminderEmailEnabled         Boolean             @default(false)
+  // Підписка та trial
+  subscriptionPlan             SubscriptionPlan    @default(FREE)
+  trialEndsAt                  DateTime? // Кінець безкоштовного trial (14 днів з реєстрації)
+  subscriptionStatus           String? // trial | active | expired | cancelled
+  subscriptionCurrentPeriodEnd DateTime? // Кінець поточного оплаченого періоду
   // Безпека пристроїв
   trustedDevices               String? // JSON: масив deviceId дозволених пристроїв
   // Відносини

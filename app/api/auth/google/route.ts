@@ -115,6 +115,7 @@ export async function GET(request: Request) {
         counter++
       }
 
+      const { getTrialEndDate } = await import('@/lib/subscription')
       business = await prisma.business.create({
         data: {
           name,
@@ -124,6 +125,8 @@ export async function GET(request: Request) {
           logo: picture,
           niche: 'OTHER',
           customNiche: null,
+          trialEndsAt: getTrialEndDate(),
+          subscriptionStatus: 'trial',
         },
         select: { id: true, googleId: true, email: true, name: true, logo: true, slug: true, niche: true, customNiche: true, isActive: true, phone: true, address: true, description: true, primaryColor: true, secondaryColor: true, backgroundColor: true, surfaceColor: true },
       })

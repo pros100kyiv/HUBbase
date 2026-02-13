@@ -23,10 +23,11 @@ import {
   MoneyIcon,
   LinkIcon,
   FileTextIcon,
-  DatabaseIcon
+  DatabaseIcon,
+  CreditCardIcon
 } from '@/components/icons'
 
-type Tab = 'overview' | 'businesses' | 'phones' | 'activity' | 'graph' | 'analytics' | 'integrations' | 'security' | 'finances' | 'clients' | 'admins' | 'settings' | 'export'
+type Tab = 'overview' | 'businesses' | 'phones' | 'activity' | 'graph' | 'analytics' | 'integrations' | 'security' | 'finances' | 'clients' | 'admins' | 'subscriptions' | 'settings' | 'export'
 
 interface Business {
   id: string
@@ -41,6 +42,10 @@ interface Business {
   registrationType: 'telegram' | 'google' | 'standard'
   businessIdentifier: string | null
   niche: string
+  subscriptionPlan?: string
+  trialEndsAt?: Date | string | null
+  subscriptionStatus?: string | null
+  subscriptionCurrentPeriodEnd?: Date | string | null
 }
 
 const ONLINE_THRESHOLD_MS = 2 * 60 * 1000 // 2 хвилини
@@ -238,6 +243,7 @@ export default function ControlCenterPage() {
   const tabs = [
     { id: 'overview', label: 'Огляд', icon: BuildingIcon },
     { id: 'businesses', label: 'Бізнеси', icon: UsersIcon },
+    { id: 'subscriptions', label: 'Підписки', icon: CreditCardIcon },
     { id: 'phones', label: 'Телефонний довідник', icon: PhoneIcon },
     { id: 'activity', label: 'Архів дій', icon: CalendarIcon },
     { id: 'graph', label: 'Граф зв\'язків', icon: LinkIcon },
@@ -437,6 +443,15 @@ export default function ControlCenterPage() {
 
         {activeTab === 'admins' && (
           <AdminsTab refreshTrigger={refreshTrigger} />
+        )}
+
+        {activeTab === 'subscriptions' && (
+          <SubscriptionsTab
+            businesses={businesses}
+            loading={loading}
+            formatDate={formatDate}
+            onDataChanged={handleDataChanged}
+          />
         )}
 
         {activeTab === 'settings' && (
@@ -2068,6 +2083,219 @@ function SettingsTab() {
           <p>• Live Stats Bar: кожні 3 сек</p>
         </div>
       </div>
+    </div>
+  )
+}
+
+// Підписки — керування тарифами та trial
+const PLAN_LABELS: Record<string, string> = {
+  FREE: 'Безкоштовний',
+  START: 'Старт',
+  BUSINESS: 'Бізнес',
+  PRO: 'Про',
+}
+
+function SubscriptionsTab({
+  businesses,
+  loading,
+  formatDate,
+  onDataChanged,
+}: {
+  businesses: Business[]
+  loading: boolean
+  formatDate: (date: Date | null) => string
+  onDataChanged: () => void
+}) {
+  const [planFilter, setPlanFilter] = useState<string>('all')
+  const [trialFilter, setTrialFilter] = useState<'all' | 'trial' | 'expired'>('all')
+  const [editModalOpen, setEditModalOpen] = useState(false)
+  const [editBusiness, setEditBusiness] = useState<Business | null>(null)
+  const [editPlan, setEditPlan] = useState<string>('FREE')
+  const [extendTrialDays, setExtendTrialDays] = useState<number>(0)
+  const [saving, setSaving] = useState(false)
+
+  const filtered = businesses.filter((b: Business) => {
+    if (planFilter !== 'all' && (b.subscriptionPlan || 'FREE') !== planFilter) return false
+    const trialEnd = b.trialEndsAt ? new Date(b.trialEndsAt) : null
+    const now = new Date()
+    if (trialFilter === 'trial' && (!trialEnd || trialEnd <= now)) return false
+    if (trialFilter === 'expired') {
+      if (!trialEnd || trialEnd > now) return false
+      if ((b.subscriptionPlan || 'FREE') !== 'FREE') return false
+    }
+    return true
+  })
+
+  const handleOpenEdit = (b: Business) => {
+    setEditBusiness(b)
+    setEditPlan(b.subscriptionPlan || 'FREE')
+    setExtendTrialDays(0)
+    setEditModalOpen(true)
+  }
+
+  const handleSaveSubscription = async () => {
+    if (!editBusiness) return
+    setSaving(true)
+    try {
+      const body: { subscriptionPlan?: string; trialEndsAt?: string | null; extendTrialDays?: number; subscriptionStatus?: string } = {}
+      if (editPlan === 'FREE' || editPlan === 'START' || editPlan === 'BUSINESS' || editPlan === 'PRO') {
+        body.subscriptionPlan = editPlan
+      }
+      if (extendTrialDays > 0) {
+        body.extendTrialDays = extendTrialDays
+      }
+      const response = await fetch('/api/admin/control-center', {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        body: JSON.stringify({
+          businessId: editBusiness.id,
+          action: 'updateSubscription',
+          data: body,
+        }),
+      })
+      if (response.ok) {
+        setEditModalOpen(false)
+        setEditBusiness(null)
+        onDataChanged?.()
+        toast({ title: 'Підписку оновлено', type: 'success' })
+      } else {
+        const data = await response.json()
+        toast({ title: data.error || 'Помилка оновлення', type: 'error' })
+      }
+    } catch (e) {
+      console.error(e)
+      toast({ title: 'Помилка оновлення підписки', type: 'error' })
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const getTrialLabel = (b: Business) => {
+    const trialEnd = b.trialEndsAt ? new Date(b.trialEndsAt) : null
+    if (!trialEnd) return '—'
+    const now = new Date()
+    if (trialEnd > now) return `Trial до ${formatDate(trialEnd)}`
+    return `Trial закінчився ${formatDate(trialEnd)}`
+  }
+
+  return (
+    <div className="min-w-0">
+      <h2 className="text-xl sm:text-2xl font-bold text-white mb-4">Підписки та trial</h2>
+      <p className="text-gray-400 text-sm mb-4">
+        Керування тарифами (Старт, Бізнес, Про) та безкоштовним trial. Новий бізнес отримує 14 днів trial.
+      </p>
+
+      <div className="flex flex-wrap gap-3 mb-4">
+        <select
+          value={planFilter}
+          onChange={(e) => setPlanFilter(e.target.value)}
+          className="min-h-[44px] px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white"
+        >
+          <option value="all">Всі тарифи</option>
+          {Object.entries(PLAN_LABELS).map(([k, v]) => (
+            <option key={k} value={k}>{v}</option>
+          ))}
+        </select>
+        <select
+          value={trialFilter}
+          onChange={(e) => setTrialFilter(e.target.value as 'all' | 'trial' | 'expired')}
+          className="min-h-[44px] px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white"
+        >
+          <option value="all">Усі по trial</option>
+          <option value="trial">На trial</option>
+          <option value="expired">Trial закінчився</option>
+        </select>
+      </div>
+
+      {loading ? (
+        <div className="text-gray-400 py-8">Завантаження...</div>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full border-collapse">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="text-left py-3 px-2 text-gray-400 font-medium">Бізнес</th>
+                <th className="text-left py-3 px-2 text-gray-400 font-medium">Тариф</th>
+                <th className="text-left py-3 px-2 text-gray-400 font-medium">Trial</th>
+                <th className="text-left py-3 px-2 text-gray-400 font-medium">Дії</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((b: Business) => (
+                <tr key={b.id} className="border-b border-white/5 hover:bg-white/5">
+                  <td className="py-3 px-2">
+                    <div className="font-medium text-white">{b.name}</div>
+                    <div className="text-sm text-gray-400">{b.email}</div>
+                  </td>
+                  <td className="py-3 px-2 text-white">{PLAN_LABELS[b.subscriptionPlan || 'FREE'] || b.subscriptionPlan}</td>
+                  <td className="py-3 px-2 text-gray-300">{getTrialLabel(b)}</td>
+                  <td className="py-3 px-2">
+                    <button
+                      onClick={() => handleOpenEdit(b)}
+                      className="px-3 py-1.5 rounded-lg bg-white/10 hover:bg-white/20 text-white text-sm font-medium"
+                    >
+                      Змінити
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+          {filtered.length === 0 && (
+            <div className="text-gray-400 py-8 text-center">Немає бізнесів за обраними фільтрами</div>
+          )}
+        </div>
+      )}
+
+      {editModalOpen && editBusiness && (
+        <ModalPortal>
+          <div className="modal-overlay sm:!p-4" onClick={() => { if (!saving) { setEditModalOpen(false); setEditBusiness(null) } }}>
+            <div className="bg-[#1e293b] rounded-xl p-6 max-w-md w-full border border-white/10" onClick={(e) => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-white mb-4">Редагувати підписку · {editBusiness.name}</h3>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Тариф</label>
+                <select
+                  value={editPlan}
+                  onChange={(e) => setEditPlan(e.target.value)}
+                  className="w-full min-h-[44px] px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white"
+                >
+                  {Object.entries(PLAN_LABELS).map(([k, v]) => (
+                    <option key={k} value={k}>{v}</option>
+                  ))}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm text-gray-400 mb-1">Продовжити trial (днів)</label>
+                <input
+                  type="number"
+                  min={0}
+                  value={extendTrialDays || ''}
+                  onChange={(e) => setExtendTrialDays(parseInt(e.target.value, 10) || 0)}
+                  className="w-full min-h-[44px] px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white"
+                  placeholder="0 — не змінювати"
+                />
+              </div>
+            </div>
+            <div className="flex gap-3 mt-6">
+              <button
+                onClick={handleSaveSubscription}
+                disabled={saving}
+                className="flex-1 min-h-[44px] px-4 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-medium disabled:opacity-50"
+              >
+                {saving ? 'Збереження...' : 'Зберегти'}
+              </button>
+              <button
+                onClick={() => { if (!saving) { setEditModalOpen(false); setEditBusiness(null) } }}
+                className="px-4 py-2 rounded-lg border border-white/20 text-gray-300 hover:bg-white/10"
+              >
+                Скасувати
+              </button>
+            </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
     </div>
   )
 }

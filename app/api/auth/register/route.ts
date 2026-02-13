@@ -7,6 +7,7 @@ import { prisma } from '@/lib/prisma'
 import { BusinessNiche } from '@prisma/client'
 import { generateBusinessIdentifier } from '@/lib/utils/business-identifier'
 import { normalizeUaPhone } from '@/lib/utils/phone'
+import { getTrialEndDate } from '@/lib/subscription'
 
 const registerSchema = z.object({
   name: z.string().min(1, 'Назва обов\'язкова'),
@@ -133,6 +134,8 @@ export async function POST(request: Request) {
           customNiche: null,
           telegramBotToken: defaultTelegramBotToken,
           telegramNotificationsEnabled: true,
+          trialEndsAt: getTrialEndDate(),
+          subscriptionStatus: 'trial',
         },
         select: {
           id: true,
