@@ -95,8 +95,14 @@ export async function POST(request: Request) {
       }
     }
 
-    // Генеруємо JWT токен
-    const secret = process.env.JWT_SECRET || 'xbase-admin-secret-key-change-in-production'
+    // Генеруємо JWT токен тільки з реальним секретом оточення
+    const secret = process.env.JWT_SECRET
+    if (!secret) {
+      return NextResponse.json(
+        { error: 'Адмін авторизація не налаштована (JWT_SECRET відсутній)' },
+        { status: 503 }
+      )
+    }
     const token = jwt.sign(
       { 
         email,
