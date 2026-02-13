@@ -73,7 +73,7 @@ export function TelegramAuthButton({ text, isRegister = false, forgotPasswordMod
         if (pendingDeviceId) localStorage.removeItem('pendingDeviceId')
         if (pendingBusinessId) localStorage.removeItem('pendingBusinessId')
         
-        let data: { success?: boolean; business?: unknown; action?: string; error?: string }
+        let data: { success?: boolean; business?: { profileCompleted?: boolean }; action?: string; error?: string }
         try {
           data = await response.json()
         } catch {
