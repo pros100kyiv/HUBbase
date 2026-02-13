@@ -112,10 +112,10 @@ export default function Home() {
         {/* Hero */}
         <section className="px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 pb-16 sm:pb-24 text-center" aria-labelledby="hero-heading">
           <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-gray-300 border border-white/10 mb-6 landing-animate-in" role="status">
-            Безкоштовний старт
+            Технології вашого комфорту
           </span>
           <h1 id="hero-heading" className="landing-hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white max-w-4xl mx-auto mb-4 sm:mb-6 landing-animate-in landing-animate-in-1">
-            Клієнти записуються онлайн. Ви керуєте записами в одній панелі.
+            Онлайн-запис. Єдина панель. Повний контроль.
           </h1>
           <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-2 landing-animate-in landing-animate-in-2">
             Одне посилання або QR-код — клієнти обирають час без дзвінків. Усі записи в одному місці.
