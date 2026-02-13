@@ -167,8 +167,10 @@ function RegisterForm() {
     <AuthLayout title="Реєстрація">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-medium mb-2 text-gray-300">Назва *</label>
+          <label htmlFor="register-name" className="block text-sm font-medium mb-2 text-gray-300">Назва *</label>
           <Input
+            id="register-name"
+            name="name"
             type="text"
             value={formData.name}
             onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -180,8 +182,10 @@ function RegisterForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2 text-gray-300">Email *</label>
+          <label htmlFor="register-email" className="block text-sm font-medium mb-2 text-gray-300">Email *</label>
           <Input
+            id="register-email"
+            name="email"
             type="email"
             inputMode="email"
             value={formData.email}
@@ -198,8 +202,10 @@ function RegisterForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2 text-gray-300">Пароль *</label>
+          <label htmlFor="register-password" className="block text-sm font-medium mb-2 text-gray-300">Пароль *</label>
           <Input
+            id="register-password"
+            name="password"
             type="password"
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
@@ -211,8 +217,10 @@ function RegisterForm() {
         </div>
 
         <div>
-          <label className="block text-sm font-medium mb-2 text-gray-300">URL slug (опціонально)</label>
+          <label htmlFor="register-slug" className="block text-sm font-medium mb-2 text-gray-300">URL slug (опціонально)</label>
           <Input
+            id="register-slug"
+            name="slug"
             type="text"
             value={formData.slug}
             onChange={(e) => setFormData({ ...formData, slug: e.target.value })}
