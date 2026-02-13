@@ -79,17 +79,30 @@ function RegisterForm() {
           name: formData.name.trim(),
           email: formData.email.toLowerCase().trim(),
           password: formData.password,
-          phone: formData.slug ? undefined : undefined, // slug не відправляємо, він генерується автоматично
+          phone: undefined, // опціонально; slug генерується на сервері з назви
         }),
       })
 
-      const data = await response.json()
+      let data: { error?: string; business?: { id: string; name: string }; isLogin?: boolean }
+      try {
+        data = await response.json()
+      } catch {
+        setErrorMessage(
+          response.ok
+            ? 'Невірна відповідь від сервера. Спробуйте ще раз.'
+            : `Помилка ${response.status}. Спробуйте ще раз або перезавантажте сторінку.`
+        )
+        setShowErrorToast(true)
+        setErrors({ submit: 'Помилка з\'єднання з сервером' })
+        setIsLoading(false)
+        return
+      }
 
       if (!response.ok) {
-        setErrorMessage(data.error || 'Помилка при реєстрації')
+        setErrorMessage(data?.error || 'Помилка при реєстрації')
         setShowLoginLinkInToast(response.status === 409)
         setShowErrorToast(true)
-        setErrors({ submit: data.error || 'Помилка при реєстрації' })
+        setErrors({ submit: data?.error || 'Помилка при реєстрації' })
         setIsLoading(false)
         return
       }
