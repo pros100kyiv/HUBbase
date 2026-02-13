@@ -115,13 +115,13 @@ export default function Home() {
             Безкоштовний старт
           </span>
           <h1 id="hero-heading" className="landing-hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white max-w-4xl mx-auto mb-4 sm:mb-6 landing-animate-in landing-animate-in-1">
-            Відвідувачі записуються самі. Ви — керуєте.
+            Клієнти записуються онлайн. Ви керуєте записами в одній панелі.
           </h1>
           <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-2 landing-animate-in landing-animate-in-2">
-            Посилання або QR-код — відвідувачі обирають час без дзвінків. Всі записи в одній панелі.
+            Одне посилання або QR-код — клієнти обирають час без дзвінків. Усі записи в одному місці.
           </p>
           <p className="text-sm text-gray-500 max-w-xl mx-auto mb-8 sm:mb-10 landing-animate-in landing-animate-in-2">
-            Салон, шиномонтаж, клініка, автосервіс — запис онлайн у кілька кліків
+            Салон, шиномонтаж, клініка, автосервіс — один сервіс для онлайн-записів.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center landing-animate-in landing-animate-in-3">
             <Link
