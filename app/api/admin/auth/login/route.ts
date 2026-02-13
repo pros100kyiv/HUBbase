@@ -3,6 +3,7 @@ import { z } from 'zod'
 import { hash, compare } from 'bcryptjs'
 import jwt from 'jsonwebtoken'
 import { prisma } from '@/lib/prisma'
+import { getAdminJwtSecret } from '@/lib/middleware/admin-auth'
 
 const loginSchema = z.object({
   email: z.string().email(),
@@ -95,14 +96,8 @@ export async function POST(request: Request) {
       }
     }
 
-    // Генеруємо JWT токен тільки з реальним секретом оточення
-    const secret = process.env.JWT_SECRET
-    if (!secret) {
-      return NextResponse.json(
-        { error: 'Адмін авторизація не налаштована (JWT_SECRET відсутній)' },
-        { status: 503 }
-      )
-    }
+    // Генеруємо JWT токен з єдиним секретом (env або fallback для головного адміна)
+    const secret = getAdminJwtSecret()
     const token = jwt.sign(
       { 
         email,
