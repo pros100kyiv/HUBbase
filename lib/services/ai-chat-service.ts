@@ -160,7 +160,15 @@ ${context.location ? `Адреса: ${context.location}` : ''}
     }
 
     const genAI = new GoogleGenerativeAI(this.apiKey)
-    const model = genAI.getGenerativeModel({ model: this.model })
+    // Force JSON to avoid parse failures -> fewer fallbacks and clearer "AI used" signal.
+    const model = genAI.getGenerativeModel({
+      model: this.model,
+      generationConfig: {
+        responseMimeType: 'application/json',
+        temperature: 0.4,
+        maxOutputTokens: 256,
+      },
+    })
 
     const historyText = chatHistory
       .slice(-6)

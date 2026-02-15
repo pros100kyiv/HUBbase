@@ -26,6 +26,7 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
   })
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const sendLockRef = useRef(false)
   
   useEffect(() => {
     if (isOpen && businessId) {
@@ -82,7 +83,8 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
   }
   
   const handleSend = async () => {
-    if (!input.trim() || isLoading) return
+    // Prevent duplicate submissions (Enter repeat / double click) before React state updates.
+    if (!input.trim() || isLoading || sendLockRef.current) return
     
     const userMessage = input.trim()
     setInput('')
@@ -95,6 +97,7 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
     }
     setMessages(prev => [...prev, userMsg])
     setIsLoading(true)
+    sendLockRef.current = true
     
     try {
       const resolvedBusinessId = resolveBusinessId()
@@ -158,6 +161,7 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
       setMessages(prev => [...prev, errorMsg])
     } finally {
       setIsLoading(false)
+      sendLockRef.current = false
     }
   }
   
@@ -253,7 +257,12 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
                 type="text"
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
-                onKeyPress={(e) => e.key === 'Enter' && !e.shiftKey && handleSend()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey && !e.repeat) {
+                    e.preventDefault()
+                    handleSend()
+                  }
+                }}
                 placeholder="Напишіть повідомлення..."
                 className="flex-1 px-3 py-2.5 md:py-2 text-sm md:text-xs border border-gray-300 dark:border-gray-600 rounded-candy-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple min-h-[44px] md:min-h-0"
                 disabled={isLoading}
