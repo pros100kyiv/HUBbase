@@ -135,6 +135,7 @@ export async function GET(request: Request) {
               niche: true,
               telegramId: true,
               googleId: true,
+              aiChatEnabled: true,
             },
           }),
           prisma.business.count({ where }),
@@ -161,6 +162,7 @@ export async function GET(request: Request) {
             email: b.email,
             phone: b.phone,
             isActive: b.isActive,
+            aiChatEnabled: (b as any).aiChatEnabled === true,
             registeredAt: b.createdAt,
             lastLoginAt: mc?.lastLoginAt ?? null,
             lastSeenAt: mc?.lastSeenAt ?? null,
@@ -242,6 +244,12 @@ export async function PATCH(request: Request) {
         await prisma.business.update({ where: { id: businessId }, data: { isActive: false } })
         await prisma.managementCenter.updateMany({ where: { businessId }, data: { isActive: false } })
         break
+      case 'setAiChatEnabled': {
+        const enabled = !!(data && typeof data === 'object' && (data as any).aiChatEnabled === true)
+        await prisma.business.update({ where: { id: businessId }, data: { aiChatEnabled: enabled } })
+        await prisma.managementCenter.updateMany({ where: { businessId }, data: { aiChatEnabled: enabled } })
+        break
+      }
       case 'update':
         if (data && typeof data === 'object') {
           // Дозволені поля для оновлення — без telegramWebhookSetAt та інших полів, яких може не бути в БД

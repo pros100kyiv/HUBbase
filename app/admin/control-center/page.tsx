@@ -36,6 +36,7 @@ interface Business {
   email: string
   phone: string | null
   isActive: boolean
+  aiChatEnabled?: boolean
   registeredAt: Date
   lastLoginAt: Date | null
   lastSeenAt: Date | null
@@ -86,6 +87,7 @@ export default function ControlCenterPage() {
   const [refreshTrigger, setRefreshTrigger] = useState(0)
   const [syncing, setSyncing] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [togglingAi, setTogglingAi] = useState<Record<string, boolean>>({})
 
   const defaultStats = {
     total: 0,
@@ -172,6 +174,49 @@ export default function ControlCenterPage() {
       alert('Помилка синхронізації')
     } finally {
       setSyncing(false)
+    }
+  }
+
+  const handleToggleAiChat = async (business: Business) => {
+    const id = business.businessId
+    if (!id) return
+    const next = !(business.aiChatEnabled === true)
+
+    // optimistic UI
+    setBusinesses((prev) => prev.map((b) => (b.businessId === id ? { ...b, aiChatEnabled: next } : b)))
+    setTogglingAi((prev) => ({ ...prev, [id]: true }))
+    try {
+      const response = await fetch('/api/admin/control-center', {
+        method: 'PATCH',
+        headers: getAuthHeaders(),
+        cache: 'no-store',
+        body: JSON.stringify({
+          businessId: id,
+          action: 'setAiChatEnabled',
+          data: { aiChatEnabled: next },
+        }),
+      })
+
+      if (!response.ok) {
+        const data = await response.json().catch(() => ({}))
+        throw new Error(data.error || 'Не вдалося оновити AI')
+      }
+
+      toast({
+        title: next ? 'AI увімкнено' : 'AI вимкнено',
+        type: 'success',
+        duration: 1500,
+      })
+    } catch (error) {
+      // revert
+      setBusinesses((prev) => prev.map((b) => (b.businessId === id ? { ...b, aiChatEnabled: !next } : b)))
+      toast({
+        title: 'Помилка',
+        description: error instanceof Error ? error.message : 'Не вдалося оновити AI',
+        type: 'error',
+      })
+    } finally {
+      setTogglingAi((prev) => ({ ...prev, [id]: false }))
     }
   }
 
@@ -412,6 +457,8 @@ export default function ControlCenterPage() {
             loadData={loadData}
             setRefreshTrigger={setRefreshTrigger}
             refreshTrigger={refreshTrigger}
+            onToggleAiChat={handleToggleAiChat}
+            togglingAi={togglingAi}
           />
         )}
 
@@ -683,7 +730,7 @@ function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
 }
 
 // Businesses Tab Component
-function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, setStatusFilter, page, setPage, totalPages, formatDate, onDataChanged, loadData, setRefreshTrigger, refreshTrigger }: any) {
+function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, setStatusFilter, page, setPage, totalPages, formatDate, onDataChanged, loadData, setRefreshTrigger, refreshTrigger, onToggleAiChat, togglingAi }: any) {
   const [selectedBusinesses, setSelectedBusinesses] = useState<string[]>([])
   const [bulkAction, setBulkAction] = useState<string>('')
   const [blockModalOpen, setBlockModalOpen] = useState(false)
@@ -1109,6 +1156,18 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                   <div className="text-xs text-gray-400 truncate">{business.email}</div>
                   <div className="flex flex-wrap gap-2 pt-1">
                     <button onClick={() => setDetailModalBusiness(business)} className="px-3 py-1.5 text-xs bg-blue-500/20 text-blue-400 rounded-lg">Деталі</button>
+                    <button
+                      onClick={() => onToggleAiChat?.(business)}
+                      disabled={togglingAi[business.businessId] === true}
+                      className={`px-3 py-1.5 text-xs rounded-lg ${
+                        business.aiChatEnabled
+                          ? 'bg-purple-500/20 text-purple-300'
+                          : 'bg-gray-500/20 text-gray-300'
+                      } ${togglingAi[business.businessId] === true ? 'opacity-60 cursor-not-allowed' : ''}`}
+                      title="Увімкнути/вимкнути AI чат"
+                    >
+                      AI: {business.aiChatEnabled ? 'ON' : 'OFF'}
+                    </button>
                     {business.isActive ? (
                       <>
                         <button onClick={() => handleBlockClick(business)} className="px-3 py-1.5 text-xs bg-red-500/20 text-red-400 rounded-lg">Заблокувати</button>
@@ -1260,6 +1319,16 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                           className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 text-xs"
                         >
                           Деталі
+                        </button>
+                        <button
+                          onClick={() => onToggleAiChat?.(business)}
+                          disabled={togglingAi[business.businessId] === true}
+                          className={`px-2 py-0.5 text-white text-xs rounded transition-colors ${
+                            business.aiChatEnabled ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-600 hover:bg-gray-700'
+                          } ${togglingAi[business.businessId] === true ? 'opacity-60 cursor-not-allowed' : ''}`}
+                          title="Увімкнути/вимкнути AI чат"
+                        >
+                          AI {business.aiChatEnabled ? 'ON' : 'OFF'}
                         </button>
                         {business.isActive ? (
                           <>
