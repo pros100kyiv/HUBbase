@@ -136,6 +136,9 @@ export async function GET(request: Request) {
               telegramId: true,
               googleId: true,
               aiChatEnabled: true,
+              aiProvider: true,
+              aiSettings: true,
+              aiApiKey: true,
             },
           }),
           prisma.business.count({ where }),
@@ -163,6 +166,16 @@ export async function GET(request: Request) {
             phone: b.phone,
             isActive: b.isActive,
             aiChatEnabled: (b as any).aiChatEnabled === true,
+            aiHasKey: !!((b as any).aiApiKey && String((b as any).aiApiKey).trim()),
+            aiProvider: (b as any).aiProvider || null,
+            aiModel: (() => {
+              try {
+                const s = (b as any).aiSettings ? JSON.parse((b as any).aiSettings) : null
+                return s?.model || null
+              } catch {
+                return null
+              }
+            })(),
             registeredAt: b.createdAt,
             lastLoginAt: mc?.lastLoginAt ?? null,
             lastSeenAt: mc?.lastSeenAt ?? null,
@@ -248,6 +261,36 @@ export async function PATCH(request: Request) {
         const enabled = !!(data && typeof data === 'object' && (data as any).aiChatEnabled === true)
         await prisma.business.update({ where: { id: businessId }, data: { aiChatEnabled: enabled } })
         await prisma.managementCenter.updateMany({ where: { businessId }, data: { aiChatEnabled: enabled } })
+        break
+      }
+      case 'setAiConfig': {
+        if (!data || typeof data !== 'object') {
+          return NextResponse.json({ error: 'data is required' }, { status: 400 })
+        }
+        const aiProviderRaw = (data as any).aiProvider
+        const aiSettingsRaw = (data as any).aiSettings
+        const aiApiKeyRaw = (data as any).aiApiKey
+
+        const update: Record<string, unknown> = {}
+        if (aiProviderRaw !== undefined) {
+          update.aiProvider = typeof aiProviderRaw === 'string' && aiProviderRaw.trim() ? aiProviderRaw.trim() : null
+        }
+        if (aiSettingsRaw !== undefined) {
+          update.aiSettings = typeof aiSettingsRaw === 'string' && aiSettingsRaw.trim() ? aiSettingsRaw.trim() : null
+        }
+        if (aiApiKeyRaw !== undefined) {
+          // Allow clear (null/empty) or set new key. Keep size bounded.
+          const s = typeof aiApiKeyRaw === 'string' ? aiApiKeyRaw.trim() : ''
+          if (s && s.length > 300) return NextResponse.json({ error: 'AI key is too long' }, { status: 400 })
+          update.aiApiKey = s ? s : null
+        }
+
+        if (Object.keys(update).length === 0) {
+          return NextResponse.json({ success: true })
+        }
+
+        await prisma.business.update({ where: { id: businessId }, data: update as any })
+        await prisma.managementCenter.updateMany({ where: { businessId }, data: update as any })
         break
       }
       case 'update':

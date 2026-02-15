@@ -37,6 +37,9 @@ interface Business {
   phone: string | null
   isActive: boolean
   aiChatEnabled?: boolean
+  aiHasKey?: boolean
+  aiProvider?: string | null
+  aiModel?: string | null
   registeredAt: Date
   lastLoginAt: Date | null
   lastSeenAt: Date | null
@@ -745,6 +748,16 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
   const [isDeleting, setIsDeleting] = useState(false)
   const [searchBy, setSearchBy] = useState<'all' | 'id' | 'name' | 'email'>('all')
   const [detailModalBusiness, setDetailModalBusiness] = useState<Business | null>(null)
+  const [aiKeyDraft, setAiKeyDraft] = useState('')
+  const [aiModelDraft, setAiModelDraft] = useState('gemini-2.5-flash')
+  const [savingAiConfig, setSavingAiConfig] = useState(false)
+
+  useEffect(() => {
+    if (!detailModalBusiness) return
+    if (detailModalBusiness.aiModel && typeof detailModalBusiness.aiModel === 'string') {
+      setAiModelDraft(detailModalBusiness.aiModel)
+    }
+  }, [detailModalBusiness?.businessId])
   const [quickIdSearch, setQuickIdSearch] = useState('')
   const quickSearchInputRef = useRef<HTMLInputElement>(null)
   const rowRefsMap = useRef<Record<string, HTMLTableRowElement | null>>({})
@@ -1570,6 +1583,129 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
               <div className="flex justify-between"><span className="text-gray-400">Реєстрація:</span><span className="text-white">{detailModalBusiness.registrationType === 'telegram' ? 'Telegram' : detailModalBusiness.registrationType === 'google' ? 'Google' : 'Стандартна'}</span></div>
               <div className="flex justify-between"><span className="text-gray-400">Дата реєстрації:</span><span className="text-white">{formatDate(detailModalBusiness.registeredAt)}</span></div>
               <div className="flex justify-between"><span className="text-gray-400">Останній вхід:</span><span className="text-white">{formatDate(detailModalBusiness.lastLoginAt)}</span></div>
+            </div>
+
+            <div className="mt-5 rounded-lg border border-white/10 bg-white/5 p-3">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="text-sm font-semibold text-white">AI</div>
+                <button
+                  onClick={() => onToggleAiChat?.(detailModalBusiness)}
+                  disabled={togglingAi?.[detailModalBusiness.businessId] === true}
+                  className={`min-h-[36px] px-3 py-1.5 text-xs rounded-lg ${
+                    detailModalBusiness.aiChatEnabled ? 'bg-purple-600 hover:bg-purple-700' : 'bg-gray-600 hover:bg-gray-700'
+                  } ${togglingAi?.[detailModalBusiness.businessId] === true ? 'opacity-60 cursor-not-allowed' : ''}`}
+                >
+                  AI {detailModalBusiness.aiChatEnabled ? 'ON' : 'OFF'}
+                </button>
+              </div>
+              <div className="text-xs text-gray-300 flex flex-wrap gap-2">
+                <span>Key: {detailModalBusiness.aiHasKey ? 'set' : 'empty'}</span>
+                <span>Model: {detailModalBusiness.aiModel || '-'}</span>
+              </div>
+
+              <div className="mt-3 space-y-2">
+                <label className="text-xs text-gray-400">Gemini API key (встав, щоб оновити; порожньо = без змін)</label>
+                <input
+                  type="password"
+                  value={aiKeyDraft}
+                  onChange={(e) => setAiKeyDraft(e.target.value)}
+                  placeholder="AIza..."
+                  className="w-full min-h-[40px] px-3 py-2 rounded-lg bg-black/20 border border-white/10 text-white text-sm"
+                />
+                <label className="text-xs text-gray-400">Модель</label>
+                <select
+                  value={aiModelDraft}
+                  onChange={(e) => setAiModelDraft(e.target.value)}
+                  className="w-full min-h-[40px] px-3 py-2 rounded-lg bg-black/20 border border-white/10 text-white text-sm"
+                >
+                  <option value="gemini-2.5-flash">gemini-2.5-flash</option>
+                  <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                </select>
+                <div className="flex gap-2 pt-1">
+                  <button
+                    onClick={async () => {
+                      setSavingAiConfig(true)
+                      try {
+                        const body: any = {
+                          businessId: detailModalBusiness.businessId,
+                          action: 'setAiConfig',
+                          data: {
+                            aiProvider: 'gemini',
+                            aiSettings: JSON.stringify({ model: aiModelDraft }),
+                          },
+                        }
+                        if (aiKeyDraft.trim()) body.data.aiApiKey = aiKeyDraft.trim()
+
+                        const res = await fetch('/api/admin/control-center', {
+                          method: 'PATCH',
+                          headers: getAuthHeaders(),
+                          cache: 'no-store',
+                          body: JSON.stringify(body),
+                        })
+                        const data = await res.json().catch(() => ({}))
+                        if (!res.ok) throw new Error(data.error || 'Не вдалося зберегти AI налаштування')
+
+                        setDetailModalBusiness((prev) =>
+                          prev
+                            ? {
+                                ...prev,
+                                aiProvider: 'gemini',
+                                aiModel: aiModelDraft,
+                                aiHasKey: prev.aiHasKey || !!aiKeyDraft.trim(),
+                              }
+                            : prev
+                        )
+                        setAiKeyDraft('')
+                        toast({ title: 'AI налаштування збережено', type: 'success', duration: 1500 })
+                        await onDataChanged?.()
+                      } catch (e) {
+                        toast({
+                          title: 'Помилка',
+                          description: e instanceof Error ? e.message : 'Не вдалося зберегти AI налаштування',
+                          type: 'error',
+                        })
+                      } finally {
+                        setSavingAiConfig(false)
+                      }
+                    }}
+                    disabled={savingAiConfig}
+                    className="min-h-[44px] px-4 py-2 bg-white/10 text-white rounded-lg hover:bg-white/20 disabled:opacity-50"
+                  >
+                    {savingAiConfig ? 'Збереження...' : 'Зберегти AI'}
+                  </button>
+                  <button
+                    onClick={async () => {
+                      if (!confirm('Очистити AI ключ для цього бізнесу?')) return
+                      setSavingAiConfig(true)
+                      try {
+                        const res = await fetch('/api/admin/control-center', {
+                          method: 'PATCH',
+                          headers: getAuthHeaders(),
+                          cache: 'no-store',
+                          body: JSON.stringify({
+                            businessId: detailModalBusiness.businessId,
+                            action: 'setAiConfig',
+                            data: { aiApiKey: '' },
+                          }),
+                        })
+                        const data = await res.json().catch(() => ({}))
+                        if (!res.ok) throw new Error(data.error || 'Не вдалося очистити ключ')
+                        setDetailModalBusiness((prev) => (prev ? { ...prev, aiHasKey: false } : prev))
+                        toast({ title: 'AI ключ очищено', type: 'success', duration: 1500 })
+                        await onDataChanged?.()
+                      } catch (e) {
+                        toast({ title: 'Помилка', description: e instanceof Error ? e.message : 'Не вдалося очистити ключ', type: 'error' })
+                      } finally {
+                        setSavingAiConfig(false)
+                      }
+                    }}
+                    disabled={savingAiConfig}
+                    className="min-h-[44px] px-4 py-2 bg-red-500/20 text-red-300 rounded-lg hover:bg-red-500/30 disabled:opacity-50"
+                  >
+                    Очистити key
+                  </button>
+                </div>
+              </div>
             </div>
             <div className="mt-4 flex flex-wrap gap-2">
               {detailModalBusiness.isActive ? (

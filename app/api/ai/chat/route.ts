@@ -75,13 +75,30 @@ async function tryHeuristicDataReply(params: {
   const wantsInbox = containsAny(m, ['інбокс', 'inbox', 'direct', 'соц', 'повідомл'])
   const wantsReminders = containsAny(m, ['нагад', 'reminder'])
   const wantsNotes = containsAny(m, ['нотат', 'замітк', 'note'])
+  const wantsAppointments = containsAny(m, ['запис', 'appointments', 'календар', 'брон', 'броню', 'слот', 'сьогодні'])
+  const isGreetingOnly =
+    containsAny(m, ['привіт', 'hello', 'hi', 'добр', 'вітаю']) &&
+    !wantsKpi &&
+    !wantsPayments &&
+    !wantsInbox &&
+    !wantsReminders &&
+    !wantsNotes &&
+    !wantsAppointments
 
   // If this is a command-like message, let existing fallback handle it.
   if (message.trim().match(/^(?:note|нотатка|замітка|create note|reminder|нагадування|appointment|запис)\s*:/i)) {
     return null
   }
 
-  if (!wantsKpi && !wantsPayments && !wantsInbox && !wantsReminders && !wantsNotes) return null
+  if (isGreetingOnly) {
+    return {
+      reply:
+        'Привіт! AI зараз може бути обмежений квотою, але я все одно можу показати цифри з системи.\nНапиши, що потрібно: "скільки записів сьогодні", "KPI за 7 днів", "payments за 30 днів", "інбокс unread".',
+      meta: { mode: 'data_fallback', kind: 'help' },
+    }
+  }
+
+  if (!wantsKpi && !wantsPayments && !wantsInbox && !wantsReminders && !wantsNotes && !wantsAppointments) return null
 
   const startOfToday = new Date()
   startOfToday.setHours(0, 0, 0, 0)
@@ -106,6 +123,8 @@ async function tryHeuristicDataReply(params: {
   const toolCalls: Array<Promise<unknown>> = []
   let kpi7d: any = null
   let payments30d: any = null
+  let appt7d: any = null
+  let apptTodayCounts: any = null
 
   if (wantsKpi) {
     toolCalls.push(
@@ -119,6 +138,25 @@ async function tryHeuristicDataReply(params: {
       runAiTool(businessId, 'payments_kpi', { days: 30 }).then((r) => {
         payments30d = r
       })
+    )
+  }
+
+  if (wantsAppointments) {
+    toolCalls.push(
+      runAiTool(businessId, 'appointments_stats', { days: 7 }).then((r) => {
+        appt7d = r
+      })
+    )
+    toolCalls.push(
+      prisma.appointment
+        .groupBy({
+          by: ['status'],
+          where: { businessId, startTime: { gte: startOfToday, lte: endOfToday } },
+          _count: { _all: true },
+        })
+        .then((rows) => {
+          apptTodayCounts = rows
+        })
     )
   }
 
@@ -147,6 +185,22 @@ async function tryHeuristicDataReply(params: {
     const fmt = (s: any) => `${s.status}:${s.count}/${s.sum}`
     parts.push(`Payments 30д: ${rows.map(fmt).join(', ') || 'немає'}.`)
     meta.payments30d = data
+  }
+
+  if (wantsAppointments) {
+    const todayRows = Array.isArray(apptTodayCounts) ? apptTodayCounts : []
+    const todayTotal = todayRows.reduce((sum: number, r: any) => sum + (r?._count?._all || 0), 0)
+    const fmtRow = (r: any) => `${r.status}:${r._count?._all || 0}`
+    parts.push(`Записи сьогодні: ${todayTotal} (${todayRows.map(fmtRow).join(', ') || '0'}).`)
+    meta.appointmentsToday = { total: todayTotal, byStatus: todayRows.map((r: any) => ({ status: r.status, count: r._count?._all || 0 })) }
+
+    if (appt7d && typeof appt7d === 'object') {
+      const data = (appt7d as any).data || (appt7d as any)
+      const byStatus = Array.isArray(data.byStatus) ? data.byStatus : []
+      const total7d = byStatus.reduce((sum: number, r: any) => sum + (r?.count || 0), 0)
+      parts.push(`Записи за 7 днів: ${total7d} (${byStatus.map((r: any) => `${r.status}:${r.count}`).join(', ') || '0'}).`)
+      meta.appointments7d = data
+    }
   }
 
   if (parts.length === 0) return null

@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { BotIcon, PhoneIcon, MoneyIcon, CheckIcon, XIcon, AlertCircleIcon } from '@/components/icons'
+import { PhoneIcon, MoneyIcon, CheckIcon, XIcon, AlertCircleIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 
 interface IntegrationsSettingsProps {
@@ -15,13 +15,6 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
   const [isSaving, setIsSaving] = useState(false)
   const [testing, setTesting] = useState<string | null>(null)
   const [testResults, setTestResults] = useState<Record<string, { success: boolean, message: string }>>({})
-  
-  // AI Chat
-  const [aiProvider, setAiProvider] = useState(business?.aiProvider || 'gemini')
-  const [aiApiKey, setAiApiKey] = useState(business?.aiApiKey || '')
-  const [aiModel, setAiModel] = useState(business?.aiSettings ? JSON.parse(business.aiSettings)?.model || 'gemini-pro' : 'gemini-pro')
-  const [aiTemperature, setAiTemperature] = useState(business?.aiSettings ? JSON.parse(business.aiSettings)?.temperature || 0.7 : 0.7)
-  const [showAiApiKey, setShowAiApiKey] = useState(false)
   
   // SMS
   const [smsProvider, setSmsProvider] = useState(business?.smsProvider || 'smsc')
@@ -60,18 +53,6 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
   // Оновлюємо стан при зміні business
   useEffect(() => {
     if (business) {
-      setAiProvider(business.aiProvider || 'gemini')
-      setAiApiKey(business.aiApiKey || '')
-      if (business.aiSettings) {
-        try {
-          const settings = JSON.parse(business.aiSettings)
-          setAiModel(settings.model || 'gemini-pro')
-          setAiTemperature(settings.temperature || 0.7)
-        } catch {
-          setAiModel('gemini-pro')
-          setAiTemperature(0.7)
-        }
-      }
       setSmsProvider(business.smsProvider || 'smsc')
       setSmsApiKey(business.smsApiKey || '')
       setSmsSender(business.smsSender || 'Xbase')
@@ -99,12 +80,6 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
     setIsSaving(true)
     try {
       await onUpdate({
-        aiProvider,
-        aiApiKey: aiApiKey || undefined,
-        aiSettings: JSON.stringify({
-          model: aiModel,
-          temperature: parseFloat(aiTemperature.toString())
-        }),
         smsProvider,
         smsApiKey: smsApiKey || undefined,
         smsSender: smsSender || undefined,
@@ -126,33 +101,12 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
     }
   }
   
-  const testIntegration = async (type: 'ai' | 'sms' | 'email' | 'payment') => {
+  const testIntegration = async (type: 'sms' | 'email' | 'payment') => {
     setTesting(type)
     setTestResults(prev => ({ ...prev, [type]: { success: false, message: 'Тестування...' } }))
     
     try {
-      if (type === 'ai') {
-        const response = await fetch('/api/ai/chat', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            businessId: business.id,
-            message: 'Привіт! Це тестовий запит.',
-            sessionId: 'test_' + Date.now()
-          })
-        })
-        const data = await response.json()
-        if (data?.success && typeof data?.message === 'string') {
-          const status = data?.action?.status
-          if (status === 'ai_disabled') {
-            setTestResults(prev => ({ ...prev, [type]: { success: false, message: 'AI чат вимкнений адміном. Увімкніть в Центрі управління.' } }))
-          } else {
-            setTestResults(prev => ({ ...prev, [type]: { success: true, message: 'AI endpoint відповідає. ' + data.message } }))
-          }
-        } else {
-          setTestResults(prev => ({ ...prev, [type]: { success: false, message: data.error || 'Помилка тестування' } }))
-        }
-      } else if (type === 'sms') {
+      if (type === 'sms') {
         // Тест SMS через API
         setTestResults(prev => ({ ...prev, [type]: { success: true, message: 'SMS налаштування збережено. Для тестування відправте тестове SMS.' } }))
       } else if (type === 'email') {
@@ -180,11 +134,7 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
       {/* Статус інтеграцій */}
       <div className="card-candy p-6 bg-gradient-to-br from-candy-purple/10 to-candy-blue/10">
         <h3 className="text-lg font-black text-gray-900 dark:text-white mb-4">Статус інтеграцій</h3>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-          <div className="flex items-center gap-2">
-            {getStatusIcon(business?.aiChatEnabled === true, !!aiApiKey)}
-            <span className="text-xs font-bold">AI Чат</span>
-          </div>
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
           <div className="flex items-center gap-2">
             {getStatusIcon(true, !!smsApiKey)}
             <span className="text-xs font-bold">SMS</span>
@@ -200,98 +150,6 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
         </div>
       </div>
 
-      {/* AI Chat */}
-      <div className="card-candy p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <BotIcon className="w-5 h-5 text-candy-purple" />
-            <h3 className="text-lg font-black text-gray-900 dark:text-white">AI Чат</h3>
-          </div>
-          {getStatusIcon(business?.aiChatEnabled === true, !!aiApiKey)}
-        </div>
-        <div className="space-y-4">
-          <div className="text-xs text-gray-600 dark:text-gray-400">
-            Вмикання/вимикання AI чату керується через Центр управління (адмін). Тут можна лише налаштувати ключ/модель.
-          </div>
-          <div>
-            <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Провайдер</label>
-            <select
-              value={aiProvider}
-              onChange={(e) => setAiProvider(e.target.value)}
-              className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-candy-xs bg-white dark:bg-gray-700"
-            >
-              <option value="gemini">Google Gemini</option>
-            </select>
-          </div>
-          <div>
-            <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">
-              API Ключ
-              <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-candy-blue ml-2 underline">
-                Отримати ключ
-              </a>
-            </label>
-            <div className="relative">
-              <Input
-                type={showAiApiKey ? "text" : "password"}
-                value={aiApiKey}
-                onChange={(e) => setAiApiKey(e.target.value)}
-                placeholder="Введіть API ключ"
-                className="text-xs pr-10"
-              />
-              <button
-                type="button"
-                onClick={() => setShowAiApiKey(!showAiApiKey)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-gray-700"
-              >
-                {showAiApiKey ? 'Сховати' : 'Показати'}
-              </button>
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Модель</label>
-              <select
-                value={aiModel}
-                onChange={(e) => setAiModel(e.target.value)}
-                className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-candy-xs bg-white dark:bg-gray-700"
-              >
-                <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-                <option value="gemini-2.0-flash">gemini-2.0-flash</option>
-              </select>
-            </div>
-            <div>
-              <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">
-                Temperature: {aiTemperature}
-              </label>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={aiTemperature}
-                onChange={(e) => setAiTemperature(parseFloat(e.target.value))}
-                className="w-full"
-              />
-            </div>
-          </div>
-          <Button
-            onClick={() => testIntegration('ai')}
-            disabled={testing === 'ai' || !aiApiKey}
-            className="w-full bg-candy-purple/10 text-candy-purple border border-candy-purple hover:bg-candy-purple hover:text-white"
-          >
-            {testing === 'ai' ? 'Тестування...' : 'Тестувати AI endpoint'}
-          </Button>
-          {testResults.ai && (
-            <div className={cn(
-              "p-3 rounded-candy-xs text-xs",
-              testResults.ai.success ? "bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-400" : "bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-400"
-            )}>
-              {testResults.ai.message}
-            </div>
-          )}
-        </div>
-      </div>
-      
       {/* SMS */}
       <div className="card-candy p-6">
         <div className="flex items-center justify-between mb-4">
@@ -578,7 +436,6 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
             <ul className="list-disc list-inside space-y-1">
               <li>API ключі зберігаються в зашифрованому вигляді</li>
               <li>Після збереження налаштувань перезавантажте сторінку</li>
-              <li>Для тестування AI чату використовуйте кнопку "Тестувати"</li>
               <li>Переконайтеся, що всі API ключі валідні перед збереженням</li>
             </ul>
           </div>
