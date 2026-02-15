@@ -76,6 +76,16 @@ async function tryHeuristicDataReply(params: {
   const wantsReminders = containsAny(m, ['нагад', 'reminder'])
   const wantsNotes = containsAny(m, ['нотат', 'замітк', 'note'])
   const wantsAppointments = containsAny(m, ['запис', 'appointments', 'календар', 'брон', 'броню', 'слот', 'сьогодні'])
+  const wantsHelp = containsAny(m, [
+    'що ти вмієш',
+    'що вмієш',
+    'команди',
+    'help',
+    'допомога',
+    'як корист',
+    'що можеш',
+    'можливост',
+  ])
   const isGreetingOnly =
     containsAny(m, ['привіт', 'hello', 'hi', 'добр', 'вітаю']) &&
     !wantsKpi &&
@@ -94,6 +104,14 @@ async function tryHeuristicDataReply(params: {
     return {
       reply:
         'Привіт! AI зараз може бути обмежений квотою, але я все одно можу показати цифри з системи.\nНапиши, що потрібно: "скільки записів сьогодні", "KPI за 7 днів", "payments за 30 днів", "інбокс unread".',
+      meta: { mode: 'data_fallback', kind: 'help' },
+    }
+  }
+
+  if (wantsHelp) {
+    return {
+      reply:
+        'Я допомагаю власнику/адміну керувати кабінетом.\n\nЩо можу швидко показати (навіть якщо AI в ліміті):\n- "скільки записів сьогодні"\n- "записи за 7 днів"\n- "KPI за 7 днів"\n- "payments за 30 днів"\n- "інбокс unread"\n\nШвидкі команди (працюють без AI):\n- "note: текст"\n- "reminder: текст"\n- "appointment: Імʼя, +380..., Майстер, 2026-02-16T15:00, Послуга"\n',
       meta: { mode: 'data_fallback', kind: 'help' },
     }
   }
