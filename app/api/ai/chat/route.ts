@@ -1035,6 +1035,11 @@ export async function POST(request: Request) {
       }),
     ])
 
+    const lastOk = aiLastSuccessAtByBusiness.get(businessId) || 0
+    const isAiRecentlyOk = Date.now() - lastOk < AI_SUCCESS_TTL_MS
+    const indicator: 'green' | 'red' =
+      !!effectiveApiKey && business.aiChatEnabled && !aiUnavailableReason && (usedAi || isAiRecentlyOk) ? 'green' : 'red'
+
     return NextResponse.json({
       success: true,
       message: assistantMessage,
@@ -1042,7 +1047,7 @@ export async function POST(request: Request) {
       action: actionData,
       ai: {
         hasKey: !!effectiveApiKey,
-        indicator: !!effectiveApiKey && usedAi && decisionSource === 'llm' ? 'green' : 'red',
+        indicator,
         usedAi,
         reason: aiUnavailableReason || (decisionSource ? `source:${decisionSource}` : null),
       },
