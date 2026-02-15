@@ -749,7 +749,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
   const [searchBy, setSearchBy] = useState<'all' | 'id' | 'name' | 'email'>('all')
   const [detailModalBusiness, setDetailModalBusiness] = useState<Business | null>(null)
   const [aiKeyDraft, setAiKeyDraft] = useState('')
-  const [aiModelDraft, setAiModelDraft] = useState('gemini-2.5-flash')
+  const [aiModelDraft, setAiModelDraft] = useState('gemini-1.5-flash')
   const [savingAiConfig, setSavingAiConfig] = useState(false)
 
   useEffect(() => {
@@ -1618,6 +1618,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                   onChange={(e) => setAiModelDraft(e.target.value)}
                   className="w-full min-h-[40px] px-3 py-2 rounded-lg bg-black/20 border border-white/10 text-white text-sm"
                 >
+                  <option value="gemini-1.5-flash">gemini-1.5-flash</option>
                   <option value="gemini-2.5-flash">gemini-2.5-flash</option>
                   <option value="gemini-2.0-flash">gemini-2.0-flash</option>
                 </select>
