@@ -42,11 +42,26 @@ const ALLOWED_TOOL_NAMES = new Set<string>([
   'masters_top',
 ])
 
+function normalizeGeminiModelName(model: string): string {
+  const raw = (model || '').trim()
+  if (!raw) return 'gemini-flash-lite-latest'
+
+  // Allow both "models/..." and plain names.
+  const name = raw.startsWith('models/') ? raw.slice('models/'.length) : raw
+
+  // Some projects/keys no longer expose legacy 1.5 names via v1beta ListModels.
+  // Treat it as an alias to keep old configs working without breaking chat.
+  if (name === 'gemini-1.5-flash') return 'gemini-flash-lite-latest'
+  if (name === 'gemini-1.5-pro') return 'gemini-pro-latest'
+
+  return name
+}
+
 export class AIChatService {
   private apiKey: string
   private model: string
   
-  constructor(apiKey: string, model: string = 'gemini-1.5-flash') {
+  constructor(apiKey: string, model: string = 'gemini-flash-lite-latest') {
     this.apiKey = apiKey
     this.model = model
   }
@@ -160,15 +175,12 @@ ${context.location ? `Адреса: ${context.location}` : ''}
     }
 
     const genAI = new GoogleGenerativeAI(this.apiKey)
-    // Force JSON to avoid parse failures -> fewer fallbacks and clearer "AI used" signal.
-    const model = genAI.getGenerativeModel({
-      model: this.model,
-      generationConfig: {
-        responseMimeType: 'application/json',
-        temperature: 0.4,
-        maxOutputTokens: 256,
-      },
-    })
+    const requestedModel = normalizeGeminiModelName(this.model)
+    const genConfig = {
+      responseMimeType: 'application/json' as const,
+      temperature: 0.4,
+      maxOutputTokens: 256,
+    }
 
     const historyText = chatHistory
       .slice(-6)
@@ -241,9 +253,59 @@ ${historyText || 'немає'}
 ${userMessage}
 `
 
-    const result = await model.generateContent(prompt)
-    const response = await result.response
-    return this.parseAgentDecision(response.text())
+    const tryModels = Array.from(
+      new Set<string>(
+        [
+          requestedModel,
+          // Lightweight + usually most available on free tier.
+          'gemini-flash-lite-latest',
+          'gemini-flash-latest',
+          // Stable explicit versions.
+          'gemini-2.0-flash',
+          'gemini-2.5-flash',
+        ].filter(Boolean)
+      )
+    )
+
+    let lastErr: unknown = null
+    let bestTextReply: string | null = null
+    for (const m of tryModels) {
+      try {
+        // Force JSON to avoid parse failures -> fewer fallbacks and clearer "AI used" signal.
+        const model = genAI.getGenerativeModel({ model: m, generationConfig: genConfig })
+        const result = await model.generateContent(prompt)
+        const response = await result.response
+        const raw = response.text()
+        const parsed = this.parseAgentDecision(raw)
+        if (parsed) return parsed
+        const trimmed = (raw || '').trim()
+        if (trimmed && !bestTextReply) bestTextReply = trimmed
+
+        // Unparseable output: try next model in the list (some models ignore responseMimeType).
+        throw new Error('AI returned non-JSON response')
+      } catch (e) {
+        lastErr = e
+        const msg = e instanceof Error ? e.message : String(e)
+        const isNonJson = msg.includes('non-JSON response')
+        const isModelNotFound =
+          msg.includes('is not found') ||
+          msg.includes('404') ||
+          msg.includes('not supported for generateContent')
+        // If it's not a "model not found" and not a JSON-format issue, don't keep retrying blindly.
+        if (!isModelNotFound && !isNonJson) break
+      }
+    }
+
+    if (bestTextReply) {
+      return {
+        action: 'reply',
+        reply: bestTextReply,
+        confidence: 0.35,
+        needsConfirmation: false,
+      }
+    }
+
+    throw lastErr instanceof Error ? lastErr : new Error('AI unavailable')
   }
   
   async getResponse(

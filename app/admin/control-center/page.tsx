@@ -749,13 +749,17 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
   const [searchBy, setSearchBy] = useState<'all' | 'id' | 'name' | 'email'>('all')
   const [detailModalBusiness, setDetailModalBusiness] = useState<Business | null>(null)
   const [aiKeyDraft, setAiKeyDraft] = useState('')
-  const [aiModelDraft, setAiModelDraft] = useState('gemini-1.5-flash')
+  const [aiModelDraft, setAiModelDraft] = useState('gemini-flash-lite-latest')
   const [savingAiConfig, setSavingAiConfig] = useState(false)
 
   useEffect(() => {
     if (!detailModalBusiness) return
     if (detailModalBusiness.aiModel && typeof detailModalBusiness.aiModel === 'string') {
-      setAiModelDraft(detailModalBusiness.aiModel)
+      let m = detailModalBusiness.aiModel.trim()
+      if (m.startsWith('models/')) m = m.slice('models/'.length)
+      if (m === 'gemini-1.5-flash') m = 'gemini-flash-lite-latest'
+      if (m === 'gemini-1.5-pro') m = 'gemini-pro-latest'
+      setAiModelDraft(m || 'gemini-flash-lite-latest')
     }
   }, [detailModalBusiness?.businessId])
   const [quickIdSearch, setQuickIdSearch] = useState('')
@@ -1618,7 +1622,8 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                   onChange={(e) => setAiModelDraft(e.target.value)}
                   className="w-full min-h-[40px] px-3 py-2 rounded-lg bg-black/20 border border-white/10 text-white text-sm"
                 >
-                  <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+                  <option value="gemini-flash-lite-latest">gemini-flash-lite-latest (default)</option>
+                  <option value="gemini-flash-latest">gemini-flash-latest</option>
                   <option value="gemini-2.5-flash">gemini-2.5-flash</option>
                   <option value="gemini-2.0-flash">gemini-2.0-flash</option>
                 </select>

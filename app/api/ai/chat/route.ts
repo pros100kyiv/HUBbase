@@ -869,7 +869,7 @@ export async function POST(request: Request) {
     const history = chatHistory.map((msg) => ({ role: msg.role, message: msg.message }))
     const aiSettings = parseJson<{ model?: string }>(business.aiSettings, {})
     const aiService = effectiveApiKey
-      ? new AIChatService(effectiveApiKey, aiSettings.model || process.env.GEMINI_MODEL || 'gemini-1.5-flash')
+      ? new AIChatService(effectiveApiKey, aiSettings.model || process.env.GEMINI_MODEL || 'gemini-flash-lite-latest')
       : null
     const isKeyMissing = !effectiveApiKey
 

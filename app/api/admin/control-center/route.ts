@@ -66,6 +66,16 @@ function getRegistrationType(b: { telegramId: bigint | null; googleId: string | 
   return 'standard' as const
 }
 
+function normalizeGeminiModelName(model: unknown): string | null {
+  if (typeof model !== 'string') return null
+  let m = model.trim()
+  if (!m) return null
+  if (m.startsWith('models/')) m = m.slice('models/'.length)
+  if (m === 'gemini-1.5-flash') return 'gemini-flash-lite-latest'
+  if (m === 'gemini-1.5-pro') return 'gemini-pro-latest'
+  return m
+}
+
 export async function GET(request: Request) {
   const auth = verifyAdminToken(request as any)
   if (!auth.valid) {
@@ -171,7 +181,7 @@ export async function GET(request: Request) {
             aiModel: (() => {
               try {
                 const s = (b as any).aiSettings ? JSON.parse((b as any).aiSettings) : null
-                return s?.model || null
+                return normalizeGeminiModelName(s?.model) || null
               } catch {
                 return null
               }
@@ -276,7 +286,21 @@ export async function PATCH(request: Request) {
           update.aiProvider = typeof aiProviderRaw === 'string' && aiProviderRaw.trim() ? aiProviderRaw.trim() : null
         }
         if (aiSettingsRaw !== undefined) {
-          update.aiSettings = typeof aiSettingsRaw === 'string' && aiSettingsRaw.trim() ? aiSettingsRaw.trim() : null
+          if (typeof aiSettingsRaw === 'string' && aiSettingsRaw.trim()) {
+            // Normalize model aliases (e.g. legacy gemini-1.5-flash) before saving.
+            try {
+              const parsed = JSON.parse(aiSettingsRaw)
+              if (parsed && typeof parsed === 'object') {
+                const normalizedModel = normalizeGeminiModelName((parsed as any).model)
+                if (normalizedModel) (parsed as any).model = normalizedModel
+              }
+              update.aiSettings = JSON.stringify(parsed)
+            } catch {
+              update.aiSettings = aiSettingsRaw.trim()
+            }
+          } else {
+            update.aiSettings = null
+          }
         }
         if (aiApiKeyRaw !== undefined) {
           // Allow clear (null/empty) or set new key. Keep size bounded.
