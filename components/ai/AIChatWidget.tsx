@@ -44,6 +44,25 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
+
+  const resolveBusinessId = (): string => {
+    const fromProp = (businessId || '').trim()
+    if (fromProp) return fromProp
+    try {
+      const raw = localStorage.getItem('business')
+      if (!raw) return ''
+      const parsed = JSON.parse(raw)
+      return typeof parsed?.id === 'string' ? parsed.id : ''
+    } catch {
+      return ''
+    }
+  }
+
+  const toErrorText = (err: unknown): string => {
+    if (err instanceof Error) return err.message
+    if (typeof err === 'string') return err
+    return 'Невідома помилка'
+  }
   
   const handleSend = async () => {
     if (!input.trim() || isLoading) return
@@ -61,17 +80,32 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
     setIsLoading(true)
     
     try {
+      const resolvedBusinessId = resolveBusinessId()
+      if (!resolvedBusinessId) {
+        throw new Error('Не знайдено businessId. Оновіть сторінку або переввійдіть в акаунт.')
+      }
+
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          businessId,
+          businessId: resolvedBusinessId,
           message: userMessage,
           sessionId
         })
       })
       
-      const data = await response.json()
+      let data: any = null
+      try {
+        data = await response.json()
+      } catch {
+        data = null
+      }
+
+      if (!response.ok) {
+        const serverError = data?.error || `HTTP ${response.status}`
+        throw new Error(serverError)
+      }
       
       if (data.success) {
         const aiMsg: Message = {
@@ -88,7 +122,7 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
       const errorMsg: Message = {
         id: `error_${Date.now()}`,
         role: 'assistant',
-        message: 'Вибачте, сталася помилка. Спробуйте пізніше.',
+        message: `Вибачте, сталася помилка: ${toErrorText(error)}`,
         timestamp: new Date()
       }
       setMessages(prev => [...prev, errorMsg])

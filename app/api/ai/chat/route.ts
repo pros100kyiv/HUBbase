@@ -461,7 +461,14 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Business not found' }, { status: 404 })
     }
     if (!business.aiChatEnabled) {
-      return NextResponse.json({ error: 'AI chat is disabled for this business' }, { status: 400 })
+      // Don't fail hard: the widget is visible in dashboard for most users.
+      // Return a user-facing message so the UI doesn't show a generic error.
+      return NextResponse.json({
+        success: true,
+        message:
+          'AI чат вимкнений для цього акаунта. Увімкніть AI в налаштуваннях бізнесу (інтеграції/AI), або напишіть адміну щоб активували.',
+        action: { action: 'reply', status: 'ai_disabled' },
+      })
     }
 
     const effectiveApiKey = business.aiApiKey?.trim() || globalAiApiKey || null
