@@ -111,8 +111,9 @@ function formatMoneyUAH(value: unknown): string {
 async function tryHeuristicDataReply(params: {
   businessId: string
   message: string
+  hasAiKey: boolean
 }): Promise<{ reply: string; meta: Record<string, unknown> } | null> {
-  const { businessId, message } = params
+  const { businessId, message, hasAiKey } = params
   const m = message.toLowerCase()
 
   const wantsKpi = containsAny(m, ['kpi', 'аналіт', 'analytics', 'статист', 'показник', 'дохід', 'вируч'])
@@ -157,16 +158,20 @@ async function tryHeuristicDataReply(params: {
   if (isGreetingOnly) {
     return {
       reply:
-        'Привіт! AI зараз може бути обмежений квотою, але я все одно можу показати цифри з системи.\nНапиши, що потрібно: "скільки записів сьогодні", "KPI за 7 днів", "payments за 30 днів", "інбокс unread".',
-      meta: { mode: 'data_fallback', kind: 'help' },
+        hasAiKey
+          ? 'Привіт! Якщо AI тимчасово недоступний (квота/помилка) — я все одно можу показати цифри з кабінету.\nНапиши: "скільки записів сьогодні", "KPI за 7 днів", "payments за 30 днів", "інбокс unread".'
+          : 'Привіт! AI ключ не підключений, але я можу показати дані з кабінету напряму.\nНапиши: "огляд кабінету", "скільки записів сьогодні", "payments за 30 днів", "інбокс unread".',
+      meta: { mode: 'data_fallback', kind: hasAiKey ? 'help' : 'no_key_help' },
     }
   }
 
   if (wantsHelp) {
     return {
       reply:
-        'Я допомагаю власнику/адміну керувати кабінетом.\n\nЩо можу відповісти без підключеного AI ключа (напряму з БД):\n- KPI/аналітика: "KPI за 7 днів"\n- Записи: "скільки записів сьогодні", "покажи записи на 7 днів", "найближчі записи"\n- Платежі: "payments за 30 днів"\n- Інбокс: "інбокс unread", "покажи інбокс"\n- Нотатки/нагадування: "покажи нотатки сьогодні", "нагадування pending"\n- Клієнти: "знайди клієнта Іван", "клієнт +380...", "історія клієнта +380..."\n- Сегменти: "покажи сегменти"\n- Топ: "топ послуг за 30 днів", "топ майстрів за 30 днів"\n\nШвидкі команди (працюють без AI):\n- "note: текст"\n- "reminder: текст"\n- "appointment: Імʼя, +380..., Майстер, 2026-02-16T15:00, Послуга"\n',
-      meta: { mode: 'data_fallback', kind: 'help' },
+        hasAiKey
+          ? 'Я допомагаю по кабінету.\n\nШвидко можу: KPI/записи/клієнти/платежі/інбокс/нотатки/нагадування/сегменти/топ.\nПриклади: "KPI за 7 днів", "скільки записів сьогодні", "payments за 30 днів", "покажи інбокс", "знайди клієнта Іван".\n\nКоманди: "note: текст", "reminder: текст", "appointment: ...".'
+          : 'Ключ не підключений (червоний індикатор), тому “розумні” відповіді обмежені. Але я можу тягнути дані з кабінету напряму.\nПриклади: "огляд кабінету", "скільки записів сьогодні", "payments за 30 днів", "покажи інбокс", "знайди клієнта Іван".\n\nКоманди: "note: текст", "reminder: текст", "appointment: ...".',
+      meta: { mode: 'data_fallback', kind: hasAiKey ? 'help' : 'no_key_help' },
     }
   }
 
@@ -891,7 +896,7 @@ export async function POST(request: Request) {
 
     if (!decision) {
       // If LLM is rate-limited/misconfigured, still answer common "dashboard" questions via direct DB/tools.
-      const heuristic = await tryHeuristicDataReply({ businessId, message })
+      const heuristic = await tryHeuristicDataReply({ businessId, message, hasAiKey: !!effectiveApiKey })
       if (heuristic) {
         decision = {
           action: 'reply',
