@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma'
 import { BusinessNiche } from '@prisma/client'
 import { findBusinessByIdentifier } from '@/lib/utils/business-identifier'
 import { jsonSafe } from '@/lib/utils/json'
+import { verifyAdminToken } from '@/lib/middleware/admin-auth'
 
 // Перевіряє чи параметр є UUID (ID) чи slug
 // CUID має формат: c[0-9a-z]{24} або схожий
@@ -148,6 +149,7 @@ export async function PATCH(
   { params }: { params: Promise<{ param: string }> | { param: string } }
 ) {
   try {
+    const adminAuth = verifyAdminToken(request as any)
     const resolvedParams = await Promise.resolve(params)
     const { param } = resolvedParams
 
@@ -308,8 +310,9 @@ export async function PATCH(
         ...(customNiche !== undefined && { customNiche: customNiche || null }),
         ...(businessIdentifier !== undefined && { businessIdentifier: businessIdentifier || null }),
         ...(profileCompleted !== undefined && { profileCompleted }),
-        // AI Chat
-        ...(aiChatEnabled !== undefined && { aiChatEnabled }),
+        // AI Chat:
+        // aiChatEnabled is controlled from Admin Control Center API (multi-tenant safety).
+        ...(aiChatEnabled !== undefined && adminAuth.valid && { aiChatEnabled }),
         ...(aiProvider !== undefined && { aiProvider: aiProvider || null }),
         ...(aiApiKey !== undefined && { aiApiKey: aiApiKey || null }),
         ...(aiSettings !== undefined && { aiSettings: aiSettings || null }),
