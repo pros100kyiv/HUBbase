@@ -76,6 +76,60 @@ function normalizeGeminiModelName(model: unknown): string | null {
   return m
 }
 
+const SYSTEM_SETTING_GEMINI_KEY = 'global_gemini_api_key'
+const SYSTEM_SETTING_GEMINI_MODEL = 'global_gemini_model'
+
+async function ensureSystemSettingTableExists(): Promise<void> {
+  // We can't rely on prisma migrations in this repo (shadow DB apply errors),
+  // so we ensure the table exists at runtime for admin-only operations.
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "SystemSetting" (
+      "key" TEXT PRIMARY KEY,
+      "value" TEXT,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `)
+}
+
+async function getGlobalGeminiConfig(): Promise<{ apiKey: string | null; model: string | null }> {
+  try {
+    const [k, m] = await Promise.all([
+      prisma.systemSetting.findUnique({ where: { key: SYSTEM_SETTING_GEMINI_KEY }, select: { value: true } }),
+      prisma.systemSetting.findUnique({ where: { key: SYSTEM_SETTING_GEMINI_MODEL }, select: { value: true } }),
+    ])
+    return {
+      apiKey: (k?.value || '').trim() || null,
+      model: normalizeGeminiModelName((m?.value || '').trim()) || null,
+    }
+  } catch {
+    // Table might not exist yet; fall back to env-only.
+    return { apiKey: null, model: null }
+  }
+}
+
+type AiUsageCounters = {
+  total: number
+  llm: number
+  heuristic: number
+  fallback: number
+  rateLimited: number // 429 or server-side cooldown
+  lastUsedAiAt: Date | null
+  lastRateLimitedAt: Date | null
+}
+
+function emptyAiUsage(): AiUsageCounters {
+  return {
+    total: 0,
+    llm: 0,
+    heuristic: 0,
+    fallback: 0,
+    rateLimited: 0,
+    lastUsedAiAt: null,
+    lastRateLimitedAt: null,
+  }
+}
+
 export async function GET(request: Request) {
   const auth = verifyAdminToken(request as any)
   if (!auth.valid) {
@@ -83,6 +137,15 @@ export async function GET(request: Request) {
   }
 
   try {
+    const globalEnvKey = process.env.GEMINI_API_KEY?.trim() || process.env.GOOGLE_API_KEY?.trim() || null
+    const globalEnvModel = process.env.GEMINI_MODEL?.trim() || null
+    const globalDb = await getGlobalGeminiConfig()
+    const globalAi = {
+      hasKey: !!((globalDb.apiKey || globalEnvKey || '').trim()),
+      model: globalDb.model || globalEnvModel || 'gemini-flash-lite-latest',
+      source: globalDb.apiKey ? 'db' : globalEnvKey ? 'env' : 'none',
+    }
+
     const { searchParams } = new URL(request.url)
     const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1)
     const limit = Math.min(100, Math.max(1, parseInt(searchParams.get('limit') || '20') || 20))
@@ -154,6 +217,68 @@ export async function GET(request: Request) {
           prisma.business.count({ where }),
         ])
 
+        // AI usage counters: best-effort metrics based on stored chat metadata.
+        const ids = businessesRaw.map((b) => b.id)
+        const since24h = new Date(Date.now() - 24 * 60 * 60 * 1000)
+        const todayStart = new Date()
+        todayStart.setHours(0, 0, 0, 0)
+
+        const usage24hByBusiness = new Map<string, AiUsageCounters>()
+        const usageTodayByBusiness = new Map<string, AiUsageCounters>()
+        for (const id of ids) {
+          usage24hByBusiness.set(id, emptyAiUsage())
+          usageTodayByBusiness.set(id, emptyAiUsage())
+        }
+
+        if (ids.length > 0) {
+          const assistantMsgs = await prisma.aIChatMessage.findMany({
+            where: { businessId: { in: ids }, role: 'assistant', createdAt: { gte: since24h } },
+            select: { businessId: true, createdAt: true, metadata: true },
+            orderBy: { createdAt: 'desc' },
+          })
+
+          for (const row of assistantMsgs) {
+            const bId = row.businessId
+            const metaRaw = row.metadata || ''
+            let meta: any = null
+            try {
+              meta = metaRaw ? JSON.parse(metaRaw) : null
+            } catch {
+              meta = null
+            }
+
+            const ai = meta?.ai && typeof meta.ai === 'object' ? meta.ai : null
+            const source = typeof ai?.source === 'string' ? ai.source : null
+            const usedAi = ai?.usedAi === true || source === 'llm'
+
+            const reason = typeof ai?.unavailableReason === 'string' ? ai.unavailableReason : ''
+            const actionData = meta?.actionData && typeof meta.actionData === 'object' ? meta.actionData : null
+            const actionReason = typeof actionData?.aiUnavailableReason === 'string' ? actionData.aiUnavailableReason : ''
+            const combined = `${reason} ${actionReason}`
+            const isRateLimited = combined.includes('429') || combined.includes('rate-limited') || combined.includes('cooldown')
+
+            const bump = (map: Map<string, AiUsageCounters>) => {
+              const cur = map.get(bId) || emptyAiUsage()
+              cur.total += 1
+              if (source === 'heuristic') cur.heuristic += 1
+              else if (source === 'fallback') cur.fallback += 1
+              else if (usedAi) cur.llm += 1
+              else cur.fallback += 1
+              if (usedAi) {
+                if (!cur.lastUsedAiAt || row.createdAt > cur.lastUsedAiAt) cur.lastUsedAiAt = row.createdAt
+              }
+              if (isRateLimited) {
+                cur.rateLimited += 1
+                if (!cur.lastRateLimitedAt || row.createdAt > cur.lastRateLimitedAt) cur.lastRateLimitedAt = row.createdAt
+              }
+              map.set(bId, cur)
+            }
+
+            bump(usage24hByBusiness)
+            if (row.createdAt >= todayStart) bump(usageTodayByBusiness)
+          }
+        }
+
         const mcMap = new Map<string, { lastLoginAt: Date | null; lastSeenAt: Date | null; registrationType: string }>()
         if (businessesRaw.length > 0) {
           const mcList = await prisma.managementCenter.findMany({
@@ -186,6 +311,8 @@ export async function GET(request: Request) {
                 return null
               }
             })(),
+            aiUsage24h: usage24hByBusiness.get(b.id) || emptyAiUsage(),
+            aiUsageToday: usageTodayByBusiness.get(b.id) || emptyAiUsage(),
             registeredAt: b.createdAt,
             lastLoginAt: mc?.lastLoginAt ?? null,
             lastSeenAt: mc?.lastSeenAt ?? null,
@@ -226,7 +353,7 @@ export async function GET(request: Request) {
       { maxAttempts: 3, delayMs: 2500 }
     )
 
-    return NextResponse.json(jsonSafe({ businesses, pagination, stats }))
+    return NextResponse.json(jsonSafe({ businesses, pagination, stats, globalAi }))
   } catch (error: unknown) {
     console.error('Control center API error:', error)
     return NextResponse.json(
@@ -234,6 +361,7 @@ export async function GET(request: Request) {
         businesses: [],
         pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
         stats: EMPTY_STATS,
+        globalAi: { hasKey: false, model: 'gemini-flash-lite-latest', source: 'none' },
         error: error instanceof Error ? error.message : 'Помилка завантаження',
       }),
       { status: 200 }
@@ -315,6 +443,44 @@ export async function PATCH(request: Request) {
 
         await prisma.business.update({ where: { id: businessId }, data: update as any })
         await prisma.managementCenter.updateMany({ where: { businessId }, data: update as any })
+        break
+      }
+      case 'setGlobalAiConfig': {
+        if (!data || typeof data !== 'object') {
+          return NextResponse.json({ error: 'data is required' }, { status: 400 })
+        }
+
+        const aiApiKeyRaw = (data as any).aiApiKey
+        const aiModelRaw = (data as any).aiModel
+        const applyToAll = (data as any).applyToAll === true
+
+        await ensureSystemSettingTableExists()
+
+        if (aiApiKeyRaw !== undefined) {
+          const s = typeof aiApiKeyRaw === 'string' ? aiApiKeyRaw.trim() : ''
+          if (s && s.length > 300) return NextResponse.json({ error: 'AI key is too long' }, { status: 400 })
+          await prisma.systemSetting.upsert({
+            where: { key: SYSTEM_SETTING_GEMINI_KEY },
+            create: { key: SYSTEM_SETTING_GEMINI_KEY, value: s ? s : null },
+            update: { value: s ? s : null },
+          })
+        }
+
+        if (aiModelRaw !== undefined) {
+          const normalized = normalizeGeminiModelName(aiModelRaw) || null
+          await prisma.systemSetting.upsert({
+            where: { key: SYSTEM_SETTING_GEMINI_MODEL },
+            create: { key: SYSTEM_SETTING_GEMINI_MODEL, value: normalized },
+            update: { value: normalized },
+          })
+        }
+
+        if (applyToAll) {
+          // One-click: force all accounts to use the global key by clearing per-business overrides.
+          await prisma.business.updateMany({ data: { aiApiKey: null } })
+          await prisma.managementCenter.updateMany({ data: { aiApiKey: null } })
+        }
+
         break
       }
       case 'update':

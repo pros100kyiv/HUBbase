@@ -8,6 +8,12 @@ function clampLimit(value: unknown, min: number, max: number, fallback: number):
   return Math.max(min, Math.min(max, Math.floor(n)))
 }
 
+function truncateText(text: string, max: number): string {
+  const s = String(text || '')
+  if (s.length <= max) return s
+  return s.slice(0, Math.max(0, max - 1)) + '…'
+}
+
 export type AiToolName =
   | 'biz_overview'
   | 'analytics_kpi'
@@ -23,11 +29,156 @@ export type AiToolName =
   | 'payments_kpi'
   | 'services_top'
   | 'masters_top'
+  | 'schedule_overview'
+  | 'who_working'
+  | 'free_slots'
+  | 'gaps_summary'
 
 export type AiToolResult = {
   tool: AiToolName
   // Keep payload compact; no huge lists or long text fields.
   data: Record<string, unknown>
+}
+
+type DaySchedule = { enabled: boolean; start: string; end: string }
+type WorkingHours = Record<string, DaySchedule>
+type DateOverrides = Record<string, { enabled: boolean; start: string; end: string }>
+
+const DAY_KEYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as const
+const DAY_LABELS_SHORT = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Нд']
+
+function parseWorkingHours(raw: string | null | undefined): WorkingHours | null {
+  if (!raw || typeof raw !== 'string' || !raw.trim()) return null
+  try {
+    const obj = JSON.parse(raw) as any
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null
+    return obj as WorkingHours
+  } catch {
+    return null
+  }
+}
+
+function parseDateOverrides(raw: string | null | undefined): DateOverrides | null {
+  if (!raw || typeof raw !== 'string' || !raw.trim()) return null
+  try {
+    const obj = JSON.parse(raw) as any
+    if (!obj || typeof obj !== 'object' || Array.isArray(obj)) return null
+    return obj as DateOverrides
+  } catch {
+    return null
+  }
+}
+
+function getScheduleSummary(workingHours?: string | null): string {
+  const hours = parseWorkingHours(workingHours)
+  if (!hours) return 'Графік не налаштовано'
+  const enabled = DAY_KEYS.filter((key) => hours[key]?.enabled)
+  if (enabled.length === 0) return 'Вихідні'
+  const first = enabled[0]
+  const last = enabled[enabled.length - 1]
+  const firstDay = DAY_LABELS_SHORT[DAY_KEYS.indexOf(first)]
+  const lastDay = DAY_LABELS_SHORT[DAY_KEYS.indexOf(last)]
+  const start = hours[first]?.start ?? '09:00'
+  const end = hours[first]?.end ?? '18:00'
+  const sameHours = enabled.every((k) => hours[k]?.start === start && hours[k]?.end === end)
+  if (sameHours) return `${firstDay}–${lastDay} ${start}–${end}`
+  return 'За графіком'
+}
+
+function getDateKey(d: Date): string {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+function dayKeyFromDate(d: Date): string {
+  const js = d.getDay() // 0 Sun .. 6 Sat
+  return DAY_KEYS[(js + 6) % 7] // 0->sunday, 1->monday...
+}
+
+function getMasterScheduleOnDate(master: { workingHours?: string | null; scheduleDateOverrides?: string | null }, date: Date): {
+  enabled: boolean
+  start: string
+  end: string
+  source: 'override' | 'weekly' | 'none'
+} | null {
+  const dateKey = getDateKey(date)
+  const overrides = parseDateOverrides(master.scheduleDateOverrides)
+  const override = overrides?.[dateKey]
+  if (override !== undefined) {
+    return { enabled: override.enabled === true, start: override.start ?? '09:00', end: override.end ?? '18:00', source: 'override' }
+  }
+  const wh = parseWorkingHours(master.workingHours)
+  const dk = dayKeyFromDate(date)
+  const day = wh?.[dk]
+  if (!day) return { enabled: false, start: '09:00', end: '18:00', source: 'none' }
+  return { enabled: day.enabled === true, start: day.start ?? '09:00', end: day.end ?? '18:00', source: 'weekly' }
+}
+
+export async function toolScheduleOverview(businessId: string): Promise<AiToolResult> {
+  const [business, masters] = await Promise.all([
+    prisma.business.findUnique({ where: { id: businessId }, select: { workingHours: true } }),
+    prisma.master.findMany({
+      where: { businessId, isActive: true },
+      orderBy: { createdAt: 'asc' },
+      take: 80,
+      select: { id: true, name: true, workingHours: true, scheduleDateOverrides: true, isActive: true },
+    }),
+  ])
+
+  return {
+    tool: 'schedule_overview',
+    data: {
+      business: {
+        hasWorkingHours: !!(business?.workingHours && business.workingHours.trim()),
+        workingHours: business?.workingHours ? truncateText(business.workingHours, 1200) : null,
+      },
+      masters: masters.map((m) => ({
+        id: m.id,
+        name: m.name,
+        isActive: m.isActive,
+        summary: getScheduleSummary(m.workingHours),
+        overridesCount: Object.keys(parseDateOverrides(m.scheduleDateOverrides) || {}).length,
+        hasWorkingHours: !!(m.workingHours && m.workingHours.trim()),
+      })),
+    },
+  }
+}
+
+export async function toolWhoWorking(businessId: string, args?: Record<string, unknown>): Promise<AiToolResult> {
+  const dateStr = String(args?.date ?? '').trim()
+  const date = dateStr && /^\d{4}-\d{2}-\d{2}$/.test(dateStr) ? new Date(`${dateStr}T00:00:00`) : new Date()
+  const key = getDateKey(date)
+
+  const masters = await prisma.master.findMany({
+    where: { businessId, isActive: true },
+    orderBy: { createdAt: 'asc' },
+    take: 120,
+    select: { id: true, name: true, workingHours: true, scheduleDateOverrides: true },
+  })
+
+  const rows = masters.map((m) => {
+    const sched = getMasterScheduleOnDate(m, date)
+    return {
+      id: m.id,
+      name: m.name,
+      enabled: !!sched?.enabled,
+      start: sched?.start ?? null,
+      end: sched?.end ?? null,
+      source: sched?.source ?? null,
+    }
+  })
+
+  return {
+    tool: 'who_working',
+    data: {
+      date: key,
+      working: rows.filter((r) => r.enabled),
+      off: rows.filter((r) => !r.enabled).slice(0, 40),
+      totals: { working: rows.filter((r) => r.enabled).length, total: rows.length },
+    },
+  }
 }
 
 export function parseRangeFromArgs(args: Record<string, unknown> | undefined, defaultDays: number): DateRange {
@@ -551,6 +702,209 @@ function normalizeUaMaybe(phone: string): string {
   return p
 }
 
+function timeToHours(s: string): number {
+  const [h, m] = String(s || '').split(':').map((x) => parseInt(x, 10) || 0)
+  return h + m / 60
+}
+
+function getWindowsForDateKey(
+  dateKey: string,
+  master: { workingHours?: string | null; scheduleDateOverrides?: string | null }
+): Array<{ start: number; end: number }> | null {
+  const date = new Date(`${dateKey}T00:00:00`)
+  if (Number.isNaN(date.getTime())) return null
+  const overrides = parseDateOverrides(master.scheduleDateOverrides)
+  const override = overrides?.[dateKey]
+  if (override !== undefined) {
+    if (!override.enabled) return null
+    const start = timeToHours(override.start)
+    const end = timeToHours(override.end)
+    if (start >= end) return null
+    return [{ start: Math.max(0, start), end: Math.min(24, end) }]
+  }
+  const wh = parseWorkingHours(master.workingHours)
+  const dk = dayKeyFromDate(date)
+  const day = wh?.[dk]
+  if (!day?.enabled) return null
+  const start = timeToHours(day.start || '09:00')
+  const end = timeToHours(day.end || '18:00')
+  if (start >= end) return null
+  return [{ start: Math.max(0, start), end: Math.min(24, end) }]
+}
+
+async function resolveMasterForScheduleTool(
+  businessId: string,
+  args?: Record<string, unknown>
+): Promise<{ id: string; name: string; workingHours: string | null; scheduleDateOverrides: string | null } | null> {
+  const masterId = typeof args?.masterId === 'string' ? args.masterId.trim() : ''
+  const masterName = typeof args?.masterName === 'string' ? args.masterName.trim() : ''
+  if (masterId) {
+    return prisma.master.findFirst({
+      where: { businessId, id: masterId, isActive: true },
+      select: { id: true, name: true, workingHours: true, scheduleDateOverrides: true },
+    })
+  }
+  if (masterName) {
+    return prisma.master.findFirst({
+      where: { businessId, isActive: true, name: { contains: masterName, mode: 'insensitive' } },
+      orderBy: { createdAt: 'asc' },
+      select: { id: true, name: true, workingHours: true, scheduleDateOverrides: true },
+    })
+  }
+  return null
+}
+
+export async function toolFreeSlots(businessId: string, args?: Record<string, unknown>): Promise<AiToolResult> {
+  const dateKey = typeof args?.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(args.date.trim())
+    ? args.date.trim()
+    : getDateKey(new Date())
+  const durationMinutes = clampLimit(args?.durationMinutes, 5, 360, 60)
+  const limit = clampLimit(args?.limit, 1, 80, 24)
+  const slotStepMinutes = 30
+
+  const master = await resolveMasterForScheduleTool(businessId, args)
+  if (!master) {
+    return {
+      tool: 'free_slots',
+      data: {
+        date: dateKey,
+        durationMinutes,
+        error: 'master_required',
+        hint: 'Provide masterId or masterName',
+      },
+    }
+  }
+
+  const windows = getWindowsForDateKey(dateKey, master)
+  if (!windows || windows.length === 0) {
+    return { tool: 'free_slots', data: { date: dateKey, durationMinutes, master: { id: master.id, name: master.name }, slots: [] } }
+  }
+
+  const startOfDay = new Date(`${dateKey}T00:00:00`)
+  const endOfDay = new Date(`${dateKey}T23:59:59`)
+  const appts = await prisma.appointment.findMany({
+    where: {
+      businessId,
+      masterId: master.id,
+      startTime: { lt: endOfDay },
+      endTime: { gt: startOfDay },
+      status: { notIn: ['Cancelled', 'Скасовано'] },
+    },
+    orderBy: { startTime: 'asc' },
+    select: { startTime: true, endTime: true },
+  })
+
+  const busy: Array<{ startMin: number; endMin: number }> = appts.map((a) => ({
+    startMin: a.startTime.getHours() * 60 + a.startTime.getMinutes(),
+    endMin: a.endTime.getHours() * 60 + a.endTime.getMinutes(),
+  }))
+
+  const isFree = (startMin: number, endMin: number): boolean => {
+    for (const b of busy) {
+      if (startMin < b.endMin && endMin > b.startMin) return false
+    }
+    return true
+  }
+
+  const slots: string[] = []
+  for (const w of windows) {
+    const winStartMin = Math.round(w.start * 60)
+    const winEndMin = Math.round(w.end * 60)
+    for (let t = winStartMin; t + durationMinutes <= winEndMin; t += slotStepMinutes) {
+      if (isFree(t, t + durationMinutes)) {
+        const hh = String(Math.floor(t / 60)).padStart(2, '0')
+        const mm = String(t % 60).padStart(2, '0')
+        slots.push(`${dateKey}T${hh}:${mm}`)
+        if (slots.length >= limit) break
+      }
+    }
+    if (slots.length >= limit) break
+  }
+
+  return {
+    tool: 'free_slots',
+    data: {
+      date: dateKey,
+      durationMinutes,
+      master: { id: master.id, name: master.name },
+      slots,
+      totalBusy: busy.length,
+    },
+  }
+}
+
+export async function toolGapsSummary(businessId: string, args?: Record<string, unknown>): Promise<AiToolResult> {
+  const dateKey = typeof args?.date === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(args.date.trim())
+    ? args.date.trim()
+    : getDateKey(new Date())
+  const minGapMinutes = clampLimit(args?.minGapMinutes, 10, 360, 30)
+  const limit = clampLimit(args?.limit, 1, 30, 10)
+
+  const master = await resolveMasterForScheduleTool(businessId, args)
+  if (!master) {
+    return { tool: 'gaps_summary', data: { date: dateKey, error: 'master_required', hint: 'Provide masterId or masterName' } }
+  }
+
+  const windows = getWindowsForDateKey(dateKey, master)
+  if (!windows || windows.length === 0) {
+    return { tool: 'gaps_summary', data: { date: dateKey, master: { id: master.id, name: master.name }, gaps: [], note: 'no_working_hours' } }
+  }
+
+  const startOfDay = new Date(`${dateKey}T00:00:00`)
+  const endOfDay = new Date(`${dateKey}T23:59:59`)
+  const appts = await prisma.appointment.findMany({
+    where: {
+      businessId,
+      masterId: master.id,
+      startTime: { lt: endOfDay },
+      endTime: { gt: startOfDay },
+      status: { notIn: ['Cancelled', 'Скасовано'] },
+    },
+    orderBy: { startTime: 'asc' },
+    select: { startTime: true, endTime: true, status: true, clientName: true },
+  })
+
+  const toMin = (d: Date) => d.getHours() * 60 + d.getMinutes()
+  const busy = appts.map((a) => ({ s: toMin(a.startTime), e: toMin(a.endTime), status: a.status, client: a.clientName }))
+
+  const gaps: Array<{ start: string; end: string; minutes: number }> = []
+  const fmt = (min: number) => `${String(Math.floor(min / 60)).padStart(2, '0')}:${String(min % 60).padStart(2, '0')}`
+
+  for (const w of windows) {
+    const ws = Math.round(w.start * 60)
+    const we = Math.round(w.end * 60)
+    const inWindow = busy.filter((b) => b.e > ws && b.s < we).map((b) => ({ s: Math.max(ws, b.s), e: Math.min(we, b.e) }))
+    inWindow.sort((a, b) => a.s - b.s)
+
+    let cur = ws
+    for (const b of inWindow) {
+      if (b.s > cur) {
+        const len = b.s - cur
+        if (len >= minGapMinutes) gaps.push({ start: fmt(cur), end: fmt(b.s), minutes: len })
+      }
+      cur = Math.max(cur, b.e)
+    }
+    if (we > cur) {
+      const len = we - cur
+      if (len >= minGapMinutes) gaps.push({ start: fmt(cur), end: fmt(we), minutes: len })
+    }
+  }
+
+  gaps.sort((a, b) => b.minutes - a.minutes)
+
+  return {
+    tool: 'gaps_summary',
+    data: {
+      date: dateKey,
+      master: { id: master.id, name: master.name },
+      minGapMinutes,
+      gaps: gaps.slice(0, limit),
+      totalGaps: gaps.length,
+      totalAppointments: appts.length,
+    },
+  }
+}
+
 export async function runAiTool(businessId: string, name: AiToolName, args?: Record<string, unknown>): Promise<AiToolResult> {
   switch (name) {
     case 'biz_overview':
@@ -581,6 +935,14 @@ export async function runAiTool(businessId: string, name: AiToolName, args?: Rec
       return toolServicesTop(businessId, args)
     case 'masters_top':
       return toolMastersTop(businessId, args)
+    case 'schedule_overview':
+      return toolScheduleOverview(businessId)
+    case 'who_working':
+      return toolWhoWorking(businessId, args)
+    case 'free_slots':
+      return toolFreeSlots(businessId, args)
+    case 'gaps_summary':
+      return toolGapsSummary(businessId, args)
   }
 }
 

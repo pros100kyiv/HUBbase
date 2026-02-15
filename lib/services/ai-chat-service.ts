@@ -14,6 +14,20 @@ export type AgentActionType =
   | 'create_note'
   | 'create_reminder'
   | 'create_appointment'
+  | 'create_client'
+  | 'create_service'
+  | 'create_master'
+  | 'update_appointment'
+  | 'reschedule_appointment'
+  | 'cancel_appointment'
+  | 'delete_service'
+  | 'add_client_tag'
+  | 'send_sms'
+  | 'create_segment'
+  | 'update_business_working_hours'
+  | 'update_master_working_hours'
+  | 'set_master_date_override'
+  | 'clear_master_date_override'
   | 'tool_call'
 
 export interface AgentDecision {
@@ -40,6 +54,10 @@ const ALLOWED_TOOL_NAMES = new Set<string>([
   'payments_kpi',
   'services_top',
   'masters_top',
+  'schedule_overview',
+  'who_working',
+  'free_slots',
+  'gaps_summary',
 ])
 
 function normalizeGeminiModelName(model: string): string {
@@ -119,6 +137,20 @@ ${context.location ? `Адреса: ${context.location}` : ''}
         'create_note',
         'create_reminder',
         'create_appointment',
+        'create_client',
+        'create_service',
+        'create_master',
+        'update_appointment',
+        'reschedule_appointment',
+        'cancel_appointment',
+        'delete_service',
+        'add_client_tag',
+        'send_sms',
+        'create_segment',
+        'update_business_working_hours',
+        'update_master_working_hours',
+        'set_master_date_override',
+        'clear_master_date_override',
         'tool_call',
       ]
 
@@ -195,11 +227,25 @@ ${context.location ? `Адреса: ${context.location}` : ''}
 2) "create_note" - створити нотатку
 3) "create_reminder" - створити нагадування
 4) "create_appointment" - створити запис
-5) "tool_call" - отримати дані з системи (аналітика/клієнти/записи) мінімальним обсягом
+5) "create_client" - створити/оновити клієнта
+6) "create_service" - створити/оновити послугу
+7) "create_master" - створити майстра
+8) "update_appointment" - редагувати запис (майстер/послуги/нотатки/клієнтські поля)
+9) "reschedule_appointment" - перенести запис на інший час
+10) "cancel_appointment" - скасувати запис
+11) "delete_service" - вимкнути (soft-delete) послугу
+12) "add_client_tag" - додати тег клієнту
+13) "send_sms" - надіслати SMS (якщо налаштований SMS провайдер)
+14) "create_segment" - створити сегмент клієнтів
+15) "tool_call" - отримати дані з системи (аналітика/клієнти/записи) мінімальним обсягом
+16) "update_business_working_hours" - оновити тижневий графік роботи бізнесу
+17) "update_master_working_hours" - оновити тижневий графік роботи майстра
+18) "set_master_date_override" - задати виключення графіку майстра на конкретну дату
+19) "clear_master_date_override" - прибрати виключення графіку майстра на дату
 
 Формат JSON:
 {
-  "action": "reply | create_note | create_reminder | create_appointment | tool_call",
+  "action": "reply | create_note | create_reminder | create_appointment | create_client | create_service | create_master | update_appointment | reschedule_appointment | cancel_appointment | delete_service | add_client_tag | send_sms | create_segment | tool_call",
   "reply": "коротка відповідь українською для користувача",
   "confidence": 0.0,
   "needsConfirmation": false,
@@ -219,6 +265,7 @@ ${context.location ? `Адреса: ${context.location}` : ''}
 - Не проси "всю базу" — запитуй агрегати або top-N.
 - ТИ МАЄШ ДОСТУП до даних через tools і TOOL_CONTEXT. НІКОЛИ не кажи "я не маю доступу до аналітики/даних".
 - Якщо користувач питає про KPI/аналітику/причини/статистику — спочатку зроби tool_call (analytics_kpi, appointments_stats).
+- Якщо користувач просить поради/покращення/збільшення прибутку — зроби 1-3 tool_call (analytics_kpi, payments_kpi, services_top, masters_top, appointments_stats) і потім дай 3-7 коротких конкретних порад з числами/гіпотезами.
 - Якщо запит не про кабінет (оф-топ) — все одно відповідай ввічливо 1-2 фрази і м'яко поверни до того, чим можеш допомогти в кабінеті.
 
 Контекст бізнесу:
@@ -242,6 +289,27 @@ ${context.location ? `Адреса: ${context.location}` : ''}
 - reminders_list: { status?: string, limit?: number }
 - social_inbox_summary: { platform?: string, limit?: number }
 - payments_kpi: { days?: number }
+- schedule_overview: {}
+- who_working: { date?: string(YYYY-MM-DD) }
+- free_slots: { date?: string(YYYY-MM-DD), masterId?: string, masterName?: string, durationMinutes?: number, limit?: number }
+- gaps_summary: { date?: string(YYYY-MM-DD), masterId?: string, masterName?: string, minGapMinutes?: number, limit?: number }
+
+Поля payload для actions:
+- create_client.payload: { name: string, phone: string, email?: string, notes?: string }
+- create_service.payload: { name: string, price: number, duration: number, category?: string, subcategory?: string, description?: string }
+- create_appointment.payload: { clientName: string, clientPhone: string, clientEmail?: string, masterName: string, serviceNames?: string[], startTime: string(ISO), durationMinutes?: number, notes?: string, customServiceName?: string, customPrice?: number }
+- create_master.payload: { name: string, bio?: string, photo?: string, workingHoursJson?: string }
+- cancel_appointment.payload: { appointmentId?: string, clientPhone?: string, startTime?: string(ISO) }
+- reschedule_appointment.payload: { appointmentId?: string, clientPhone?: string, oldStartTime?: string(ISO), newStartTime: string(ISO), durationMinutes?: number }
+- update_appointment.payload: { appointmentId?: string, clientPhone?: string, startTime?: string(ISO), masterName?: string, masterId?: string, serviceIds?: string[], notes?: string, status?: string }
+- delete_service.payload: { serviceId?: string, name?: string }
+- add_client_tag.payload: { clientId?: string, clientPhone?: string, tag: string }
+- send_sms.payload: { phone?: string, clientPhone?: string, message: string }
+- create_segment.payload: { name: string, criteria: object|string, autoUpdate?: boolean }
+- update_business_working_hours.payload: { workingHours: object|string(JSON) }
+- update_master_working_hours.payload: { masterId?: string, masterName?: string, workingHours: object|string(JSON) }
+- set_master_date_override.payload: { masterId?: string, masterName?: string, date: string(YYYY-MM-DD), enabled: boolean, start?: string(HH:mm), end?: string(HH:mm) }
+- clear_master_date_override.payload: { masterId?: string, masterName?: string, date: string(YYYY-MM-DD) }
 
 TOOL_CONTEXT (стислі дані з БД, якщо вже є):
 ${toolContext ? toolContext : '(empty)'}

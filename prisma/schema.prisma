@@ -947,3 +947,13 @@ model Admin {
   @@index([isActive])
   @@index([createdAt])
 }
+
+// ============================================
+// СИСТЕМНІ НАЛАШТУВАННЯ (глобальні ключі/дефолти)
+// ============================================
+model SystemSetting {
+  key       String   @id // e.g. "global_gemini_api_key", "global_gemini_model"
+  value     String?  @db.Text
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
