@@ -58,6 +58,103 @@ function buildToolContext(parts: string[]): string {
   return `${snapshotKeep}\n...TRUNCATED...\n${tail}`
 }
 
+function containsAny(haystack: string, needles: string[]): boolean {
+  const s = haystack.toLowerCase()
+  return needles.some((n) => s.includes(n))
+}
+
+async function tryHeuristicDataReply(params: {
+  businessId: string
+  message: string
+}): Promise<{ reply: string; meta: Record<string, unknown> } | null> {
+  const { businessId, message } = params
+  const m = message.toLowerCase()
+
+  const wantsKpi = containsAny(m, ['kpi', 'аналіт', 'analytics', 'статист', 'показник', 'дохід', 'вируч'])
+  const wantsPayments = containsAny(m, ['платеж', 'оплат', 'payments', 'revenue'])
+  const wantsInbox = containsAny(m, ['інбокс', 'inbox', 'direct', 'соц', 'повідомл'])
+  const wantsReminders = containsAny(m, ['нагад', 'reminder'])
+  const wantsNotes = containsAny(m, ['нотат', 'замітк', 'note'])
+
+  // If this is a command-like message, let existing fallback handle it.
+  if (message.trim().match(/^(?:note|нотатка|замітка|create note|reminder|нагадування|appointment|запис)\s*:/i)) {
+    return null
+  }
+
+  if (!wantsKpi && !wantsPayments && !wantsInbox && !wantsReminders && !wantsNotes) return null
+
+  const startOfToday = new Date()
+  startOfToday.setHours(0, 0, 0, 0)
+  const endOfToday = new Date(startOfToday)
+  endOfToday.setHours(23, 59, 59, 999)
+
+  const parts: string[] = []
+  const meta: Record<string, unknown> = { mode: 'data_fallback' }
+
+  const opsPromise = Promise.allSettled([
+    prisma.socialInboxMessage.count({ where: { businessId, isRead: false } }),
+    prisma.telegramReminder.count({ where: { businessId, status: 'pending' } }),
+    prisma.note.count({ where: { businessId, date: { gte: startOfToday, lte: endOfToday } } }),
+  ]).then((results) => {
+    const val = (idx: number): number | null => {
+      const r = results[idx]
+      return r && r.status === 'fulfilled' ? r.value : null
+    }
+    return { inboxUnread: val(0), remindersPending: val(1), notesToday: val(2) }
+  })
+
+  const toolCalls: Array<Promise<unknown>> = []
+  let kpi7d: any = null
+  let payments30d: any = null
+
+  if (wantsKpi) {
+    toolCalls.push(
+      runAiTool(businessId, 'analytics_kpi', { days: 7 }).then((r) => {
+        kpi7d = r
+      })
+    )
+  }
+  if (wantsPayments) {
+    toolCalls.push(
+      runAiTool(businessId, 'payments_kpi', { days: 30 }).then((r) => {
+        payments30d = r
+      })
+    )
+  }
+
+  const [ops] = await Promise.all([opsPromise, Promise.allSettled(toolCalls)])
+
+  if (wantsInbox || wantsReminders || wantsNotes) {
+    parts.push(
+      `Оперативно: inbox unread=${ops.inboxUnread ?? 'n/a'}, reminders pending=${ops.remindersPending ?? 'n/a'}, notes today=${ops.notesToday ?? 'n/a'}.`
+    )
+    meta.ops = ops
+  }
+
+  if (wantsKpi && kpi7d && typeof kpi7d === 'object') {
+    const data = (kpi7d as any).data || (kpi7d as any)
+    // toolAnalyticsKpi returns { range, appointmentsTotal, appointmentsDone, cancelled, newClients, paymentsSucceeded, revenueSucceeded? }
+    parts.push(
+      `KPI 7д: записів=${data.appointmentsTotal ?? 0}, виконано=${data.appointmentsDone ?? 0}, скасовано=${data.cancelled ?? 0}, нових клієнтів=${data.newClients ?? 0}.`
+    )
+    if (typeof data.revenueSucceeded === 'number') parts.push(`Дохід (succeeded)=${data.revenueSucceeded}.`)
+    meta.kpi7d = data
+  }
+
+  if (wantsPayments && payments30d && typeof payments30d === 'object') {
+    const data = (payments30d as any).data || (payments30d as any)
+    const rows = Array.isArray(data.byStatus) ? data.byStatus : []
+    const fmt = (s: any) => `${s.status}:${s.count}/${s.sum}`
+    parts.push(`Payments 30д: ${rows.map(fmt).join(', ') || 'немає'}.`)
+    meta.payments30d = data
+  }
+
+  if (parts.length === 0) return null
+
+  parts.push('Якщо скажеш період (7/30/90) і що саме важливо — уточню деталізацію.')
+  return { reply: parts.join('\n'), meta }
+}
+
 function buildFallbackDecision(
   message: string,
   business: {
@@ -422,9 +519,23 @@ export async function POST(request: Request) {
         }
       } catch (error) {
         aiUnavailableReason = error instanceof Error ? error.message : 'AI unavailable'
+        decision = null
       }
     } else {
       aiUnavailableReason = 'AI API key is not configured'
+    }
+
+    if (!decision) {
+      // If LLM is rate-limited/misconfigured, still answer common "dashboard" questions via direct DB/tools.
+      const heuristic = await tryHeuristicDataReply({ businessId, message })
+      if (heuristic) {
+        decision = {
+          action: 'reply',
+          reply: heuristic.reply,
+          confidence: 0.65,
+          payload: { ...heuristic.meta },
+        }
+      }
     }
 
     if (!decision) {
