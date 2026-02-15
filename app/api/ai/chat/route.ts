@@ -9,6 +9,7 @@ const DEFAULT_APPOINTMENT_DURATION_MINUTES = 60
 const MAX_TOOL_CONTEXT_CHARS = 8000
 const MAX_TOOL_LINE_CHARS = 1600
 const MAX_TOOL_CALLS = 3
+const MAX_ASSISTANT_REPLY_CHARS = 900
 
 const parseJson = <T>(raw: string | null | undefined, fallback: T): T => {
   if (raw == null || String(raw).trim() === '') return fallback
@@ -966,6 +967,9 @@ export async function POST(request: Request) {
     if (!assistantMessage.trim()) {
       assistantMessage = 'Не вдалося обробити запит. Спробуйте ще раз.'
     }
+
+    // Keep responses compact to reduce token usage and keep the chat snappy.
+    assistantMessage = truncateText(assistantMessage.trim(), MAX_ASSISTANT_REPLY_CHARS)
 
     const sid = sessionId || 'default'
     await prisma.$transaction([
