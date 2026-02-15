@@ -20,6 +20,10 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
   const [isLoading, setIsLoading] = useState(false)
+  const [aiIndicator, setAiIndicator] = useState<{ color: 'green' | 'red'; title: string }>({
+    color: 'red',
+    title: 'AI: unknown',
+  })
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   
@@ -35,6 +39,19 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
               message: msg.message,
               timestamp: new Date(msg.createdAt)
             })))
+          }
+          if (data.ai && typeof data.ai === 'object') {
+            const hasKey = data.ai.hasKey === true
+            const indicator = data.ai.indicator === 'green' ? 'green' : 'red'
+            const reason = typeof data.ai.reason === 'string' ? data.ai.reason : null
+            setAiIndicator({
+              color: indicator,
+              title: indicator === 'green'
+                ? 'AI: key connected'
+                : hasKey
+                  ? `AI: key present, not used (${reason || 'fallback'})`
+                  : 'AI: key missing',
+            })
           }
         })
         .catch(err => console.error('Error loading chat history:', err))
@@ -108,6 +125,19 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
       }
       
       if (data.success) {
+        if (data.ai && typeof data.ai === 'object') {
+          const hasKey = data.ai.hasKey === true
+          const indicator = data.ai.indicator === 'green' ? 'green' : 'red'
+          const reason = typeof data.ai.reason === 'string' ? data.ai.reason : null
+          setAiIndicator({
+            color: indicator,
+            title: indicator === 'green'
+              ? 'AI: using key'
+              : hasKey
+                ? `AI: key present, not used (${reason || 'fallback'})`
+                : 'AI: key missing',
+          })
+        }
         const aiMsg: Message = {
           id: `ai_${Date.now()}`,
           role: 'assistant',
@@ -149,6 +179,11 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
             <div className="flex items-center gap-2">
               <BotIcon className="w-5 h-5 text-candy-purple" />
               <h3 className="text-sm font-black text-gray-900 dark:text-white">AI Помічник</h3>
+              <span
+                className={`inline-block w-2.5 h-2.5 rounded-full ${aiIndicator.color === 'green' ? 'bg-green-500' : 'bg-red-500'}`}
+                title={aiIndicator.title}
+                aria-label={aiIndicator.title}
+              />
             </div>
             <button
               onClick={() => setIsOpen(false)}

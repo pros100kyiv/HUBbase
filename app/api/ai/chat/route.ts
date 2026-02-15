@@ -63,6 +63,50 @@ function containsAny(haystack: string, needles: string[]): boolean {
   return needles.some((n) => s.includes(n))
 }
 
+function parseDaysFromText(message: string, fallback: number): number {
+  const m = message.toLowerCase()
+  if (m.includes('сьогодні') || m.includes('today')) return 1
+  if (m.includes('завтра') || m.includes('tomorrow')) return 2
+  if (m.match(/\b7\b/) || m.includes('тиж')) return 7
+  if (m.match(/\b30\b/) || m.includes('місяц')) return 30
+  if (m.match(/\b90\b/) || m.includes('кварт') || m.includes('3 міся')) return 90
+  return fallback
+}
+
+function parseLimitFromText(message: string, fallback: number, min = 1, max = 50): number {
+  const m = message.toLowerCase()
+  const match = m.match(/\b(?:top|топ|limit|ліміт|покажи|показати|останні)\s*(\d{1,3})\b/)
+  const n = match ? parseInt(match[1] || '', 10) : NaN
+  if (!Number.isFinite(n)) return fallback
+  return Math.max(min, Math.min(max, n))
+}
+
+function extractUaPhoneCandidate(message: string): string | null {
+  const raw = message.replace(/[^\d+]/g, ' ')
+  // Match +380XXXXXXXXX or 0XXXXXXXXX or 380XXXXXXXXX in rough text.
+  const match = raw.match(/(?:\+?380\d{9}|380\d{9}|0\d{9})/)
+  if (!match) return null
+  const normalized = normalizeUaPhone(match[0])
+  return isValidUaPhone(normalized) ? normalized : null
+}
+
+function extractSearchQuery(message: string): string | null {
+  const s = message.trim()
+  // Common patterns: "знайди клієнта Іван", "клієнт: Іван", "client Іван"
+  const m1 = s.match(/(?:знайди|пошук|search)\s+(?:клієнт[аів]?|client[s]?)\s+(.+)$/i)
+  if (m1?.[1]) return m1[1].trim()
+  const m2 = s.match(/(?:клієнт[аів]?|client[s]?)\s*[:\-]\s*(.+)$/i)
+  if (m2?.[1]) return m2[1].trim()
+  return null
+}
+
+function formatMoneyUAH(value: unknown): string {
+  const n = typeof value === 'number' ? value : Number(value || 0)
+  if (!Number.isFinite(n)) return '0'
+  // Keep it simple and ASCII; no Intl to avoid env differences.
+  return String(Math.round(n))
+}
+
 async function tryHeuristicDataReply(params: {
   businessId: string
   message: string
@@ -76,6 +120,15 @@ async function tryHeuristicDataReply(params: {
   const wantsReminders = containsAny(m, ['нагад', 'reminder'])
   const wantsNotes = containsAny(m, ['нотат', 'замітк', 'note'])
   const wantsAppointments = containsAny(m, ['запис', 'appointments', 'календар', 'брон', 'броню', 'слот', 'сьогодні'])
+  const wantsClients = containsAny(m, ['клієнт', 'clients', 'client', 'контакт'])
+  const wantsSegments = containsAny(m, ['сегмент', 'segment'])
+  const wantsOverview = containsAny(m, ['огляд', 'overview', 'що є в кабінеті', 'скільки клієн', 'скільки майстр', 'скільки послуг'])
+  const wantsTopServices = containsAny(m, ['топ послуг', 'популярні послуг', 'services top', 'top services'])
+  const wantsTopMasters = containsAny(m, ['топ майстр', 'популярні майстр', 'masters top', 'top masters'])
+  const wantsAppointmentsList = containsAny(m, ['список запис', 'покажи запис', 'хто записан', 'найближч', 'записи на'])
+  const wantsNotesList = containsAny(m, ['список нотат', 'покажи нотат'])
+  const wantsRemindersList = containsAny(m, ['список нагад', 'покажи нагад'])
+  const wantsInboxList = containsAny(m, ['покажи інбокс', 'останні повідомлення', 'останн', 'messages'])
   const wantsHelp = containsAny(m, [
     'що ти вмієш',
     'що вмієш',
@@ -111,12 +164,30 @@ async function tryHeuristicDataReply(params: {
   if (wantsHelp) {
     return {
       reply:
-        'Я допомагаю власнику/адміну керувати кабінетом.\n\nЩо можу швидко показати (навіть якщо AI в ліміті):\n- "скільки записів сьогодні"\n- "записи за 7 днів"\n- "KPI за 7 днів"\n- "payments за 30 днів"\n- "інбокс unread"\n\nШвидкі команди (працюють без AI):\n- "note: текст"\n- "reminder: текст"\n- "appointment: Імʼя, +380..., Майстер, 2026-02-16T15:00, Послуга"\n',
+        'Я допомагаю власнику/адміну керувати кабінетом.\n\nЩо можу відповісти без підключеного AI ключа (напряму з БД):\n- KPI/аналітика: "KPI за 7 днів"\n- Записи: "скільки записів сьогодні", "покажи записи на 7 днів", "найближчі записи"\n- Платежі: "payments за 30 днів"\n- Інбокс: "інбокс unread", "покажи інбокс"\n- Нотатки/нагадування: "покажи нотатки сьогодні", "нагадування pending"\n- Клієнти: "знайди клієнта Іван", "клієнт +380...", "історія клієнта +380..."\n- Сегменти: "покажи сегменти"\n- Топ: "топ послуг за 30 днів", "топ майстрів за 30 днів"\n\nШвидкі команди (працюють без AI):\n- "note: текст"\n- "reminder: текст"\n- "appointment: Імʼя, +380..., Майстер, 2026-02-16T15:00, Послуга"\n',
       meta: { mode: 'data_fallback', kind: 'help' },
     }
   }
 
-  if (!wantsKpi && !wantsPayments && !wantsInbox && !wantsReminders && !wantsNotes && !wantsAppointments) return null
+  if (
+    !wantsKpi &&
+    !wantsPayments &&
+    !wantsInbox &&
+    !wantsReminders &&
+    !wantsNotes &&
+    !wantsAppointments &&
+    !wantsClients &&
+    !wantsSegments &&
+    !wantsOverview &&
+    !wantsTopServices &&
+    !wantsTopMasters &&
+    !wantsAppointmentsList &&
+    !wantsNotesList &&
+    !wantsRemindersList &&
+    !wantsInboxList
+  ) {
+    return null
+  }
 
   const startOfToday = new Date()
   startOfToday.setHours(0, 0, 0, 0)
@@ -143,6 +214,23 @@ async function tryHeuristicDataReply(params: {
   let payments30d: any = null
   let appt7d: any = null
   let apptTodayCounts: any = null
+  let overview: any = null
+  let segments: any = null
+  let notesList: any = null
+  let remindersList: any = null
+  let inboxSummary: any = null
+  let apptList: any = null
+  let servicesTop: any = null
+  let mastersTop: any = null
+  let clientsSearch: any = null
+  let clientByPhone: any = null
+  let clientHistory: any = null
+
+  const days = parseDaysFromText(message, 7)
+  const limit = parseLimitFromText(message, 10)
+  const phone = extractUaPhoneCandidate(message)
+  const q = extractSearchQuery(message)
+  const wantsClientHistory = containsAny(m, ['істор', 'history', 'візит', 'відвідуван', 'скільки витратив'])
 
   if (wantsKpi) {
     toolCalls.push(
@@ -178,9 +266,93 @@ async function tryHeuristicDataReply(params: {
     )
   }
 
+  if (wantsOverview) {
+    toolCalls.push(
+      runAiTool(businessId, 'biz_overview', {}).then((r) => {
+        overview = r
+      })
+    )
+  }
+
+  if (wantsSegments) {
+    toolCalls.push(
+      runAiTool(businessId, 'segments_list', {}).then((r) => {
+        segments = r
+      })
+    )
+  }
+
+  if (wantsNotesList) {
+    const todayIso = new Date().toISOString().slice(0, 10)
+    const date = containsAny(m, ['сьогодні', 'today']) ? todayIso : undefined
+    toolCalls.push(
+      runAiTool(businessId, 'notes_list', { date, limit }).then((r) => {
+        notesList = r
+      })
+    )
+  }
+
+  if (wantsRemindersList) {
+    const status = containsAny(m, ['pending', 'в очіку', 'не відправ', 'активн']) ? 'pending' : undefined
+    toolCalls.push(
+      runAiTool(businessId, 'reminders_list', { status, limit }).then((r) => {
+        remindersList = r
+      })
+    )
+  }
+
+  if (wantsInboxList || (wantsInbox && containsAny(m, ['покажи', 'останні', 'last']))) {
+    const platform = containsAny(m, ['instagram', 'інст', 'insta']) ? 'instagram' : containsAny(m, ['facebook', 'фейс']) ? 'facebook' : undefined
+    toolCalls.push(
+      runAiTool(businessId, 'social_inbox_summary', { platform, limit }).then((r) => {
+        inboxSummary = r
+      })
+    )
+  }
+
+  if (wantsAppointmentsList) {
+    toolCalls.push(
+      runAiTool(businessId, 'appointments_list', { days, limit }).then((r) => {
+        apptList = r
+      })
+    )
+  }
+
+  if (wantsTopServices) {
+    toolCalls.push(
+      runAiTool(businessId, 'services_top', { days: parseDaysFromText(message, 30), limit: Math.min(10, Math.max(1, limit)) }).then((r) => {
+        servicesTop = r
+      })
+    )
+  }
+  if (wantsTopMasters) {
+    toolCalls.push(
+      runAiTool(businessId, 'masters_top', { days: parseDaysFromText(message, 30), limit: Math.min(10, Math.max(1, limit)) }).then((r) => {
+        mastersTop = r
+      })
+    )
+  }
+
+  if (wantsClients) {
+    if (phone) {
+      toolCalls.push(
+        runAiTool(businessId, 'client_by_phone', { phone }).then((r) => {
+          clientByPhone = r
+        })
+      )
+      // If they asked history - fetch it in a second step after we know clientId (below).
+    } else if (q) {
+      toolCalls.push(
+        runAiTool(businessId, 'clients_search', { q, limit: Math.min(20, Math.max(1, limit)) }).then((r) => {
+          clientsSearch = r
+        })
+      )
+    }
+  }
+
   const [ops] = await Promise.all([opsPromise, Promise.allSettled(toolCalls)])
 
-  if (wantsInbox || wantsReminders || wantsNotes) {
+  if (wantsInbox || wantsReminders || wantsNotes || wantsOverview) {
     parts.push(
       `Оперативно: inbox unread=${ops.inboxUnread ?? 'n/a'}, reminders pending=${ops.remindersPending ?? 'n/a'}, notes today=${ops.notesToday ?? 'n/a'}.`
     )
@@ -189,18 +361,18 @@ async function tryHeuristicDataReply(params: {
 
   if (wantsKpi && kpi7d && typeof kpi7d === 'object') {
     const data = (kpi7d as any).data || (kpi7d as any)
-    // toolAnalyticsKpi returns { range, appointmentsTotal, appointmentsDone, cancelled, newClients, paymentsSucceeded, revenueSucceeded? }
+    const kpi = (data && typeof data === 'object' && (data as any).kpi) ? (data as any).kpi : data
     parts.push(
-      `KPI 7д: записів=${data.appointmentsTotal ?? 0}, виконано=${data.appointmentsDone ?? 0}, скасовано=${data.cancelled ?? 0}, нових клієнтів=${data.newClients ?? 0}.`
+      `KPI 7д: записів=${kpi?.appointmentsTotal ?? 0}, виконано=${kpi?.appointmentsDone ?? 0}, скасовано=${kpi?.cancelled ?? 0}, нових клієнтів=${kpi?.newClients ?? 0}.`
     )
-    if (typeof data.revenueSucceeded === 'number') parts.push(`Дохід (succeeded)=${data.revenueSucceeded}.`)
-    meta.kpi7d = data
+    parts.push(`Дохід (succeeded)=${formatMoneyUAH(kpi?.revenue ?? 0)}; платежів=${kpi?.paymentsCount ?? 0}.`)
+    meta.kpi7d = kpi
   }
 
   if (wantsPayments && payments30d && typeof payments30d === 'object') {
     const data = (payments30d as any).data || (payments30d as any)
     const rows = Array.isArray(data.byStatus) ? data.byStatus : []
-    const fmt = (s: any) => `${s.status}:${s.count}/${s.sum}`
+    const fmt = (s: any) => `${s.status}:${s.count}/${formatMoneyUAH(s.sum)}`
     parts.push(`Payments 30д: ${rows.map(fmt).join(', ') || 'немає'}.`)
     meta.payments30d = data
   }
@@ -221,9 +393,105 @@ async function tryHeuristicDataReply(params: {
     }
   }
 
+  if (wantsOverview && overview && typeof overview === 'object') {
+    const data = (overview as any).data || (overview as any)
+    const counts = (data && typeof data === 'object') ? (data as any).counts : null
+    const biz = (data && typeof data === 'object') ? (data as any).business : null
+    if (biz) parts.push(`Бізнес: ${biz.name || 'n/a'}; AI chat=${biz.aiChatEnabled ? 'ON' : 'OFF'}; reminders=${biz.remindersEnabled ? 'ON' : 'OFF'}.`)
+    if (counts) parts.push(`Лічильники: клієнтів=${counts.clients ?? 'n/a'}, майстрів=${counts.masters ?? 'n/a'}, послуг=${counts.services ?? 'n/a'}, записів=${counts.appointments ?? 'n/a'}.`)
+    meta.overview = data
+  }
+
+  if (wantsSegments && segments && typeof segments === 'object') {
+    const data = (segments as any).data || (segments as any)
+    const rows = Array.isArray(data.rows) ? data.rows : []
+    parts.push(`Сегменти: ${rows.length ? rows.map((r: any) => `${r.name}(${r.clientCount ?? 0})`).join(', ') : 'немає'}.`)
+    meta.segments = data
+  }
+
+  if (wantsNotesList && notesList && typeof notesList === 'object') {
+    const data = (notesList as any).data || (notesList as any)
+    const rows = Array.isArray(data.rows) ? data.rows : []
+    parts.push(`Нотатки${data.date ? ` (${data.date})` : ''}: ${rows.length ? rows.map((r: any) => `${r.completed ? '[x]' : '[ ]'} ${r.text}`).join('\n') : 'немає'}.`)
+    meta.notesList = data
+  }
+
+  if (wantsRemindersList && remindersList && typeof remindersList === 'object') {
+    const data = (remindersList as any).data || (remindersList as any)
+    const rows = Array.isArray(data.rows) ? data.rows : []
+    parts.push(`Нагадування${data.status ? ` (${data.status})` : ''}: ${rows.length ? rows.map((r: any) => `${r.status} ${r.scheduledAt ? `@${String(r.scheduledAt)}` : ''} - ${r.message}`).join('\n') : 'немає'}.`)
+    meta.remindersList = data
+  }
+
+  if ((wantsInboxList || wantsInbox) && inboxSummary && typeof inboxSummary === 'object') {
+    const data = (inboxSummary as any).data || (inboxSummary as any)
+    const rows = Array.isArray(data.rows) ? data.rows : []
+    parts.push(`Інбокс: unread=${data.unreadCount ?? 'n/a'}. Останні: ${rows.length ? rows.map((r: any) => `${r.platform}:${r.unread ? 'unread' : 'read'} ${r.sender || 'n/a'} - ${r.preview}`).join('\n') : 'немає'}.`)
+    meta.inbox = data
+  }
+
+  if (wantsAppointmentsList && apptList && typeof apptList === 'object') {
+    const data = (apptList as any).data || (apptList as any)
+    const rows = Array.isArray(data.rows) ? data.rows : []
+    parts.push(`Записи (до ${data.limit ?? limit} за ${days} дн): ${rows.length ? rows.map((r: any) => `${String(r.start)} ${r.status} ${r.client || ''} (*${r.phoneLast4 || ''})`).join('\n') : 'немає'}.`)
+    meta.appointmentsList = data
+  }
+
+  if (wantsTopServices && servicesTop && typeof servicesTop === 'object') {
+    const data = (servicesTop as any).data || (servicesTop as any)
+    const rows = Array.isArray(data.rows) ? data.rows : []
+    parts.push(`Топ послуг (${parseDaysFromText(message, 30)}д): ${rows.length ? rows.map((r: any) => `${r.name || r.serviceId}:${r.count}`).join(', ') : 'немає'}.`)
+    meta.servicesTop = data
+  }
+  if (wantsTopMasters && mastersTop && typeof mastersTop === 'object') {
+    const data = (mastersTop as any).data || (mastersTop as any)
+    const rows = Array.isArray(data.rows) ? data.rows : []
+    parts.push(`Топ майстрів (${parseDaysFromText(message, 30)}д): ${rows.length ? rows.map((r: any) => `${r.masterName || r.masterId}:${r.appointments}`).join(', ') : 'немає'}.`)
+    meta.mastersTop = data
+  }
+
+  // Client reply: search/by phone, plus history if requested.
+  if (wantsClients) {
+    if (phone && clientByPhone && typeof clientByPhone === 'object') {
+      const data = (clientByPhone as any).data || (clientByPhone as any)
+      const client = data.client || null
+      if (!client) {
+        parts.push(`Клієнт за телефоном ${phone} не знайдений.`)
+      } else {
+        parts.push(
+          `Клієнт: ${client.name} (*${client.phoneLast4}), статус=${client.status || 'n/a'}, візитів=${client.totalAppointments ?? 0}, витрати=${formatMoneyUAH(client.totalSpent ?? 0)}.`
+        )
+        meta.client = client
+
+        if (wantsClientHistory && client.id) {
+          try {
+            const hist = await runAiTool(businessId, 'client_history', { clientId: client.id, limit: Math.min(10, Math.max(1, limit)) })
+            const hdata = (hist as any).data || (hist as any)
+            const appts = Array.isArray(hdata.appointments) ? hdata.appointments : []
+            parts.push(
+              `Історія (останні ${appts.length}): ${appts.length ? appts.map((a: any) => `${String(a.start)} ${a.status} (masterId=${a.masterId})`).join('\n') : 'немає'}.`
+            )
+            meta.clientHistory = hdata
+          } catch {
+            // ignore; keep partial response
+          }
+        } else if (containsAny(m, ['істор', 'history'])) {
+          parts.push('Щоб показати історію, напиши: "історія клієнта +380..."')
+        }
+      }
+    } else if (q && clientsSearch && typeof clientsSearch === 'object') {
+      const data = (clientsSearch as any).data || (clientsSearch as any)
+      const rows = Array.isArray(data.rows) ? data.rows : []
+      parts.push(`Клієнти за "${data.q || q}": ${rows.length ? rows.map((c: any) => `${c.name} (*${c.phoneLast4})`).join(', ') : 'немає'}.`)
+      meta.clients = data
+    } else if (!phone && !q) {
+      parts.push('Щоб знайти клієнта — напиши ім’я або телефон: "знайди клієнта Іван" або "клієнт +380..."')
+    }
+  }
+
   if (parts.length === 0) return null
 
-  parts.push('Якщо скажеш період (7/30/90) і що саме важливо — уточню деталізацію.')
+  parts.push('Можу деталізувати: скажи період (1/7/30/90) і що саме показати.')
   return { reply: parts.join('\n'), meta }
 }
 
@@ -532,14 +800,22 @@ export async function POST(request: Request) {
     if (!business) {
       return NextResponse.json({ error: 'Business not found' }, { status: 404 })
     }
+
+    const hasAiKey = !!((business.aiApiKey?.trim() || globalAiApiKey || '').trim())
     if (!business.aiChatEnabled) {
       // Don't fail hard: the widget is visible in dashboard for most users.
       // Return a user-facing message so the UI doesn't show a generic error.
       return NextResponse.json({
         success: true,
         message:
-          'AI чат вимкнений для цього акаунта. Увімкніть AI в налаштуваннях бізнесу (інтеграції/AI), або напишіть адміну щоб активували.',
+          'AI чат вимкнений для цього акаунта. Увімкнути/вимкнути AI можна тільки в Центрі управління (адмін).',
         action: { action: 'reply', status: 'ai_disabled' },
+        ai: {
+          hasKey: hasAiKey,
+          indicator: 'red',
+          usedAi: false,
+          reason: 'ai_disabled',
+        },
       })
     }
 
@@ -571,9 +847,12 @@ export async function POST(request: Request) {
     const aiService = effectiveApiKey
       ? new AIChatService(effectiveApiKey, aiSettings.model || process.env.GEMINI_MODEL || 'gemini-2.5-flash')
       : null
+    const isKeyMissing = !effectiveApiKey
 
     let decision: AgentDecision | null = null
     let aiUnavailableReason: string | null = null
+    let usedAi = false
+    let decisionSource: 'llm' | 'heuristic' | 'fallback' | null = null
     const snapshotText = await getBusinessSnapshotText(businessId)
     const toolContextParts: string[] = [snapshotText]
 
@@ -596,6 +875,11 @@ export async function POST(request: Request) {
           toolContextParts.push('TOOL_LIMIT_REACHED=true; now reply using existing TOOL_CONTEXT, no more tool_call.')
           decision = await aiService.getAgentDecision(message, context, history, buildToolContext(toolContextParts))
         }
+
+        if (decision) {
+          usedAi = true
+          decisionSource = 'llm'
+        }
       } catch (error) {
         aiUnavailableReason = error instanceof Error ? error.message : 'AI unavailable'
         decision = null
@@ -614,13 +898,38 @@ export async function POST(request: Request) {
           confidence: 0.65,
           payload: { ...heuristic.meta },
         }
+        decisionSource = 'heuristic'
       }
+    }
+
+    if (!decision && isKeyMissing) {
+      // No key configured: don't reply with a generic "AI unavailable".
+      // Provide a "cabinet assistant" menu so user can keep working.
+      decision = {
+        action: 'reply',
+        reply:
+          'AI ключ не підключений, тому "розумні" відповіді можуть бути обмежені. Але я можу напряму з кабінету показати дані:\n' +
+          '- "огляд кабінету" (клієнти/майстри/послуги/записи)\n' +
+          '- "KPI за 7 днів"\n' +
+          '- "payments за 30 днів"\n' +
+          '- "скільки записів сьогодні" або "покажи записи на 7 днів"\n' +
+          '- "інбокс unread" або "покажи інбокс"\n' +
+          '- "покажи нотатки сьогодні", "нагадування pending"\n' +
+          '- "знайди клієнта Іван", "клієнт +380...", "історія клієнта +380..."\n' +
+          '- "покажи сегменти"\n' +
+          '- "топ послуг за 30 днів", "топ майстрів за 30 днів"\n\n' +
+          'Напиши, що саме потрібно — і я витягну це з бази.',
+        confidence: 1,
+        payload: { mode: 'no_key_fallback' },
+      }
+      decisionSource = 'heuristic'
     }
 
     if (!decision) {
       decision = buildFallbackDecision(message, {
         services: business.services.map((s) => ({ id: s.id, name: s.name, duration: s.duration })),
       })
+      decisionSource = 'fallback'
     }
 
     let assistantMessage = ''
@@ -690,6 +999,12 @@ export async function POST(request: Request) {
       message: assistantMessage,
       tokens,
       action: actionData,
+      ai: {
+        hasKey: !!effectiveApiKey,
+        indicator: !!effectiveApiKey && usedAi && decisionSource === 'llm' ? 'green' : 'red',
+        usedAi,
+        reason: aiUnavailableReason || (decisionSource ? `source:${decisionSource}` : null),
+      },
     })
   } catch (error) {
     console.error('AI Chat API error:', error)
@@ -718,7 +1033,21 @@ export async function GET(request: Request) {
       orderBy: { createdAt: 'asc' },
     })
 
-    return NextResponse.json({ messages })
+    const biz = await prisma.business.findUnique({
+      where: { id: businessId },
+      select: { aiApiKey: true, aiChatEnabled: true },
+    })
+    const globalAiApiKey = process.env.GEMINI_API_KEY?.trim() || process.env.GOOGLE_API_KEY?.trim()
+    const hasKey = !!((biz?.aiApiKey?.trim() || globalAiApiKey || '').trim())
+    return NextResponse.json({
+      messages,
+      ai: {
+        hasKey,
+        indicator: hasKey && biz?.aiChatEnabled ? 'green' : 'red',
+        usedAi: false,
+        reason: biz?.aiChatEnabled ? null : 'ai_disabled',
+      },
+    })
   } catch (error) {
     console.error('Get chat history error:', error)
     return NextResponse.json({ error: 'Failed to get chat history' }, { status: 500 })
