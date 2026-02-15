@@ -19,23 +19,23 @@ export function verifyAdminToken(request: NextRequest | Request): AdminAuthResul
   try {
     const authHeader = request.headers.get('authorization')
     const token = authHeader?.replace('Bearer ', '') || authHeader
-    
+
     if (!token) {
       return { valid: false }
     }
 
     const secret = getAdminJwtSecret()
     const decoded = jwt.verify(token, secret) as any
-    
+
     // Перевіряємо роль (developer, SUPER_ADMIN, ADMIN, VIEWER)
     const validRoles = ['developer', 'SUPER_ADMIN', 'ADMIN', 'VIEWER']
     if (!validRoles.includes(decoded.role)) {
       return { valid: false }
     }
 
-    return { 
-      valid: true, 
-      email: decoded.email, 
+    return {
+      valid: true,
+      email: decoded.email,
       role: decoded.role,
       permissions: decoded.permissions || [],
       adminId: decoded.adminId || null,

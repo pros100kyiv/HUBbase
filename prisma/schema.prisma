@@ -128,6 +128,7 @@ model Business {
   imports                      DataImport[] // Імпорти даних
   exports                      DataExport[] // Експорти даних
   aiChatMessages               AIChatMessage[] // AI чат повідомлення
+  aiSnapshot                   BusinessAiSnapshot?
   broadcasts                   Broadcast[] // Розсилки SMS/Email
   payments                     Payment[] // Платежі
   clientSegments               ClientSegment[] // Сегменти клієнтів
@@ -514,6 +515,20 @@ model AIChatMessage {
   @@index([businessId])
   @@index([sessionId])
   @@index([createdAt])
+}
+
+// Стиснутий snapshot для AI (агрегації/топи), щоб мінімізувати токени
+model BusinessAiSnapshot {
+  id          String   @id @default(cuid())
+  businessId  String   @unique
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  // JSON з агрегатами та короткими "фактами". Тримай компактним.
+  snapshot    String   @db.Text
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([businessId])
+  @@index([updatedAt])
 }
 
 // Розсилки SMS/Email
