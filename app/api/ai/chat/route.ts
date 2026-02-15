@@ -11,6 +11,10 @@ const MAX_TOOL_LINE_CHARS = 1600
 const MAX_TOOL_CALLS = 3
 const MAX_ASSISTANT_REPLY_CHARS = 900
 
+// Best-effort in-memory cooldown to avoid repeated 429 calls.
+// Note: serverless instances may restart; this is still useful within a warm instance.
+const aiCooldownByBusiness = new Map<string, number>()
+
 const parseJson = <T>(raw: string | null | undefined, fallback: T): T => {
   if (raw == null || String(raw).trim() === '') return fallback
   try {
@@ -43,6 +47,18 @@ function safeText(value: unknown): string | null {
 function truncateText(text: string, max: number): string {
   if (text.length <= max) return text
   return text.slice(0, Math.max(0, max - 1)) + '…'
+}
+
+function parseRetryAfterMsFromAiError(message: string): number | null {
+  const m1 = message.match(/Please retry in\s+([\d.]+)s/i)
+  const s1 = m1 ? Number(m1[1]) : NaN
+  if (Number.isFinite(s1) && s1 > 0) return Math.round(s1 * 1000)
+
+  const m2 = message.match(/\"retryDelay\"\s*:\s*\"(\d+)s\"/i)
+  const s2 = m2 ? Number(m2[1]) : NaN
+  if (Number.isFinite(s2) && s2 > 0) return s2 * 1000
+
+  return null
 }
 
 function buildToolContext(parts: string[]): string {
@@ -862,7 +878,13 @@ export async function POST(request: Request) {
     const snapshotText = await getBusinessSnapshotText(businessId)
     const toolContextParts: string[] = [snapshotText]
 
-    if (aiService) {
+    const now = Date.now()
+    const cooldownUntil = aiCooldownByBusiness.get(businessId) || 0
+
+    if (aiService && now < cooldownUntil) {
+      aiUnavailableReason = `AI rate-limited (cooldown ${Math.ceil((cooldownUntil - now) / 1000)}s)`
+      decision = null
+    } else if (aiService) {
       try {
         let toolCalls = 0
         while (toolCalls < MAX_TOOL_CALLS) {
@@ -889,6 +911,13 @@ export async function POST(request: Request) {
       } catch (error) {
         aiUnavailableReason = error instanceof Error ? error.message : 'AI unavailable'
         decision = null
+
+        // If provider returns retry-after info, set a cooldown to avoid repeated failing calls.
+        if (aiUnavailableReason && aiUnavailableReason.includes('429')) {
+          const retryMs = parseRetryAfterMsFromAiError(aiUnavailableReason) ?? 30000
+          const safeRetryMs = Math.max(5000, Math.min(5 * 60 * 1000, retryMs))
+          aiCooldownByBusiness.set(businessId, Date.now() + safeRetryMs)
+        }
       }
     } else {
       aiUnavailableReason = 'AI API key is not configured'

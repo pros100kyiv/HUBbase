@@ -24,7 +24,10 @@ function isUUID(str: string): boolean {
   return str.length > 10 && !isSlugLike
 }
 
-const businessSelect = {
+// Private fields used by authenticated dashboard flows (param is internal ID).
+// NOTE: This project currently has weak auth (localStorage-based); we still avoid exposing secrets
+// through guessable identifiers (businessIdentifier/slug) in GET below.
+const businessPrivateSelect = {
   id: true,
   name: true,
   slug: true,
@@ -79,7 +82,43 @@ const businessSelect = {
   subscriptionCurrentPeriodEnd: true,
 }
 
-type BusinessSelect = typeof businessSelect
+// Public view for guessable routes (businessIdentifier/slug): DO NOT expose secrets.
+const businessPublicSelect = {
+  id: true,
+  name: true,
+  slug: true,
+  // Keep basic display fields only (avoid PII and secrets)
+  description: true,
+  logo: true,
+  primaryColor: true,
+  secondaryColor: true,
+  backgroundColor: true,
+  surfaceColor: true,
+  isActive: true,
+  businessCardBackgroundImage: true,
+  slogan: true,
+  additionalInfo: true,
+  socialMedia: true,
+  workingHours: true,
+  location: true,
+  niche: true,
+  customNiche: true,
+  businessIdentifier: true,
+  profileCompleted: true,
+  avatar: true,
+  // Expose non-secret AI flags only
+  aiChatEnabled: true,
+  aiProvider: true,
+  aiSettings: true,
+  remindersEnabled: true,
+  settings: true,
+  subscriptionPlan: true,
+  trialEndsAt: true,
+  subscriptionStatus: true,
+  subscriptionCurrentPeriodEnd: true,
+}
+
+type BusinessSelect = typeof businessPrivateSelect
 type BusinessResult = {
   [K in keyof BusinessSelect]: BusinessSelect[K] extends true ? any : never
 }
@@ -93,20 +132,23 @@ export async function GET(
     const { param } = resolvedParams
 
     let business: BusinessResult | null = null
+    const isNumericIdentifier = /^\d+$/.test(param)
+    const isInternalId = isUUID(param)
+    const select = isNumericIdentifier || !isInternalId ? (businessPublicSelect as any) : (businessPrivateSelect as any)
 
     // Спочатку пробуємо знайти за businessIdentifier (число)
-    if (/^\d+$/.test(param)) {
+    if (isNumericIdentifier) {
       business = await prisma.business.findUnique({
         where: { businessIdentifier: param },
-        select: businessSelect,
+        select,
       }) as BusinessResult | null
     }
 
     // Якщо не знайдено за businessIdentifier, пробуємо за ID
-    if (!business && isUUID(param)) {
+    if (!business && isInternalId) {
       business = await prisma.business.findUnique({
         where: { id: param },
-        select: businessSelect,
+        select,
       }) as BusinessResult | null
     }
 
@@ -114,7 +156,7 @@ export async function GET(
     if (!business) {
       business = await prisma.business.findUnique({
         where: { slug: param },
-        select: businessSelect,
+        select,
       }) as BusinessResult | null
     }
 
@@ -124,10 +166,9 @@ export async function GET(
       if (foundBusiness) {
         // Відфільтруємо тільки потрібні поля
         const filtered: Partial<BusinessResult> = {}
-        Object.keys(businessSelect).forEach(key => {
-          if (key in foundBusiness) {
-            (filtered as any)[key] = (foundBusiness as any)[key]
-          }
+        const keys = Object.keys(select)
+        keys.forEach((key) => {
+          if (key in foundBusiness) (filtered as any)[key] = (foundBusiness as any)[key]
         })
         business = filtered as BusinessResult
       }
@@ -361,7 +402,7 @@ export async function PATCH(
         // Block/Unblock
         ...(isActive !== undefined && { isActive }),
       },
-      select: businessSelect,
+      select: businessPrivateSelect,
       })
     } catch (updateError: any) {
       console.error('Error updating business in database:', updateError)
