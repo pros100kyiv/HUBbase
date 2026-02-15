@@ -14,6 +14,8 @@ const MAX_ASSISTANT_REPLY_CHARS = 900
 // Best-effort in-memory cooldown to avoid repeated 429 calls.
 // Note: serverless instances may restart; this is still useful within a warm instance.
 const aiCooldownByBusiness = new Map<string, number>()
+const aiLastSuccessAtByBusiness = new Map<string, number>()
+const AI_SUCCESS_TTL_MS = 10 * 60 * 1000
 
 const parseJson = <T>(raw: string | null | undefined, fallback: T): T => {
   if (raw == null || String(raw).trim() === '') return fallback
@@ -907,6 +909,7 @@ export async function POST(request: Request) {
         if (decision) {
           usedAi = true
           decisionSource = 'llm'
+          aiLastSuccessAtByBusiness.set(businessId, Date.now())
         }
       } catch (error) {
         aiUnavailableReason = error instanceof Error ? error.message : 'AI unavailable'
@@ -1077,13 +1080,15 @@ export async function GET(request: Request) {
     })
     const globalAiApiKey = process.env.GEMINI_API_KEY?.trim() || process.env.GOOGLE_API_KEY?.trim()
     const hasKey = !!((biz?.aiApiKey?.trim() || globalAiApiKey || '').trim())
+    const lastOk = aiLastSuccessAtByBusiness.get(businessId) || 0
+    const isAiLikelyWorking = Date.now() - lastOk < AI_SUCCESS_TTL_MS
     return NextResponse.json({
       messages,
       ai: {
         hasKey,
-        indicator: hasKey && biz?.aiChatEnabled ? 'green' : 'red',
+        indicator: hasKey && biz?.aiChatEnabled && isAiLikelyWorking ? 'green' : 'red',
         usedAi: false,
-        reason: biz?.aiChatEnabled ? null : 'ai_disabled',
+        reason: !biz?.aiChatEnabled ? 'ai_disabled' : !hasKey ? 'key_missing' : isAiLikelyWorking ? null : 'no_recent_ai_success',
       },
     })
   } catch (error) {
