@@ -9,6 +9,7 @@ import {
   parseBookingTimeZone,
   slotKeyToUtcDate,
 } from '@/lib/utils/booking-settings'
+import { generateAppointmentAccessToken, hashAppointmentAccessToken } from '@/lib/utils/appointment-access-token'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -89,7 +90,7 @@ export async function POST(request: Request) {
     const bid = String(businessId)
     const mid = String(masterId)
     const [business, master] = await Promise.all([
-      prisma.business.findUnique({ where: { id: bid }, select: { id: true, settings: true } }),
+      prisma.business.findUnique({ where: { id: bid }, select: { id: true, slug: true, settings: true } }),
       prisma.master.findUnique({ where: { id: mid }, select: { id: true, businessId: true } }),
     ])
     if (!business) {
@@ -183,7 +184,7 @@ export async function POST(request: Request) {
 
     // КРИТИЧНО: гарантуємо, що клієнт з’явиться у вкладці "Клієнти"
     // Робимо upsert по @@unique([businessId, phone]) — без race condition та без дублікатів.
-    const { client, appointment } = await prisma.$transaction(async (tx) => {
+    const { client, appointment, manageToken } = await prisma.$transaction(async (tx) => {
       const ensuredClient = await tx.client.upsert({
         where: {
           businessId_phone: {
@@ -227,7 +228,44 @@ export async function POST(request: Request) {
         },
       })
 
-      return { client: ensuredClient, appointment: createdAppointment }
+      // Magic-link token for client self-service (only for public booking).
+      // We store only hash in DB, token is returned to the client once.
+      let token: string | null = null
+      if (isFromBookingFlag) {
+        const existing = await tx.appointmentAccessToken.findFirst({
+          where: { appointmentId: createdAppointment.id, businessId: bid, revokedAt: null },
+          select: { id: true },
+        })
+        if (!existing) {
+          token = generateAppointmentAccessToken()
+          const tokenHash = hashAppointmentAccessToken(token)
+          await tx.appointmentAccessToken.create({
+            data: {
+              businessId: bid,
+              appointmentId: createdAppointment.id,
+              tokenHash,
+              userAgent: request.headers.get('user-agent'),
+              ip: request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || request.headers.get('x-real-ip') || null,
+            },
+          })
+        }
+      }
+
+      // Basic audit trail (non-blocking).
+      try {
+        await tx.appointmentEvent.create({
+          data: {
+            businessId: bid,
+            appointmentId: createdAppointment.id,
+            type: 'APPOINTMENT_CREATED',
+            data: JSON.stringify({ isFromBooking: isFromBookingFlag, status: initialStatus }),
+          },
+        })
+      } catch {
+        // ignore
+      }
+
+      return { client: ensuredClient, appointment: createdAppointment, manageToken: token }
     })
 
     // Автоматично додаємо номер телефону клієнта в Реєстр телефонів
@@ -244,7 +282,15 @@ export async function POST(request: Request) {
       // Не викидаємо помилку, щоб не зламати створення запису
     }
 
-    return NextResponse.json(appointment, { status: 201 })
+    return NextResponse.json(
+      {
+        ...appointment,
+        ...(manageToken && business?.slug
+          ? { manageToken, manageUrl: `/booking/${business.slug}/manage/${manageToken}` }
+          : {}),
+      },
+      { status: 201 }
+    )
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unknown error'
     const stack = error instanceof Error ? error.stack : undefined

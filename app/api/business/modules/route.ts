@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     const validated = moduleSchema.parse(moduleData)
 
     // Створюємо або оновлюємо модуль
-    const module = await prisma.businessModule.upsert({
+    const moduleRow = await prisma.businessModule.upsert({
       where: {
         businessId_moduleKey: {
           businessId,
@@ -91,7 +91,7 @@ export async function POST(request: Request) {
       },
     })
 
-    return NextResponse.json({ module }, { status: 201 })
+    return NextResponse.json({ module: moduleRow }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json({ error: error.errors[0].message }, { status: 400 })

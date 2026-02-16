@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, Suspense } from 'react'
+import { useEffect, useState, Suspense, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { BotIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
@@ -15,53 +15,7 @@ function TelegramAuthContent() {
   const [status, setStatus] = useState<'loading' | 'success' | 'error'>('loading')
   const [message, setMessage] = useState('Обробка авторизації...')
 
-  useEffect(() => {
-    // 1) Telegram при redirect передає дані в hash: #id=...&first_name=...&last_name=...&username=...&photo_url=...&auth_date=...&hash=...
-    const hash = typeof window !== 'undefined' ? window.location.hash.substring(1) : ''
-    const hashParams = new URLSearchParams(hash)
-    const idFromHash = hashParams.get('id')
-
-    let telegramData: Record<string, unknown> | null = null
-
-    if (idFromHash) {
-      telegramData = {
-        id: idFromHash,
-        first_name: hashParams.get('first_name') || undefined,
-        last_name: hashParams.get('last_name') || undefined,
-        username: hashParams.get('username') || undefined,
-        photo_url: hashParams.get('photo_url') || undefined,
-        auth_date: hashParams.get('auth_date') || undefined,
-        hash: hashParams.get('hash') || undefined,
-      }
-    }
-
-    // 2) Або дані в query (data=...) як JSON
-    if (!telegramData && searchParams.get('data')) {
-      try {
-        const decoded = JSON.parse(decodeURIComponent(searchParams.get('data') || '{}'))
-        if (decoded && decoded.id) telegramData = decoded
-      } catch {
-        // ігноруємо невалідний JSON
-      }
-    }
-
-    if (telegramData && telegramData.id) {
-      handleTelegramAuth(telegramData)
-      return
-    }
-
-    // 3) Popup: дані з window.opener
-    if (typeof window !== 'undefined' && window.opener && (window.opener as any).telegramAuthData) {
-      const data = (window.opener as any).telegramAuthData
-      handleTelegramAuth(data)
-      return
-    }
-
-    setStatus('error')
-    setMessage('Не вдалося отримати дані від Telegram')
-  }, [searchParams])
-
-  const handleTelegramAuth = async (telegramData: any) => {
+  const handleTelegramAuth = useCallback(async (telegramData: any) => {
     try {
       setStatus('loading')
       setMessage('Авторизація через Telegram...')
@@ -107,7 +61,53 @@ function TelegramAuthContent() {
       setStatus('error')
       setMessage(error instanceof Error ? error.message : 'Помилка при обробці авторизації')
     }
-  }
+  }, [router])
+
+  useEffect(() => {
+    // 1) Telegram при redirect передає дані в hash: #id=...&first_name=...&last_name=...&username=...&photo_url=...&auth_date=...&hash=...
+    const hash = typeof window !== 'undefined' ? window.location.hash.substring(1) : ''
+    const hashParams = new URLSearchParams(hash)
+    const idFromHash = hashParams.get('id')
+
+    let telegramData: Record<string, unknown> | null = null
+
+    if (idFromHash) {
+      telegramData = {
+        id: idFromHash,
+        first_name: hashParams.get('first_name') || undefined,
+        last_name: hashParams.get('last_name') || undefined,
+        username: hashParams.get('username') || undefined,
+        photo_url: hashParams.get('photo_url') || undefined,
+        auth_date: hashParams.get('auth_date') || undefined,
+        hash: hashParams.get('hash') || undefined,
+      }
+    }
+
+    // 2) Або дані в query (data=...) як JSON
+    if (!telegramData && searchParams.get('data')) {
+      try {
+        const decoded = JSON.parse(decodeURIComponent(searchParams.get('data') || '{}'))
+        if (decoded && decoded.id) telegramData = decoded
+      } catch {
+        // ігноруємо невалідний JSON
+      }
+    }
+
+    if (telegramData && telegramData.id) {
+      handleTelegramAuth(telegramData)
+      return
+    }
+
+    // 3) Popup: дані з window.opener
+    if (typeof window !== 'undefined' && window.opener && (window.opener as any).telegramAuthData) {
+      const data = (window.opener as any).telegramAuthData
+      handleTelegramAuth(data)
+      return
+    }
+
+    setStatus('error')
+    setMessage('Не вдалося отримати дані від Telegram')
+  }, [searchParams, handleTelegramAuth])
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-4">

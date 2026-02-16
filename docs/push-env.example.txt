@@ -1,0 +1,11 @@
+# Web Push (VAPID) env vars for local/dev
+#
+# Do NOT commit real private keys to git.
+# Put these values into your local environment or your hosting provider.
+#
+# Required for enabling "Отримати push-нагадування" and for manual push reminders.
+
+NEXT_PUBLIC_VAPID_PUBLIC_KEY=<your_public_key>
+VAPID_PRIVATE_KEY=<your_private_key>
+VAPID_SUBJECT=mailto:support@your-domain.com
+

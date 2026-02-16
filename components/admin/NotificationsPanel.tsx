@@ -27,6 +27,24 @@ interface Appointment {
 
 type ServicesMap = Record<string, { name: string; price?: number }>
 
+interface ChangeRequest {
+  id: string
+  type: 'RESCHEDULE' | 'CANCEL' | string
+  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'WITHDRAWN' | string
+  requestedStartTime?: string | null
+  requestedEndTime?: string | null
+  clientNote?: string | null
+  createdAt: string
+  appointment: {
+    id: string
+    clientName: string
+    startTime: string
+    endTime: string
+    status: string
+    master?: { id: string; name: string } | null
+  }
+}
+
 interface AppointmentCardProps {
   appointment: Appointment
   servicesMap: ServicesMap
@@ -235,6 +253,7 @@ interface NotificationsPanelProps {
 
 export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: NotificationsPanelProps) {
   const [appointments, setAppointments] = useState<Appointment[]>([])
+  const [changeRequests, setChangeRequests] = useState<ChangeRequest[]>([])
   const [servicesMap, setServicesMap] = useState<Record<string, { name: string; price?: number }>>({})
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState<string | null>(null)
@@ -245,7 +264,7 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
 
   useEffect(() => {
     if (isOpen && businessId) {
-      loadPendingAppointments()
+      loadNotifications()
     }
   }, [isOpen, businessId])
 
@@ -257,18 +276,20 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
     }
   }, [showDonePriceModalForId, appointments])
 
-  const loadPendingAppointments = async () => {
+  const loadNotifications = async () => {
     setLoading(true)
     try {
-      const [appointmentsRes, mastersRes, servicesRes] = await Promise.all([
+      const [appointmentsRes, mastersRes, servicesRes, changeReqRes] = await Promise.all([
         fetch(`/api/appointments?businessId=${businessId}&status=Pending`),
         fetch(`/api/masters?businessId=${businessId}`),
         fetch(`/api/services?businessId=${businessId}`),
+        fetch(`/api/appointment-change-requests?businessId=${businessId}&status=PENDING`),
       ])
       if (!appointmentsRes.ok) throw new Error('Failed to fetch appointments')
       const data = await appointmentsRes.json()
       const masters = mastersRes.ok ? await mastersRes.json() : []
       const servicesList = servicesRes.ok ? await servicesRes.json() : []
+      const changeReqList = changeReqRes.ok ? await changeReqRes.json() : []
 
       const map: Record<string, { name: string; price?: number }> = {}
       if (Array.isArray(servicesList)) {
@@ -283,9 +304,11 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
         return { ...apt, masterName: master?.name || 'Невідомий спеціаліст' }
       })
       setAppointments(withMasters)
+      setChangeRequests(Array.isArray(changeReqList) ? changeReqList : [])
     } catch (error) {
       console.error('Error loading appointments:', error)
       setAppointments([])
+      setChangeRequests([])
     } finally {
       setLoading(false)
     }
@@ -301,7 +324,7 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
       })
       if (response.ok) {
         toast({ title: 'Запис підтверджено', type: 'success' })
-        await loadPendingAppointments()
+        await loadNotifications()
         onUpdate()
       } else {
         const err = await response.json().catch(() => ({}))
@@ -326,7 +349,7 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
       const data = await response.json().catch(() => ({}))
       if (response.ok) {
         toast({ title: 'Статус оновлено', type: 'success' })
-        await loadPendingAppointments()
+        await loadNotifications()
         onUpdate()
       } else {
         toast({ title: 'Помилка', description: data?.error || 'Не вдалося оновити статус', type: 'error' })
@@ -353,7 +376,7 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
       })
       if (response.ok) {
         toast({ title: 'Запис перенесено', type: 'success' })
-        await loadPendingAppointments()
+        await loadNotifications()
         onUpdate()
       } else {
         const err = await response.json().catch(() => ({}))
@@ -387,7 +410,7 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
         toast({ title: 'Запис позначено як Виконано', type: 'success' })
         setShowDonePriceModalForId(null)
         setDonePriceInputGrn('')
-        await loadPendingAppointments()
+        await loadNotifications()
         onUpdate()
       } else {
         const err = await response.json().catch(() => ({}))
@@ -403,7 +426,30 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
 
   if (!isOpen) return null
 
-  const count = appointments.length
+  const count = appointments.length + changeRequests.length
+
+  const handleRequestDecision = async (requestId: string, action: 'approve' | 'reject') => {
+    setProcessing(requestId)
+    try {
+      const res = await fetch(`/api/appointment-change-requests/${requestId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessId, action }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) {
+        toast({ title: action === 'approve' ? 'Запит підтверджено' : 'Запит відхилено', type: 'success' })
+        await loadNotifications()
+        onUpdate()
+      } else {
+        toast({ title: 'Помилка', description: data?.error || 'Не вдалося обробити запит', type: 'error' })
+      }
+    } catch (e) {
+      toast({ title: 'Помилка', description: e instanceof Error ? e.message : 'Не вдалося обробити запит', type: 'error' })
+    } finally {
+      setProcessing(null)
+    }
+  }
 
   return (
     <>
@@ -468,6 +514,82 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
               </div>
             ) : (
               <div className="space-y-4">
+                {changeRequests.length > 0 && (
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Запити від клієнтів</p>
+                      <span className="text-xs text-gray-500">{changeRequests.length}</span>
+                    </div>
+                    {changeRequests.map((r) => {
+                      const currentStart = new Date(r.appointment.startTime)
+                      const currentEnd = new Date(r.appointment.endTime)
+                      const reqStart = r.requestedStartTime ? new Date(r.requestedStartTime) : null
+                      const reqEnd = r.requestedEndTime ? new Date(r.requestedEndTime) : null
+                      const typeLabel = r.type === 'CANCEL' ? 'Скасування' : r.type === 'RESCHEDULE' ? 'Перенесення' : r.type
+                      return (
+                        <article key={r.id} className="rounded-2xl p-4 bg-white/[0.04] border border-white/10">
+                          <div className="flex items-start justify-between gap-2">
+                            <div className="min-w-0">
+                              <p className="text-sm font-bold text-white truncate">{fixMojibake(r.appointment.clientName)}</p>
+                              <p className="text-[11px] text-gray-500 mt-0.5 truncate">
+                                {r.appointment.master?.name || '—'} · {typeLabel}
+                              </p>
+                            </div>
+                            <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-300 border border-amber-500/20 whitespace-nowrap">
+                              Очікує
+                            </span>
+                          </div>
+
+                          <div className="mt-3 text-[12px] text-gray-300 space-y-1">
+                            <div className="flex justify-between gap-3">
+                              <span className="text-gray-500">Було:</span>
+                              <span className="tabular-nums text-right">
+                                {format(currentStart, 'd MMM, HH:mm', { locale: uk })}–{format(currentEnd, 'HH:mm', { locale: uk })}
+                              </span>
+                            </div>
+                            {r.type === 'RESCHEDULE' && reqStart && reqEnd ? (
+                              <div className="flex justify-between gap-3">
+                                <span className="text-gray-500">Просить:</span>
+                                <span className="tabular-nums text-right">
+                                  {format(reqStart, 'd MMM, HH:mm', { locale: uk })}–{format(reqEnd, 'HH:mm', { locale: uk })}
+                                </span>
+                              </div>
+                            ) : null}
+                            {r.clientNote ? <p className="text-[11px] text-gray-500 italic line-clamp-2">{r.clientNote}</p> : null}
+                          </div>
+
+                          <div className="mt-3 flex gap-2">
+                            <button
+                              type="button"
+                              onClick={() => handleRequestDecision(r.id, 'approve')}
+                              disabled={processing === r.id}
+                              className="touch-target flex-1 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-semibold bg-white text-black hover:bg-gray-100 transition-colors disabled:opacity-50"
+                              style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}
+                            >
+                              {processing === r.id ? 'Обробка...' : 'Підтвердити'}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleRequestDecision(r.id, 'reject')}
+                              disabled={processing === r.id}
+                              className="touch-target min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-medium border border-white/20 bg-white/10 text-white hover:bg-white/20 transition-colors disabled:opacity-50"
+                            >
+                              Відхилити
+                            </button>
+                          </div>
+                        </article>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {appointments.length > 0 && (
+                  <div className="space-y-3">
+                    {changeRequests.length > 0 && <div className="h-px bg-white/10" />}
+                    <div className="flex items-center justify-between">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-gray-400">Нові бронювання</p>
+                      <span className="text-xs text-gray-500">{appointments.length}</span>
+                    </div>
                 {appointments.map((appointment) => (
                   <AppointmentCard
                     key={appointment.id}
@@ -488,6 +610,8 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
                   }}
                   />
                 ))}
+                  </div>
+                )}
               </div>
             )}
           </div>

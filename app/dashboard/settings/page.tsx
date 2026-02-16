@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { BusinessCardEditor } from '@/components/admin/BusinessCardEditor'
 import { BookingSlotsSettings } from '@/components/admin/BookingSlotsSettings'
+import { ClientChangeRequestsSettings } from '@/components/admin/ClientChangeRequestsSettings'
 import { IntegrationsSettings } from '@/components/admin/IntegrationsSettings'
 import { PasswordForLoginSection } from '@/components/admin/PasswordForLoginSection'
 import {
@@ -848,6 +849,11 @@ export default function SettingsPage() {
                     // ignore
                   }
                 }}
+              />
+              <ClientChangeRequestsSettings
+                businessId={business.id}
+                currentSettings={business.settings || undefined}
+                onSave={(nextRaw) => setBusiness((prevB) => (prevB ? { ...prevB, settings: nextRaw } : prevB))}
               />
               <div className="flex justify-end">
                 <Button

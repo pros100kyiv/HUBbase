@@ -93,6 +93,7 @@ export default function AppointmentsPage() {
   const [donePriceInputGrn, setDonePriceInputGrn] = useState<number | ''>('')
   const [donePriceServiceName, setDonePriceServiceName] = useState('')
   const [donePriceSaving, setDonePriceSaving] = useState(false)
+  const [sendingReminderForId, setSendingReminderForId] = useState<string | null>(null)
 
   useEffect(() => {
     try {
@@ -1353,6 +1354,37 @@ export default function AppointmentsPage() {
                     Історія клієнта
                   </button>
                 ) : null}
+                {apt.isFromBooking === true && (
+                  <button
+                    type="button"
+                    disabled={sendingReminderForId === apt.id}
+                    onClick={async () => {
+                      if (!business?.id) return
+                      setSendingReminderForId(apt.id)
+                      try {
+                        const res = await fetch('/api/reminders/manual', {
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ businessId: business.id, appointmentId: apt.id }),
+                        })
+                        const data = await res.json().catch(() => ({}))
+                        if (res.ok && data?.sent > 0) {
+                          toast({ title: 'Нагадування надіслано', description: `Push: ${data.sent}`, type: 'success' })
+                        } else {
+                          toast({ title: 'Нагадування не надіслано', description: data?.error || 'Клієнт ще не увімкнув push', type: 'info' })
+                        }
+                      } catch (e) {
+                        toast({ title: 'Помилка', description: e instanceof Error ? e.message : 'Не вдалося надіслати', type: 'error' })
+                      } finally {
+                        setSendingReminderForId(null)
+                      }
+                    }}
+                    className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-sm font-medium text-white hover:bg-white/15 transition-colors active:scale-[0.98] inline-flex items-center justify-center gap-2 disabled:opacity-60"
+                    title="Надіслати push-нагадування"
+                  >
+                    {sendingReminderForId === apt.id ? 'Надсилання...' : 'Нагадати (push)'}
+                  </button>
+                )}
                 <button
                   type="button"
                   onClick={() => {

@@ -26,6 +26,13 @@ export function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
   const [business, setBusiness] = useState<any>(null)
+  const [searchOpen, setSearchOpen] = useState(false)
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [pendingCount, setPendingCount] = useState(0)
+  const searchButtonRef = useRef<HTMLButtonElement>(null)
+  const prevPendingRef = useRef<number | null>(null)
+  const pendingPollTimeoutRef = useRef<number | null>(null)
+  const pendingPollAbortRef = useRef<AbortController | null>(null)
 
   // Defensive: during dev/HMR we have seen cases where the imported functions are not functions.
   // Don't crash the whole dashboard if that happens.
@@ -104,18 +111,7 @@ export function Navbar() {
     router.push('/login')
   }
 
-  // Не показувати навігацію на головній, реєстрації та логіні
-  if (pathname === '/' || pathname === '/register' || pathname === '/login') {
-    return null
-  }
-
-  const [searchOpen, setSearchOpen] = useState(false)
-  const [showNotifications, setShowNotifications] = useState(false)
-  const [pendingCount, setPendingCount] = useState(0)
-  const searchButtonRef = useRef<HTMLButtonElement>(null)
-  const prevPendingRef = useRef<number | null>(null)
-  const pendingPollTimeoutRef = useRef<number | null>(null)
-  const pendingPollAbortRef = useRef<AbortController | null>(null)
+  const shouldHideNav = pathname === '/' || pathname === '/register' || pathname === '/login'
 
   // Pending appointments count; звук при появі нового запису (червона точка з’являється)
   useEffect(() => {
@@ -142,10 +138,14 @@ export function Navbar() {
 
         const ac = new AbortController()
         pendingPollAbortRef.current = ac
-        const res = await fetch(`/api/appointments?businessId=${business.id}&status=Pending`, { signal: ac.signal })
-        if (!res.ok) return
-        const data = await res.json()
-        const count = Array.isArray(data) ? data.length : 0
+        const [aptRes, reqRes] = await Promise.all([
+          fetch(`/api/appointments?businessId=${business.id}&status=Pending`, { signal: ac.signal }),
+          fetch(`/api/appointment-change-requests?businessId=${business.id}&status=PENDING`, { signal: ac.signal }),
+        ])
+        if (!aptRes.ok) return
+        const aptData = await aptRes.json().catch(() => [])
+        const reqData = reqRes.ok ? await reqRes.json().catch(() => []) : []
+        const count = (Array.isArray(aptData) ? aptData.length : 0) + (Array.isArray(reqData) ? reqData.length : 0)
         const prevVal = prevPendingRef.current
         prevPendingRef.current = count
         if (prevVal !== null && count > prevVal && typeof document !== 'undefined' && document.visibilityState === 'visible') {
@@ -205,6 +205,9 @@ export function Navbar() {
     window.addEventListener('keydown', handleKey)
     return () => window.removeEventListener('keydown', handleKey)
   }, [pathname])
+
+  // Не показувати навігацію на головній, реєстрації та логіні
+  if (shouldHideNav) return null
 
   // Don't show on dashboard pages (they have sidebar)
   if (pathname?.startsWith('/dashboard')) {
@@ -296,9 +299,14 @@ export function Navbar() {
                     onClose={() => setShowNotifications(false)}
                     onUpdate={() => {
                       if (business?.id) {
-                        fetch(`/api/appointments?businessId=${business.id}&status=Pending`)
-                          .then((r) => r.json())
-                          .then((d) => setPendingCount(Array.isArray(d) ? d.length : 0))
+                        Promise.all([
+                          fetch(`/api/appointments?businessId=${business.id}&status=Pending`).then((r) => (r.ok ? r.json() : [])),
+                          fetch(`/api/appointment-change-requests?businessId=${business.id}&status=PENDING`).then((r) => (r.ok ? r.json() : [])),
+                        ])
+                          .then(([a, c]) => {
+                            const total = (Array.isArray(a) ? a.length : 0) + (Array.isArray(c) ? c.length : 0)
+                            setPendingCount(total)
+                          })
                           .catch(() => setPendingCount(0))
                       }
                     }}

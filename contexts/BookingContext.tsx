@@ -39,6 +39,8 @@ export interface BookingState {
     status?: string | null
     startTime?: string | null
     endTime?: string | null
+    manageToken?: string | null
+    manageUrl?: string | null
   } | null
 }
 

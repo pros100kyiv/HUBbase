@@ -61,11 +61,15 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
     let cancelled = false
     const fetchPendingCount = async () => {
       try {
-        const response = await fetch(`/api/appointments?businessId=${business.id}&status=Pending`)
+        const [aptRes, reqRes] = await Promise.all([
+          fetch(`/api/appointments?businessId=${business.id}&status=Pending`),
+          fetch(`/api/appointment-change-requests?businessId=${business.id}&status=PENDING`),
+        ])
         if (cancelled) return
-        if (response.ok) {
-          const data = await response.json()
-          const count = Array.isArray(data) ? data.length : 0
+        if (aptRes.ok) {
+          const a = await aptRes.json().catch(() => [])
+          const c = reqRes.ok ? await reqRes.json().catch(() => []) : []
+          const count = (Array.isArray(a) ? a.length : 0) + (Array.isArray(c) ? c.length : 0)
           if (!cancelled) setPendingCount(count)
         }
       } catch {

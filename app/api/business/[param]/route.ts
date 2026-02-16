@@ -125,11 +125,10 @@ type BusinessResult = {
 
 export async function GET(
   request: Request,
-  { params }: { params: Promise<{ param: string }> | { param: string } }
+  { params }: { params: Promise<{ param: string }> }
 ) {
   try {
-    const resolvedParams = await Promise.resolve(params)
-    const { param } = resolvedParams
+    const { param } = await params
 
     let business: BusinessResult | null = null
     const isNumericIdentifier = /^\d+$/.test(param)
@@ -187,12 +186,11 @@ export async function GET(
 
 export async function PATCH(
   request: Request,
-  { params }: { params: Promise<{ param: string }> | { param: string } }
+  { params }: { params: Promise<{ param: string }> }
 ) {
   try {
     const adminAuth = verifyAdminToken(request as any)
-    const resolvedParams = await Promise.resolve(params)
-    const { param } = resolvedParams
+    const { param } = await params
 
     console.log('PATCH request received with param:', param)
     console.log('Is UUID?', isUUID(param))
@@ -297,6 +295,7 @@ export async function PATCH(
       reminderEmailEnabled,
       reminderHoursBefore,
       bookingSlots,
+      clientChangeRequests,
       // Block/Unblock
       isActive,
     } = body
@@ -377,8 +376,8 @@ export async function PATCH(
         ...(remindersEnabled !== undefined && { remindersEnabled }),
         ...(reminderSmsEnabled !== undefined && { reminderSmsEnabled }),
         ...(reminderEmailEnabled !== undefined && { reminderEmailEnabled }),
-        // reminderHoursBefore, bookingSlots зберігаються в settings JSON
-        ...((reminderHoursBefore !== undefined || bookingSlots !== undefined) && (() => {
+        // reminderHoursBefore, bookingSlots, clientChangeRequests зберігаються в settings JSON
+        ...((reminderHoursBefore !== undefined || bookingSlots !== undefined || clientChangeRequests !== undefined) && (() => {
           try {
             const prev = (currentBusiness as { settings?: string | null })?.settings
             const parsed = prev ? JSON.parse(prev) : {}
@@ -394,11 +393,25 @@ export async function PATCH(
                 maxDaysAhead: Math.max(1, Math.min(365, Math.round(Number(b.maxDaysAhead) || 60))),
               }
             }
+            if (clientChangeRequests !== undefined && clientChangeRequests !== null && typeof clientChangeRequests === 'object') {
+              const c = clientChangeRequests as Record<string, unknown>
+              parsed.clientChangeRequests = {
+                enabled: c.enabled !== false,
+                allowReschedule: c.allowReschedule !== false,
+                allowCancel: c.allowCancel !== false,
+                requireMasterApproval: c.requireMasterApproval !== false,
+                minHoursBefore: Math.max(0, Math.min(168, Math.round(Number(c.minHoursBefore) || 3))),
+              }
+            }
             return { settings: JSON.stringify(parsed) }
           } catch {
             const base = reminderHoursBefore !== undefined ? { reminderHoursBefore: Number(reminderHoursBefore) || 24 } : {}
             const slots = bookingSlots !== undefined && typeof bookingSlots === 'object' ? { bookingSlots } : {}
-            return { settings: JSON.stringify({ ...base, ...slots }) }
+            const changes =
+              clientChangeRequests !== undefined && typeof clientChangeRequests === 'object'
+                ? { clientChangeRequests }
+                : {}
+            return { settings: JSON.stringify({ ...base, ...slots, ...changes }) }
           }
         })()),
         // Block/Unblock

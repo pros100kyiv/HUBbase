@@ -7,10 +7,6 @@ import { Navbar } from '@/components/layout/Navbar'
 import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
 import { registerMobileMenuState } from '@/lib/ui/mobile-menu-state'
 
-// Some dev/HMR states resolve Navbar's mobile-menu helpers via this module path.
-// Re-export them to avoid runtime/import errors and keep dashboard usable.
-export { setMobileMenuState, getMobileMenuState } from '@/lib/ui/mobile-menu-state'
-
 const Sidebar = dynamic(
   () => import('@/components/admin/Sidebar').then((m) => ({ default: m.Sidebar })),
   { ssr: false, loading: () => <div className="hidden md:block fixed left-0 top-14 bottom-0 w-64 bg-white/5 animate-pulse" aria-hidden /> }

@@ -46,6 +46,29 @@ enum UserRole {
   DEVELOPER // Розробник (повний контроль)
 }
 
+// Запити клієнта на зміну запису (перенесення / скасування)
+enum AppointmentChangeRequestType {
+  RESCHEDULE
+  CANCEL
+}
+
+enum AppointmentChangeRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+// Логи нагадувань (поки що тільки Push)
+enum ReminderChannel {
+  PUSH
+}
+
+enum ReminderStatus {
+  SENT
+  FAILED
+}
+
 model Business {
   id                           String              @id @default(cuid())
   name                         String
@@ -137,6 +160,12 @@ model Business {
   socialInboxMessages          SocialInboxMessage[] // Вхідні/исхідні повідомлення з соцмереж (дубль в кабінет)
   notes                        Note[] // Нотатки
   modules                      BusinessModule[] // Модулі/розширення бізнесу
+  // Запити/нагодування/пуш-підписки (multi-tenant обов'язково через businessId)
+  appointmentAccessTokens      AppointmentAccessToken[]
+  appointmentChangeRequests    AppointmentChangeRequest[]
+  pushSubscriptions            PushSubscription[]
+  appointmentEvents            AppointmentEvent[]
+  reminderLogs                 ReminderLog[]
   createdAt                    DateTime            @default(now())
   updatedAt                    DateTime            @updatedAt
 
@@ -166,6 +195,7 @@ model Master {
   // Додаткові дані для різних ніш
   metadata           String? // JSON: додаткові дані залежно від ніші
   appointments       Appointment[]
+  changeRequests     AppointmentChangeRequest[]
   utilizationMetrics MasterUtilization[] // Метрики використання
   createdAt          DateTime            @default(now())
   updatedAt          DateTime            @updatedAt
@@ -261,6 +291,12 @@ model Appointment {
   source              String? // Джерело запису: "qr", "link", "phone", "walk_in", "ad_campaign_*", тощо
   campaignId          String? // ID рекламної кампанії (якщо запис з реклами)
   payments            Payment[] // Платежі за цей запис
+  // Клієнтський доступ + запити на перенесення/скасування + пуш
+  accessToken         AppointmentAccessToken?
+  changeRequests      AppointmentChangeRequest[]
+  pushSubscriptions   PushSubscription[]
+  events              AppointmentEvent[]
+  reminderLogs        ReminderLog[]
   createdAt           DateTime  @default(now())
   updatedAt           DateTime  @updatedAt
 
@@ -272,6 +308,108 @@ model Appointment {
   @@index([status])
   @@index([businessId, startTime])
   @@index([businessId, status])
+}
+
+// Токен доступу для клієнта (magic-link без акаунту).
+// Зберігаємо тільки hash; сам токен показуємо клієнту один раз після бронювання.
+model AppointmentAccessToken {
+  id            String      @id @default(cuid())
+  businessId    String
+  appointmentId String      @unique
+  tokenHash     String      @unique
+  userAgent     String?
+  ip            String?
+  revokedAt     DateTime?
+  createdAt     DateTime    @default(now())
+
+  business      Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([tokenHash])
+}
+
+// Підписка браузера на Web Push для конкретного запису (щоб надсилати нагадування).
+model PushSubscription {
+  id            String      @id @default(cuid())
+  businessId    String
+  appointmentId String
+  endpoint      String
+  p256dh        String
+  auth          String
+  userAgent     String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  business      Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@unique([appointmentId, endpoint])
+  @@index([businessId])
+  @@index([appointmentId])
+}
+
+// Запит клієнта на перенесення/скасування, який має підтвердити майстер/адмін.
+model AppointmentChangeRequest {
+  id                 String                        @id @default(cuid())
+  businessId          String
+  appointmentId       String
+  masterId            String
+  type               AppointmentChangeRequestType
+  status             AppointmentChangeRequestStatus @default(PENDING)
+  requestedStartTime  DateTime?
+  requestedEndTime    DateTime?
+  clientNote          String?
+  decisionNote        String?
+  decidedAt           DateTime?
+  decidedBy           String?
+  createdAt           DateTime                      @default(now())
+  updatedAt           DateTime                      @updatedAt
+
+  business            Business                      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  appointment         Appointment                   @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  master              Master                        @relation(fields: [masterId], references: [id], onDelete: Cascade)
+
+  @@index([businessId, status])
+  @@index([appointmentId])
+  @@index([masterId])
+  @@index([createdAt])
+}
+
+// Аудит-лог по запису (щоб видно було хто і що змінював).
+model AppointmentEvent {
+  id            String      @id @default(cuid())
+  businessId    String
+  appointmentId String
+  type          String
+  data          String?
+  createdAt     DateTime    @default(now())
+
+  business      Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([appointmentId])
+  @@index([createdAt])
+}
+
+// Лог ручних нагадувань з кабінету.
+model ReminderLog {
+  id            String        @id @default(cuid())
+  businessId    String
+  appointmentId String
+  channel       ReminderChannel
+  status        ReminderStatus @default(SENT)
+  triggeredBy   String        @default("manual")
+  error         String?
+  createdAt     DateTime      @default(now())
+
+  business      Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  appointment   Appointment   @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+  @@index([appointmentId])
+  @@index([createdAt])
 }
 
 // Користувачі бізнесу з ролями

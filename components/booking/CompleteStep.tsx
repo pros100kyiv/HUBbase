@@ -5,6 +5,8 @@ import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { formatInTimeZone } from 'date-fns-tz'
+import { useMemo, useState } from 'react'
+import { toast } from '@/components/ui/toast'
 
 interface CompleteStepProps {
   businessName?: string
@@ -30,6 +32,8 @@ function formatStatusLabel(status?: string | null): { label: string; tone: 'neut
 
 export function CompleteStep({ businessName, businessLocation, timeZone }: CompleteStepProps) {
   const { state, reset, setStep } = useBooking()
+  const [pushBusy, setPushBusy] = useState(false)
+  const [pushEnabled, setPushEnabled] = useState<boolean | null>(null)
 
   const isPriceAfterProcedure =
     state.bookingWithoutService || (state.customServiceName && state.customServiceName.trim().length > 0)
@@ -69,6 +73,76 @@ export function CompleteStep({ businessName, businessLocation, timeZone }: Compl
   })()
 
   const statusInfo = formatStatusLabel(state.confirmation?.status)
+  const manageUrl = state.confirmation?.manageUrl || null
+
+  const canUsePush = useMemo(() => {
+    return typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window
+  }, [])
+
+  const urlBase64ToUint8Array = (base64String: string) => {
+    const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
+    const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
+    const rawData = window.atob(base64)
+    const outputArray = new Uint8Array(rawData.length)
+    for (let i = 0; i < rawData.length; ++i) outputArray[i] = rawData.charCodeAt(i)
+    return outputArray
+  }
+
+  const handleEnablePush = async () => {
+    const token = state.confirmation?.manageToken
+    if (!token) {
+      toast({ title: 'Помилка', description: 'Немає токена доступу до запису. Оновіть сторінку та спробуйте ще раз.', type: 'error' })
+      return
+    }
+    if (!canUsePush) {
+      toast({ title: 'Непідтримується', description: 'Push-нагадування недоступні в цьому браузері/режимі.', type: 'info' })
+      return
+    }
+    const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
+    if (!publicKey) {
+      toast({
+        title: 'Push ще не налаштовано',
+        description: 'На сервері відсутній NEXT_PUBLIC_VAPID_PUBLIC_KEY. Додайте VAPID ключі в .env, тоді push запрацює.',
+        type: 'info',
+        duration: 5000,
+      })
+      return
+    }
+
+    setPushBusy(true)
+    try {
+      const permission = await Notification.requestPermission()
+      if (permission !== 'granted') {
+        setPushEnabled(false)
+        toast({ title: 'Доступ заборонено', description: 'Щоб отримувати нагадування, дозвольте сповіщення в браузері.', type: 'info' })
+        return
+      }
+
+      const reg = await navigator.serviceWorker.ready
+      const sub = await reg.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(publicKey),
+      })
+
+      const res = await fetch('/api/push/subscribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, subscription: sub }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) {
+        throw new Error(data?.error || 'Не вдалося увімкнути push')
+      }
+      setPushEnabled(true)
+      toast({ title: 'Нагадування увімкнено', description: 'Тепер можна отримувати push-нагадування по цьому запису.', type: 'success' })
+    } catch (e) {
+      console.error(e)
+      setPushEnabled(false)
+      toast({ title: 'Помилка', description: e instanceof Error ? e.message : 'Не вдалося увімкнути push', type: 'error' })
+    } finally {
+      setPushBusy(false)
+    }
+  }
 
   const handleNewBooking = () => {
     reset()
@@ -141,22 +215,40 @@ export function CompleteStep({ businessName, businessLocation, timeZone }: Compl
         <div className="rounded-xl p-4 mb-4 card-glass border border-black/10 dark:border-white/10">
           <p className="text-sm font-semibold text-foreground mb-2">Нагадування</p>
           <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-            Скоро додамо нагадування у Telegram / SMS. Поки що кнопка неактивна.
+            Push-нагадування працюють через браузер (краще у режимі «Додати на головний екран»).
           </p>
           <button
             type="button"
-            disabled
+            onClick={handleEnablePush}
+            disabled={pushBusy || pushEnabled === true}
             className={cn(
               'w-full min-h-[48px] py-3 rounded-xl text-sm font-semibold transition-colors',
-              'bg-black/[0.06] dark:bg-white/10 border border-black/10 dark:border-white/15',
-              'text-gray-500 dark:text-gray-400 cursor-not-allowed'
+              pushEnabled === true
+                ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
+                : 'bg-black/[0.06] dark:bg-white/10 border border-black/10 dark:border-white/15 text-foreground dark:text-white hover:bg-black/[0.08] dark:hover:bg-white/15',
+              (pushBusy || pushEnabled === true) && 'opacity-80'
             )}
-            aria-disabled="true"
-            title="Скоро"
+            aria-disabled={pushBusy || pushEnabled === true}
+            title={pushEnabled === true ? 'Увімкнено' : 'Увімкнути push-нагадування'}
           >
-            Отримати нагадування (скоро)
+            {pushEnabled === true ? 'Нагадування увімкнено' : pushBusy ? 'Увімкнення...' : 'Отримати push-нагадування'}
           </button>
         </div>
+
+        {manageUrl && (
+          <div className="rounded-xl p-4 mb-4 card-glass border border-black/10 dark:border-white/10">
+            <p className="text-sm font-semibold text-foreground mb-2">Керування записом</p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+              За цим посиланням можна попросити перенести або скасувати запис (потрібне підтвердження майстра).
+            </p>
+            <a
+              href={manageUrl}
+              className="w-full min-h-[48px] py-3 rounded-xl bg-white text-black text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] inline-flex items-center justify-center"
+            >
+              Відкрити керування записом
+            </a>
+          </div>
+        )}
 
         <div className="flex flex-col sm:flex-row gap-2">
           <button

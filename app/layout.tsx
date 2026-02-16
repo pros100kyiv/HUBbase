@@ -4,6 +4,7 @@ import { BookingProvider } from '@/contexts/BookingContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
 import { NavigationProgressProvider } from '@/contexts/NavigationProgressContext'
 import { ToastContainer } from '@/components/ui/toast'
+import { PushServiceWorkerRegister } from '@/components/push/PushServiceWorkerRegister'
 
 export const metadata: Metadata = {
   title: 'Xbase — Запис онлайн, бронювання та клієнти | xbase.online',
@@ -102,6 +103,7 @@ export default function RootLayout({
           <BookingProvider>
             <NavigationProgressProvider>
               <ToastContainer />
+              <PushServiceWorkerRegister />
               {children}
             </NavigationProgressProvider>
           </BookingProvider>

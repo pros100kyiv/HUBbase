@@ -22,6 +22,18 @@ export function MonthProgressCard({ stats, loading }: MonthProgressCardProps) {
   const router = useRouter()
   const [showModal, setShowModal] = useState(false)
 
+  useEffect(() => {
+    if (!showModal) return
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setShowModal(false)
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [showModal])
+
   // Якщо дані завантажуються або відсутні
   if (loading || !stats) {
     return (
@@ -67,18 +79,6 @@ export function MonthProgressCard({ stats, loading }: MonthProgressCardProps) {
   const radius = 28
   const circumference = 2 * Math.PI * radius
   const dashArray = `${(successRate / 100) * circumference} ${circumference}`
-
-  useEffect(() => {
-    if (!showModal) return
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        setShowModal(false)
-      }
-    }
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [showModal])
 
   return (
     <>

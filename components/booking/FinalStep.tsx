@@ -95,7 +95,9 @@ export function FinalStep({ businessId }: FinalStepProps) {
         const status = typeof created?.status === 'string' ? created.status : null
         const startTime = typeof created?.startTime === 'string' ? created.startTime : null
         const endTime = typeof created?.endTime === 'string' ? created.endTime : null
-        setConfirmation({ appointmentId, createdAt, status, startTime, endTime })
+        const manageToken = typeof created?.manageToken === 'string' ? created.manageToken : null
+        const manageUrl = typeof created?.manageUrl === 'string' ? created.manageUrl : null
+        setConfirmation({ appointmentId, createdAt, status, startTime, endTime, manageToken, manageUrl })
         toast({ title: 'Запис створено!', description: 'Деталі запису нижче.', type: 'success', duration: 3500 })
         setStep(5)
       } else {

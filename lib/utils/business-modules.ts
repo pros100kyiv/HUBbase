@@ -14,7 +14,7 @@ export interface BusinessModuleConfig {
  * Перевіряє чи модуль активований для бізнесу
  */
 export async function isModuleEnabled(businessId: string, moduleKey: string): Promise<boolean> {
-  const module = await prisma.businessModule.findUnique({
+  const moduleRow = await prisma.businessModule.findUnique({
     where: {
       businessId_moduleKey: {
         businessId,
@@ -24,14 +24,14 @@ export async function isModuleEnabled(businessId: string, moduleKey: string): Pr
     select: { isEnabled: true },
   })
 
-  return module?.isEnabled ?? false
+  return moduleRow?.isEnabled ?? false
 }
 
 /**
  * Отримує налаштування модуля
  */
 export async function getModuleSettings(businessId: string, moduleKey: string): Promise<any> {
-  const module = await prisma.businessModule.findUnique({
+  const moduleRow = await prisma.businessModule.findUnique({
     where: {
       businessId_moduleKey: {
         businessId,
@@ -41,10 +41,10 @@ export async function getModuleSettings(businessId: string, moduleKey: string): 
     select: { settings: true },
   })
 
-  if (!module?.settings) return null
+  if (!moduleRow?.settings) return null
 
   try {
-    return JSON.parse(module.settings)
+    return JSON.parse(moduleRow.settings)
   } catch {
     return null
   }

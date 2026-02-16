@@ -20,6 +20,7 @@ export function MastersList({ businessId }: MastersListProps) {
   const router = useRouter()
   const [masters, setMasters] = useState<Master[]>([])
   const [loading, setLoading] = useState(true)
+  const [masterStats, setMasterStats] = useState<Record<string, any>>({})
 
   useEffect(() => {
     fetch(`/api/masters?businessId=${businessId}`)
@@ -31,31 +32,8 @@ export function MastersList({ businessId }: MastersListProps) {
       .catch(() => setLoading(false))
   }, [businessId])
 
-  if (loading) {
-    return (
-      <div className="bg-white rounded-3xl shadow-lg p-6">
-        <p className="text-gray-500 text-center">Завантаження...</p>
-      </div>
-    )
-  }
-
-  if (masters.length === 0) {
-    return (
-      <div className="bg-white rounded-3xl shadow-lg p-6 text-center">
-        <p className="text-gray-500 mb-4">Немає майстрів</p>
-        <button
-          onClick={() => router.push('/dashboard/settings')}
-          className="px-4 py-2 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-all active:scale-95"
-        >
-          Додати спеціаліста
-        </button>
-      </div>
-    )
-  }
-
-  const [masterStats, setMasterStats] = useState<Record<string, any>>({})
-
   useEffect(() => {
+    if (!masters || masters.length === 0) return
     masters.forEach((master) => {
       fetch(`/api/masters/${master.id}/stats`)
         .then((res) => res.json())
@@ -78,6 +56,28 @@ export function MastersList({ businessId }: MastersListProps) {
         })
     })
   }, [masters])
+
+  if (loading) {
+    return (
+      <div className="bg-white rounded-3xl shadow-lg p-6">
+        <p className="text-gray-500 text-center">Завантаження...</p>
+      </div>
+    )
+  }
+
+  if (masters.length === 0) {
+    return (
+      <div className="bg-white rounded-3xl shadow-lg p-6 text-center">
+        <p className="text-gray-500 mb-4">Немає майстрів</p>
+        <button
+          onClick={() => router.push('/dashboard/settings')}
+          className="px-4 py-2 bg-primary text-white rounded-xl font-semibold hover:bg-primary/90 transition-all active:scale-95"
+        >
+          Додати спеціаліста
+        </button>
+      </div>
+    )
+  }
 
   return (
     <div className="space-y-6">
