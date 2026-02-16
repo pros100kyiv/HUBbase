@@ -26,6 +26,17 @@ const MicIcon = ({ className = 'w-4 h-4' }: { className?: string }) => (
   </svg>
 )
 
+const SpeakerIcon = ({ className = 'w-4 h-4' }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M11 5l-5 4H3v6h3l5 4V5zm6.5 3.5a5 5 0 010 7M19 7a9 9 0 010 10"
+    />
+  </svg>
+)
+
 export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
@@ -43,6 +54,14 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
       return 'uk-UA'
     }
   })
+  const [ttsEnabled, setTtsEnabled] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('ai_tts_enabled') === '1'
+    } catch {
+      return false
+    }
+  })
+  const [ttsSupported, setTtsSupported] = useState<boolean>(false)
   const [sttSupported, setSttSupported] = useState<boolean>(false)
   const [sttListening, setSttListening] = useState<boolean>(false)
   const [sttDraft, setSttDraft] = useState<string>('')
@@ -52,6 +71,7 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
   const recognitionRef = useRef<any>(null)
   const sttFinalRef = useRef<string>('')
   const sttShouldSendOnEndRef = useRef<boolean>(false)
+  const lastSpokenMessageIdRef = useRef<string | null>(null)
   
   useEffect(() => {
     if (isOpen && businessId) {
@@ -59,12 +79,17 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
         .then(res => res.json())
         .then(data => {
           if (data.messages) {
-            setMessages(data.messages.map((msg: any) => ({
+            const mapped = data.messages.map((msg: any) => ({
               id: msg.id,
               role: msg.role,
               message: msg.message,
               timestamp: new Date(msg.createdAt)
-            })))
+            }))
+            setMessages(mapped)
+
+            // Don't auto-speak old history; only speak new assistant messages.
+            const lastAssistant = [...mapped].reverse().find((m: any) => m?.role === 'assistant')
+            lastSpokenMessageIdRef.current = lastAssistant?.id || null
           }
           if (data.ai && typeof data.ai === 'object') {
             const hasKey = data.ai.hasKey === true
@@ -101,11 +126,61 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
 
   useEffect(() => {
     try {
+      setTtsSupported(typeof window !== 'undefined' && 'speechSynthesis' in window && typeof SpeechSynthesisUtterance !== 'undefined')
+    } catch {
+      setTtsSupported(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
       localStorage.setItem('ai_voice_lang', voiceLang)
     } catch {
       // ignore
     }
   }, [voiceLang])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('ai_tts_enabled', ttsEnabled ? '1' : '0')
+    } catch {
+      // ignore
+    }
+  }, [ttsEnabled])
+
+  const speak = (text: string) => {
+    if (!ttsSupported || !ttsEnabled) return
+    const t = String(text || '')
+      .replace(/\s+/g, ' ')
+      .trim()
+    if (!t) return
+
+    // Keep it short for UX and to avoid long monologues.
+    const say = t.length > 420 ? `${t.slice(0, 420).trim()}…` : t
+
+    try {
+      window.speechSynthesis.cancel()
+      const u = new SpeechSynthesisUtterance(say)
+      u.lang = voiceLang
+      u.rate = 1
+      u.pitch = 1.05
+      u.volume = 1
+      window.speechSynthesis.speak(u)
+    } catch {
+      // ignore
+    }
+  }
+
+  useEffect(() => {
+    if (!ttsEnabled || !ttsSupported) return
+    if (!messages.length) return
+    const last = messages[messages.length - 1]
+    if (!last || last.role !== 'assistant') return
+    if (lastSpokenMessageIdRef.current === last.id) return
+    lastSpokenMessageIdRef.current = last.id
+    speak(last.message)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [messages, ttsEnabled, ttsSupported, voiceLang])
 
   const resolveBusinessId = (): string => {
     const fromProp = (businessId || '').trim()
@@ -492,6 +567,18 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
             </div>
             <div className="mt-2 flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
               <span>Voice:</span>
+              <button
+                type="button"
+                disabled={!ttsSupported}
+                onClick={() => setTtsEnabled((v) => !v)}
+                className={`px-2 py-1 rounded border border-gray-300 dark:border-gray-600 inline-flex items-center gap-1 ${
+                  ttsEnabled ? 'bg-gray-200 dark:bg-gray-600' : ''
+                } ${!ttsSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
+                title={ttsSupported ? (ttsEnabled ? 'Озвучка: увімкнено' : 'Озвучка: вимкнено') : 'Озвучка недоступна у цьому браузері'}
+              >
+                <SpeakerIcon className="w-3.5 h-3.5" />
+                Озвуч.
+              </button>
               <button
                 type="button"
                 className={`px-2 py-1 rounded border border-gray-300 dark:border-gray-600 ${voiceLang === 'uk-UA' ? 'bg-gray-200 dark:bg-gray-600' : ''}`}
