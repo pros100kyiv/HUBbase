@@ -32,6 +32,8 @@ interface Business {
   phone?: string
   address?: string
   description?: string
+  logo?: string
+  avatar?: string
   primaryColor?: string
   secondaryColor?: string
   backgroundColor?: string

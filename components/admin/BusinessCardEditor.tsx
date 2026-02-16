@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { ImageIcon, CheckIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
+import { toast } from '@/components/ui/toast'
 
 interface BusinessCardEditorProps {
   business: {
@@ -22,6 +23,8 @@ interface BusinessCardEditorProps {
     location?: string | null
   }
   onSave: (data: {
+    name?: string
+    logo?: string | null
     businessCardBackgroundImage?: string | null
     slogan?: string | null
     additionalInfo?: string | null
@@ -32,6 +35,8 @@ interface BusinessCardEditorProps {
 
 export function BusinessCardEditor({ business, onSave }: BusinessCardEditorProps) {
   const [formData, setFormData] = useState({
+    name: business.name || '',
+    logo: business.logo || business.avatar || '',
     businessCardBackgroundImage: business.businessCardBackgroundImage || '',
     slogan: business.slogan || '',
     additionalInfo: business.additionalInfo || '',
@@ -42,26 +47,47 @@ export function BusinessCardEditor({ business, onSave }: BusinessCardEditorProps
 
   useEffect(() => {
     setFormData({
+      name: business.name || '',
+      logo: business.logo || business.avatar || '',
       businessCardBackgroundImage: business.businessCardBackgroundImage || '',
       slogan: business.slogan || '',
       additionalInfo: business.additionalInfo || '',
       socialMedia: business.socialMedia || '',
       location: business.location || '',
     })
-  }, [business.id, business.businessCardBackgroundImage, business.slogan, business.additionalInfo, business.socialMedia, business.location])
+  }, [business.id, business.name, business.logo, business.avatar, business.businessCardBackgroundImage, business.slogan, business.additionalInfo, business.socialMedia, business.location])
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const fileToDataUrl = (file: File, cb: (dataUrl: string) => void) => {
+    const reader = new FileReader()
+    reader.onloadend = () => cb(reader.result as string)
+    reader.readAsDataURL(file)
+  }
+
+  const handleBackgroundUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      setFormData({
-        ...formData,
-        businessCardBackgroundImage: reader.result as string,
-      })
+    // Prevent extremely large base64 strings in DB.
+    if (file.size > 2_000_000) {
+      toast({ title: 'Файл завеликий', description: 'Макс. 2MB для фонового зображення', type: 'error' })
+      return
     }
-    reader.readAsDataURL(file)
+    fileToDataUrl(file, (dataUrl) => {
+      setFormData((prev) => ({ ...prev, businessCardBackgroundImage: dataUrl }))
+    })
+  }
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 1_000_000) {
+      toast({ title: 'Файл завеликий', description: 'Макс. 1MB для логотипа', type: 'error' })
+      return
+    }
+    fileToDataUrl(file, (dataUrl) => {
+      setFormData((prev) => ({ ...prev, logo: dataUrl }))
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -69,6 +95,8 @@ export function BusinessCardEditor({ business, onSave }: BusinessCardEditorProps
     setIsSaving(true)
     try {
       await onSave({
+        name: formData.name.trim(),
+        logo: formData.logo || null,
         businessCardBackgroundImage: formData.businessCardBackgroundImage || null,
         slogan: formData.slogan || null,
         additionalInfo: formData.additionalInfo || null,
@@ -133,6 +161,44 @@ export function BusinessCardEditor({ business, onSave }: BusinessCardEditorProps
         {/* Form */}
         <form onSubmit={handleSubmit} className="rounded-xl border border-white/10 bg-white/[0.03] p-4 space-y-4 min-w-0">
           <div>
+            <label className="block text-sm font-medium mb-2 text-gray-300">Назва бізнесу</label>
+            <Input
+              value={formData.name}
+              onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
+              placeholder="Наприклад: Pros100Kyiv"
+              className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-500 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2 text-gray-300">Логотип</label>
+            <div className="flex items-center gap-3 flex-wrap">
+              {formData.logo && (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={formData.logo}
+                  alt="Logo"
+                  className="w-16 h-16 object-cover rounded-2xl border border-white/15 bg-white/10"
+                />
+              )}
+              <label className="touch-target min-h-[44px] inline-flex items-center gap-2 px-4 py-2 border border-white/20 rounded-xl cursor-pointer hover:bg-white/10 transition-colors text-sm font-medium text-white">
+                <ImageIcon className="w-4 h-4" />
+                Завантажити
+                <input type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
+              </label>
+              {formData.logo && (
+                <button
+                  type="button"
+                  onClick={() => setFormData((p) => ({ ...p, logo: '' }))}
+                  className="touch-target min-h-[44px] px-4 py-2 rounded-xl border border-white/20 bg-white/10 text-gray-300 hover:bg-white/15 hover:text-white transition-colors text-sm"
+                >
+                  Прибрати
+                </button>
+              )}
+            </div>
+          </div>
+
+          <div>
             <label className="block text-sm font-medium mb-2 text-gray-300">Фонове зображення</label>
             <div className="flex items-center gap-3 flex-wrap">
               {formData.businessCardBackgroundImage && (
@@ -146,7 +212,7 @@ export function BusinessCardEditor({ business, onSave }: BusinessCardEditorProps
               <label className="touch-target min-h-[44px] inline-flex items-center gap-2 px-4 py-2 border border-white/20 rounded-xl cursor-pointer hover:bg-white/10 transition-colors text-sm font-medium text-white">
                 <ImageIcon className="w-4 h-4" />
                 Завантажити
-                <input type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
+                <input type="file" accept="image/*" onChange={handleBackgroundUpload} className="hidden" />
               </label>
               {formData.businessCardBackgroundImage && (
                 <button
@@ -247,21 +313,21 @@ export function BusinessCardEditor({ business, onSave }: BusinessCardEditorProps
 
               <div className="relative z-10 text-center px-4 max-w-md">
                 <div className="flex items-center justify-center mb-3">
-                  {(business.logo || business.avatar) ? (
+                  {formData.logo ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img
-                      src={(business.logo || business.avatar) as string}
-                      alt={business.name}
+                      src={formData.logo}
+                      alt={formData.name || business.name}
                       className="w-12 h-12 rounded-2xl object-cover border border-white/15 bg-white/10"
                     />
                   ) : (
                     <div className="w-12 h-12 rounded-2xl bg-white/10 border border-white/15 flex items-center justify-center text-white font-bold">
-                      {(business.name || 'B').slice(0, 1).toUpperCase()}
+                      {(formData.name || business.name || 'B').slice(0, 1).toUpperCase()}
                     </div>
                   )}
                 </div>
 
-                <div className="text-xl font-bold text-white mb-1">{business.name}</div>
+                <div className="text-xl font-bold text-white mb-1">{(formData.name || business.name).trim()}</div>
                 <div className="text-sm text-gray-200 mb-3">
                   {(formData.slogan || business.description || 'Професійні послуги високої якості').trim()}
                 </div>
