@@ -9,6 +9,8 @@ import { SMSService } from '@/lib/services/sms-service'
 const DEFAULT_APPOINTMENT_DURATION_MINUTES = 60
 const MAX_TOOL_CONTEXT_CHARS = 8000
 const MAX_TOOL_LINE_CHARS = 1600
+// User requirement: always use this model, ignore per-business overrides.
+const ENFORCED_GEMINI_MODEL = 'gemini-flash-lite-latest' as const
 // IMPORTANT: every extra LLM request burns free-tier quota quickly.
 // Keep tool-calling to a single LLM request per user message.
 const MAX_TOOL_CALLS = 1
@@ -2062,10 +2064,10 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { businessId, message, sessionId } = body
     const globalEnvKey = process.env.GEMINI_API_KEY?.trim() || process.env.GOOGLE_API_KEY?.trim() || null
-    const globalEnvModel = process.env.GEMINI_MODEL?.trim() || null
     const globalDb = await getGlobalAiFromSystemSettings()
     const globalAiApiKey = globalDb.apiKey || globalEnvKey
-    const globalAiModel = globalDb.model || globalEnvModel || 'gemini-flash-lite-latest'
+    // Even if env/DB contains something else, we enforce this model server-side.
+    const globalAiModel = ENFORCED_GEMINI_MODEL
 
     if (!businessId || typeof message !== 'string' || !message.trim()) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
@@ -2124,8 +2126,8 @@ export async function POST(request: Request) {
     }
 
     const history = chatHistory.map((msg) => ({ role: msg.role, message: msg.message }))
-    const aiSettings = parseJson<{ model?: string }>(business.aiSettings, {})
-    const configuredModel = aiSettings.model || globalAiModel
+    // IMPORTANT: model is mandatory; do not allow business/global overrides.
+    const configuredModel = globalAiModel
     const aiService = effectiveApiKey
       ? new AIChatService(effectiveApiKey, configuredModel)
       : null

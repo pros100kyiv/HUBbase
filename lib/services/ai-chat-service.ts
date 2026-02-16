@@ -1,5 +1,8 @@
 import { GoogleGenerativeAI } from '@google/generative-ai'
 
+// User requirement: only use this model (no fallback list).
+const ENFORCED_GEMINI_MODEL = 'gemini-flash-lite-latest' as const
+
 interface ChatContext {
   businessName: string
   businessDescription?: string
@@ -61,18 +64,10 @@ const ALLOWED_TOOL_NAMES = new Set<string>([
 ])
 
 function normalizeGeminiModelName(model: string): string {
-  const raw = (model || '').trim()
-  if (!raw) return 'gemini-flash-lite-latest'
-
-  // Allow both "models/..." and plain names.
-  const name = raw.startsWith('models/') ? raw.slice('models/'.length) : raw
-
-  // Some projects/keys no longer expose legacy 1.5 names via v1beta ListModels.
-  // Treat it as an alias to keep old configs working without breaking chat.
-  if (name === 'gemini-1.5-flash') return 'gemini-flash-lite-latest'
-  if (name === 'gemini-1.5-pro') return 'gemini-pro-latest'
-
-  return name
+  // Enforced model: ignore whatever is passed in (DB/env/UI).
+  // We keep the function to avoid refactors in call sites.
+  void model
+  return ENFORCED_GEMINI_MODEL
 }
 
 export class AIChatService {
@@ -81,7 +76,7 @@ export class AIChatService {
   
   constructor(apiKey: string, model: string = 'gemini-flash-lite-latest') {
     this.apiKey = apiKey
-    this.model = model
+    this.model = normalizeGeminiModelName(model)
   }
   
   private generateSystemPrompt(context: ChatContext): string {
@@ -321,19 +316,7 @@ ${historyText || 'немає'}
 ${userMessage}
 `
 
-    const tryModels = Array.from(
-      new Set<string>(
-        [
-          requestedModel,
-          // Lightweight + usually most available on free tier.
-          'gemini-flash-lite-latest',
-          'gemini-flash-latest',
-          // Stable explicit versions.
-          'gemini-2.0-flash',
-          'gemini-2.5-flash',
-        ].filter(Boolean)
-      )
-    )
+    const tryModels = [requestedModel]
 
     let lastErr: unknown = null
     let bestTextReply: string | null = null
@@ -387,7 +370,7 @@ ${userMessage}
       }
 
       const genAI = new GoogleGenerativeAI(this.apiKey)
-      const model = genAI.getGenerativeModel({ model: this.model })
+      const model = genAI.getGenerativeModel({ model: normalizeGeminiModelName(this.model) })
       
       const systemPrompt = this.generateSystemPrompt(context)
       

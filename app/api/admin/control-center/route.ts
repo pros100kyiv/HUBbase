@@ -10,6 +10,9 @@ import type { SubscriptionPlan } from '@prisma/client'
 export const dynamic = 'force-dynamic'
 export const revalidate = 60
 
+// User requirement: only allow this Gemini model everywhere.
+const ENFORCED_GEMINI_MODEL = 'gemini-flash-lite-latest' as const
+
 async function getControlCenterStats(): Promise<{
   totalCount: number
   activeCount: number
@@ -100,11 +103,12 @@ async function getGlobalGeminiConfig(): Promise<{ apiKey: string | null; model: 
     ])
     return {
       apiKey: (k?.value || '').trim() || null,
-      model: normalizeGeminiModelName((m?.value || '').trim()) || null,
+      // Even if DB contains something else, we enforce the model.
+      model: ENFORCED_GEMINI_MODEL,
     }
   } catch {
     // Table might not exist yet; fall back to env-only.
-    return { apiKey: null, model: null }
+    return { apiKey: null, model: ENFORCED_GEMINI_MODEL }
   }
 }
 
@@ -142,7 +146,7 @@ export async function GET(request: Request) {
     const globalDb = await getGlobalGeminiConfig()
     const globalAi = {
       hasKey: !!((globalDb.apiKey || globalEnvKey || '').trim()),
-      model: globalDb.model || globalEnvModel || 'gemini-flash-lite-latest',
+      model: ENFORCED_GEMINI_MODEL,
       source: globalDb.apiKey ? 'db' : globalEnvKey ? 'env' : 'none',
     }
 
@@ -304,12 +308,8 @@ export async function GET(request: Request) {
             aiHasKey: !!((b as any).aiApiKey && String((b as any).aiApiKey).trim()),
             aiProvider: (b as any).aiProvider || null,
             aiModel: (() => {
-              try {
-                const s = (b as any).aiSettings ? JSON.parse((b as any).aiSettings) : null
-                return normalizeGeminiModelName(s?.model) || null
-              } catch {
-                return null
-              }
+              // UI shows the enforced model (settings are ignored server-side anyway).
+              return ENFORCED_GEMINI_MODEL
             })(),
             aiUsage24h: usage24hByBusiness.get(b.id) || emptyAiUsage(),
             aiUsageToday: usageTodayByBusiness.get(b.id) || emptyAiUsage(),
@@ -415,12 +415,11 @@ export async function PATCH(request: Request) {
         }
         if (aiSettingsRaw !== undefined) {
           if (typeof aiSettingsRaw === 'string' && aiSettingsRaw.trim()) {
-            // Normalize model aliases (e.g. legacy gemini-1.5-flash) before saving.
+            // Force the model (user requirement) even if UI sends something else.
             try {
               const parsed = JSON.parse(aiSettingsRaw)
               if (parsed && typeof parsed === 'object') {
-                const normalizedModel = normalizeGeminiModelName((parsed as any).model)
-                if (normalizedModel) (parsed as any).model = normalizedModel
+                ;(parsed as any).model = ENFORCED_GEMINI_MODEL
               }
               update.aiSettings = JSON.stringify(parsed)
             } catch {
@@ -467,11 +466,19 @@ export async function PATCH(request: Request) {
         }
 
         if (aiModelRaw !== undefined) {
-          const normalized = normalizeGeminiModelName(aiModelRaw) || null
+          // Ignore requested model; enforced.
+          const normalized = ENFORCED_GEMINI_MODEL
           await prisma.systemSetting.upsert({
             where: { key: SYSTEM_SETTING_GEMINI_MODEL },
             create: { key: SYSTEM_SETTING_GEMINI_MODEL, value: normalized },
             update: { value: normalized },
+          })
+        } else {
+          // Keep DB consistent with enforcement even when only updating the key.
+          await prisma.systemSetting.upsert({
+            where: { key: SYSTEM_SETTING_GEMINI_MODEL },
+            create: { key: SYSTEM_SETTING_GEMINI_MODEL, value: ENFORCED_GEMINI_MODEL },
+            update: { value: ENFORCED_GEMINI_MODEL },
           })
         }
 
