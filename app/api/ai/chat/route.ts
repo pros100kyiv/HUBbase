@@ -9,7 +9,9 @@ import { SMSService } from '@/lib/services/sms-service'
 const DEFAULT_APPOINTMENT_DURATION_MINUTES = 60
 const MAX_TOOL_CONTEXT_CHARS = 8000
 const MAX_TOOL_LINE_CHARS = 1600
-const MAX_TOOL_CALLS = 3
+// IMPORTANT: every extra LLM request burns free-tier quota quickly.
+// Keep tool-calling to a single LLM request per user message.
+const MAX_TOOL_CALLS = 1
 const MAX_ASSISTANT_REPLY_CHARS = 900
 
 // Best-effort in-memory cooldown to avoid repeated 429 calls.
@@ -181,6 +183,78 @@ function formatMoneyUAH(value: unknown): string {
   if (!Number.isFinite(n)) return '0'
   // Keep it simple and ASCII; no Intl to avoid env differences.
   return String(Math.round(n))
+}
+
+function formatToolResultToReply(result: { tool: string; data: any }): string {
+  const tool = result?.tool
+  const data = result?.data
+  const json = () => truncateText(JSON.stringify(data ?? null), 900)
+
+  try {
+    if (tool === 'who_working') {
+      const working = Array.isArray(data?.working) ? data.working : []
+      const date = data?.date || 'today'
+      const fmt = (r: any) => `${r?.name || 'n/a'}${r?.start && r?.end ? ` ${r.start}-${r.end}` : ''}`
+      return `Хто працює ${date}: ${working.length ? working.map(fmt).join(', ') : 'ніхто'}.`
+    }
+    if (tool === 'free_slots') {
+      if (data?.error === 'master_required') return 'Для слотів вкажи майстра (masterName або masterId).'
+      const slots = Array.isArray(data?.slots) ? data.slots : []
+      const date = data?.date || ''
+      const m = data?.master?.name || 'майстра'
+      const dur = data?.durationMinutes || 60
+      return `Вільні слоти ${date} для ${m} (${dur}хв): ${slots.length ? slots.slice(0, 16).map((s: string) => String(s).slice(11)).join(', ') : 'немає'}.`
+    }
+    if (tool === 'gaps_summary') {
+      if (data?.error === 'master_required') return 'Для “дірки між записами” вкажи майстра (masterName або masterId).'
+      const gaps = Array.isArray(data?.gaps) ? data.gaps : []
+      const date = data?.date || ''
+      const m = data?.master?.name || 'майстра'
+      const minGap = data?.minGapMinutes || 30
+      const fmt = (g: any) => `${g.start}-${g.end} (${g.minutes}хв)`
+      return `Дірки ${date} для ${m} (>=${minGap}хв): ${gaps.length ? gaps.map(fmt).join(', ') : 'немає'}.`
+    }
+    if (tool === 'schedule_overview') {
+      const masters = Array.isArray(data?.masters) ? data.masters : []
+      return `Графік: майстрів активних=${masters.length}. ${masters
+        .slice(0, 10)
+        .map((m: any) => `${m.name}(${m.summary})`)
+        .join('; ')}${masters.length > 10 ? '…' : ''}`
+    }
+    if (tool === 'analytics_kpi') {
+      const kpi = data?.kpi || data
+      return `KPI: записів=${kpi?.appointmentsTotal ?? 0}, виконано=${kpi?.appointmentsDone ?? 0}, скасовано=${kpi?.cancelled ?? 0}, нових клієнтів=${kpi?.newClients ?? 0}, дохід=${formatMoneyUAH(kpi?.revenue ?? 0)}.`
+    }
+    if (tool === 'payments_kpi') {
+      const rows = Array.isArray(data?.byStatus) ? data.byStatus : []
+      return `Payments: ${rows.length ? rows.map((r: any) => `${r.status}:${r.count}/${formatMoneyUAH(r.sum)}`).join(', ') : 'немає'}.`
+    }
+    if (tool === 'appointments_stats') {
+      const byStatus = Array.isArray(data?.byStatus) ? data.byStatus : []
+      return `Записи: ${byStatus.length ? byStatus.map((r: any) => `${r.status}:${r.count}`).join(', ') : '0'}.`
+    }
+    if (tool === 'appointments_list') {
+      const rows = Array.isArray(data?.rows) ? data.rows : []
+      return `Записи: ${rows.length ? rows.slice(0, 12).map((r: any) => `${String(r.start)} ${r.status} ${r.client || ''}(*${r.phoneLast4 || ''})`).join('\n') : 'немає'}.`
+    }
+    if (tool === 'clients_search') {
+      const rows = Array.isArray(data?.rows) ? data.rows : []
+      return `Клієнти: ${rows.length ? rows.map((c: any) => `${c.name}(*${c.phoneLast4})`).join(', ') : 'немає'}.`
+    }
+    if (tool === 'client_by_phone') {
+      const c = data?.client
+      if (!c) return 'Клієнта не знайдено.'
+      return `Клієнт: ${c.name}(*${c.phoneLast4}), статус=${c.status || 'n/a'}, візитів=${c.totalAppointments ?? 0}, витрати=${formatMoneyUAH(c.totalSpent ?? 0)}.`
+    }
+    if (tool === 'segments_list') {
+      const rows = Array.isArray(data?.rows) ? data.rows : []
+      return `Сегменти: ${rows.length ? rows.map((r: any) => `${r.name}(${r.clientCount ?? 0})`).join(', ') : 'немає'}.`
+    }
+  } catch {
+    // ignore and fall back to generic JSON
+  }
+
+  return `Ок. Дані: ${json()}`
 }
 
 async function tryHeuristicDataReply(params: {
@@ -2082,28 +2156,26 @@ export async function POST(request: Request) {
       decision = null
     } else if (!decision && aiService) {
       try {
-        let toolCalls = 0
-        while (toolCalls < MAX_TOOL_CALLS) {
-          decision = await aiService.getAgentDecision(message, context, history, buildToolContext(toolContextParts))
-          if (!decision || decision.action !== 'tool_call' || !decision.tool?.name) break
-
-          const name = decision.tool.name as AiToolName
-          const result = await runAiTool(businessId, name, decision.tool.args)
-          const line = `TOOL:${result.tool}=${JSON.stringify(result.data)}`
-          toolContextParts.push(truncateText(line, MAX_TOOL_LINE_CHARS))
-          toolCalls++
-        }
-
-        // Ensure we always end with a user-facing reply, even if tool-call limit was reached.
-        if (decision?.action === 'tool_call') {
-          toolContextParts.push('TOOL_LIMIT_REACHED=true; now reply using existing TOOL_CONTEXT, no more tool_call.')
-          decision = await aiService.getAgentDecision(message, context, history, buildToolContext(toolContextParts))
-        }
+        // Single LLM request. If it asks for a tool, run it and format reply server-side.
+        decision = await aiService.getAgentDecision(message, context, history, buildToolContext(toolContextParts))
 
         if (decision) {
           usedAi = true
           decisionSource = 'llm'
           aiLastSuccessAtByBusiness.set(businessId, Date.now())
+        }
+
+        if (decision?.action === 'tool_call' && decision.tool?.name) {
+          const toolName = decision.tool.name as AiToolName
+          const result = await runAiTool(businessId, toolName, decision.tool.args)
+          const toolReply = formatToolResultToReply(result as any)
+          decision = {
+            action: 'reply',
+            reply: toolReply,
+            confidence: 0.7,
+            needsConfirmation: false,
+            payload: { tool: result.tool, data: result.data },
+          }
         }
       } catch (error) {
         aiUnavailableReason = error instanceof Error ? error.message : 'AI unavailable'
@@ -2191,7 +2263,7 @@ export async function POST(request: Request) {
       actionData = {
         ...(actionData || {}),
         mode: 'heuristic_fallback',
-        aiUnavailableReason,
+        aiUnavailableReason: truncateText(aiUnavailableReason, 500),
       }
     }
 
@@ -2253,7 +2325,7 @@ export async function POST(request: Request) {
         hasKey: !!effectiveApiKey,
         indicator,
         usedAi,
-        reason: aiUnavailableReason || (decisionSource ? `source:${decisionSource}` : null),
+        reason: aiUnavailableReason ? truncateText(aiUnavailableReason, 500) : decisionSource ? `source:${decisionSource}` : null,
       },
     })
   } catch (error) {
