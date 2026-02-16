@@ -101,14 +101,10 @@ export function TimeStep({ businessId }: TimeStepProps) {
       .then((res) => (res.ok ? res.json() : Promise.resolve(null)))
       .then((data: { recommendedSlots?: RecommendedSlot[] } | null) => {
         const list = data?.recommendedSlots ?? []
-        const now = new Date()
-        const futureOnly = Array.isArray(list)
-          ? list.filter((rec) => {
-              const d = new Date(rec.slot)
-              return !isNaN(d.getTime()) && d > now
-            })
+        const safeList = Array.isArray(list)
+          ? list.filter((rec) => typeof rec?.slot === 'string' && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(rec.slot))
           : []
-        setRecommendedSlots(futureOnly)
+        setRecommendedSlots(safeList)
       })
       .catch(() => setRecommendedSlots([]))
   }, [masterId, bid, totalDuration])
@@ -121,7 +117,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
 
     const date = state.selectedDate
     const dateStr = format(date, 'yyyy-MM-dd')
-    const id = `${dateStr}|${masterId}|${bid}`
+    const id = `${dateStr}|${masterId}|${bid}|${totalDuration}`
     requestIdRef.current = id
     setLoading(true)
     setLoadError(false)
@@ -161,26 +157,19 @@ export function TimeStep({ businessId }: TimeStepProps) {
         setReason(typeof data.reason === 'string' ? data.reason : null)
         setBusySlots(busy)
 
-        const now = new Date()
-        const today = todayRef.current ? startOfDay(todayRef.current) : startOfDay(new Date())
-        const selectedDayStart = startOfDay(new Date(date))
-        const futureOnly =
-          selectedDayStart.getTime() === today.getTime()
-            ? raw.filter((slotStr: string) => {
-                const d = new Date(slotStr)
-                return !isNaN(d.getTime()) && d > now
-              })
-            : raw.filter((slotStr: string) => {
-                const d = new Date(slotStr)
-                return !isNaN(d.getTime())
-              })
+        const safeSlots = raw.filter(
+          (slotStr: string) =>
+            typeof slotStr === 'string' &&
+            /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(slotStr) &&
+            slotStr.startsWith(dateStr)
+        )
 
-        setSlots(futureOnly)
-        if (futureOnly.length > 0) {
-          const first = futureOnly[0]
+        setSlots(safeSlots)
+        if (safeSlots.length > 0) {
+          const first = safeSlots[0]
           const timeStr = String(first).slice(11, 16)
           const currentKey = `${dateStr}T${state.selectedTime || ''}`
-          if (!state.selectedTime || !futureOnly.includes(currentKey)) setTime(timeStr)
+          if (!state.selectedTime || !safeSlots.includes(currentKey)) setTime(timeStr)
         } else {
           setTime('')
         }

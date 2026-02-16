@@ -7,7 +7,7 @@ import { useEffect, useState, useRef } from 'react'
 import { useTheme } from '@/contexts/ThemeContext'
 import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
 import { SunIcon, MoonIcon, OledIcon, MenuIcon, QRIcon } from '@/components/icons'
-import { setMobileMenuState, getMobileMenuState } from '@/app/dashboard/layout'
+import { setMobileMenuState, getMobileMenuState } from '@/lib/ui/mobile-menu-state'
 import { playNotificationSound } from '@/lib/notification-sound'
 import { AccountProfileButton } from '@/components/layout/AccountProfileButton'
 import { XbaseLogo } from '@/components/layout/XbaseLogo'
@@ -26,6 +26,24 @@ export function Navbar() {
   const router = useRouter()
   const pathname = usePathname()
   const [business, setBusiness] = useState<any>(null)
+
+  // Defensive: during dev/HMR we have seen cases where the imported functions are not functions.
+  // Don't crash the whole dashboard if that happens.
+  const safeGetMobileMenuState = () => {
+    try {
+      return typeof getMobileMenuState === 'function' ? getMobileMenuState() : false
+    } catch {
+      return false
+    }
+  }
+  const safeSetMobileMenuState = (open: boolean) => {
+    try {
+      if (typeof setMobileMenuState === 'function') setMobileMenuState(open)
+    } catch {
+      // ignore
+    }
+  }
+
   let theme: 'light' | 'dark' | 'oled' = 'light'
   let cycleTheme: () => void = () => {}
   let mounted = false
@@ -124,8 +142,8 @@ export function Navbar() {
 
   // Close mobile menu when pathname changes
   useEffect(() => {
-    if (getMobileMenuState() && pathname) {
-      setMobileMenuState(false)
+    if (safeGetMobileMenuState() && pathname) {
+      safeSetMobileMenuState(false)
     }
   }, [pathname])
 
@@ -152,7 +170,7 @@ export function Navbar() {
               {/* Left: меню (mobile) + назва бізнесу */}
               <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0">
                 <button
-                  onClick={() => setMobileMenuState(!getMobileMenuState())}
+                  onClick={() => safeSetMobileMenuState(!safeGetMobileMenuState())}
                   className="md:hidden touch-target p-2.5 rounded-xl hover:bg-white/10 active:bg-white/15 transition-colors flex-shrink-0 flex items-center justify-center"
                   aria-label="Відкрити меню"
                   title="Меню"

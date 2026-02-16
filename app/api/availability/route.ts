@@ -11,6 +11,20 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { format, addMinutes, addDays } from 'date-fns'
+import { toZonedTime } from 'date-fns-tz'
+import {
+  DEFAULT_BOOKING_OPTIONS,
+  type BookingSlotsOptions,
+  getLocalDayRangeUtc,
+  parseBookingSlotsOptions,
+  parseBookingTimeZone,
+  slotKeyToUtcDate,
+} from '@/lib/utils/booking-settings'
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+const NO_STORE_HEADERS = { 'Cache-Control': 'no-store, max-age=0' }
 
 const DAY_NAMES = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday']
 
@@ -140,37 +154,6 @@ function getWindowsForDate(
 
 type MasterRow = { workingHours: string | null; scheduleDateOverrides: string | null }
 
-type BookingSlotsOptions = {
-  slotStepMinutes: number
-  bufferMinutes: number
-  minAdvanceBookingMinutes: number
-  maxDaysAhead: number
-}
-
-const DEFAULT_BOOKING_OPTIONS: BookingSlotsOptions = {
-  slotStepMinutes: 30,
-  bufferMinutes: 0,
-  minAdvanceBookingMinutes: 60,
-  maxDaysAhead: 60,
-}
-
-function parseBookingSlotsOptions(settingsRaw: string | null | undefined): BookingSlotsOptions {
-  if (!settingsRaw || typeof settingsRaw !== 'string') return DEFAULT_BOOKING_OPTIONS
-  try {
-    const parsed = JSON.parse(settingsRaw) as Record<string, unknown>
-    const b = parsed?.bookingSlots as Record<string, unknown> | undefined
-    if (!b || typeof b !== 'object') return DEFAULT_BOOKING_OPTIONS
-    return {
-      slotStepMinutes: [15, 30, 60].includes(Number(b.slotStepMinutes)) ? Number(b.slotStepMinutes) : 30,
-      bufferMinutes: Math.max(0, Math.min(30, Math.round(Number(b.bufferMinutes) || 0))),
-      minAdvanceBookingMinutes: Math.max(0, Math.min(10080, Math.round(Number(b.minAdvanceBookingMinutes) || 60))),
-      maxDaysAhead: Math.max(1, Math.min(365, Math.round(Number(b.maxDaysAhead) || 60))),
-    }
-  } catch {
-    return DEFAULT_BOOKING_OPTIONS
-  }
-}
-
 async function getAvailableSlotsForDate(
   master: MasterRow,
   dateNorm: string,
@@ -178,7 +161,8 @@ async function getAvailableSlotsForDate(
   masterId: string,
   durationMinutes: number,
   now: Date,
-  options: BookingSlotsOptions = DEFAULT_BOOKING_OPTIONS
+  options: BookingSlotsOptions = DEFAULT_BOOKING_OPTIONS,
+  timeZone: string
 ): Promise<{ available: string[]; busySlots: string[] }> {
   const empty = { available: [] as string[], busySlots: [] as string[] }
   const parts = dateNorm.split('-')
@@ -210,17 +194,18 @@ async function getAvailableSlotsForDate(
     }
   }
 
-  const startOfDayDate = new Date(year, month, day, 0, 0, 0, 0)
-  const endOfDayDate = new Date(year, month, day, 23, 59, 59, 999)
+  const dayRange = getLocalDayRangeUtc(dateNorm, timeZone)
+  if (!dayRange) return empty
+  const { startUtc: startOfDayUtc, endExclusiveUtc } = dayRange
   let appointments: Array<{ startTime: Date; endTime: Date }> = []
   try {
-    // Записи, що перетинають день (включно з тими, що починаються вчора і закінчуються сьогодні)
+    // Записи, що перетинають локальний день у `timeZone`.
     appointments = await prisma.appointment.findMany({
       where: {
         businessId,
         masterId,
-        startTime: { lt: endOfDayDate },
-        endTime: { gt: startOfDayDate },
+        startTime: { lt: endExclusiveUtc },
+        endTime: { gt: startOfDayUtc },
         status: { notIn: ['Cancelled', 'Скасовано'] },
       },
       select: { startTime: true, endTime: true },
@@ -232,37 +217,48 @@ async function getAvailableSlotsForDate(
   // Позначаємо зайняті слоти: запис + buffer перекриває слоти
   const occupied = new Set<string>()
   for (const apt of appointments) {
-    const aptStart = new Date(apt.startTime)
-    const aptEnd = new Date(apt.endTime)
-    const effStart = addMinutes(aptStart, -bufferMinutes)
-    const effEnd = addMinutes(aptEnd, bufferMinutes)
-    const startMinutes = effStart.getHours() * 60 + effStart.getMinutes()
+    const aptStartUtc = new Date(apt.startTime)
+    const aptEndUtc = new Date(apt.endTime)
+    const effStartUtc = addMinutes(aptStartUtc, -bufferMinutes)
+    const effEndUtc = addMinutes(aptEndUtc, bufferMinutes)
+
+    // Convert to business TZ before rounding to step; otherwise server TZ can shift slot mapping.
+    const effStartZoned = toZonedTime(effStartUtc, timeZone)
+    const startMinutes = effStartZoned.getHours() * 60 + effStartZoned.getMinutes()
     const startSlotMinutes = Math.floor(startMinutes / slotStepMinutes) * slotStepMinutes
-    let t = new Date(effStart)
-    t.setHours(Math.floor(startSlotMinutes / 60), startSlotMinutes % 60, 0, 0)
-    while (t < effEnd) {
-      const key = format(t, "yyyy-MM-dd'T'HH:mm")
+
+    const startDateNorm = format(effStartZoned, 'yyyy-MM-dd')
+    const h = Math.floor(startSlotMinutes / 60)
+    const m = startSlotMinutes % 60
+    const startKey = `${startDateNorm}T${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
+    let tUtc = slotKeyToUtcDate(startKey, timeZone)
+    if (!tUtc) continue
+
+    while (tUtc < effEndUtc) {
+      const key = format(toZonedTime(tUtc, timeZone), "yyyy-MM-dd'T'HH:mm")
       if (key.startsWith(dateNorm)) occupied.add(key)
-      t = addMinutes(t, slotStepMinutes)
+      tUtc = addMinutes(tUtc, slotStepMinutes)
     }
   }
 
-  const minAdvanceDate = addMinutes(now, minAdvanceBookingMinutes)
+  const nowUtc = now
+  const minAdvanceUtc = addMinutes(nowUtc, minAdvanceBookingMinutes)
   const steps = Math.ceil(durationMinutes / slotStepMinutes)
   const inAnyWindow = (hours: number) =>
     windows.some((w) => hours >= w.start && hours < w.end)
   const available = slots
     .filter((slotStr) => {
       if (typeof slotStr !== 'string' || !/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(slotStr)) return false
-      const slotDate = new Date(slotStr)
-      if (isNaN(slotDate.getTime())) return false
-      if (slotDate <= now) return false
-      if (slotDate < minAdvanceDate) return false
+      const slotStartUtc = slotKeyToUtcDate(slotStr, timeZone)
+      if (!slotStartUtc || isNaN(slotStartUtc.getTime())) return false
+      if (slotStartUtc <= nowUtc) return false
+      if (slotStartUtc < minAdvanceUtc) return false
       for (let i = 0; i < steps; i++) {
-        const t = addMinutes(slotDate, i * slotStepMinutes)
-        const key = format(t, "yyyy-MM-dd'T'HH:mm")
+        const tUtc = addMinutes(slotStartUtc, i * slotStepMinutes)
+        const tZoned = toZonedTime(tUtc, timeZone)
+        const key = format(tZoned, "yyyy-MM-dd'T'HH:mm")
         if (occupied.has(key)) return false
-        const v = t.getHours() + t.getMinutes() / 60
+        const v = tZoned.getHours() + tZoned.getMinutes() / 60
         if (!inAnyWindow(v)) return false
       }
       return true
@@ -290,7 +286,7 @@ export async function GET(request: Request) {
     if (!masterId || !businessId) {
       return NextResponse.json(
         { availableSlots: [], scheduleNotConfigured: true },
-        { status: 200 }
+        { status: 200, headers: NO_STORE_HEADERS }
       )
     }
 
@@ -304,19 +300,20 @@ export async function GET(request: Request) {
       console.error('[availability] master fetch error', e)
       return NextResponse.json(
         { availableSlots: [], scheduleNotConfigured: true },
-        { status: 200 }
+        { status: 200, headers: NO_STORE_HEADERS }
       )
     }
 
     if (!master) {
       return NextResponse.json(
         { availableSlots: [], scheduleNotConfigured: true },
-        { status: 200 }
+        { status: 200, headers: NO_STORE_HEADERS }
       )
     }
 
     // Отримуємо налаштування слотів з бізнесу
     let bookingOptions = DEFAULT_BOOKING_OPTIONS
+    let timeZone = parseBookingTimeZone(null)
     try {
       const business = await prisma.business.findUnique({
         where: { id: businessId },
@@ -324,6 +321,7 @@ export async function GET(request: Request) {
       })
       if (business?.settings) {
         bookingOptions = parseBookingSlotsOptions(business.settings)
+        timeZone = parseBookingTimeZone(business.settings)
       }
     } catch {
       // ignore, use defaults
@@ -340,20 +338,20 @@ export async function GET(request: Request) {
       return NextResponse.json({
         workingWeekdays: workingWeekdays.length > 0 ? workingWeekdays : [0, 1, 2, 3, 4, 5, 6],
         scheduleNotConfigured: false,
-      })
+      }, { headers: NO_STORE_HEADERS })
     }
 
     // Режим 2: рекомендовані найближчі слоти (from + days + limit)
     if (fromStr && daysParam && limitParam) {
       const parts = fromStr.split('-')
       if (parts.length !== 3) {
-        return NextResponse.json({ recommendedSlots: [] }, { status: 200 })
+        return NextResponse.json({ recommendedSlots: [] }, { status: 200, headers: NO_STORE_HEADERS })
       }
       const fromYear = parseInt(parts[0], 10)
       const fromMonth = parseInt(parts[1], 10) - 1
       const fromDay = parseInt(parts[2], 10)
       if (isNaN(fromYear) || isNaN(fromMonth) || isNaN(fromDay)) {
-        return NextResponse.json({ recommendedSlots: [] }, { status: 200 })
+        return NextResponse.json({ recommendedSlots: [] }, { status: 200, headers: NO_STORE_HEADERS })
       }
       const days = Math.max(1, Math.min(bookingOptions.maxDaysAhead, parseInt(daysParam, 10) || 14))
       const limit = Math.max(1, Math.min(20, parseInt(limitParam, 10) || 8))
@@ -369,7 +367,8 @@ export async function GET(request: Request) {
           masterId,
           durationMinutes,
           now,
-          bookingOptions
+          bookingOptions,
+          timeZone
         )
         for (const slot of daySlots) {
           if (recommendedSlots.length >= limit) break
@@ -377,14 +376,14 @@ export async function GET(request: Request) {
           recommendedSlots.push({ date: dateNorm, time, slot })
         }
       }
-      return NextResponse.json({ recommendedSlots })
+      return NextResponse.json({ recommendedSlots }, { headers: NO_STORE_HEADERS })
     }
 
     // Режим 3: слоти на один день (date=YYYY-MM-DD)
     if (!dateStr) {
       return NextResponse.json(
         { availableSlots: [], scheduleNotConfigured: true },
-        { status: 200 }
+        { status: 200, headers: NO_STORE_HEADERS }
       )
     }
 
@@ -392,7 +391,7 @@ export async function GET(request: Request) {
     if (parts.length !== 3) {
       return NextResponse.json(
         { availableSlots: [], scheduleNotConfigured: true },
-        { status: 200 }
+        { status: 200, headers: NO_STORE_HEADERS }
       )
     }
     const year = parseInt(parts[0], 10)
@@ -401,7 +400,7 @@ export async function GET(request: Request) {
     if (isNaN(year) || isNaN(month) || isNaN(day) || month < 0 || month > 11 || day < 1 || day > 31) {
       return NextResponse.json(
         { availableSlots: [], scheduleNotConfigured: true },
-        { status: 200 }
+        { status: 200, headers: NO_STORE_HEADERS }
       )
     }
 
@@ -416,7 +415,7 @@ export async function GET(request: Request) {
         availableSlots: [],
         scheduleNotConfigured: false,
         reason: 'day_off',
-      })
+      }, { headers: NO_STORE_HEADERS })
     }
 
     const now = new Date()
@@ -427,7 +426,8 @@ export async function GET(request: Request) {
       masterId,
       durationMinutes,
       now,
-      bookingOptions
+      bookingOptions,
+      timeZone
     )
 
     return NextResponse.json({
@@ -435,12 +435,12 @@ export async function GET(request: Request) {
       busySlots: busySlots || [],
       scheduleNotConfigured: false,
       ...(availableSlots.length === 0 && { reason: 'all_occupied' }),
-    })
+    }, { headers: NO_STORE_HEADERS })
   } catch (err) {
     console.error('Availability error:', err)
     return NextResponse.json(
       { availableSlots: [], scheduleNotConfigured: true },
-      { status: 200 }
+      { status: 200, headers: NO_STORE_HEADERS }
     )
   }
 }

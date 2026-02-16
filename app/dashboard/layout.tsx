@@ -5,6 +5,11 @@ import { useState, useEffect, useLayoutEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
 import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
+import { registerMobileMenuState } from '@/lib/ui/mobile-menu-state'
+
+// Some dev/HMR states resolve Navbar's mobile-menu helpers via this module path.
+// Re-export them to avoid runtime/import errors and keep dashboard usable.
+export { setMobileMenuState, getMobileMenuState } from '@/lib/ui/mobile-menu-state'
 
 const Sidebar = dynamic(
   () => import('@/components/admin/Sidebar').then((m) => ({ default: m.Sidebar })),
@@ -30,17 +35,6 @@ const BlockedOverlay = dynamic(
   () => import('@/components/admin/BlockedOverlay').then((m) => ({ default: m.BlockedOverlay })),
   { ssr: false }
 )
-
-// Global state for mobile menu
-let globalMobileMenuState = { isOpen: false, setIsOpen: (_open: boolean) => {} }
-
-export function setMobileMenuState(isOpen: boolean) {
-  globalMobileMenuState.setIsOpen(isOpen)
-}
-
-export function getMobileMenuState(): boolean {
-  return globalMobileMenuState.isOpen
-}
 
 export default function DashboardLayout({
   children,
@@ -108,7 +102,7 @@ export default function DashboardLayout({
 
   // useLayoutEffect: реєструємо setter ДО малювання, щоб перший клік відразу відкривав меню (без подвійного натискання)
   useLayoutEffect(() => {
-    globalMobileMenuState = { isOpen: mobileMenuOpen, setIsOpen: setMobileMenuOpen }
+    registerMobileMenuState(mobileMenuOpen, setMobileMenuOpen)
   }, [mobileMenuOpen])
 
   // Heartbeat для статусу онлайн/офлайн в Центрі управління

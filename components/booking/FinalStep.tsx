@@ -60,6 +60,10 @@ export function FinalStep({ businessId }: FinalStepProps) {
       const totalDurationFromServices = state.selectedServices.reduce((sum, s) => sum + s.duration, 0)
       const totalDuration = totalDurationFromServices > 0 ? totalDurationFromServices : 30
       const [hours, minutes] = state.selectedTime.split(':').map(Number)
+      const dateStr = format(state.selectedDate!, 'yyyy-MM-dd')
+      const slotKey = `${dateStr}T${state.selectedTime}`
+
+      // Keep legacy ISO payload for backward compatibility, but primary source is `slotKey`.
       const startTime = new Date(state.selectedDate!)
       startTime.setHours(hours, minutes, 0, 0)
       const endTime = new Date(startTime.getTime() + totalDuration * 60000)
@@ -76,6 +80,8 @@ export function FinalStep({ businessId }: FinalStepProps) {
           masterId: state.selectedMaster.id,
           clientName: state.clientName,
           clientPhone: state.clientPhone,
+          slot: slotKey,
+          durationMinutes: totalDuration,
           startTime: startTime.toISOString(),
           endTime: endTime.toISOString(),
           services: servicesPayload,

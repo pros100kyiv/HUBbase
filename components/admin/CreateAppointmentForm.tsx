@@ -425,7 +425,7 @@ export function CreateAppointmentForm({
       {clientLocked && hasClientPhone ? (
         <div className={embedded ? 'rounded-xl border border-white/10 bg-white/5 p-2.5' : 'rounded-xl border border-white/10 bg-white/5 p-3'}>
           <p className="text-xs font-medium text-gray-400 mb-1">Клієнт</p>
-          <div className="flex items-center justify-between gap-3">
+          <div className="flex items-center justify-between gap-3 max-[360px]:flex-col max-[360px]:items-stretch max-[360px]:gap-2">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center flex-shrink-0">
                 <span className="text-sm font-bold text-white">{clientInitial}</span>
@@ -435,7 +435,7 @@ export function CreateAppointmentForm({
                 <p className="text-xs text-gray-400 mt-0.5 truncate tabular-nums">{clientDisplayPhone}</p>
               </div>
             </div>
-            <div className="flex items-center gap-1.5 flex-shrink-0">
+            <div className="flex items-center gap-1.5 flex-shrink-0 max-[360px]:w-full max-[360px]:justify-end max-[360px]:flex-wrap">
               {clientDisplayPhone && (
                 <a
                   href={`tel:${clientDisplayPhone}`}
@@ -451,7 +451,7 @@ export function CreateAppointmentForm({
               )}
               <a
                 href={`/dashboard/clients?phone=${encodeURIComponent(normalizeUaPhone(clientDisplayPhone))}`}
-                className="text-xs font-medium text-primary hover:underline whitespace-nowrap ml-1"
+                className="text-xs font-medium text-primary hover:underline ml-1 max-[360px]:text-[11px]"
                 onClick={(e) => e.stopPropagation()}
               >
                 Картка
@@ -465,13 +465,13 @@ export function CreateAppointmentForm({
           open={clientDetailsOpen}
           onToggle={(e) => setClientDetailsOpen((e.currentTarget as HTMLDetailsElement).open)}
         >
-          <summary className="cursor-pointer list-none select-none flex items-center justify-between gap-3">
+          <summary className="cursor-pointer list-none select-none flex items-center justify-between gap-3 max-[360px]:flex-col max-[360px]:items-stretch max-[360px]:gap-2">
             <div className="flex items-center gap-2.5 min-w-0">
               <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center flex-shrink-0">
                 <span className="text-sm font-bold text-white">{clientInitial}</span>
               </div>
               <div className="min-w-0">
-                <p className="text-xs font-medium text-gray-400">Клієнт</p>
+                <p className="text-xs font-medium text-gray-400 whitespace-nowrap">Клієнт</p>
                 <p className="text-sm font-semibold text-white truncate">
                   {hasClientName ? formData.clientName.trim() : 'Вкажіть імʼя та телефон'}
                 </p>
@@ -480,7 +480,7 @@ export function CreateAppointmentForm({
                 )}
               </div>
             </div>
-            <div className="flex items-center gap-1.5 flex-shrink-0">
+            <div className="flex items-center gap-1.5 flex-shrink-0 max-[360px]:w-full max-[360px]:justify-end max-[360px]:flex-wrap">
               {clientLookupStatus === 'found' && (
                 <span className="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-[11px] font-medium text-emerald-200">
                   знайдено
@@ -505,7 +505,7 @@ export function CreateAppointmentForm({
               {hasClientPhone && (
                 <a
                   href={`/dashboard/clients?phone=${encodeURIComponent(normalizeUaPhone(formData.clientPhone))}`}
-                  className="text-xs font-medium text-primary hover:underline whitespace-nowrap px-2 py-1"
+                  className="text-xs font-medium text-primary hover:underline px-2 py-1 max-[360px]:px-1 max-[360px]:text-[11px]"
                   onClick={(e) => {
                     e.stopPropagation()
                   }}
@@ -513,7 +513,9 @@ export function CreateAppointmentForm({
                   Картка
                 </a>
               )}
-              <span className="text-xs text-gray-400">{clientDetailsOpen ? 'Згорнути' : 'Редагувати'}</span>
+              <span className="text-xs text-gray-400 max-[360px]:basis-full max-[360px]:text-right">
+                {clientDetailsOpen ? 'Згорнути' : 'Редагувати'}
+              </span>
             </div>
           </summary>
 

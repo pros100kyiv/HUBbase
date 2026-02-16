@@ -2,6 +2,16 @@ import { NextResponse } from 'next/server'
 import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
 import { normalizeUaPhone, isValidUaPhone } from '@/lib/utils/phone'
+import { addMinutes, addDays } from 'date-fns'
+import {
+  DEFAULT_BOOKING_OPTIONS,
+  parseBookingSlotsOptions,
+  parseBookingTimeZone,
+  slotKeyToUtcDate,
+} from '@/lib/utils/booking-settings'
+
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
 
 function normalizeServicesToJsonArrayString(services: unknown): string | null {
   // В БД зберігаємо JSON-рядок масиву ID послуг: '["id1","id2"]' або '[]' (без послуги / своя послуга)
@@ -19,9 +29,10 @@ function checkConflict(
   masterId: string,
   startTime: Date,
   endTime: Date,
-  excludeId?: string
+  excludeId?: string,
+  db: Prisma.TransactionClient | typeof prisma = prisma
 ): Promise<boolean> {
-  return prisma.appointment
+  return db.appointment
     .findFirst({
       where: {
         businessId,
@@ -47,9 +58,28 @@ export async function POST(request: Request) {
     )
   }
   try {
-    const { businessId, masterId, clientName, clientPhone, clientEmail, startTime, endTime, services, notes, customPrice, customServiceName, customService, isFromBooking } = body
+    const {
+      businessId,
+      masterId,
+      clientName,
+      clientPhone,
+      clientEmail,
+      startTime,
+      endTime,
+      slot,
+      durationMinutes,
+      services,
+      notes,
+      customPrice,
+      customServiceName,
+      customService,
+      isFromBooking,
+    } = body
 
-    if (!businessId || !masterId || !clientName || !clientPhone || !startTime || !endTime) {
+    const hasSlotPayload = typeof slot === 'string' && slot.trim()
+    const hasStartEndPayload = startTime != null && endTime != null
+
+    if (!businessId || !masterId || !clientName || !clientPhone || (!hasSlotPayload && !hasStartEndPayload)) {
       return NextResponse.json(
         { error: 'Не заповнені обов’язкові поля: бізнес, спеціаліст, ім’я, телефон, дата та час' },
         { status: 400 }
@@ -59,7 +89,7 @@ export async function POST(request: Request) {
     const bid = String(businessId)
     const mid = String(masterId)
     const [business, master] = await Promise.all([
-      prisma.business.findUnique({ where: { id: bid }, select: { id: true } }),
+      prisma.business.findUnique({ where: { id: bid }, select: { id: true, settings: true } }),
       prisma.master.findUnique({ where: { id: mid }, select: { id: true, businessId: true } }),
     ])
     if (!business) {
@@ -69,21 +99,59 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: 'Спеціаліста не знайдено або він не належить цьому бізнесу' }, { status: 400 })
     }
 
-    const start = new Date(startTime as string | number | Date)
-    const end = new Date(endTime as string | number | Date)
+    // Name kept unique to avoid any accidental duplicate bindings during bundling.
+    const isFromBookingFlag = isFromBooking === true
+    const initialStatus = isFromBookingFlag ? 'Pending' : 'Confirmed'
 
-    // Validate dates
-    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      return NextResponse.json({ error: 'Invalid date format' }, { status: 400 })
+    const settingsRaw = business?.settings ?? null
+    const bookingOptions = parseBookingSlotsOptions(settingsRaw)
+    const timeZone = parseBookingTimeZone(settingsRaw)
+
+    let start: Date
+    let end: Date
+    if (hasSlotPayload) {
+      const slotKey = String(slot).trim()
+      const rawDuration = Number(durationMinutes)
+      const dur =
+        Number.isFinite(rawDuration) && rawDuration > 0
+          ? Math.max(15, Math.min(480, Math.round(rawDuration)))
+          : 30
+      const startUtc = slotKeyToUtcDate(slotKey, timeZone)
+      if (!startUtc) {
+        return NextResponse.json(
+          { error: 'Невірний формат слоту. Очікується "YYYY-MM-DDTHH:mm".' },
+          { status: 400 }
+        )
+      }
+      start = startUtc
+      end = addMinutes(startUtc, dur)
+    } else {
+      start = new Date(startTime as string | number | Date)
+      end = new Date(endTime as string | number | Date)
     }
 
-    // Check for conflicts
-    const hasConflict = await checkConflict(bid, mid, start, end)
-    if (hasConflict) {
-      return NextResponse.json(
-        { error: 'This time slot is already booked' },
-        { status: 409 }
-      )
+    // Validate dates
+    if (isNaN(start.getTime()) || isNaN(end.getTime()) || end <= start) {
+      return NextResponse.json({ error: 'Невірна дата/час запису' }, { status: 400 })
+    }
+
+    // Server-side safety for public booking (prevents booking "in the past" due to TZ/client mismatch).
+    if (isFromBookingFlag) {
+      const nowUtc = new Date()
+      const minAllowedUtc = addMinutes(nowUtc, bookingOptions.minAdvanceBookingMinutes ?? DEFAULT_BOOKING_OPTIONS.minAdvanceBookingMinutes)
+      if (start < minAllowedUtc) {
+        return NextResponse.json(
+          { error: 'Цей час вже недоступний. Оберіть інший слот.' },
+          { status: 409 }
+        )
+      }
+      const maxAllowedUtc = addDays(nowUtc, bookingOptions.maxDaysAhead ?? DEFAULT_BOOKING_OPTIONS.maxDaysAhead)
+      if (start > maxAllowedUtc) {
+        return NextResponse.json(
+          { error: 'Запис на таку дату недоступний. Оберіть ближчу дату.' },
+          { status: 400 }
+        )
+      }
     }
 
     const normalizedPhone = normalizeUaPhone(String(clientPhone))
@@ -113,10 +181,6 @@ export async function POST(request: Request) {
         ? customServiceName.trim()
         : (typeof customService === 'string' && customService.trim() ? customService.trim() : null)
 
-    // Очікує — тільки для записів від клієнта (публічне бронювання). Записи з акаунту створюються вже підтвердженими.
-    const fromBooking = isFromBooking === true
-    const initialStatus = fromBooking ? 'Pending' : 'Confirmed'
-
     // КРИТИЧНО: гарантуємо, що клієнт з’явиться у вкладці "Клієнти"
     // Робимо upsert по @@unique([businessId, phone]) — без race condition та без дублікатів.
     const { client, appointment } = await prisma.$transaction(async (tx) => {
@@ -139,6 +203,11 @@ export async function POST(request: Request) {
         },
       })
 
+      const hasConflict = await checkConflict(bid, mid, start, end, undefined, tx)
+      if (hasConflict) {
+        throw new Error('APPOINTMENT_CONFLICT')
+      }
+
       const createdAppointment = await tx.appointment.create({
         data: {
           businessId: bid,
@@ -154,7 +223,7 @@ export async function POST(request: Request) {
           notes: typeof notes === 'string' && notes.trim() ? notes.trim() : null,
           customPrice: typeof customPrice === 'number' && customPrice > 0 ? customPrice : null,
           status: initialStatus,
-          isFromBooking: fromBooking,
+          isFromBooking: isFromBookingFlag,
         },
       })
 
@@ -192,6 +261,9 @@ export async function POST(request: Request) {
         userMessage = 'Спеціаліст, бізнес або клієнт не знайдено. Оновіть сторінку та спробуйте знову.'
         status = 400
       }
+    } else if (message === 'APPOINTMENT_CONFLICT') {
+      userMessage = 'Цей час вже зайнятий іншим клієнтом.'
+      status = 409
     } else {
       const isConflict = message.includes('Unique constraint') || message.includes('conflict')
       const isForeignKey = message.includes('Foreign key') || message.includes('Record to update not found')

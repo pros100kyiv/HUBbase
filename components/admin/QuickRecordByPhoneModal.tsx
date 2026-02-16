@@ -262,16 +262,16 @@ export function QuickRecordByPhoneModal({
                     Інший номер
                   </button>
                 </div>
-                <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-2.5 mb-3 flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5 min-w-0">
+                <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-2.5 mb-3 flex flex-col min-[380px]:flex-row min-[380px]:items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0 flex-1">
                     <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-300/20 flex items-center justify-center flex-shrink-0">
                       <span className="text-sm font-bold text-white">
                         {(client.name || '—').trim().charAt(0).toUpperCase() || '—'}
                       </span>
                     </div>
                     <div className="min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5">
-                        <p className="text-[11px] font-medium text-emerald-200/80">Клієнт</p>
+                      <div className="flex items-center gap-2 mb-0.5 min-w-0 flex-wrap">
+                        <p className="text-[11px] font-medium text-emerald-200/80 whitespace-nowrap">Клієнт</p>
                         <span
                           className={
                             clientBadge === 'found'
@@ -288,7 +288,7 @@ export function QuickRecordByPhoneModal({
                       <p className="text-xs text-emerald-100/70 mt-0.5 truncate tabular-nums">{client.phone}</p>
                     </div>
                   </div>
-                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                  <div className="flex items-center gap-1.5 flex-shrink-0 w-full justify-end min-[380px]:w-auto">
                     {client.phone && (
                       <a
                         href={`tel:${client.phone}`}
@@ -304,7 +304,7 @@ export function QuickRecordByPhoneModal({
                     )}
                     <a
                       href={`/dashboard/clients?phone=${encodeURIComponent(normalizeUaPhone(client.phone) || client.phone)}`}
-                      className="text-xs font-medium text-emerald-200 hover:text-white hover:underline whitespace-nowrap ml-1"
+                      className="text-xs font-medium text-emerald-200 hover:text-white hover:underline ml-1 max-[360px]:text-[11px]"
                       onClick={(e) => e.stopPropagation()}
                     >
                       Картка

@@ -1251,7 +1251,6 @@
     overflow-y: auto;
     overflow-x: hidden;
     overflow-wrap: break-word;
-    word-break: break-word;
     -webkit-overflow-scrolling: touch;
     scroll-behavior: smooth;
     overscroll-behavior-y: contain;
@@ -1307,7 +1306,6 @@
     min-height: 0;
     overflow-x: hidden;
     overflow-wrap: break-word;
-    word-break: break-word;
     position: relative;
     color: inherit;
     animation: modal-dialog-in 0.32s cubic-bezier(0.16, 1, 0.3, 1);
