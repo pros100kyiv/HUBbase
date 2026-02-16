@@ -258,10 +258,20 @@ export function QuickRecordByPhoneModal({
                     Інший номер
                   </button>
                 </div>
-                <div className="rounded-xl border border-white/10 bg-white/5 p-3 mb-4">
-                  <p className="text-xs font-medium text-gray-400 mb-0.5">Клієнт</p>
-                  <p className="text-sm font-medium text-white">{client.name}</p>
-                  <p className="text-xs text-gray-400 mt-0.5">{client.phone}</p>
+                <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-2.5 mb-3 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
+                    <p className="text-[11px] font-medium text-emerald-200/80 mb-0.5">Клієнт</p>
+                    <p className="text-sm font-semibold text-white truncate">{client.name}</p>
+                    <p className="text-xs text-emerald-100/70 mt-0.5 truncate">{client.phone}</p>
+                  </div>
+                  <a
+                    href={`/dashboard/clients?phone=${encodeURIComponent(normalizeUaPhone(client.phone) || client.phone)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-medium text-emerald-200 hover:text-white hover:underline whitespace-nowrap"
+                  >
+                    Картка
+                  </a>
                 </div>
                 <h2 className="modal-title text-white mb-3 text-base">Деталі запису</h2>
                 <CreateAppointmentForm

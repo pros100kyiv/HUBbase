@@ -1150,52 +1150,115 @@ export default function ClientsPage() {
                                     )
                                   }
 
-                                  return filtered.map((appointment: any) => {
+                                  // Робимо читабельнішим: групування по днях + статусний акцент (ліва смужка + крапка)
+                                  let lastDayKey = ''
+                                  return filtered.flatMap((appointment: any) => {
                                     const start = new Date(appointment.startTime)
                                     const end = new Date(appointment.endTime)
                                     const servicesList = getAppointmentServices(appointment)
                                     const total = getAppointmentTotal(appointment)
                                     const master = masters.find((m) => m.id === appointment.masterId)
-                                    return (
-                                      <div
-                                        key={appointment.id}
-                                        className="relative pl-8 pr-3 py-3 group"
-                                      >
-                                        <div className="absolute left-0 top-5 w-3 h-3 rounded-full bg-white/30 border-2 border-[#2A2A2A] group-hover:bg-emerald-400/80 transition-colors" aria-hidden />
-                                        <div className="p-3 rounded-lg border border-white/10 bg-white/5 hover:bg-white/[0.08] hover:border-white/20 transition-all">
-                                          <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+
+                                    const statusKey = normalizeStatusKey(appointment.status)
+                                    const accentBorder =
+                                      statusKey === 'Done' ? 'border-l-sky-500/80' :
+                                      statusKey === 'Confirmed' ? 'border-l-emerald-500/80' :
+                                      statusKey === 'Pending' ? 'border-l-amber-500/80' :
+                                      statusKey === 'Cancelled' ? 'border-l-rose-500/70' :
+                                      'border-l-white/20'
+                                    const dotBg =
+                                      statusKey === 'Done' ? 'bg-sky-400/80' :
+                                      statusKey === 'Confirmed' ? 'bg-emerald-400/80' :
+                                      statusKey === 'Pending' ? 'bg-amber-400/80' :
+                                      statusKey === 'Cancelled' ? 'bg-rose-400/70' :
+                                      'bg-white/30'
+
+                                    const dayKey = format(start, 'yyyy-MM-dd')
+                                    const nodes: React.ReactNode[] = []
+                                    if (dayKey !== lastDayKey) {
+                                      lastDayKey = dayKey
+                                      nodes.push(
+                                        <div key={`day-${dayKey}`} className="pl-8 pr-2 pt-3 pb-1">
+                                          <div className="inline-flex items-center gap-2 px-2 py-1 rounded-lg bg-white/5 border border-white/10">
+                                            <span className="text-xs font-semibold text-white tabular-nums">
+                                              {format(start, 'dd.MM.yyyy')}
+                                            </span>
+                                            <span className="text-[11px] text-gray-400">
+                                              {format(start, 'EEEE', { locale: uk })}
+                                            </span>
+                                          </div>
+                                        </div>
+                                      )
+                                    }
+
+                                    nodes.push(
+                                      <div key={appointment.id} className="relative pl-8 pr-2 py-2.5 group">
+                                        <div
+                                          className={cn(
+                                            'absolute left-0 top-6 w-3 h-3 rounded-full border-2 border-[var(--modal-dialog-bg)] transition-colors',
+                                            dotBg
+                                          )}
+                                          aria-hidden
+                                        />
+                                        <div
+                                          className={cn(
+                                            'p-3 rounded-xl border border-white/10 bg-white/[0.05] hover:bg-white/[0.08] hover:border-white/20 transition-all border-l-4',
+                                            accentBorder
+                                          )}
+                                        >
+                                          <div className="flex items-start justify-between gap-3">
                                             <div className="min-w-0 flex-1">
                                               <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                                                <span className="text-xs font-semibold text-white">{format(start, 'dd.MM.yyyy')}</span>
-                                                <span className="text-xs text-gray-400 tabular-nums">{format(start, 'HH:mm')}–{format(end, 'HH:mm')}</span>
-                                                <span className={cn('px-1.5 py-0.5 rounded-full text-[10px] font-medium border', getStatusColor(appointment.status))}>
+                                                <span className="text-sm font-semibold text-white tabular-nums">
+                                                  {format(start, 'HH:mm')}–{format(end, 'HH:mm')}
+                                                </span>
+                                                <span className={cn('px-2 py-0.5 rounded-full text-[11px] font-medium border', getStatusColor(appointment.status))}>
                                                   {getStatusLabel(appointment.status)}
                                                 </span>
+                                                {master && (
+                                                  <span className="text-[11px] text-gray-400 truncate">
+                                                    {master.name}
+                                                  </span>
+                                                )}
                                               </div>
-                                              {master && <p className="text-[10px] text-gray-400 mb-1.5">Спеціаліст: {master.name}</p>}
-                                              {servicesList.length > 0 && (
-                                                <div className="flex flex-wrap gap-1">
+
+                                              {servicesList.length > 0 ? (
+                                                <div className="flex flex-wrap gap-1.5">
                                                   {servicesList.map((serviceId, idx) => {
                                                     const service = services.find((s) => s.id === serviceId || s.name === serviceId)
                                                     return (
-                                                      <span key={idx} className="px-1.5 py-0.5 text-[10px] font-medium rounded bg-white/10 text-pink-400/90 border border-white/10">
-                                                        {service?.name || serviceId} {service ? `· ${Math.round(service.price)} грн` : ''}
+                                                      <span
+                                                        key={`${appointment.id}-svc-${idx}`}
+                                                        className="px-2 py-0.5 text-[11px] font-medium rounded-lg bg-white/10 text-purple-200/90 border border-white/10"
+                                                      >
+                                                        {service?.name || serviceId}
                                                       </span>
                                                     )
                                                   })}
                                                 </div>
+                                              ) : (
+                                                <p className="text-[11px] text-gray-500">Послуги не вказані</p>
                                               )}
-                                              {appointment.notes && <p className="text-[10px] text-gray-500 italic mt-1.5">{appointment.notes}</p>}
+
+                                              {appointment.notes && (
+                                                <p className="text-[11px] text-gray-500 italic mt-2 line-clamp-2">
+                                                  {appointment.notes}
+                                                </p>
+                                              )}
                                             </div>
+
                                             {total > 0 && (
-                                              <div className="text-sm font-semibold text-purple-400 flex-shrink-0 sm:text-right">
-                                                {Math.round(total)} грн
+                                              <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                                <span className="text-sm font-semibold text-purple-300 tabular-nums">
+                                                  {Math.round(total)} грн
+                                                </span>
                                               </div>
                                             )}
                                           </div>
                                         </div>
                                       </div>
                                     )
+                                    return nodes
                                   })
                                 })()}
                               </div>
@@ -1429,7 +1492,7 @@ export default function ClientsPage() {
                           </div>
                           <div className="relative max-h-[320px] overflow-y-auto">
                             <div className="absolute left-[11px] top-2 bottom-2 w-px bg-white/10 rounded-full" aria-hidden />
-                            <div className="space-y-2 relative pl-6">
+                            <div className="space-y-0 relative">
                               {(() => {
                                 const q = historySearchQuery.trim().toLowerCase()
                                 const filtered = (clientByPhoneModal.appointments || [])
@@ -1455,47 +1518,114 @@ export default function ClientsPage() {
                                     </div>
                                   )
                                 }
-                                return filtered.map((appointment: any) => {
+                                let lastDayKey = ''
+                                return filtered.flatMap((appointment: any) => {
                                   const start = new Date(appointment.startTime)
                                   const end = new Date(appointment.endTime)
                                   const servicesList = getAppointmentServices(appointment)
                                   const total = getAppointmentTotal(appointment)
                                   const master = masters.find((m) => m.id === appointment.masterId)
-                                  return (
-                                    <div key={appointment.id} className="relative group">
-                                      <div className="absolute -left-6 top-5 w-3 h-3 rounded-full bg-white/30 border-2 border-[var(--modal-dialog-bg)] group-hover:bg-emerald-400/80 transition-colors" aria-hidden />
-                                      <div className="modal-list-card">
-                                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-2">
+
+                                  const statusKey = normalizeStatusKey(appointment.status)
+                                  const accentBorder =
+                                    statusKey === 'Done' ? 'border-l-sky-500/80' :
+                                    statusKey === 'Confirmed' ? 'border-l-emerald-500/80' :
+                                    statusKey === 'Pending' ? 'border-l-amber-500/80' :
+                                    statusKey === 'Cancelled' ? 'border-l-rose-500/70' :
+                                    'border-l-white/20'
+                                  const dotBg =
+                                    statusKey === 'Done' ? 'bg-sky-400/80' :
+                                    statusKey === 'Confirmed' ? 'bg-emerald-400/80' :
+                                    statusKey === 'Pending' ? 'bg-amber-400/80' :
+                                    statusKey === 'Cancelled' ? 'bg-rose-400/70' :
+                                    'bg-white/30'
+
+                                  const dayKey = format(start, 'yyyy-MM-dd')
+                                  const nodes: React.ReactNode[] = []
+                                  if (dayKey !== lastDayKey) {
+                                    lastDayKey = dayKey
+                                    nodes.push(
+                                      <div key={`day-${dayKey}`} className="pl-8 pr-2 pt-3 pb-1">
+                                        <div className="inline-flex items-center gap-2 px-2 py-1 rounded-lg bg-white/5 border border-white/10">
+                                          <span className="text-xs font-semibold text-white tabular-nums">
+                                            {format(start, 'dd.MM.yyyy')}
+                                          </span>
+                                          <span className="text-[11px] text-gray-400">
+                                            {format(start, 'EEEE', { locale: uk })}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    )
+                                  }
+
+                                  nodes.push(
+                                    <div key={appointment.id} className="relative pl-8 pr-2 py-2.5 group">
+                                      <div
+                                        className={cn(
+                                          'absolute left-0 top-6 w-3 h-3 rounded-full border-2 border-[var(--modal-dialog-bg)] transition-colors',
+                                          dotBg
+                                        )}
+                                        aria-hidden
+                                      />
+                                      <div
+                                        className={cn(
+                                          'p-3 rounded-xl border border-white/10 bg-white/[0.05] hover:bg-white/[0.08] hover:border-white/20 transition-all border-l-4',
+                                          accentBorder
+                                        )}
+                                      >
+                                        <div className="flex items-start justify-between gap-3">
                                           <div className="min-w-0 flex-1">
                                             <div className="flex flex-wrap items-center gap-2 mb-1.5">
-                                              <span className="text-sm font-semibold text-white">{format(start, 'dd.MM.yyyy')}</span>
-                                              <span className="text-xs text-gray-400 tabular-nums">{format(start, 'HH:mm')}–{format(end, 'HH:mm')}</span>
-                                              <span className={cn('px-2 py-0.5 rounded-lg text-xs font-medium', getStatusColor(appointment.status))}>
+                                              <span className="text-sm font-semibold text-white tabular-nums">
+                                                {format(start, 'HH:mm')}–{format(end, 'HH:mm')}
+                                              </span>
+                                              <span className={cn('px-2 py-0.5 rounded-full text-[11px] font-medium border', getStatusColor(appointment.status))}>
                                                 {getStatusLabel(appointment.status)}
                                               </span>
+                                              {master && (
+                                                <span className="text-[11px] text-gray-400 truncate">
+                                                  {master.name}
+                                                </span>
+                                              )}
                                             </div>
-                                            {master && <p className="text-xs text-gray-400 mb-1.5">Спеціаліст: {master.name}</p>}
-                                            {servicesList.length > 0 && (
-                                              <div className="flex flex-wrap gap-1">
+
+                                            {servicesList.length > 0 ? (
+                                              <div className="flex flex-wrap gap-1.5">
                                                 {servicesList.map((serviceId, idx) => {
                                                   const service = services.find((s) => s.id === serviceId || s.name === serviceId)
                                                   return (
-                                                    <span key={idx} className="px-2 py-0.5 text-xs font-medium rounded-lg bg-purple-500/20 text-purple-300 border border-purple-500/30">
-                                                      {service?.name || serviceId} {service ? `· ${Math.round(service.price)} грн` : ''}
+                                                    <span
+                                                      key={`${appointment.id}-svc-${idx}`}
+                                                      className="px-2 py-0.5 text-[11px] font-medium rounded-lg bg-white/10 text-purple-200/90 border border-white/10"
+                                                    >
+                                                      {service?.name || serviceId}
                                                     </span>
                                                   )
                                                 })}
                                               </div>
+                                            ) : (
+                                              <p className="text-[11px] text-gray-500">Послуги не вказані</p>
                                             )}
-                                            {appointment.notes && <p className="text-xs text-gray-500 italic mt-1.5">{appointment.notes}</p>}
+
+                                            {appointment.notes && (
+                                              <p className="text-[11px] text-gray-500 italic mt-2 line-clamp-2">
+                                                {appointment.notes}
+                                              </p>
+                                            )}
                                           </div>
+
                                           {total > 0 && (
-                                            <div className="text-sm font-semibold modal-value-money flex-shrink-0 sm:text-right">{Math.round(total)} грн</div>
+                                            <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                                              <span className="text-sm font-semibold text-purple-300 tabular-nums">
+                                                {Math.round(total)} грн
+                                              </span>
+                                            </div>
                                           )}
                                         </div>
                                       </div>
                                     </div>
                                   )
+                                  return nodes
                                 })
                               })()}
                             </div>
