@@ -15,6 +15,17 @@ interface AIChatWidgetProps {
   className?: string
 }
 
+const MicIcon = ({ className = 'w-4 h-4' }: { className?: string }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      strokeWidth={2}
+      d="M12 14a3 3 0 003-3V5a3 3 0 10-6 0v6a3 3 0 003 3zm6-3a6 6 0 01-12 0m6 7v3m-4 0h8"
+    />
+  </svg>
+)
+
 export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [messages, setMessages] = useState<Message[]>([])
@@ -24,9 +35,23 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
     color: 'red',
     title: 'AI: unknown',
   })
+  const [voiceLang, setVoiceLang] = useState<'uk-UA' | 'ru-RU'>(() => {
+    try {
+      const raw = localStorage.getItem('ai_voice_lang')
+      return raw === 'ru-RU' ? 'ru-RU' : 'uk-UA'
+    } catch {
+      return 'uk-UA'
+    }
+  })
+  const [sttSupported, setSttSupported] = useState<boolean>(false)
+  const [sttListening, setSttListening] = useState<boolean>(false)
+  const [sttDraft, setSttDraft] = useState<string>('')
   const [sessionId] = useState(() => `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`)
   const messagesEndRef = useRef<HTMLDivElement>(null)
   const sendLockRef = useRef(false)
+  const recognitionRef = useRef<any>(null)
+  const sttFinalRef = useRef<string>('')
+  const sttShouldSendOnEndRef = useRef<boolean>(false)
   
   useEffect(() => {
     if (isOpen && businessId) {
@@ -63,6 +88,25 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
   }, [messages])
 
+  useEffect(() => {
+    // Web Speech API support varies by browser (Chrome/Edge are best).
+    try {
+      const w = window as any
+      const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition
+      setSttSupported(!!Ctor)
+    } catch {
+      setSttSupported(false)
+    }
+  }, [])
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('ai_voice_lang', voiceLang)
+    } catch {
+      // ignore
+    }
+  }, [voiceLang])
+
   const resolveBusinessId = (): string => {
     const fromProp = (businessId || '').trim()
     if (fromProp) return fromProp
@@ -81,24 +125,130 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
     if (typeof err === 'string') return err
     return 'Невідома помилка'
   }
-  
-  const handleSend = async () => {
+
+  const ensureRecognition = (): any | null => {
+    if (recognitionRef.current) return recognitionRef.current
+    try {
+      const w = window as any
+      const Ctor = w.SpeechRecognition || w.webkitSpeechRecognition
+      if (!Ctor) return null
+      const recognition = new Ctor()
+      recognition.continuous = false
+      recognition.interimResults = true
+      recognition.maxAlternatives = 1
+      recognitionRef.current = recognition
+      return recognition
+    } catch {
+      return null
+    }
+  }
+
+  const stopListening = () => {
+    sttShouldSendOnEndRef.current = true
+    try {
+      recognitionRef.current?.stop?.()
+    } catch {
+      // ignore
+    }
+  }
+
+  const startListening = () => {
+    if (!sttSupported || sttListening) return
+    const recognition = ensureRecognition()
+    if (!recognition) {
+      setSttSupported(false)
+      return
+    }
+
+    setSttDraft('')
+    sttFinalRef.current = ''
+    sttShouldSendOnEndRef.current = false
+
+    recognition.lang = voiceLang
+
+    recognition.onresult = (event: any) => {
+      try {
+        let interim = ''
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          const res = event.results[i]
+          const transcript = String(res?.[0]?.transcript || '')
+          if (!transcript) continue
+          if (res.isFinal) sttFinalRef.current += `${transcript} `
+          else interim += transcript
+        }
+        const nextDraft = `${sttFinalRef.current}${interim}`.trim()
+        setSttDraft(nextDraft)
+      } catch {
+        // ignore
+      }
+    }
+
+    recognition.onerror = (event: any) => {
+      setSttListening(false)
+      sttShouldSendOnEndRef.current = false
+      const err = typeof event?.error === 'string' ? event.error : 'speech_error'
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `stt_error_${Date.now()}`,
+          role: 'assistant',
+          message:
+            err === 'not-allowed' || err === 'service-not-allowed'
+              ? 'Немає доступу до мікрофона. Дозволь мікрофон у браузері.'
+              : 'Не вдалось розпізнати голос. Спробуй ще раз або напиши текстом.',
+          timestamp: new Date(),
+        },
+      ])
+    }
+
+    recognition.onend = async () => {
+      setSttListening(false)
+      const shouldSend = sttShouldSendOnEndRef.current
+      sttShouldSendOnEndRef.current = false
+
+      const finalText = String(sttFinalRef.current || '').trim()
+      const draft = String(sttDraft || '').trim()
+      const text = finalText || draft
+      sttFinalRef.current = ''
+      setSttDraft('')
+
+      if (shouldSend && text) {
+        await sendMessage(text)
+      }
+    }
+
+    try {
+      setSttListening(true)
+      recognition.start()
+    } catch (e) {
+      setSttListening(false)
+      setMessages((prev) => [
+        ...prev,
+        {
+          id: `stt_start_error_${Date.now()}`,
+          role: 'assistant',
+          message: `Голос недоступний: ${toErrorText(e)}`,
+          timestamp: new Date(),
+        },
+      ])
+    }
+  }
+
+  const sendMessage = async (rawText: string) => {
+    const userMessage = (rawText || '').trim()
     // Prevent duplicate submissions (Enter repeat / double click) before React state updates.
-    if (!input.trim() || isLoading || sendLockRef.current) return
-    
-    const userMessage = input.trim()
-    setInput('')
-    
+    if (!userMessage || isLoading || sendLockRef.current) return
+
     const userMsg: Message = {
       id: `user_${Date.now()}`,
       role: 'user',
       message: userMessage,
-      timestamp: new Date()
+      timestamp: new Date(),
     }
-    setMessages(prev => [...prev, userMsg])
+    setMessages((prev) => [...prev, userMsg])
     setIsLoading(true)
     sendLockRef.current = true
-    
+
     try {
       const resolvedBusinessId = resolveBusinessId()
       if (!resolvedBusinessId) {
@@ -111,10 +261,10 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
         body: JSON.stringify({
           businessId: resolvedBusinessId,
           message: userMessage,
-          sessionId
-        })
+          sessionId,
+        }),
       })
-      
+
       let data: any = null
       try {
         data = await response.json()
@@ -126,7 +276,7 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
         const serverError = data?.error || `HTTP ${response.status}`
         throw new Error(serverError)
       }
-      
+
       if (data.success) {
         if (data.ai && typeof data.ai === 'object') {
           const hasKey = data.ai.hasKey === true
@@ -134,20 +284,21 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
           const reason = typeof data.ai.reason === 'string' ? data.ai.reason : null
           setAiIndicator({
             color: indicator,
-            title: indicator === 'green'
-              ? 'AI: using key'
-              : hasKey
-                ? `AI: key present, not used (${reason || 'fallback'})`
-                : 'AI: key missing',
+            title:
+              indicator === 'green'
+                ? 'AI: using key'
+                : hasKey
+                  ? `AI: key present, not used (${reason || 'fallback'})`
+                  : 'AI: key missing',
           })
         }
         const aiMsg: Message = {
           id: `ai_${Date.now()}`,
           role: 'assistant',
           message: data.message,
-          timestamp: new Date()
+          timestamp: new Date(),
         }
-        setMessages(prev => [...prev, aiMsg])
+        setMessages((prev) => [...prev, aiMsg])
       } else {
         throw new Error(data.error || 'Failed to get response')
       }
@@ -156,13 +307,20 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
         id: `error_${Date.now()}`,
         role: 'assistant',
         message: `Вибачте, сталася помилка: ${toErrorText(error)}`,
-        timestamp: new Date()
+        timestamp: new Date(),
       }
-      setMessages(prev => [...prev, errorMsg])
+      setMessages((prev) => [...prev, errorMsg])
     } finally {
       setIsLoading(false)
       sendLockRef.current = false
     }
+  }
+
+  const handleSend = async () => {
+    const userMessage = input.trim()
+    if (!userMessage) return
+    setInput('')
+    await sendMessage(userMessage)
   }
   
   return (
@@ -263,16 +421,67 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
                     handleSend()
                   }
                 }}
-                placeholder="Напишіть повідомлення..."
+                placeholder={sttListening ? 'Слухаю…' : 'Напишіть повідомлення...'}
                 className="flex-1 px-3 py-2.5 md:py-2 text-sm md:text-xs border border-gray-300 dark:border-gray-600 rounded-candy-xs bg-white dark:bg-gray-700 text-gray-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-candy-purple min-h-[44px] md:min-h-0"
-                disabled={isLoading}
+                disabled={isLoading || sttListening}
               />
               <button
+                type="button"
+                disabled={!sttSupported || isLoading}
+                onPointerDown={(e) => {
+                  e.preventDefault()
+                  try {
+                    ;(e.currentTarget as any).setPointerCapture?.(e.pointerId)
+                  } catch {
+                    // ignore
+                  }
+                  startListening()
+                }}
+                onPointerUp={(e) => {
+                  e.preventDefault()
+                  stopListening()
+                }}
+                onPointerCancel={(e) => {
+                  e.preventDefault()
+                  stopListening()
+                }}
+                title={sttSupported ? 'Голос (натисни і говори)' : 'Голос доступний у Chrome/Edge'}
+                className={`px-3 py-2 rounded-candy-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:shadow-soft-lg transition-all ${
+                  sttListening ? 'ring-2 ring-candy-purple' : ''
+                } ${!sttSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
+              >
+                <MicIcon className="w-4 h-4" />
+              </button>
+              <button
                 onClick={handleSend}
-                disabled={!input.trim() || isLoading}
+                disabled={!input.trim() || isLoading || sttListening}
                 className="px-4 py-2 bg-gradient-to-r from-candy-blue to-candy-purple text-white rounded-candy-xs disabled:opacity-50 disabled:cursor-not-allowed hover:shadow-soft-lg transition-all"
               >
                 <SendIcon className="w-4 h-4" />
+              </button>
+            </div>
+            {sttListening && sttDraft && (
+              <div className="mt-2 text-[11px] text-gray-500 dark:text-gray-400 whitespace-pre-wrap">
+                {sttDraft}
+              </div>
+            )}
+            <div className="mt-2 flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
+              <span>Voice:</span>
+              <button
+                type="button"
+                className={`px-2 py-1 rounded border border-gray-300 dark:border-gray-600 ${voiceLang === 'uk-UA' ? 'bg-gray-200 dark:bg-gray-600' : ''}`}
+                onClick={() => setVoiceLang('uk-UA')}
+                disabled={sttListening}
+              >
+                UA
+              </button>
+              <button
+                type="button"
+                className={`px-2 py-1 rounded border border-gray-300 dark:border-gray-600 ${voiceLang === 'ru-RU' ? 'bg-gray-200 dark:bg-gray-600' : ''}`}
+                onClick={() => setVoiceLang('ru-RU')}
+                disabled={sttListening}
+              >
+                RU
               </button>
             </div>
           </div>
