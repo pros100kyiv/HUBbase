@@ -205,7 +205,14 @@ function getDateKeyFromRelativeOrExplicit(message: string): string | null {
 }
 
 function extractPhoneOnlyMessage(message: string): string | null {
-  const raw = message.trim()
+  let raw = message.trim()
+  // UI can sometimes send/echo JSON-stringified values: `"098..."`.
+  if (
+    (raw.startsWith('"') && raw.endsWith('"') && raw.length >= 2) ||
+    (raw.startsWith("'") && raw.endsWith("'") && raw.length >= 2)
+  ) {
+    raw = raw.slice(1, -1).trim()
+  }
   // Phone-only messages (no extra words) are common follow-ups.
   if (!/^[+0-9][0-9+\s()-]{6,}$/.test(raw)) return null
   const normalized = normalizeUaPhone(raw)
