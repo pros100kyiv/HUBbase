@@ -180,6 +180,108 @@ function extractMasterNameCandidate(message: string): string | null {
   return null
 }
 
+function extractTimeCandidate(message: string): { hh: string; mm: string } | null {
+  // 10:00 / 10 00 / 10.00
+  const m1 = message.match(/\b([01]?\d|2[0-3])\s*[:.]\s*([0-5]\d)\b/)
+  if (m1?.[1] && m1?.[2]) {
+    return { hh: String(m1[1]).padStart(2, '0'), mm: String(m1[2]).padStart(2, '0') }
+  }
+  const m2 = message.match(/\b([01]?\d|2[0-3])\s+([0-5]\d)\b/)
+  if (m2?.[1] && m2?.[2]) {
+    return { hh: String(m2[1]).padStart(2, '0'), mm: String(m2[2]).padStart(2, '0') }
+  }
+  return null
+}
+
+function getDateKeyFromRelativeOrExplicit(message: string): string | null {
+  const lower = message.toLowerCase()
+  if (lower.includes('сьогодні') || lower.includes('today')) return new Date().toISOString().slice(0, 10)
+  if (lower.includes('завтра') || lower.includes('tomorrow')) {
+    const d = new Date()
+    d.setDate(d.getDate() + 1)
+    return d.toISOString().slice(0, 10)
+  }
+  return extractDateKeyCandidate(message)
+}
+
+function extractPhoneOnlyMessage(message: string): string | null {
+  const raw = message.trim()
+  // Phone-only messages (no extra words) are common follow-ups.
+  if (!/^[+0-9][0-9+\s()-]{6,}$/.test(raw)) return null
+  const normalized = normalizeUaPhone(raw)
+  return isValidUaPhone(normalized) ? normalized : null
+}
+
+function tryBuildAppointmentFromRecentHistory(params: {
+  messagePhone: string
+  history: Array<{ role: string; message: string }>
+  business: { services: Array<{ name: string }> }
+}): AgentDecision | null {
+  const { messagePhone, history, business } = params
+  const lastAssistant = [...history].reverse().find((m) => m.role === 'assistant')?.message || ''
+  const lastUser = [...history].reverse().find((m) => m.role === 'user')?.message || ''
+
+  const a = lastAssistant.toLowerCase()
+  const u = lastUser.toLowerCase()
+  const askedForPhone = a.includes('номер') || a.includes('телефон') || a.includes('phone')
+  const looksLikeBooking = u.includes('запиш') || u.includes('запис') || u.includes('appointment')
+  if (!askedForPhone || !looksLikeBooking) return null
+
+  const dateKey = getDateKeyFromRelativeOrExplicit(lastUser)
+  const time = extractTimeCandidate(lastUser)
+  if (!dateKey || !time) return null
+
+  const doIdx = lastUser.toLowerCase().indexOf('до ')
+  if (doIdx === -1) return null
+  const tail = lastUser.slice(doIdx + 3).trim()
+  if (!tail) return null
+
+  const services = [...business.services].sort((a1, a2) => a2.name.length - a1.name.length)
+  let serviceName: string | null = null
+  let masterPart = tail
+  for (const s of services) {
+    const sLower = s.name.toLowerCase()
+    const idx = tail.toLowerCase().indexOf(sLower)
+    if (idx !== -1) {
+      serviceName = s.name
+      masterPart = tail.slice(0, idx).trim()
+      break
+    }
+  }
+
+  const masterName = masterPart.trim()
+  if (!masterName) return null
+
+  let clientName = lastUser
+  clientName = clientName.replace(/запиш(?:и|іть)\s+/i, '')
+  clientName = clientName.replace(/\bна\s+завтра\b/gi, '')
+  clientName = clientName.replace(/\bна\s+сьогодні\b/gi, '')
+  clientName = clientName.replace(new RegExp(`\\b${dateKey}\\b`, 'g'), '')
+  clientName = clientName.replace(/\bна\s+([01]?\d|2[0-3])\s*[:.]\s*([0-5]\d)\b/i, '')
+  clientName = clientName.replace(/\bна\s+([01]?\d|2[0-3])\s+([0-5]\d)\b/i, '')
+  const cutIdx = clientName.toLowerCase().indexOf('до ')
+  if (cutIdx !== -1) clientName = clientName.slice(0, cutIdx)
+  clientName = clientName.replace(/[,\.\!]+/g, ' ').replace(/\s+/g, ' ').trim()
+  const nameParts = clientName.split(' ').filter(Boolean)
+  const finalClientName = nameParts.slice(0, 2).join(' ').trim()
+  if (!finalClientName) return null
+
+  const startTime = `${dateKey}T${time.hh}:${time.mm}`
+  return {
+    action: 'create_appointment',
+    reply: 'Ок, створюю запис.',
+    confidence: 0.75,
+    needsConfirmation: false,
+    payload: {
+      clientName: finalClientName,
+      clientPhone: messagePhone,
+      masterName,
+      ...(serviceName ? { serviceNames: [serviceName] } : {}),
+      startTime,
+    } as any,
+  }
+}
+
 function formatMoneyUAH(value: unknown): string {
   const n = typeof value === 'number' ? value : Number(value || 0)
   if (!Number.isFinite(n)) return '0'
@@ -1983,9 +2085,17 @@ async function executeAgentAction(params: {
     const serviceIds = Array.isArray(payload.serviceIds)
       ? payload.serviceIds.filter((s): s is string => typeof s === 'string')
       : []
+    const serviceNames = Array.isArray((payload as any).serviceNames)
+      ? ((payload as any).serviceNames as unknown[]).filter((s): s is string => typeof s === 'string')
+      : []
+    const byNames = serviceNames
+      .map((n) => n.toLowerCase())
+      .map((n) => business.services.find((s) => s.name.toLowerCase().includes(n))?.id)
+      .filter((x): x is string => !!x)
     const validServiceIds = serviceIds.filter((id) => business.services.some((s) => s.id === id))
-    const selectedService = validServiceIds.length > 0
-      ? business.services.find((s) => s.id === validServiceIds[0])
+    const mergedServiceIds = [...validServiceIds, ...byNames].filter((id, i, arr) => arr.indexOf(id) === i)
+    const selectedService = mergedServiceIds.length > 0
+      ? business.services.find((s) => s.id === mergedServiceIds[0])
       : undefined
     const durationFromPayload =
       typeof payload.durationMinutes === 'number' && payload.durationMinutes > 0
@@ -2038,7 +2148,7 @@ async function executeAgentAction(params: {
         startTime,
         endTime,
         status: 'Confirmed',
-        services: JSON.stringify(validServiceIds),
+        services: JSON.stringify(mergedServiceIds),
         notes: safeText(payload.notes),
         customServiceName: safeText(payload.customServiceName),
         customPrice: typeof payload.customPrice === 'number' ? payload.customPrice : null,
@@ -2152,6 +2262,22 @@ export async function POST(request: Request) {
       }) || null
     if (decision) {
       decisionSource = 'explicit'
+    }
+
+    // If user sends only a phone as a follow-up, try to finalize booking from previous context.
+    if (!decision) {
+      const phoneOnly = extractPhoneOnlyMessage(message)
+      if (phoneOnly) {
+        const fromHistory = tryBuildAppointmentFromRecentHistory({
+          messagePhone: phoneOnly,
+          history,
+          business: { services: business.services.map((s) => ({ name: s.name })) },
+        })
+        if (fromHistory) {
+          decision = fromHistory
+          decisionSource = 'heuristic'
+        }
+      }
     }
 
     if (!decision && aiService && now < cooldownUntil) {
