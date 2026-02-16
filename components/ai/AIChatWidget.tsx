@@ -322,6 +322,15 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
     }
   }
 
+  const quickHints: Array<{ label: string; text: string }> = [
+    { label: 'Огляд', text: 'огляд кабінету' },
+    { label: 'Записи сьогодні', text: 'скільки записів сьогодні' },
+    { label: 'Хто працює', text: 'хто сьогодні працює' },
+    { label: 'Вільні слоти', text: 'покажи вільні слоти на завтра' },
+    { label: 'Payments 30д', text: 'payments за 30 днів' },
+    { label: 'Інбокс', text: 'покажи інбокс' },
+  ]
+
   const handleSend = async () => {
     const userMessage = input.trim()
     if (!userMessage) return
@@ -464,6 +473,23 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
                 {sttDraft}
               </div>
             )}
+            <div className="mt-2 flex flex-wrap gap-2">
+              {quickHints.map((h) => (
+                <button
+                  key={h.label}
+                  type="button"
+                  disabled={isLoading || sttListening}
+                  onClick={() => {
+                    setInput('')
+                    sendMessage(h.text)
+                  }}
+                  className="text-[11px] px-2 py-1 rounded-full border border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                  title={h.text}
+                >
+                  {h.label}
+                </button>
+              ))}
+            </div>
             <div className="mt-2 flex items-center gap-2 text-[11px] text-gray-500 dark:text-gray-400">
               <span>Voice:</span>
               <button

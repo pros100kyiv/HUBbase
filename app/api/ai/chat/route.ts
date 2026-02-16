@@ -299,7 +299,32 @@ function formatMoneyUAH(value: unknown): string {
 function formatToolResultToReply(result: { tool: string; data: any }): string {
   const tool = result?.tool
   const data = result?.data
-  const json = () => truncateText(JSON.stringify(data ?? null), 900)
+  const looksLikeJson = (s: string) => {
+    const t = (s || '').trim()
+    return (t.startsWith('{') && t.endsWith('}')) || (t.startsWith('[') && t.endsWith(']'))
+  }
+
+  const summarizeUnknown = (): string => {
+    if (data === null || data === undefined) return 'Готово.'
+    if (typeof data === 'string') {
+      const t = data.trim()
+      if (!t) return 'Готово.'
+      if (looksLikeJson(t)) {
+        return 'Ок, отримав дані. Уточни, що саме показати (наприклад: "коротко", "списком", "тільки суми/кількість").'
+      }
+      return truncateText(t, 500)
+    }
+    if (Array.isArray(data)) {
+      const n = data.length
+      return `Ок, отримав дані (${n} шт.). Уточни, що саме показати.`
+    }
+    if (typeof data === 'object') {
+      const keys = Object.keys(data || {}).slice(0, 10)
+      const k = keys.length ? keys.join(', ') : 'без полів'
+      return `Ок, отримав дані (${k}). Уточни, що саме показати.`
+    }
+    return 'Ок, отримав дані. Уточни, що саме показати.'
+  }
 
   try {
     if (tool === 'who_working') {
@@ -365,7 +390,7 @@ function formatToolResultToReply(result: { tool: string; data: any }): string {
     // ignore and fall back to generic JSON
   }
 
-  return `Ок. Дані: ${json()}`
+  return summarizeUnknown()
 }
 
 async function tryHeuristicDataReply(params: {
@@ -2466,8 +2491,20 @@ export async function POST(request: Request) {
     })
   } catch (error) {
     console.error('AI Chat API error:', error)
+    const raw = error instanceof Error ? error.message : 'Failed to process chat message'
+    const t = String(raw || '').toLowerCase()
+    const safe =
+      t.includes('prisma') ||
+      t.includes('database') ||
+      t.includes('neon.tech') ||
+      t.includes("can't reach") ||
+      t.includes('econnrefused') ||
+      t.includes('etimedout') ||
+      t.includes('invocation')
+        ? 'Сервіс тимчасово недоступний. Спробуйте через кілька хвилин.'
+        : raw
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to process chat message' },
+      { error: safe },
       { status: 500 }
     )
   }
