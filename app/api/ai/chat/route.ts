@@ -2234,7 +2234,7 @@ export async function POST(request: Request) {
       return NextResponse.json({
         success: true,
         message:
-          'AI чат вимкнений для цього акаунта. Увімкнути/вимкнути AI можна тільки в Центрі управління (адмін).',
+          'Зараз я офлайн — в мене обідня перерва. Зайди, будь ласка, трохи пізніше.\n\nПідказка: перевір у Центрі управління, що AI увімкнений.',
         action: { action: 'reply', status: 'ai_disabled' },
         ai: {
           hasKey: hasAiKey,
@@ -2246,6 +2246,22 @@ export async function POST(request: Request) {
     }
 
     const effectiveApiKey = business.aiApiKey?.trim() || globalAiApiKey || null
+    if (!effectiveApiKey) {
+      // User request: disable "no key" assistant mode. When no key, act "offline".
+      return NextResponse.json({
+        success: true,
+        message:
+          'Зараз я офлайн — в мене обідня перерва. Зайди, будь ласка, трохи пізніше.\n\nПідказка: підключи AI ключ у Центрі управління.',
+        action: { action: 'reply', status: 'key_missing' },
+        ai: {
+          hasKey: false,
+          indicator: 'red',
+          usedAi: false,
+          reason: 'key_missing',
+        },
+      })
+    }
+
     const chatHistory = await prisma.aIChatMessage.findMany({
       where: { businessId, sessionId: sessionId || 'default' },
       orderBy: { createdAt: 'asc' },
@@ -2314,7 +2330,14 @@ export async function POST(request: Request) {
 
     if (!decision && aiService && now < cooldownUntil) {
       aiUnavailableReason = `AI rate-limited (cooldown ${Math.ceil((cooldownUntil - now) / 1000)}s)`
-      decision = null
+      // User request: when AI is offline/rate-limited, do not attempt heuristics; return a simple message.
+      decision = {
+        action: 'reply',
+        reply: 'Зараз я офлайн — в мене обідня перерва. Зайди, будь ласка, трохи пізніше.',
+        confidence: 1,
+        payload: { mode: 'offline', reason: 'rate_limited' },
+      }
+      decisionSource = 'fallback'
     } else if (!decision && aiService) {
       try {
         // Single LLM request. If it asks for a tool, run it and format reply server-side.
@@ -2353,41 +2376,16 @@ export async function POST(request: Request) {
       aiUnavailableReason = 'AI API key is not configured'
     }
 
-    if (!decision) {
-      // If LLM is rate-limited/misconfigured, still answer common "dashboard" questions via direct DB/tools.
-      const heuristic = await tryHeuristicDataReply({ businessId, message, hasAiKey: !!effectiveApiKey })
-      if (heuristic) {
-        decision = {
-          action: 'reply',
-          reply: heuristic.reply,
-          confidence: 0.65,
-          payload: { ...heuristic.meta },
-        }
-        decisionSource = 'heuristic'
-      }
-    }
-
-    if (!decision && isKeyMissing) {
-      // No key configured: don't reply with a generic "AI unavailable".
-      // Provide a "cabinet assistant" menu so user can keep working.
+    if (!decision && aiUnavailableReason) {
+      // User request: when AI is offline (quota/key/network), do not attempt DB-heuristics.
       decision = {
         action: 'reply',
         reply:
-          'AI ключ не підключений, тому "розумні" відповіді можуть бути обмежені. Але я можу напряму з кабінету показати дані:\n' +
-          '- "огляд кабінету" (клієнти/майстри/послуги/записи)\n' +
-          '- "KPI за 7 днів"\n' +
-          '- "payments за 30 днів"\n' +
-          '- "скільки записів сьогодні" або "покажи записи на 7 днів"\n' +
-          '- "інбокс unread" або "покажи інбокс"\n' +
-          '- "покажи нотатки сьогодні", "нагадування pending"\n' +
-          '- "знайди клієнта Іван", "клієнт +380...", "історія клієнта +380..."\n' +
-          '- "покажи сегменти"\n' +
-          '- "топ послуг за 30 днів", "топ майстрів за 30 днів"\n\n' +
-          'Напиши, що саме потрібно — і я витягну це з бази.',
+          'Зараз я офлайн — в мене обідня перерва. Зайди, будь ласка, трохи пізніше.\n\nПідказка: якщо це повторюється — перевір ключ/ліміти у Центрі управління.',
         confidence: 1,
-        payload: { mode: 'no_key_fallback' },
+        payload: { mode: 'offline', reason: 'ai_unavailable' },
       }
-      decisionSource = 'heuristic'
+      decisionSource = 'fallback'
     }
 
     if (!decision) {
