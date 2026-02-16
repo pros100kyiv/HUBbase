@@ -56,9 +56,12 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
   })
   const [ttsEnabled, setTtsEnabled] = useState<boolean>(() => {
     try {
-      return localStorage.getItem('ai_tts_enabled') === '1'
+      const raw = localStorage.getItem('ai_tts_enabled')
+      // "Out of the box": default ON, but user can toggle and we persist it.
+      if (raw === null) return true
+      return raw === '1'
     } catch {
-      return false
+      return true
     }
   })
   const [ttsSupported, setTtsSupported] = useState<boolean>(false)
