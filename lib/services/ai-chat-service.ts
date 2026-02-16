@@ -107,10 +107,47 @@ ${context.location ? `Адреса: ${context.location}` : ''}
   }
 
   private extractFirstJsonObject(text: string): string | null {
-    const start = text.indexOf('{')
-    const end = text.lastIndexOf('}')
-    if (start === -1 || end === -1 || end <= start) return null
-    return text.slice(start, end + 1)
+    if (!text) return null
+    const cleaned = String(text)
+      .trim()
+      // Model sometimes wraps JSON in fences even when instructed not to.
+      .replace(/^```(?:json)?\s*/i, '')
+      .replace(/\s*```$/i, '')
+
+    const start = cleaned.indexOf('{')
+    if (start === -1) return null
+
+    // Balanced-brace extraction (ignores braces inside JSON strings).
+    let depth = 0
+    let inString = false
+    let escaped = false
+    for (let i = start; i < cleaned.length; i++) {
+      const ch = cleaned[i]!
+      if (inString) {
+        if (escaped) {
+          escaped = false
+          continue
+        }
+        if (ch === '\\') {
+          escaped = true
+          continue
+        }
+        if (ch === '"') inString = false
+        continue
+      }
+
+      if (ch === '"') {
+        inString = true
+        continue
+      }
+      if (ch === '{') depth += 1
+      if (ch === '}') depth -= 1
+      if (depth === 0) {
+        return cleaned.slice(start, i + 1)
+      }
+    }
+
+    return null
   }
 
   private parseAgentDecision(rawText: string): AgentDecision | null {
@@ -254,7 +291,7 @@ ${context.location ? `Адреса: ${context.location}` : ''}
 - Завжди намагайся "закривати" задачі по кабінету: записи, клієнти, платежі, інбокс, нотатки/нагадування, сегменти, KPI.
 - Якщо запит нечіткий — задай ОДНЕ уточнення або зроби tool_call для швидких цифр і потім уточни.
 - Якщо даних не вистачає для дії, став action="reply" та попроси відсутні поля.
-- Нічого не вигадуй про час, майстрів або послуги.
+- НІКОЛИ не вигадуй: імена майстрів/клієнтів, час, дні тижня, послуги. Якщо не вказано — став action="reply" і задай 1 уточнення.
 - confidence від 0 до 1.
 - Якщо потрібно більше даних — використовуй tool_call замість довгих пояснень.
 - Не проси "всю базу" — запитуй агрегати або top-N.
@@ -293,7 +330,7 @@ ${context.location ? `Адреса: ${context.location}` : ''}
 - create_client.payload: { name: string, phone: string, email?: string, notes?: string }
 - create_service.payload: { name: string, price: number, duration: number, category?: string, subcategory?: string, description?: string }
 - create_appointment.payload: { clientName: string, clientPhone: string, clientEmail?: string, masterName: string, serviceNames?: string[], startTime: string(ISO), durationMinutes?: number, notes?: string, customServiceName?: string, customPrice?: number }
-- create_master.payload: { name: string, bio?: string, photo?: string, workingHoursJson?: string }
+- create_master.payload: { name: string, bio?: string, photo?: string, workingHours?: object|string(JSON) }
 - cancel_appointment.payload: { appointmentId?: string, clientPhone?: string, startTime?: string(ISO) }
 - reschedule_appointment.payload: { appointmentId?: string, clientPhone?: string, oldStartTime?: string(ISO), newStartTime: string(ISO), durationMinutes?: number }
 - update_appointment.payload: { appointmentId?: string, clientPhone?: string, startTime?: string(ISO), masterName?: string, masterId?: string, serviceIds?: string[], notes?: string, status?: string }
@@ -319,7 +356,6 @@ ${userMessage}
     const tryModels = [requestedModel]
 
     let lastErr: unknown = null
-    let bestTextReply: string | null = null
     for (const m of tryModels) {
       try {
         // Force JSON to avoid parse failures -> fewer fallbacks and clearer "AI used" signal.
@@ -329,30 +365,18 @@ ${userMessage}
         const raw = response.text()
         const parsed = this.parseAgentDecision(raw)
         if (parsed) return parsed
-        const trimmed = (raw || '').trim()
-        if (trimmed && !bestTextReply) bestTextReply = trimmed
-
-        // Unparseable output: try next model in the list (some models ignore responseMimeType).
-        throw new Error('AI returned non-JSON response')
+        // Never pass raw model output back to UI (it may be JSON / garbage).
+        throw new Error('AI returned invalid JSON')
       } catch (e) {
         lastErr = e
         const msg = e instanceof Error ? e.message : String(e)
-        const isNonJson = msg.includes('non-JSON response')
+        const isNonJson = msg.includes('invalid JSON')
         const isModelNotFound =
           msg.includes('is not found') ||
           msg.includes('404') ||
           msg.includes('not supported for generateContent')
         // If it's not a "model not found" and not a JSON-format issue, don't keep retrying blindly.
         if (!isModelNotFound && !isNonJson) break
-      }
-    }
-
-    if (bestTextReply) {
-      return {
-        action: 'reply',
-        reply: bestTextReply,
-        confidence: 0.35,
-        needsConfirmation: false,
       }
     }
 

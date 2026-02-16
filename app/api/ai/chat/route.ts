@@ -1316,7 +1316,8 @@ async function executeAgentAction(params: {
     const name = safeText((payload as any).name)
     const bio = safeText((payload as any).bio)
     const photo = safeText((payload as any).photo)
-    const workingHoursJson = safeText((payload as any).workingHoursJson)
+    // Prefer structured object to avoid JSON-escaping issues in LLM output.
+    const workingHoursJson = toScheduleJson((payload as any).workingHours ?? (payload as any).workingHoursJson)
     if (!name) {
       return {
         message: decision.reply || 'Ок. Як звати майстра?',
