@@ -143,15 +143,6 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
     }
   }
 
-  const stopListening = () => {
-    sttShouldSendOnEndRef.current = true
-    try {
-      recognitionRef.current?.stop?.()
-    } catch {
-      // ignore
-    }
-  }
-
   const startListening = () => {
     if (!sttSupported || sttListening) return
     const recognition = ensureRecognition()
@@ -162,7 +153,8 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
 
     setSttDraft('')
     sttFinalRef.current = ''
-    sttShouldSendOnEndRef.current = false
+    // UX: auto-send on end (user doesn't need to "hold" the button).
+    sttShouldSendOnEndRef.current = true
 
     recognition.lang = voiceLang
 
@@ -232,6 +224,20 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
         },
       ])
     }
+  }
+
+  const toggleListening = () => {
+    if (!sttSupported || isLoading) return
+    if (sttListening) {
+      // Keep shouldSend=true (default) so "stop" sends transcript.
+      try {
+        recognitionRef.current?.stop?.()
+      } catch {
+        // ignore
+      }
+      return
+    }
+    startListening()
   }
 
   const sendMessage = async (rawText: string) => {
@@ -428,24 +434,17 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
               <button
                 type="button"
                 disabled={!sttSupported || isLoading}
-                onPointerDown={(e) => {
+                onClick={(e) => {
                   e.preventDefault()
-                  try {
-                    ;(e.currentTarget as any).setPointerCapture?.(e.pointerId)
-                  } catch {
-                    // ignore
-                  }
-                  startListening()
+                  toggleListening()
                 }}
-                onPointerUp={(e) => {
-                  e.preventDefault()
-                  stopListening()
-                }}
-                onPointerCancel={(e) => {
-                  e.preventDefault()
-                  stopListening()
-                }}
-                title={sttSupported ? 'Голос (натисни і говори)' : 'Голос доступний у Chrome/Edge'}
+                title={
+                  !sttSupported
+                    ? 'Голос доступний у Chrome/Edge'
+                    : sttListening
+                      ? 'Зупинити (натисни ще раз)'
+                      : 'Почати говорити'
+                }
                 className={`px-3 py-2 rounded-candy-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-200 hover:shadow-soft-lg transition-all ${
                   sttListening ? 'ring-2 ring-candy-purple' : ''
                 } ${!sttSupported ? 'opacity-50 cursor-not-allowed' : ''}`}
