@@ -5,7 +5,7 @@ import { cn } from '@/lib/utils'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { formatInTimeZone } from 'date-fns-tz'
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { toast } from '@/components/ui/toast'
 
 interface CompleteStepProps {
@@ -34,6 +34,8 @@ export function CompleteStep({ businessName, businessLocation, timeZone }: Compl
   const { state, reset, setStep } = useBooking()
   const [pushBusy, setPushBusy] = useState(false)
   const [pushEnabled, setPushEnabled] = useState<boolean | null>(null)
+  const [vapidPublicKey, setVapidPublicKey] = useState<string | null>(null)
+  const [pushConfigChecked, setPushConfigChecked] = useState(false)
 
   const isPriceAfterProcedure =
     state.bookingWithoutService || (state.customServiceName && state.customServiceName.trim().length > 0)
@@ -79,6 +81,31 @@ export function CompleteStep({ businessName, businessLocation, timeZone }: Compl
     return typeof window !== 'undefined' && 'serviceWorker' in navigator && 'PushManager' in window
   }, [])
 
+  // Fetch VAPID public key from server. Avoid showing any global "error" toasts on load.
+  useEffect(() => {
+    let cancelled = false
+    const run = async () => {
+      if (!canUsePush) {
+        setPushConfigChecked(true)
+        return
+      }
+      try {
+        const res = await fetch('/api/push/config', { cache: 'no-store' })
+        const data = await res.json().catch(() => ({} as any))
+        const key = typeof data?.publicKey === 'string' ? data.publicKey : null
+        if (!cancelled) setVapidPublicKey(key && key.trim() ? key.trim() : null)
+      } catch {
+        if (!cancelled) setVapidPublicKey(null)
+      } finally {
+        if (!cancelled) setPushConfigChecked(true)
+      }
+    }
+    run()
+    return () => {
+      cancelled = true
+    }
+  }, [canUsePush])
+
   const urlBase64ToUint8Array = (base64String: string) => {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
     const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')
@@ -98,14 +125,9 @@ export function CompleteStep({ businessName, businessLocation, timeZone }: Compl
       toast({ title: 'Непідтримується', description: 'Push-нагадування недоступні в цьому браузері/режимі.', type: 'info' })
       return
     }
-    const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY
-    if (!publicKey) {
-      toast({
-        title: 'Push ще не налаштовано',
-        description: 'На сервері відсутній NEXT_PUBLIC_VAPID_PUBLIC_KEY. Додайте VAPID ключі в .env, тоді push запрацює.',
-        type: 'info',
-        duration: 5000,
-      })
+    if (!vapidPublicKey) {
+      // No toast here: show inline state instead of "hanging" messages.
+      setPushEnabled(false)
       return
     }
 
@@ -121,7 +143,7 @@ export function CompleteStep({ businessName, businessLocation, timeZone }: Compl
       const reg = await navigator.serviceWorker.ready
       const sub = await reg.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(publicKey),
+        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
       })
 
       const res = await fetch('/api/push/subscribe', {
@@ -220,19 +242,36 @@ export function CompleteStep({ businessName, businessLocation, timeZone }: Compl
           <button
             type="button"
             onClick={handleEnablePush}
-            disabled={pushBusy || pushEnabled === true}
+            disabled={pushBusy || pushEnabled === true || (pushConfigChecked && !vapidPublicKey)}
             className={cn(
               'w-full min-h-[48px] py-3 rounded-xl text-sm font-semibold transition-colors',
               pushEnabled === true
                 ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
                 : 'bg-black/[0.06] dark:bg-white/10 border border-black/10 dark:border-white/15 text-foreground dark:text-white hover:bg-black/[0.08] dark:hover:bg-white/15',
-              (pushBusy || pushEnabled === true) && 'opacity-80'
+              (pushBusy || pushEnabled === true || (pushConfigChecked && !vapidPublicKey)) && 'opacity-80'
             )}
             aria-disabled={pushBusy || pushEnabled === true}
-            title={pushEnabled === true ? 'Увімкнено' : 'Увімкнути push-нагадування'}
+            title={
+              pushEnabled === true
+                ? 'Увімкнено'
+                : pushConfigChecked && !vapidPublicKey
+                  ? 'Push не налаштовано на сервері'
+                  : 'Увімкнути push-нагадування'
+            }
           >
-            {pushEnabled === true ? 'Нагадування увімкнено' : pushBusy ? 'Увімкнення...' : 'Отримати push-нагадування'}
+            {pushEnabled === true
+              ? 'Нагадування увімкнено'
+              : pushBusy
+                ? 'Увімкнення...'
+                : pushConfigChecked && !vapidPublicKey
+                  ? 'Push тимчасово недоступний'
+                  : 'Отримати push-нагадування'}
           </button>
+          {pushConfigChecked && !vapidPublicKey && (
+            <p className="text-[11px] text-gray-500 dark:text-gray-400 mt-2">
+              Push не налаштовано (немає VAPID ключів на сервері). Додайте env змінні як у `docs/push-env.example.txt`.
+            </p>
+          )}
         </div>
 
         {manageUrl && (
