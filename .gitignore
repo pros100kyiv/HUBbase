@@ -19,6 +19,9 @@ pnpm-debug.log*
 .vscode
 .idea
 
+# TypeScript incremental build info
+*.tsbuildinfo
+
 # Vercel
 .vercel
 
