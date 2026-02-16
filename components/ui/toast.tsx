@@ -47,7 +47,9 @@ function ToastComponent({ toast, onRemove }: ToastProps) {
   return (
     <div
       className={cn(
-        'min-w-[300px] max-w-md rounded-candy-sm border-2 p-4 shadow-soft-lg backdrop-blur-sm transition-all duration-300',
+        // Mobile: allow full width (container clamps to viewport).
+        // Desktop: keep the original min/max widths.
+        'w-full sm:min-w-[300px] sm:max-w-md rounded-candy-sm border-2 p-4 shadow-soft-lg backdrop-blur-sm transition-all duration-300',
         colors[toast.type || 'info'],
         isVisible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
       )}
@@ -104,7 +106,17 @@ export function ToastContainer() {
   }
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
+    <div
+      className={cn(
+        // Mobile: center under top bar; Desktop: top-right.
+        'fixed z-50 flex flex-col gap-2 pointer-events-none',
+        'left-1/2 -translate-x-1/2 sm:left-auto sm:translate-x-0 sm:right-4',
+        // Under the fixed navbar/panels on small screens.
+        'top-[calc(env(safe-area-inset-top,0px)+4rem)] sm:top-4',
+        // Clamp width to viewport on mobile.
+        'w-[min(92vw,420px)] sm:w-auto'
+      )}
+    >
       {toasts.map((toast) => (
         <div key={toast.id} className="pointer-events-auto">
           <ToastComponent toast={toast} onRemove={removeToast} />

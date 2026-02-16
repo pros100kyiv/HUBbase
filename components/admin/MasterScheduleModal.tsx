@@ -28,6 +28,8 @@ interface MasterScheduleModalProps {
   }
   businessId: string
   otherMasters?: Array<{ id: string; name: string }>
+  /** When provided, open the editor for this date key (YYYY-MM-DD) on mount. */
+  initialEditingDateKey?: string | null
   onClose: () => void
   onSave: (workingHours?: string, scheduleDateOverrides?: string) => void
 }
@@ -55,8 +57,15 @@ function timeToMinutes(t: string): number {
   return hh * 60 + mm
 }
 
-export function MasterScheduleModal({ master, businessId, onClose, onSave }: MasterScheduleModalProps) {
+export function MasterScheduleModal({
+  master,
+  businessId,
+  initialEditingDateKey = null,
+  onClose,
+  onSave,
+}: MasterScheduleModalProps) {
   const [scheduleDateOverrides, setScheduleDateOverrides] = useState<DateOverridesMap>({})
+  const [overridesLoaded, setOverridesLoaded] = useState(false)
   const [monthDate, setMonthDate] = useState(() => new Date())
   const [editingDateKey, setEditingDateKey] = useState<string | null>(null)
   const [editOverride, setEditOverride] = useState<DateOverride>({ enabled: true, start: '09:00', end: '18:00' })
@@ -74,9 +83,11 @@ export function MasterScheduleModal({ master, businessId, onClose, onSave }: Mas
             : master.scheduleDateOverrides)
           : {}
       setScheduleDateOverrides(parsed && typeof parsed === 'object' && !Array.isArray(parsed) ? parsed : {})
+      setOverridesLoaded(true)
     } catch (e) {
       console.error('Error parsing scheduleDateOverrides:', e)
       setScheduleDateOverrides({})
+      setOverridesLoaded(true)
     }
   }, [master.scheduleDateOverrides])
 
@@ -119,6 +130,20 @@ export function MasterScheduleModal({ master, businessId, onClose, onSave }: Mas
     setEditOverride(existing ?? { enabled: true, start: '09:00', end: '18:00' })
   }
 
+  // Open a specific date editor when the modal is opened from "Week overview".
+  // Run once per mount to avoid re-opening after user closes the editor.
+  const [didInitEditingDate, setDidInitEditingDate] = useState(false)
+  useEffect(() => {
+    if (didInitEditingDate) return
+    if (!initialEditingDateKey) return
+    if (!overridesLoaded) return
+    const d = new Date(`${initialEditingDateKey}T00:00:00`)
+    if (!Number.isFinite(d.getTime())) return
+    setDidInitEditingDate(true)
+    setMonthDate(d)
+    openEditorForDate(initialEditingDateKey)
+  }, [didInitEditingDate, initialEditingDateKey, overridesLoaded])
+
   const validateOverride = (o: DateOverride): { ok: true } | { ok: false; message: string } => {
     if (!o.enabled) return { ok: true }
     const startMin = timeToMinutes(o.start)
@@ -146,8 +171,12 @@ export function MasterScheduleModal({ master, businessId, onClose, onSave }: Mas
     setShowErrorToast(false)
 
     try {
-      // User request: no base schedule. Keep it empty and rely on per-date map.
-      const workingHoursJson = '{}'
+      // Important: do NOT wipe the weekly schedule when saving overrides.
+      // Week overview and other parts of the UI depend on `workingHours` when it exists.
+      const workingHoursJson =
+        typeof master.workingHours === 'string' && master.workingHours.trim()
+          ? master.workingHours
+          : '{}'
       const scheduleDateOverridesJson = JSON.stringify(scheduleDateOverrides)
 
       const response = await fetch(`/api/masters/${master.id}`, {

@@ -6,7 +6,8 @@
 
 @layer base {
   :root {
-    --background: 255 255 255;
+    /* Light base: slightly off-white to reduce glare */
+    --background: 242 242 247;
     --foreground: 15 23 42;
     --border: 226 232 240;
     --input: 255 255 255;
@@ -220,6 +221,13 @@
     outline: 2px solid rgba(255, 255, 255, 0.7);
     outline-offset: 2px;
   }
+  .light .focus-ring:focus-visible {
+    outline: 2px solid rgba(17, 24, 39, 0.55);
+  }
+  .light a:focus-visible,
+  .light button:focus-visible {
+    outline: 2px solid rgba(17, 24, 39, 0.45);
+  }
 
   /* Panel background - semi-transparent dark with blur */
   .panel-bg {
@@ -285,9 +293,10 @@
   
   /* Xbase: світла тема — читабельний фон, чіткий контраст */
   .light body {
-    background: #EFF1F4;
+    background: #F2F2F7;
     background-image:
-      radial-gradient(circle at 20% 30%, rgba(0, 0, 0, 0.02) 0%, transparent 50%);
+      radial-gradient(circle at 20% 30%, rgba(0, 0, 0, 0.02) 0%, transparent 55%),
+      radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.03) 0%, transparent 55%);
     color: #111827;
   }
 

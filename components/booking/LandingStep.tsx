@@ -3,6 +3,7 @@
 import { useBooking } from '@/contexts/BookingContext'
 import { InstallAppBadges } from '@/components/layout/InstallAppBadges'
 import { cn } from '@/lib/utils'
+import { XbaseLogo } from '@/components/layout/XbaseLogo'
 
 interface Business {
   name?: string
@@ -162,11 +163,10 @@ export function LandingStep({ business }: LandingStepProps) {
         </button>
       </div>
 
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2">
-        <div className="w-8 h-8 md:w-10 md:h-10 rounded-lg bg-white/20 flex items-center justify-center text-white font-bold text-xs md:text-sm">
-          HUB
+      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-20 flex items-center">
+        <div className="px-3 py-2 rounded-xl bg-white/10 border border-white/15 backdrop-blur-sm">
+          <XbaseLogo size="sm" variant="light" />
         </div>
-        <span className="text-xs md:text-sm font-semibold text-white">HUBbase</span>
       </div>
 
       <div className="fixed top-4 left-4 z-20">

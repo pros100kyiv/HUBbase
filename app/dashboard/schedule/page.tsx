@@ -7,6 +7,8 @@ import { ClockIcon, UserIcon, SettingsIcon, TrashIcon, ChevronDownIcon } from '@
 import { MasterScheduleModal } from '@/components/admin/MasterScheduleModal'
 import { QuickMasterCard } from '@/components/admin/QuickMasterCard'
 import { toast } from '@/components/ui/toast'
+import { addDays, startOfWeek, format as formatDate } from 'date-fns'
+import { uk } from 'date-fns/locale'
 
 interface Master {
   id: string
@@ -107,10 +109,17 @@ export default function SchedulePage() {
   const [masters, setMasters] = useState<Master[]>([])
   const [loading, setLoading] = useState(true)
   const [scheduleModalMaster, setScheduleModalMaster] = useState<Master | null>(null)
+  const [scheduleModalInitialDateKey, setScheduleModalInitialDateKey] = useState<string | null>(null)
   const [showQuickMasterCard, setShowQuickMasterCard] = useState(false)
   const [editingMaster, setEditingMaster] = useState<Master | null>(null)
   const [openMenuId, setOpenMenuId] = useState<string | null>(null)
   const [showWeekOverview, setShowWeekOverview] = useState(false)
+  const [weekAnchor, setWeekAnchor] = useState<Date>(() => new Date())
+
+  const openScheduleModal = (master: Master, initialDateKey: string | null = null) => {
+    setScheduleModalMaster(master)
+    setScheduleModalInitialDateKey(initialDateKey)
+  }
 
   const loadMasters = useCallback(() => {
     if (!business?.id) return
@@ -158,6 +167,7 @@ export default function SchedulePage() {
   const handleScheduleSave = () => {
     loadMasters()
     setScheduleModalMaster(null)
+    setScheduleModalInitialDateKey(null)
   }
 
   const handleDeleteMaster = async (master: Master) => {
@@ -187,7 +197,7 @@ export default function SchedulePage() {
   if (!business || loading) {
     return (
       <div className="min-h-[60vh] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-black/20 dark:border-white/30 border-t-black/60 dark:border-t-white rounded-full animate-spin" />
       </div>
     )
   }
@@ -243,7 +253,7 @@ export default function SchedulePage() {
                   >
                     <button
                       type="button"
-                      onClick={() => setScheduleModalMaster(master)}
+                      onClick={() => openScheduleModal(master)}
                       className="flex items-center gap-3 min-w-0 flex-1 text-left"
                     >
                       {master.photo ? (
@@ -355,7 +365,7 @@ export default function SchedulePage() {
                 {/* Кнопка «Графік» на всю ширину */}
                 <button
                   type="button"
-                  onClick={() => setScheduleModalMaster(master)}
+                  onClick={() => openScheduleModal(master)}
                   className="w-full py-2.5 px-4 rounded-lg bg-sky-500/20 border border-sky-500/40 text-sky-400 text-sm font-medium hover:bg-sky-500/30 transition-colors flex items-center justify-center gap-2"
                 >
                   <ClockIcon className="w-4 h-4" />
@@ -393,54 +403,164 @@ export default function SchedulePage() {
           </button>
           {showWeekOverview && (
             <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[320px] text-sm">
-                <thead>
-                  <tr className="border-b border-white/10">
-                    <th className="text-left py-2 pr-2 text-gray-400 font-medium">Спеціаліст</th>
-                    {DAY_LABELS_SHORT.map((label) => (
-                      <th key={label} className="py-2 px-1 text-center text-gray-400 font-medium w-14">
-                        {label}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {masters.map((master) => (
-                    <tr key={master.id} className="border-b border-white/5 hover:bg-white/5">
-                      <td className="py-2 pr-2">
+              {(() => {
+                const weekStart = startOfWeek(weekAnchor, { weekStartsOn: 1 })
+                const weekDates = DAY_KEYS.map((_, idx) => addDays(weekStart, idx))
+                const weekLabel = `${formatDate(weekDates[0], 'd MMM', { locale: uk })} – ${formatDate(weekDates[6], 'd MMM', { locale: uk })}`
+
+                const getCellSchedule = (
+                  master: Master,
+                  dayKey: string,
+                  dateKey: string
+                ): { enabled: boolean; start: string; end: string; source: 'override' | 'base' } | null => {
+                  // 1) Exact date override wins
+                  const overrides = parseDateOverrides(master.scheduleDateOverrides) ?? {}
+                  const o = overrides[dateKey]
+                  if (o !== undefined) {
+                    return {
+                      enabled: Boolean(o.enabled),
+                      start: o.start ?? '09:00',
+                      end: o.end ?? '18:00',
+                      source: 'override',
+                    }
+                  }
+                  // 2) Weekly schedule fallback
+                  const hours = parseWorkingHours(master.workingHours)
+                  const d = hours?.[dayKey]
+                  if (!d) return null
+                  return {
+                    enabled: Boolean(d.enabled),
+                    start: d.start ?? '09:00',
+                    end: d.end ?? '18:00',
+                    source: 'base',
+                  }
+                }
+
+                return (
+                  <>
+                    <div className="flex items-center justify-between gap-2 mb-3">
+                      <div className="text-xs text-gray-500 dark:text-gray-400">
+                        Тиждень: <span className="text-gray-700 dark:text-gray-200 font-medium">{weekLabel}</span>
+                      </div>
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         <button
                           type="button"
-                          onClick={() => setScheduleModalMaster(master)}
-                          className="text-left text-white font-medium hover:underline truncate max-w-[140px] block"
+                          onClick={() => setWeekAnchor((d) => addDays(d, -7))}
+                          className="touch-target min-h-[36px] px-3 rounded-lg border border-black/10 dark:border-white/20 bg-black/[0.04] dark:bg-white/10 text-foreground dark:text-white text-xs font-medium hover:bg-black/[0.06] dark:hover:bg-white/20 transition-colors"
+                          aria-label="Попередній тиждень"
                         >
-                          {master.name}
+                          ←
                         </button>
-                      </td>
-                      {DAY_KEYS.map((dayKey) => {
-                        const daySchedule = getMasterScheduleForDay(master, dayKey)
-                        const isWorking = daySchedule?.enabled
-                        return (
-                          <td key={dayKey} className="py-1.5 px-1 text-center">
-                            <button
-                              type="button"
-                              onClick={() => setScheduleModalMaster(master)}
-                              className={cn(
-                                'w-full py-1.5 rounded-lg text-[10px] transition-colors',
-                                isWorking
-                                  ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30'
-                                  : 'bg-white/5 text-gray-500 border border-white/10'
-                              )}
-                            >
-                              {isWorking ? `${daySchedule?.start?.slice(0, 5) || '—'}–${daySchedule?.end?.slice(0, 5) || '—'}` : '—'}
-                            </button>
-                          </td>
-                        )
-                      })}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <p className="text-xs text-gray-500 mt-3">Клік по імені або клітинці — відкрити повний графік та виключення.</p>
+                        <button
+                          type="button"
+                          onClick={() => setWeekAnchor(new Date())}
+                          className="touch-target min-h-[36px] px-3 rounded-lg border border-black/10 dark:border-white/20 bg-black/[0.04] dark:bg-white/10 text-foreground dark:text-white text-xs font-medium hover:bg-black/[0.06] dark:hover:bg-white/20 transition-colors"
+                        >
+                          Сьогодні
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setWeekAnchor((d) => addDays(d, 7))}
+                          className="touch-target min-h-[36px] px-3 rounded-lg border border-black/10 dark:border-white/20 bg-black/[0.04] dark:bg-white/10 text-foreground dark:text-white text-xs font-medium hover:bg-black/[0.06] dark:hover:bg-white/20 transition-colors"
+                          aria-label="Наступний тиждень"
+                        >
+                          →
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-wrap items-center gap-2 text-[11px] text-gray-600 dark:text-gray-400 mb-3">
+                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border border-black/10 dark:border-white/10 bg-black/[0.03] dark:bg-white/5">
+                        <span className="w-2 h-2 rounded-full bg-gray-500/60" />
+                        Не налаштовано
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border border-emerald-500/25 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500" />
+                        Тижневий графік
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border border-sky-500/25 bg-sky-500/10 text-sky-700 dark:text-sky-300">
+                        <span className="w-2 h-2 rounded-full bg-sky-500" />
+                        Виключення (дата)
+                      </span>
+                      <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-200">
+                        <span className="w-2 h-2 rounded-full bg-rose-500" />
+                        Вихідний
+                      </span>
+                    </div>
+
+                    <table className="w-full min-w-[520px] text-sm">
+                      <thead>
+                        <tr className="border-b border-black/10 dark:border-white/10">
+                          <th className="text-left py-2 pr-2 text-gray-600 dark:text-gray-400 font-medium">Спеціаліст</th>
+                          {weekDates.map((d, idx) => (
+                            <th key={idx} className="py-2 px-1 text-center text-gray-600 dark:text-gray-400 font-medium w-16">
+                              <div className="leading-tight">
+                                <div className="text-[11px]">{DAY_LABELS_SHORT[idx]}</div>
+                                <div className="text-[10px] opacity-80 tabular-nums">{formatDate(d, 'd.MM')}</div>
+                              </div>
+                            </th>
+                          ))}
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {masters.map((master) => (
+                          <tr key={master.id} className="border-b border-black/5 dark:border-white/5 hover:bg-black/[0.02] dark:hover:bg-white/5">
+                            <td className="py-2 pr-2">
+                              <button
+                                type="button"
+                                onClick={() => openScheduleModal(master)}
+                                className="text-left text-foreground dark:text-white font-medium hover:underline truncate max-w-[160px] block"
+                              >
+                                {master.name}
+                              </button>
+                            </td>
+                            {weekDates.map((d, idx) => {
+                              const dayKey = DAY_KEYS[idx]
+                              const dateKey = formatDate(d, 'yyyy-MM-dd')
+                              const s = getCellSchedule(master, dayKey, dateKey)
+
+                              const isConfigured = s !== null
+                              const isWorking = s?.enabled === true
+                              const isDayOff = s?.enabled === false
+                              const isOverride = s?.source === 'override'
+                              const label = !isConfigured ? '—' : isWorking ? `${s!.start.slice(0, 5)}–${s!.end.slice(0, 5)}` : 'Вих.'
+
+                              return (
+                                <td key={dateKey} className="py-1.5 px-1 text-center">
+                                  <button
+                                    type="button"
+                                    onClick={() => openScheduleModal(master, dateKey)}
+                                    title={
+                                      !isConfigured
+                                        ? 'Не налаштовано'
+                                        : isOverride
+                                          ? 'Виключення за датою'
+                                          : 'Тижневий графік'
+                                    }
+                                    className={cn(
+                                      'w-full py-1.5 rounded-lg text-[10px] transition-colors border tabular-nums',
+                                      'active:scale-[0.98]',
+                                      !isConfigured && 'bg-black/[0.03] dark:bg-white/5 text-gray-600 dark:text-gray-500 border-black/10 dark:border-white/10 hover:bg-black/[0.05] dark:hover:bg-white/10',
+                                      isWorking && !isOverride && 'bg-emerald-500/15 text-emerald-700 dark:text-emerald-300 border-emerald-500/25 hover:bg-emerald-500/20',
+                                      isWorking && isOverride && 'bg-sky-500/15 text-sky-700 dark:text-sky-300 border-sky-500/25 hover:bg-sky-500/20',
+                                      isDayOff && 'bg-rose-500/10 text-rose-700 dark:text-rose-200 border-rose-500/20 hover:bg-rose-500/15'
+                                    )}
+                                  >
+                                    {label}
+                                  </button>
+                                </td>
+                              )
+                            })}
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                    <p className="text-xs text-gray-600 dark:text-gray-500 mt-3">
+                      Клік по клітинці — відкриває редагування саме цієї дати (виключення). Клік по імені — загальний календар.
+                    </p>
+                  </>
+                )
+              })()}
             </div>
           )}
         </section>
@@ -450,7 +570,8 @@ export default function SchedulePage() {
         <MasterScheduleModal
           master={scheduleModalMaster}
           businessId={business.id}
-          onClose={() => setScheduleModalMaster(null)}
+          initialEditingDateKey={scheduleModalInitialDateKey}
+          onClose={() => { setScheduleModalMaster(null); setScheduleModalInitialDateKey(null) }}
           onSave={handleScheduleSave}
         />
       )}

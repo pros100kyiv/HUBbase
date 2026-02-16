@@ -4,6 +4,7 @@ import nextDynamic from 'next/dynamic'
 import { useEffect, useState, useRef } from 'react'
 import { useBooking } from '@/contexts/BookingContext'
 import { LandingStep } from '@/components/booking/LandingStep'
+import { parseBookingTimeZone } from '@/lib/utils/booking-settings'
 
 const ServiceStep = nextDynamic(
   () => import('@/components/booking/ServiceStep').then((m) => ({ default: m.ServiceStep })),
@@ -21,11 +22,16 @@ const FinalStep = nextDynamic(
   () => import('@/components/booking/FinalStep').then((m) => ({ default: m.FinalStep })),
   { ssr: false }
 )
+const CompleteStep = nextDynamic(
+  () => import('@/components/booking/CompleteStep').then((m) => ({ default: m.CompleteStep })),
+  { ssr: false }
+)
 
 interface Business {
   id: string
   name: string
   slug: string
+  settings?: string | null
   primaryColor?: string
   secondaryColor?: string
   backgroundColor?: string
@@ -102,12 +108,20 @@ export default function BookingPageClient({ slug }: { slug: string }) {
     return () => window.removeEventListener('storage', handler)
   }, [slug, business?.id])
 
+  const businessTimeZone = parseBookingTimeZone(business?.settings ?? null)
+
   const steps = [
     <LandingStep key="landing" business={business} />,
-    <ServiceStep key="service" businessId={business?.id} />,
     <MasterStep key="master" businessId={business?.id} />,
     <TimeStep key="time" businessId={business?.id} />,
+    <ServiceStep key="service" businessId={business?.id} />,
     <FinalStep key="final" businessId={business?.id} />,
+    <CompleteStep
+      key="complete"
+      businessName={business?.name}
+      businessLocation={business?.location ?? null}
+      timeZone={businessTimeZone}
+    />,
   ]
 
   if (isLoading) {

@@ -32,6 +32,14 @@ export interface BookingState {
   selectedTime: string | null
   clientName: string
   clientPhone: string
+  /** Result of successful booking (for the final screen). */
+  confirmation: {
+    appointmentId: string
+    createdAt: string
+    status?: string | null
+    startTime?: string | null
+    endTime?: string | null
+  } | null
 }
 
 interface BookingContextType {
@@ -47,6 +55,7 @@ interface BookingContextType {
   setTime: (time: string | null) => void
   setClientName: (name: string) => void
   setClientPhone: (phone: string) => void
+  setConfirmation: (val: BookingState['confirmation']) => void
   reset: () => void
 }
 
@@ -61,6 +70,7 @@ const initialState: BookingState = {
   selectedTime: null,
   clientName: '',
   clientPhone: '',
+  confirmation: null,
 }
 
 const BookingContext = createContext<BookingContextType | undefined>(undefined)
@@ -122,6 +132,10 @@ export function BookingProvider({ children }: { children: ReactNode }) {
     setState(prev => ({ ...prev, clientPhone: phone }))
   }, [])
 
+  const setConfirmation = useCallback((val: BookingState['confirmation']) => {
+    setState(prev => ({ ...prev, confirmation: val }))
+  }, [])
+
   const setBusinessId = useCallback((id: string | null) => {
     setState(prev => {
       if (prev.businessId === id) return prev
@@ -147,6 +161,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       setTime,
       setClientName,
       setClientPhone,
+      setConfirmation,
       reset,
     }),
     [
@@ -162,6 +177,7 @@ export function BookingProvider({ children }: { children: ReactNode }) {
       setTime,
       setClientName,
       setClientPhone,
+      setConfirmation,
       reset,
     ]
   )

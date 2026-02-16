@@ -265,14 +265,14 @@ export function TimeStep({ businessId }: TimeStepProps) {
   return (
     <div className="min-h-screen py-4 sm:py-6 px-3 md:px-6 pb-[env(safe-area-inset-bottom)]">
       <div className="max-w-4xl mx-auto">
-        <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 text-center text-white" style={{ letterSpacing: '-0.02em' }}>
+        <h2 className="text-lg sm:text-xl md:text-2xl font-bold mb-3 sm:mb-4 text-center text-foreground" style={{ letterSpacing: '-0.02em' }}>
           Оберіть час
         </h2>
 
         {/* Найближчі вільні слоти — рекомендації */}
         {recommendedSlots.length > 0 && (
           <div className="mb-4">
-            <h3 className="text-sm font-semibold text-white mb-2">Найближчі вільні:</h3>
+            <h3 className="text-sm font-semibold text-foreground mb-2">Найближчі вільні:</h3>
             <div className="flex flex-wrap gap-2">
               {recommendedSlots.map((rec) => {
                 const isSelected =
@@ -287,8 +287,8 @@ export function TimeStep({ businessId }: TimeStepProps) {
                     className={cn(
                       'min-h-[40px] px-3 py-2 rounded-lg text-xs font-medium transition-colors active:scale-[0.98]',
                       isSelected
-                        ? 'bg-white text-black shadow-md ring-2 ring-white/50'
-                        : 'bg-white/10 border border-white/20 text-white hover:bg-white/20'
+                        ? 'bg-white text-black shadow-md ring-2 ring-black/20 dark:ring-white/50'
+                        : 'bg-black/[0.04] dark:bg-white/10 border border-black/10 dark:border-white/20 text-foreground dark:text-white hover:bg-black/[0.06] dark:hover:bg-white/20'
                     )}
                   >
                     {formatRecommendedLabel(rec)}
@@ -300,7 +300,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
         )}
 
         <div className="mb-3 sm:mb-4">
-          <h3 className="text-sm font-semibold text-white mb-2">Оберіть дату:</h3>
+          <h3 className="text-sm font-semibold text-foreground mb-2">Оберіть дату:</h3>
           {!calendarReady || !currentMonth || !monthStart || !monthEnd ? (
             <div className="rounded-xl p-4 sm:p-6 card-glass text-center text-gray-400 text-sm">
               Завантаження календаря...
@@ -313,18 +313,18 @@ export function TimeStep({ businessId }: TimeStepProps) {
                     <button
                       type="button"
                       onClick={() => setCurrentMonth(subMonths(currentMonth!, 1))}
-                      className="touch-target min-h-[36px] min-w-[36px] px-2 py-1.5 border border-white/20 bg-white/10 text-white rounded-lg text-xs font-medium hover:bg-white/20 transition-colors flex items-center justify-center flex-shrink-0"
+                      className="touch-target min-h-[36px] min-w-[36px] px-2 py-1.5 border border-black/10 dark:border-white/20 bg-black/[0.04] dark:bg-white/10 text-foreground dark:text-white rounded-lg text-xs font-medium hover:bg-black/[0.06] dark:hover:bg-white/20 transition-colors flex items-center justify-center flex-shrink-0"
                       title="Попередній місяць"
                     >
                       ←
                     </button>
-                    <h4 className="text-xs sm:text-sm font-semibold text-white truncate text-center px-1 min-w-0 capitalize">
+                    <h4 className="text-xs sm:text-sm font-semibold text-foreground truncate text-center px-1 min-w-0 capitalize">
                       {format(currentMonth!, 'MMMM yyyy', { locale: uk })}
                     </h4>
                     <button
                       type="button"
                       onClick={() => setCurrentMonth(addMonths(currentMonth!, 1))}
-                      className="touch-target min-h-[36px] min-w-[36px] px-2 py-1.5 border border-white/20 bg-white/10 text-white rounded-lg text-xs font-medium hover:bg-white/20 transition-colors flex items-center justify-center flex-shrink-0"
+                      className="touch-target min-h-[36px] min-w-[36px] px-2 py-1.5 border border-black/10 dark:border-white/20 bg-black/[0.04] dark:bg-white/10 text-foreground dark:text-white rounded-lg text-xs font-medium hover:bg-black/[0.06] dark:hover:bg-white/20 transition-colors flex items-center justify-center flex-shrink-0"
                       title="Наступний місяць"
                     >
                       →
@@ -377,12 +377,12 @@ export function TimeStep({ businessId }: TimeStepProps) {
                         title={dayOff ? 'Вихідний у спеціаліста' : undefined}
                         className={cn(
                           'w-full h-8 sm:h-9 flex items-center justify-center rounded-md text-[11px] sm:text-xs font-medium transition-colors active:scale-95 min-w-0',
-                          isSelected && 'bg-white text-black shadow-md ring-2 ring-white/50',
-                          isToday && isInMonth && !isSelected && !dayOff && 'ring-1 ring-white/30 bg-white/20 text-white',
-                          isPastDate && 'text-white/20 cursor-not-allowed bg-white/5',
-                          isOtherMonth && 'text-white/25 bg-transparent cursor-default',
-                          dayOff && isInMonth && 'text-white/30 cursor-not-allowed bg-white/5 line-through',
-                          !isSelected && !isPastDate && isInMonth && !isToday && !dayOff && 'bg-white/10 border border-white/10 text-white hover:bg-white/20'
+                          isSelected && 'bg-white text-black shadow-md ring-2 ring-black/20 dark:ring-white/50',
+                          isToday && isInMonth && !isSelected && !dayOff && 'ring-1 ring-black/20 dark:ring-white/30 bg-black/[0.06] dark:bg-white/20 text-foreground dark:text-white',
+                          isPastDate && 'text-gray-400 dark:text-white/20 cursor-not-allowed bg-black/[0.02] dark:bg-white/5',
+                          isOtherMonth && 'text-gray-400/70 dark:text-white/25 bg-transparent cursor-default',
+                          dayOff && isInMonth && 'text-gray-400 dark:text-white/30 cursor-not-allowed bg-black/[0.02] dark:bg-white/5 line-through',
+                          !isSelected && !isPastDate && isInMonth && !isToday && !dayOff && 'bg-black/[0.04] dark:bg-white/10 border border-black/10 dark:border-white/10 text-foreground dark:text-white hover:bg-black/[0.06] dark:hover:bg-white/20'
                         )}
                       >
                         {format(day, 'd')}
@@ -398,14 +398,14 @@ export function TimeStep({ businessId }: TimeStepProps) {
         {state.selectedDate && (
           <div className="mb-3 sm:mb-4">
             {showNoSlotsMessage && (
-              <div className="rounded-xl p-4 mb-4 card-glass border border-white/20 bg-white/5">
-                <p className="text-sm font-medium text-gray-300">Місць немає на цей день.</p>
-                <p className="text-xs text-gray-400 mt-1">{noSlotsText}</p>
+              <div className="rounded-xl p-4 mb-4 card-glass border border-black/10 dark:border-white/20 bg-black/[0.02] dark:bg-white/5">
+                <p className="text-sm font-medium text-gray-800 dark:text-gray-300">Місць немає на цей день.</p>
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">{noSlotsText}</p>
               </div>
             )}
             {!loading && (slots.length > 0 || busySlots.length > 0) && (
               <>
-                <h3 className="text-sm font-semibold text-white mb-2">
+                <h3 className="text-sm font-semibold text-foreground mb-2">
                   Оберіть час (за графіком спеціаліста):
                 </h3>
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 gap-1.5 sm:gap-2">
@@ -424,9 +424,9 @@ export function TimeStep({ businessId }: TimeStepProps) {
                           title={isBusy ? 'Зайнято' : undefined}
                           className={cn(
                             'min-h-[44px] sm:min-h-0 px-2 sm:px-3 py-2.5 sm:py-2.5 rounded-lg transition-colors text-xs font-medium',
-                            isBusy && 'bg-white/5 border border-white/10 text-white/40 cursor-not-allowed line-through',
-                            !isBusy && 'active:scale-[0.98] bg-white/10 border border-white/10 text-white hover:bg-white/20',
-                            isSelected && 'bg-white text-black shadow-md ring-2 ring-white/50'
+                            isBusy && 'bg-black/[0.02] dark:bg-white/5 border border-black/10 dark:border-white/10 text-gray-500 dark:text-white/40 cursor-not-allowed line-through',
+                            !isBusy && 'active:scale-[0.98] bg-black/[0.04] dark:bg-white/10 border border-black/10 dark:border-white/10 text-foreground dark:text-white hover:bg-black/[0.06] dark:hover:bg-white/20',
+                            isSelected && 'bg-white text-black shadow-md ring-2 ring-black/20 dark:ring-white/50'
                           )}
                         >
                           {time}
@@ -439,14 +439,14 @@ export function TimeStep({ businessId }: TimeStepProps) {
               </>
             )}
             {loading && (
-              <div className="rounded-xl p-4 mb-4 card-glass border border-white/10 text-center text-gray-400 text-sm">
+              <div className="rounded-xl p-4 mb-4 card-glass border border-black/10 dark:border-white/10 text-center text-gray-600 dark:text-gray-400 text-sm">
                 Завантаження слотів...
               </div>
             )}
             {state.selectedTime && (
               <div className="mt-3 p-3 rounded-xl card-glass">
-                <p className="text-sm font-medium text-white">
-                  Обрано: <span className="text-white">{state.selectedTime}</span>
+                <p className="text-sm font-medium text-foreground">
+                  Обрано: <span className="font-semibold text-foreground">{state.selectedTime}</span>
                 </p>
               </div>
             )}
@@ -455,25 +455,25 @@ export function TimeStep({ businessId }: TimeStepProps) {
 
         {state.selectedTime && state.selectedDate && (
           <div className="rounded-xl p-4 mb-4 card-glass">
-            <p className="text-xs mb-1 text-gray-400">Обрано:</p>
-            <p className="text-sm font-semibold text-white">
+            <p className="text-xs mb-1 text-gray-600 dark:text-gray-400">Обрано:</p>
+            <p className="text-sm font-semibold text-foreground">
               {format(state.selectedDate, 'd MMMM yyyy', { locale: uk })}, {state.selectedTime}
             </p>
-            <p className="text-xs mt-1 text-gray-400">Тривалість: {totalDuration} хв</p>
+            <p className="text-xs mt-1 text-gray-600 dark:text-gray-400">Тривалість: {totalDuration} хв</p>
           </div>
         )}
 
         <div className="flex gap-2 sm:gap-3">
           <button
             type="button"
-            onClick={() => setStep(2)}
-            className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors active:scale-[0.98]"
+            onClick={() => setStep(1)}
+            className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg border border-black/10 dark:border-white/20 bg-black/[0.04] dark:bg-white/10 text-foreground dark:text-white text-sm font-medium hover:bg-black/[0.06] dark:hover:bg-white/20 transition-colors active:scale-[0.98]"
           >
             Назад
           </button>
           <button
             type="button"
-            onClick={() => setStep(4)}
+            onClick={() => setStep(3)}
             disabled={!state.selectedDate || !state.selectedTime}
             className="touch-target flex-1 min-h-[48px] py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-semibold transition-colors active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}

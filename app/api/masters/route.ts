@@ -5,26 +5,39 @@ export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
     const businessId = searchParams.get('businessId')
+    const light =
+      searchParams.get('light') === '1' ||
+      searchParams.get('light') === 'true'
 
     if (!businessId) {
       return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
     }
 
+    // Booking flow only needs lightweight data; avoid sending large schedule JSON.
     const masters = await prisma.master.findMany({
       where: { businessId },
       orderBy: { name: 'asc' },
-      select: {
-        id: true,
-        name: true,
-        photo: true,
-        bio: true,
-        rating: true,
-        isActive: true,
-        workingHours: true,
-        scheduleDateOverrides: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+      select: light
+        ? {
+            id: true,
+            name: true,
+            photo: true,
+            bio: true,
+            rating: true,
+            isActive: true,
+          }
+        : {
+            id: true,
+            name: true,
+            photo: true,
+            bio: true,
+            rating: true,
+            isActive: true,
+            workingHours: true,
+            scheduleDateOverrides: true,
+            createdAt: true,
+            updatedAt: true,
+          },
     })
     return NextResponse.json(masters)
   } catch (error) {
