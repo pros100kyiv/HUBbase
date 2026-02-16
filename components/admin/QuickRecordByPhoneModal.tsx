@@ -258,20 +258,59 @@ export function QuickRecordByPhoneModal({
                     Інший номер
                   </button>
                 </div>
-                <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-2.5 mb-3 flex items-center justify-between gap-2">
-                  <div className="min-w-0">
-                    <p className="text-[11px] font-medium text-emerald-200/80 mb-0.5">Клієнт</p>
-                    <p className="text-sm font-semibold text-white truncate">{client.name}</p>
-                    <p className="text-xs text-emerald-100/70 mt-0.5 truncate">{client.phone}</p>
+                <div className="rounded-xl border border-emerald-400/20 bg-emerald-400/10 p-2.5 mb-3 flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-300/20 flex items-center justify-center flex-shrink-0">
+                      <span className="text-sm font-bold text-white">
+                        {(client.name || '—').trim().charAt(0).toUpperCase() || '—'}
+                      </span>
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[11px] font-medium text-emerald-200/80 mb-0.5">Клієнт</p>
+                      <p className="text-sm font-semibold text-white truncate">{client.name}</p>
+                      <p className="text-xs text-emerald-100/70 mt-0.5 truncate tabular-nums">{client.phone}</p>
+                    </div>
                   </div>
-                  <a
-                    href={`/dashboard/clients?phone=${encodeURIComponent(normalizeUaPhone(client.phone) || client.phone)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-xs font-medium text-emerald-200 hover:text-white hover:underline whitespace-nowrap"
-                  >
-                    Картка
-                  </a>
+                  <div className="flex items-center gap-1.5 flex-shrink-0">
+                    {client.phone && (
+                      <a
+                        href={`tel:${client.phone}`}
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-emerald-200/20 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/15 hover:text-white transition-colors"
+                        title="Зателефонувати"
+                        aria-label="Зателефонувати"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                      </a>
+                    )}
+                    {client.phone && (
+                      <button
+                        type="button"
+                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-emerald-200/20 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/15 hover:text-white transition-colors"
+                        title="Копіювати номер"
+                        aria-label="Копіювати номер"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          navigator.clipboard?.writeText(client.phone)
+                        }}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2M8 16a2 2 0 002 2h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8z" />
+                        </svg>
+                      </button>
+                    )}
+                    <a
+                      href={`/dashboard/clients?phone=${encodeURIComponent(normalizeUaPhone(client.phone) || client.phone)}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-xs font-medium text-emerald-200 hover:text-white hover:underline whitespace-nowrap ml-1"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      Картка
+                    </a>
+                  </div>
                 </div>
                 <h2 className="modal-title text-white mb-3 text-base">Деталі запису</h2>
                 <CreateAppointmentForm

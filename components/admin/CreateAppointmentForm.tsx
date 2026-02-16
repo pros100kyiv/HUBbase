@@ -249,6 +249,12 @@ export function CreateAppointmentForm({
     return formData.serviceIds.length > 0 || Boolean(formData.customService.trim()) || formData.customPrice > 0
   })
 
+  const clientDisplayName = (formData.clientName || '').trim() || '—'
+  const clientDisplayPhone = (formData.clientPhone || '').trim()
+  const clientInitial = (clientDisplayName || '—').trim().charAt(0).toUpperCase() || '—'
+  const iconBtnClass =
+    'inline-flex items-center justify-center w-8 h-8 rounded-lg border border-white/15 bg-white/5 text-gray-200 hover:bg-white/10 hover:text-white transition-colors'
+
   useEffect(() => {
     if (clientLocked) return
     const shouldOpen = !hasClientPhone || !hasClientName || clientLookupStatus === 'not_found'
@@ -418,20 +424,58 @@ export function CreateAppointmentForm({
       {/* Клієнт: показуємо короткий рядок + опційно розкриваємо редагування */}
       {clientLocked && hasClientPhone ? (
         <div className={embedded ? 'rounded-xl border border-white/10 bg-white/5 p-2.5' : 'rounded-xl border border-white/10 bg-white/5 p-3'}>
-          <p className="text-xs font-medium text-gray-400 mb-0.5">Клієнт</p>
-          <div className="flex items-center justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-sm font-semibold text-white truncate">{formData.clientName?.trim() || '—'}</p>
-              <p className="text-xs text-gray-400 mt-0.5 truncate">{formData.clientPhone}</p>
+          <p className="text-xs font-medium text-gray-400 mb-1">Клієнт</p>
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm font-bold text-white">{clientInitial}</span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-sm font-semibold text-white truncate">{clientDisplayName}</p>
+                <p className="text-xs text-gray-400 mt-0.5 truncate tabular-nums">{clientDisplayPhone}</p>
+              </div>
             </div>
-            <a
-              href={`/dashboard/clients?phone=${encodeURIComponent(normalizeUaPhone(formData.clientPhone))}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-xs font-medium text-primary hover:underline whitespace-nowrap"
-            >
-              Картка клієнта
-            </a>
+            <div className="flex items-center gap-1.5 flex-shrink-0">
+              {clientDisplayPhone && (
+                <a
+                  href={`tel:${clientDisplayPhone}`}
+                  className={iconBtnClass}
+                  title="Зателефонувати"
+                  aria-label="Зателефонувати"
+                  onClick={(e) => e.stopPropagation()}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                </a>
+              )}
+              {clientDisplayPhone && (
+                <button
+                  type="button"
+                  className={iconBtnClass}
+                  title="Копіювати номер"
+                  aria-label="Копіювати номер"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    navigator.clipboard?.writeText(clientDisplayPhone)
+                    toast({ title: 'Скопійовано', description: clientDisplayPhone, type: 'success', duration: 2000 })
+                  }}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2M8 16a2 2 0 002 2h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8z" />
+                  </svg>
+                </button>
+              )}
+              <a
+                href={`/dashboard/clients?phone=${encodeURIComponent(normalizeUaPhone(clientDisplayPhone))}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-xs font-medium text-primary hover:underline whitespace-nowrap ml-1"
+                onClick={(e) => e.stopPropagation()}
+              >
+                Картка
+              </a>
+            </div>
           </div>
         </div>
       ) : (
@@ -440,21 +484,73 @@ export function CreateAppointmentForm({
           open={clientDetailsOpen}
           onToggle={(e) => setClientDetailsOpen((e.currentTarget as HTMLDetailsElement).open)}
         >
-          <summary className="cursor-pointer list-none select-none flex items-center justify-between gap-2">
-            <div className="min-w-0">
-              <p className="text-xs font-medium text-gray-400">Клієнт</p>
-              <p className="text-sm font-semibold text-white truncate">
-                {hasClientName ? formData.clientName.trim() : 'Вкажіть імʼя та телефон'}
-              </p>
-              {hasClientPhone && (
-                <p className="text-xs text-gray-400 mt-0.5 truncate">{formData.clientPhone}</p>
-              )}
+          <summary className="cursor-pointer list-none select-none flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2.5 min-w-0">
+              <div className="w-10 h-10 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center flex-shrink-0">
+                <span className="text-sm font-bold text-white">{clientInitial}</span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-xs font-medium text-gray-400">Клієнт</p>
+                <p className="text-sm font-semibold text-white truncate">
+                  {hasClientName ? formData.clientName.trim() : 'Вкажіть імʼя та телефон'}
+                </p>
+                {hasClientPhone && (
+                  <p className="text-xs text-gray-400 mt-0.5 truncate tabular-nums">{formData.clientPhone}</p>
+                )}
+              </div>
             </div>
-            <div className="flex items-center gap-2 flex-shrink-0">
+            <div className="flex items-center gap-1.5 flex-shrink-0">
               {clientLookupStatus === 'found' && (
                 <span className="inline-flex items-center rounded-full border border-emerald-400/30 bg-emerald-400/10 px-2 py-0.5 text-[11px] font-medium text-emerald-200">
                   знайдено
                 </span>
+              )}
+              {hasClientPhone && (
+                <a
+                  href={`tel:${formData.clientPhone}`}
+                  className={iconBtnClass}
+                  title="Зателефонувати"
+                  aria-label="Зателефонувати"
+                  onClick={(e) => {
+                    // Не відкривати/закривати <details> по кліку на кнопку дії
+                    e.stopPropagation()
+                  }}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                </a>
+              )}
+              {hasClientPhone && (
+                <button
+                  type="button"
+                  className={iconBtnClass}
+                  title="Копіювати номер"
+                  aria-label="Копіювати номер"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    const phone = formData.clientPhone.trim()
+                    navigator.clipboard?.writeText(phone)
+                    toast({ title: 'Скопійовано', description: phone, type: 'success', duration: 2000 })
+                  }}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2M8 16a2 2 0 002 2h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8z" />
+                  </svg>
+                </button>
+              )}
+              {hasClientPhone && (
+                <a
+                  href={`/dashboard/clients?phone=${encodeURIComponent(normalizeUaPhone(formData.clientPhone))}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-medium text-primary hover:underline whitespace-nowrap px-2 py-1"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                  }}
+                >
+                  Картка
+                </a>
               )}
               <span className="text-xs text-gray-400">{clientDetailsOpen ? 'Згорнути' : 'Редагувати'}</span>
             </div>
