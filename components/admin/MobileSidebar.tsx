@@ -53,7 +53,11 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
   }, [])
 
   useEffect(() => {
+    // Performance: on mobile Safari a background polling loop causes noticeable jank.
+    // We only need the pending count while the menu (or notifications) is actually open.
     if (!business?.id) return
+    if (!isOpen && !showNotifications) return
+
     let cancelled = false
     const fetchPendingCount = async () => {
       try {
@@ -69,12 +73,12 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       }
     }
     fetchPendingCount()
-    const interval = setInterval(fetchPendingCount, 120_000)
+    const interval = setInterval(fetchPendingCount, 180_000) // lighter polling for mobile
     return () => {
       cancelled = true
       clearInterval(interval)
     }
-  }, [business?.id])
+  }, [business?.id, isOpen, showNotifications])
 
   // Індикатор біля «Записи» зникає, коли користувач вже на сторінці записів
   const showAppointmentsBadge = pendingCount > 0 && pathname !== '/dashboard/appointments'
@@ -128,8 +132,9 @@ export function MobileSidebar({ isOpen, onClose }: MobileSidebarProps) {
       <aside
         className={cn(
           'fixed top-0 left-0 h-full w-[min(288px,calc(100vw-env(safe-area-inset-left)-env(safe-area-inset-right)))] max-w-[85vw] border-r z-50 transform transition-transform duration-300 ease-in-out md:hidden sidebar-theme backdrop-blur-xl flex flex-col pt-[env(safe-area-inset-top)] pl-[env(safe-area-inset-left)] pb-[env(safe-area-inset-bottom)] box-border',
-          isOpen ? 'translate-x-0' : '-translate-x-full'
+          isOpen ? 'translate-x-0 pointer-events-auto' : '-translate-x-full pointer-events-none'
         )}
+        aria-hidden={!isOpen}
       >
         {/* Header — лого клікабельний на головну, кнопка закрити */}
         <div className="flex items-center justify-between flex-shrink-0 py-4 px-4 border-b border-white/10">

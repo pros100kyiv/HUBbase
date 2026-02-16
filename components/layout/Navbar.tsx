@@ -114,13 +114,35 @@ export function Navbar() {
   const [pendingCount, setPendingCount] = useState(0)
   const searchButtonRef = useRef<HTMLButtonElement>(null)
   const prevPendingRef = useRef<number | null>(null)
+  const pendingPollTimeoutRef = useRef<number | null>(null)
+  const pendingPollAbortRef = useRef<AbortController | null>(null)
 
   // Pending appointments count; звук при появі нового запису (червона точка з’являється)
   useEffect(() => {
     if (!business?.id || !pathname?.startsWith('/dashboard')) return
+    let disposed = false
+
+    const clearPendingPoll = () => {
+      if (pendingPollTimeoutRef.current != null) {
+        window.clearTimeout(pendingPollTimeoutRef.current)
+        pendingPollTimeoutRef.current = null
+      }
+      if (pendingPollAbortRef.current) {
+        pendingPollAbortRef.current.abort()
+        pendingPollAbortRef.current = null
+      }
+    }
+
     const fetchPending = async () => {
       try {
-        const res = await fetch(`/api/appointments?businessId=${business.id}&status=Pending`)
+        // Avoid piling up requests on slower devices (iOS Safari).
+        clearPendingPoll()
+        if (disposed) return
+        if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return
+
+        const ac = new AbortController()
+        pendingPollAbortRef.current = ac
+        const res = await fetch(`/api/appointments?businessId=${business.id}&status=Pending`, { signal: ac.signal })
         if (!res.ok) return
         const data = await res.json()
         const count = Array.isArray(data) ? data.length : 0
@@ -135,9 +157,33 @@ export function Navbar() {
         prevPendingRef.current = 0
       }
     }
+
+    const scheduleNext = (ms: number) => {
+      if (disposed) return
+      pendingPollTimeoutRef.current = window.setTimeout(() => {
+        fetchPending().finally(() => {
+          // Schedule the next run only after this one finishes.
+          scheduleNext(180_000) // 3 хв
+        })
+      }, ms)
+    }
+
+    const onVisibility = () => {
+      if (document.visibilityState === 'visible') {
+        fetchPending()
+      }
+    }
+
+    // Initial fetch + lightweight polling
     fetchPending()
-    const interval = setInterval(fetchPending, 120_000) // 2 хв — економія запитів до БД
-    return () => clearInterval(interval)
+    scheduleNext(180_000)
+    document.addEventListener('visibilitychange', onVisibility)
+
+    return () => {
+      disposed = true
+      document.removeEventListener('visibilitychange', onVisibility)
+      clearPendingPoll()
+    }
   }, [business?.id, pathname])
 
   // Close mobile menu when pathname changes
