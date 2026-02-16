@@ -244,8 +244,6 @@ export function EditAppointmentForm({
               {formData.clientPhone.replace(/\D/g, '').length >= 9 && (
                 <a
                   href={`/dashboard/clients?phone=${encodeURIComponent(normalizeUaPhone(formData.clientPhone))}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="text-xs font-medium text-emerald-400 hover:underline whitespace-nowrap"
                 >
                   Картка клієнта

@@ -449,27 +449,8 @@ export function CreateAppointmentForm({
                   </svg>
                 </a>
               )}
-              {clientDisplayPhone && (
-                <button
-                  type="button"
-                  className={iconBtnClass}
-                  title="Копіювати номер"
-                  aria-label="Копіювати номер"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    navigator.clipboard?.writeText(clientDisplayPhone)
-                    toast({ title: 'Скопійовано', description: clientDisplayPhone, type: 'success', duration: 2000 })
-                  }}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2M8 16a2 2 0 002 2h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8z" />
-                  </svg>
-                </button>
-              )}
               <a
                 href={`/dashboard/clients?phone=${encodeURIComponent(normalizeUaPhone(clientDisplayPhone))}`}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="text-xs font-medium text-primary hover:underline whitespace-nowrap ml-1"
                 onClick={(e) => e.stopPropagation()}
               >
@@ -522,28 +503,8 @@ export function CreateAppointmentForm({
                 </a>
               )}
               {hasClientPhone && (
-                <button
-                  type="button"
-                  className={iconBtnClass}
-                  title="Копіювати номер"
-                  aria-label="Копіювати номер"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    const phone = formData.clientPhone.trim()
-                    navigator.clipboard?.writeText(phone)
-                    toast({ title: 'Скопійовано', description: phone, type: 'success', duration: 2000 })
-                  }}
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2M8 16a2 2 0 002 2h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8z" />
-                  </svg>
-                </button>
-              )}
-              {hasClientPhone && (
                 <a
                   href={`/dashboard/clients?phone=${encodeURIComponent(normalizeUaPhone(formData.clientPhone))}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
                   className="text-xs font-medium text-primary hover:underline whitespace-nowrap px-2 py-1"
                   onClick={(e) => {
                     e.stopPropagation()
@@ -585,8 +546,6 @@ export function CreateAppointmentForm({
                 {hasClientPhone && (
                   <a
                     href={`/dashboard/clients?phone=${encodeURIComponent(normalizeUaPhone(formData.clientPhone))}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
                     className="text-xs font-medium text-primary hover:underline whitespace-nowrap"
                   >
                     Картка

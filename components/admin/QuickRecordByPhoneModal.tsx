@@ -45,6 +45,7 @@ export function QuickRecordByPhoneModal({
   const [lookupLoading, setLookupLoading] = useState(false)
   const [lookupError, setLookupError] = useState('')
   const [client, setClient] = useState<{ id: string; name: string; phone: string } | null>(null)
+  const [clientBadge, setClientBadge] = useState<'selected' | 'found' | 'created'>('found')
 
   // Якщо відкрили з картки клієнта — одразу показуємо форму запису з підставленим клієнтом
   useEffect(() => {
@@ -56,6 +57,7 @@ export function QuickRecordByPhoneModal({
         name: initialClientName?.trim() || '',
         phone: normalizeUaPhone(phoneNorm) || phoneNorm,
       })
+      setClientBadge('selected')
       setStep('quick_record')
       setPhone(phoneNorm)
     } else {
@@ -112,6 +114,7 @@ export function QuickRecordByPhoneModal({
       const list = Array.isArray(data) ? data : []
       if (list.length > 0 && list[0].name) {
         setClient({ id: list[0].id, name: list[0].name, phone: list[0].phone || normalized })
+        setClientBadge('found')
         setStep('quick_record')
       } else {
         setClient(null)
@@ -131,6 +134,7 @@ export function QuickRecordByPhoneModal({
       name: createdClient.name ?? '',
       phone: createdClient.phone ?? normalizeUaPhone(phone),
     })
+    setClientBadge('created')
     setStep('quick_record')
   }
 
@@ -266,7 +270,20 @@ export function QuickRecordByPhoneModal({
                       </span>
                     </div>
                     <div className="min-w-0">
-                      <p className="text-[11px] font-medium text-emerald-200/80 mb-0.5">Клієнт</p>
+                      <div className="flex items-center gap-2 mb-0.5">
+                        <p className="text-[11px] font-medium text-emerald-200/80">Клієнт</p>
+                        <span
+                          className={
+                            clientBadge === 'found'
+                              ? 'inline-flex items-center rounded-full border border-emerald-300/30 bg-emerald-400/10 px-2 py-0.5 text-[10px] font-semibold text-emerald-100'
+                              : clientBadge === 'created'
+                                ? 'inline-flex items-center rounded-full border border-sky-300/25 bg-sky-400/10 px-2 py-0.5 text-[10px] font-semibold text-sky-100'
+                                : 'inline-flex items-center rounded-full border border-white/15 bg-white/10 px-2 py-0.5 text-[10px] font-semibold text-gray-200'
+                          }
+                        >
+                          {clientBadge === 'found' ? 'знайдено' : clientBadge === 'created' ? 'створено' : 'обрано'}
+                        </span>
+                      </div>
                       <p className="text-sm font-semibold text-white truncate">{client.name}</p>
                       <p className="text-xs text-emerald-100/70 mt-0.5 truncate tabular-nums">{client.phone}</p>
                     </div>
@@ -285,26 +302,8 @@ export function QuickRecordByPhoneModal({
                         </svg>
                       </a>
                     )}
-                    {client.phone && (
-                      <button
-                        type="button"
-                        className="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-emerald-200/20 bg-emerald-500/10 text-emerald-100 hover:bg-emerald-500/15 hover:text-white transition-colors"
-                        title="Копіювати номер"
-                        aria-label="Копіювати номер"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          navigator.clipboard?.writeText(client.phone)
-                        }}
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2M8 16a2 2 0 002 2h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8z" />
-                        </svg>
-                      </button>
-                    )}
                     <a
                       href={`/dashboard/clients?phone=${encodeURIComponent(normalizeUaPhone(client.phone) || client.phone)}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
                       className="text-xs font-medium text-emerald-200 hover:text-white hover:underline whitespace-nowrap ml-1"
                       onClick={(e) => e.stopPropagation()}
                     >

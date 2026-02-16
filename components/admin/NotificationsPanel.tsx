@@ -59,6 +59,20 @@ function AppointmentCard({ appointment, servicesMap, onConfirm, onReschedule, on
       : totalFromServices > 0
         ? totalFromServices
         : null
+  const serviceNamesFull =
+    serviceNames.length > 0 ? serviceNames : (appointment.customServiceName?.trim() ? [appointment.customServiceName.trim()] : [])
+  const visibleServices = serviceNamesFull.slice(0, 2)
+  const restServices = Math.max(0, serviceNamesFull.length - visibleServices.length)
+  const statusBorderColor =
+    appointment.status === 'Done' || appointment.status === 'Виконано'
+      ? 'border-l-sky-500/80'
+      : appointment.status === 'Confirmed' || appointment.status === 'Підтверджено'
+        ? 'border-l-emerald-500/80'
+        : appointment.status === 'Pending' || appointment.status === 'Очікує'
+          ? 'border-l-amber-500/80'
+          : appointment.status === 'Cancelled' || appointment.status === 'Скасовано'
+            ? 'border-l-rose-500/70'
+            : 'border-l-white/20'
 
   const [newDate, setNewDate] = useState(format(startTime, 'yyyy-MM-dd'))
   const [newStartTime, setNewStartTime] = useState(format(startTime, 'HH:mm'))
@@ -66,9 +80,9 @@ function AppointmentCard({ appointment, servicesMap, onConfirm, onReschedule, on
   const [showReschedule, setShowReschedule] = useState(false)
 
   return (
-    <article className="rounded-2xl p-4 sm:p-5 bg-white/[0.06] border border-white/10 outline-none">
+    <article className={cn('rounded-2xl p-4 sm:p-5 bg-white/[0.04] border border-white/10 outline-none border-l-4', statusBorderColor)}>
       {/* Клієнт і час — на перший план */}
-      <div className="flex flex-wrap items-start justify-between gap-2 mb-3">
+      <div className="flex flex-wrap items-start justify-between gap-2 mb-2.5">
         <div className="min-w-0">
           <h3 className="text-base sm:text-lg font-bold text-white leading-tight truncate">{fixMojibake(appointment.clientName)}</h3>
           <a href={`tel:${appointment.clientPhone}`} className="text-sm text-gray-400 hover:text-white transition-colors flex items-center gap-1.5 mt-0.5">
@@ -76,23 +90,52 @@ function AppointmentCard({ appointment, servicesMap, onConfirm, onReschedule, on
             {appointment.clientPhone}
           </a>
         </div>
-        <div className="text-sm text-gray-300 flex items-center gap-1.5 flex-shrink-0">
-          <ClockIcon className="w-4 h-4 flex-shrink-0 text-gray-500" />
-          <span>{format(startTime, 'd MMM', { locale: uk })}, {format(startTime, 'HH:mm', { locale: uk })} – {format(endTime, 'HH:mm', { locale: uk })}</span>
+        <div className="flex items-end gap-2 flex-shrink-0">
+          {displayPriceGrn != null && displayPriceGrn > 0 && (
+            <div className="text-sm font-semibold text-emerald-400 tabular-nums">
+              {displayPriceGrn} грн
+            </div>
+          )}
+          <div className="text-sm text-gray-300 flex items-center gap-1.5">
+            <ClockIcon className="w-4 h-4 flex-shrink-0 text-gray-500" />
+            <span className="tabular-nums">
+              {format(startTime, 'd MMM', { locale: uk })}, {format(startTime, 'HH:mm', { locale: uk })}–{format(endTime, 'HH:mm', { locale: uk })}
+            </span>
+          </div>
         </div>
       </div>
 
-      {/* Деталі — компактний список без зайвих міток */}
-      <div className="space-y-1 text-sm mb-4 text-gray-300">
-        <p><span className="text-gray-500">Спеціаліст:</span> <span className="text-white/90">{appointment.masterName ?? '—'}</span></p>
-        {serviceNames.length > 0 && (
-          <p><span className="text-gray-500">Послуги:</span> <span className="text-white/90">{serviceNames.join(', ')}</span></p>
-        )}
-        {displayPriceGrn != null && displayPriceGrn > 0 && (
-          <p className="font-semibold text-white pt-0.5">{displayPriceGrn} ₴</p>
-        )}
+      <div className="text-[11px] text-gray-500 flex items-center gap-2 flex-wrap mb-3">
+        <span className="truncate">{appointment.masterName ?? '—'}</span>
+        <span className="text-gray-700">·</span>
+        <span className="truncate">Бронювання</span>
+      </div>
+
+      <div className="mb-4">
+        <div className="flex items-center gap-1.5 flex-wrap">
+          {visibleServices.length > 0 ? (
+            <>
+              {visibleServices.map((name, idx) => (
+                <span
+                  key={`${appointment.id}-svc-${idx}`}
+                  className="px-2 py-0.5 text-[11px] font-medium rounded-lg bg-white/10 text-gray-200 border border-white/10 truncate max-w-[16rem]"
+                  title={name}
+                >
+                  {name}
+                </span>
+              ))}
+              {restServices > 0 && (
+                <span className="px-2 py-0.5 text-[11px] font-medium rounded-lg bg-white/5 text-gray-400 border border-white/10">
+                  +{restServices}
+                </span>
+              )}
+            </>
+          ) : (
+            <span className="text-[11px] text-gray-500">Послуги не вказані</span>
+          )}
+        </div>
         {appointment.notes && (
-          <p className="text-gray-400 italic text-xs pt-0.5">{appointment.notes}</p>
+          <p className="text-[11px] text-gray-500 italic mt-1.5 line-clamp-1">{appointment.notes}</p>
         )}
       </div>
 

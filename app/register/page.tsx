@@ -3,7 +3,6 @@
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { AuthLayout } from '@/components/auth/AuthLayout'
-import { TelegramAuthButton } from '@/components/auth/TelegramAuthButton'
 import { Input } from '@/components/ui/input'
 import { ErrorToast } from '@/components/ui/error-toast'
 import { toast } from '@/components/ui/toast'
@@ -253,8 +252,6 @@ function RegisterForm() {
           </svg>
           Зареєструватися через Google
         </button>
-
-        <TelegramAuthButton text="Зареєструватися через Telegram" isRegister={true} />
 
         <div className="text-center text-sm text-gray-400 pt-2">
           Вже маєте акаунт?{' '}

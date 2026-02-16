@@ -75,6 +75,14 @@ export function QuickClientCard({
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [showErrorToast, setShowErrorToast] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
+  const [extraOpen, setExtraOpen] = useState(() => {
+    const hasExistingExtra =
+      Boolean((editingClient?.email || '').trim()) ||
+      Boolean((editingClient?.notes || '').trim()) ||
+      Boolean((editingClient?.tags || '').trim()) ||
+      Boolean((editingClient?.metadata || '').trim())
+    return Boolean(editingClient && hasExistingExtra)
+  })
 
   // При відкритті редагування підставити рекомендований статус, якщо у клієнта був "new" або порожній
   useEffect(() => {
@@ -242,139 +250,154 @@ export function QuickClientCard({
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-2.5 flex-1 min-h-0 overflow-y-auto">
-          {/* Ім'я */}
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">
-              Ім'я клієнта *
-            </label>
-            <div className="relative">
-              <UserIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="text"
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                placeholder="Наприклад: Іван Петренко"
-                required
-                className="w-full pl-10 pr-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
-              />
+        <form onSubmit={handleSubmit} className="space-y-3 flex-1 min-h-0 overflow-y-auto">
+          {/* Основне */}
+          <div className="rounded-xl border border-white/10 bg-white/5 p-3 space-y-3">
+            {/* Ім'я */}
+            <div>
+              <label className="block text-xs font-medium mb-1.5 text-gray-300">
+                Ім'я клієнта <span className="text-rose-400">*</span>
+              </label>
+              <div className="relative">
+                <UserIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="text"
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  placeholder="Наприклад: Іван Петренко"
+                  required
+                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+                />
+              </div>
+            </div>
+
+            {/* Телефон */}
+            <div>
+              <label className="block text-xs font-medium mb-1.5 text-gray-300">
+                Номер телефону <span className="text-rose-400">*</span>
+              </label>
+              <div className="relative">
+                <PhoneIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <input
+                  type="tel"
+                  value={formData.phone}
+                  onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                  placeholder="0671234567"
+                  required
+                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+                />
+              </div>
+              <p className="text-[11px] text-gray-500 mt-1">Формат: номер з 0</p>
+            </div>
+
+            {/* Статус */}
+            <div>
+              <div className="flex items-center justify-between gap-2 mb-1.5">
+                <label className="block text-xs font-medium text-gray-300">Статус</label>
+                {editingClient && suggestedStatus !== formData.status && suggestedStatus !== 'new' && (
+                  <span className="text-[11px] text-gray-500">
+                    рекомендовано: <span className="text-gray-200">{CLIENT_STATUS_OPTIONS.find((o) => o.value === suggestedStatus)?.label ?? suggestedStatus}</span>
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+                {CLIENT_STATUS_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    onClick={() => setFormData({ ...formData, status: opt.value })}
+                    className={cn(
+                      'px-3 py-2 rounded-lg text-xs font-semibold transition-colors border min-h-[40px]',
+                      formData.status === opt.value
+                        ? opt.value === 'vip'
+                          ? 'bg-amber-500/25 text-amber-200 border-amber-400/50'
+                          : opt.value === 'regular'
+                            ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/45'
+                            : opt.value === 'inactive'
+                              ? 'bg-gray-500/25 text-gray-200 border-gray-400/40'
+                              : 'bg-white/15 text-white border-white/25'
+                        : 'bg-white/5 text-gray-400 border-white/10 hover:bg-white/10 hover:text-gray-300'
+                    )}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
-          {/* Телефон */}
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">
-              Номер телефону *
-            </label>
-            <div className="relative">
-              <PhoneIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <input
-                type="tel"
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-                placeholder="0XX XXX XX XX"
-                required
-                className="w-full pl-10 pr-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
-              />
+          {/* Додатково (опціонально) */}
+          <details
+            className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden"
+            open={extraOpen}
+            onToggle={(e) => setExtraOpen((e.currentTarget as HTMLDetailsElement).open)}
+          >
+            <summary className="cursor-pointer list-none select-none px-3 py-2.5 flex items-center justify-between gap-2 bg-white/5">
+              <div className="min-w-0">
+                <p className="text-xs font-semibold text-white">Додатково</p>
+                <p className="text-[11px] text-gray-500 mt-0.5">Email, примітки, теги, інформація</p>
+              </div>
+              <span className="text-xs text-gray-400 flex-shrink-0">{extraOpen ? 'Сховати' : 'Показати'}</span>
+            </summary>
+            <div className="p-3 space-y-3">
+              {/* Email */}
+              <div>
+                <label className="block text-xs font-medium mb-1.5 text-gray-300">
+                  Email
+                </label>
+                <input
+                  type="email"
+                  value={formData.email}
+                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                  placeholder="client@example.com"
+                  className="w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+                />
+              </div>
+
+              {/* Примітки */}
+              <div>
+                <label className="block text-xs font-medium mb-1.5 text-gray-300">
+                  Примітки
+                </label>
+                <textarea
+                  value={formData.notes}
+                  onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
+                  placeholder="Коротко про клієнта (опціонально)"
+                  rows={2}
+                  className="w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-500 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15 resize-none"
+                />
+              </div>
+
+              {/* Теги */}
+              <div>
+                <label className="block text-xs font-medium mb-1.5 text-gray-300">
+                  Теги
+                </label>
+                <input
+                  type="text"
+                  value={formData.tags}
+                  onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
+                  placeholder="VIP, Instagram, Постійний"
+                  className="w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-500 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+                />
+                <p className="text-[11px] text-gray-500 mt-1">Через кому</p>
+              </div>
+
+              {/* Додаткова інформація */}
+              <div>
+                <label className="block text-xs font-medium mb-1.5 text-gray-300">
+                  Додаткова інформація
+                </label>
+                <textarea
+                  value={formData.metadata}
+                  onChange={(e) => setFormData({ ...formData, metadata: e.target.value })}
+                  placeholder="Алергії, побажання, джерело… (опціонально)"
+                  rows={2}
+                  className="w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-500 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15 resize-none"
+                />
+              </div>
             </div>
-            <p className="text-xs text-gray-400 mt-1">
-              Введіть номер з 0, наприклад 0671234567
-            </p>
-          </div>
-
-          {/* Email */}
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">
-              Email (опціонально)
-            </label>
-            <input
-              type="email"
-              value={formData.email}
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="client@example.com"
-              className="w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
-            />
-          </div>
-
-          {/* Статус клієнта */}
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">
-              Статус
-            </label>
-            <div className="flex flex-wrap gap-2">
-              {CLIENT_STATUS_OPTIONS.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => setFormData({ ...formData, status: opt.value })}
-                  className={cn(
-                    'px-3 py-2 rounded-lg text-sm font-medium transition-colors touch-target min-h-[44px]',
-                    formData.status === opt.value
-                      ? opt.value === 'vip'
-                        ? 'bg-amber-500/30 text-amber-200 border border-amber-400/50'
-                        : opt.value === 'regular'
-                          ? 'bg-emerald-500/25 text-emerald-200 border border-emerald-400/50'
-                          : opt.value === 'inactive'
-                            ? 'bg-gray-500/25 text-gray-300 border border-gray-400/50'
-                            : 'bg-white/20 text-white border border-white/30'
-                      : 'bg-white/5 text-gray-400 border border-white/15 hover:bg-white/10 hover:text-gray-300'
-                  )}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-            {editingClient && suggestedStatus !== formData.status && suggestedStatus !== 'new' && (
-              <p className="text-xs text-gray-400 mt-1.5">
-                За візитами та сумою рекомендовано: <span className="text-white font-medium">{CLIENT_STATUS_OPTIONS.find((o) => o.value === suggestedStatus)?.label ?? suggestedStatus}</span>
-              </p>
-            )}
-          </div>
-
-          {/* Примітки */}
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">
-              Примітки (опціонально)
-            </label>
-            <textarea
-              value={formData.notes}
-              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-              placeholder="Додаткові примітки про клієнта..."
-              rows={3}
-              className="w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15 resize-none"
-            />
-          </div>
-
-          {/* Теги */}
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">
-              Теги (опціонально)
-            </label>
-            <input
-              type="text"
-              value={formData.tags}
-              onChange={(e) => setFormData({ ...formData, tags: e.target.value })}
-              placeholder="Наприклад: VIP, Instagram, Постійний"
-              className="w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
-            />
-            <p className="text-xs text-gray-400 mt-1">
-              Вводьте через кому. Буде збережено як список тегів.
-            </p>
-          </div>
-
-          {/* Додаткова інформація */}
-          <div>
-            <label className="block text-sm font-medium mb-2 text-gray-300">
-              Додаткова інформація (опціонально)
-            </label>
-            <textarea
-              value={formData.metadata}
-              onChange={(e) => setFormData({ ...formData, metadata: e.target.value })}
-              placeholder="Будь-які деталі про клієнта (наприклад: алергії, побажання, джерело, тощо)"
-              rows={3}
-              className="w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15 resize-none"
-            />
-          </div>
+          </details>
 
           {/* Кнопки */}
           <div className="flex gap-3 pt-2">

@@ -228,15 +228,15 @@ export function StatisticsDetailModal({
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'Pending':
-        return 'bg-orange-500/20 text-orange-400 border-orange-500/50'
+        return 'bg-amber-500/15 text-amber-200 border-amber-400/30'
       case 'Confirmed':
-        return 'bg-green-500/20 text-green-400 border-green-500/50'
+        return 'bg-emerald-500/15 text-emerald-200 border-emerald-400/30'
       case 'Done':
-        return 'bg-blue-500/20 text-blue-400 border-blue-500/50'
+        return 'bg-sky-500/15 text-sky-200 border-sky-400/30'
       case 'Cancelled':
-        return 'bg-red-500/20 text-red-400 border-red-500/50'
+        return 'bg-rose-500/15 text-rose-200 border-rose-400/30'
       default:
-        return 'bg-gray-500/20 text-gray-400 border-gray-500/50'
+        return 'bg-white/10 text-gray-200 border-white/20'
     }
   }
 
@@ -252,6 +252,53 @@ export function StatisticsDetailModal({
         return 'Скасовано'
       default:
         return status
+    }
+  }
+
+  type Tone = 'done' | 'confirmed' | 'pending' | 'cancelled' | 'other'
+
+  const toTone = (status: string): Tone => {
+    switch (status) {
+      case 'Done':
+        return 'done'
+      case 'Confirmed':
+        return 'confirmed'
+      case 'Pending':
+        return 'pending'
+      case 'Cancelled':
+        return 'cancelled'
+      default:
+        return 'other'
+    }
+  }
+
+  const toneRowBorder = (tone: Tone): string => {
+    switch (tone) {
+      case 'done':
+        return 'border-l-sky-500/70'
+      case 'confirmed':
+        return 'border-l-emerald-500/70'
+      case 'pending':
+        return 'border-l-amber-500/70'
+      case 'cancelled':
+        return 'border-l-rose-500/60'
+      default:
+        return 'border-l-white/20'
+    }
+  }
+
+  const getDisplayPriceGrn = (apt: Appointment): number | null => {
+    if (apt.customPrice != null && apt.customPrice > 0) return Math.round(Number(apt.customPrice) / 100)
+    try {
+      const ids = JSON.parse(apt.services || '[]') as string[]
+      if (!Array.isArray(ids) || ids.length === 0) return null
+      const sum = ids.reduce((acc: number, sid: string) => {
+        const s = services.find((x) => x.id === sid)
+        return acc + (s?.price || 0)
+      }, 0)
+      return sum > 0 ? sum : null
+    } catch {
+      return null
     }
   }
 
@@ -427,71 +474,130 @@ export function StatisticsDetailModal({
                 /* Список записів */
                 <div>
                   <h3 className="text-sm font-semibold text-gray-300 mb-3">Список записів</h3>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {appointments.length === 0 ? (
                       <div className="text-center py-8 text-gray-400">
                         <p>Немає записів за вибраний період</p>
                       </div>
                     ) : (
-                      appointments
-                        .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-                        .map((apt) => {
-                          const master = masters.find(m => m.id === apt.masterId)
-                          const startTime = new Date(apt.startTime)
-                          const endTime = new Date(apt.endTime)
-                          
-                          return (
-                            <div key={apt.id} className="p-3 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 transition-colors">
-                              <div className="flex items-start justify-between mb-2">
-                                <div className="flex-1">
-                                  <div className="flex items-center gap-2 mb-1 flex-wrap">
-                                    <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-white tabular-nums">
-                                      <ClockIcon className="w-4 h-4 text-gray-400 flex-shrink-0" />
-                                      {format(startTime, 'HH:mm')}–{format(endTime, 'HH:mm')}
-                                    </span>
-                                    <span className="text-xs text-gray-400">
-                                      {format(startTime, 'd MMM', { locale: uk })}
-                                    </span>
-                                  </div>
-                                  <div className="text-sm font-medium text-white mb-1">{fixMojibake(apt.clientName)}</div>
-                                  <div className="text-xs text-gray-400 flex items-center gap-2 flex-wrap">
-                                    {apt.clientPhone}
-                                    <a
-                                      href={`/dashboard/clients?phone=${encodeURIComponent(apt.clientPhone)}`}
-                                      className="text-emerald-400 hover:underline"
-                                    >
-                                      Історія клієнта
-                                    </a>
-                                  </div>
-                                  {master && (
-                                    <div className="text-xs text-gray-500 mt-1">Спеціаліст: {master.name}</div>
-                                  )}
-                                </div>
-                                <div className={cn('px-2 py-1 rounded text-xs font-medium border', getStatusColor(apt.status))}>
-                                  {getStatusLabel(apt.status)}
-                                </div>
-                              </div>
-                              {(apt.services || apt.customServiceName) && (
-                                <div className="text-xs text-gray-400 mt-2">
-                                  {(() => {
-                                    try {
-                                      const servicesList = JSON.parse(apt.services || '[]') as string[]
-                                      if (servicesList.length > 0) {
-                                        return servicesList.map((sid: string) => {
-                                          const service = services.find(s => s.id === sid)
-                                          return service?.name || sid
-                                        }).join(', ')
-                                      }
-                                      return apt.customServiceName?.trim() || 'Послуга не вказана'
-                                    } catch {
-                                      return apt.customServiceName?.trim() || apt.services || '—'
-                                    }
-                                  })()}
-                                </div>
-                              )}
+                      (() => {
+                        const sorted = [...appointments].sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                        const sections: Array<{ dayKey: string; dayDate: Date; items: Appointment[] }> = []
+                        for (const apt of sorted) {
+                          const dayDate = new Date(apt.startTime)
+                          const dayKey = format(dayDate, 'yyyy-MM-dd')
+                          const last = sections[sections.length - 1]
+                          if (!last || last.dayKey !== dayKey) sections.push({ dayKey, dayDate, items: [apt] })
+                          else last.items.push(apt)
+                        }
+
+                        return sections.map((section) => (
+                          <div key={section.dayKey} className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden">
+                            <div className="px-3 py-2 flex items-center justify-between gap-2 border-b border-white/10 bg-white/5">
+                              <span className="text-xs font-semibold text-white tabular-nums">
+                                {format(section.dayDate, 'dd.MM.yyyy')}
+                              </span>
+                              <span className="text-[11px] text-gray-400 capitalize">
+                                {format(section.dayDate, 'EEEE', { locale: uk })}
+                              </span>
                             </div>
-                          )
-                        })
+
+                            <div className="divide-y divide-white/10">
+                              {section.items.map((apt) => {
+                                const master = masters.find((m) => m.id === apt.masterId)
+                                const startTime = new Date(apt.startTime)
+                                const endTime = new Date(apt.endTime)
+                                const tone = toTone(apt.status)
+                                const displayPrice = getDisplayPriceGrn(apt)
+
+                                let serviceNames: string[] = []
+                                try {
+                                  const ids = JSON.parse(apt.services || '[]') as string[]
+                                  if (Array.isArray(ids) && ids.length > 0) {
+                                    serviceNames = ids.map((sid) => services.find((s) => s.id === sid)?.name || sid).filter(Boolean)
+                                  } else if (apt.customServiceName?.trim()) {
+                                    serviceNames = [apt.customServiceName.trim()]
+                                  }
+                                } catch {
+                                  if (apt.customServiceName?.trim()) serviceNames = [apt.customServiceName.trim()]
+                                }
+                                const visibleServices = serviceNames.slice(0, 2)
+                                const restServices = Math.max(0, serviceNames.length - visibleServices.length)
+
+                                return (
+                                  <div
+                                    key={apt.id}
+                                    className={cn(
+                                      'px-3 py-2.5 hover:bg-white/[0.06] transition-colors border-l-4',
+                                      toneRowBorder(tone)
+                                    )}
+                                  >
+                                    <div className="flex items-start justify-between gap-3">
+                                      <div className="min-w-0 flex-1">
+                                        <div className="flex flex-wrap items-center gap-2">
+                                          <span className="inline-flex items-center gap-1.5 text-sm font-semibold text-white tabular-nums">
+                                            <ClockIcon className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                                            {format(startTime, 'HH:mm')}–{format(endTime, 'HH:mm')}
+                                          </span>
+                                          <span className={cn('px-2 py-0.5 rounded-full text-[11px] font-medium border', getStatusColor(apt.status))}>
+                                            {getStatusLabel(apt.status)}
+                                          </span>
+                                          <span className="text-[11px] text-gray-400 truncate">
+                                            {master?.name || 'Невідомий спеціаліст'}
+                                          </span>
+                                        </div>
+
+                                        <div className="mt-1 text-sm font-semibold text-white truncate">
+                                          {fixMojibake(apt.clientName)}
+                                        </div>
+
+                                        <div className="mt-0.5 text-[11px] text-gray-400 flex items-center gap-2 flex-wrap">
+                                          <span className="tabular-nums">{apt.clientPhone}</span>
+                                          <a
+                                            href={`/dashboard/clients?phone=${encodeURIComponent(apt.clientPhone)}`}
+                                            className="text-emerald-400 hover:underline"
+                                          >
+                                            Історія клієнта
+                                          </a>
+                                        </div>
+
+                                        <div className="mt-1.5 flex items-center gap-1.5 flex-wrap">
+                                          {visibleServices.length > 0 ? (
+                                            <>
+                                              {visibleServices.map((name, idx) => (
+                                                <span
+                                                  key={`${apt.id}-svc-${idx}`}
+                                                  className="px-2 py-0.5 text-[11px] font-medium rounded-lg bg-white/10 text-gray-200 border border-white/10 truncate max-w-[16rem]"
+                                                  title={name}
+                                                >
+                                                  {name}
+                                                </span>
+                                              ))}
+                                              {restServices > 0 && (
+                                                <span className="px-2 py-0.5 text-[11px] font-medium rounded-lg bg-white/5 text-gray-400 border border-white/10">
+                                                  +{restServices}
+                                                </span>
+                                              )}
+                                            </>
+                                          ) : (
+                                            <span className="text-[11px] text-gray-500">Послуги не вказані</span>
+                                          )}
+                                        </div>
+                                      </div>
+
+                                      {displayPrice != null && displayPrice > 0 && (
+                                        <div className="flex-shrink-0 text-sm font-semibold text-emerald-400 tabular-nums">
+                                          {Math.round(displayPrice)} грн
+                                        </div>
+                                      )}
+                                    </div>
+                                  </div>
+                                )
+                              })}
+                            </div>
+                          </div>
+                        ))
+                      })()
                     )}
                   </div>
                 </div>

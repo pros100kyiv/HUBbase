@@ -1,16 +1,16 @@
 'use client'
 
 import dynamic from 'next/dynamic'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, eachDayOfInterval, isValid } from 'date-fns'
 import { uk } from 'date-fns/locale'
-import { MobileAppointmentCard } from '@/components/admin/MobileAppointmentCard'
 import { QuickClientCard } from '@/components/admin/QuickClientCard'
 import { Modal } from '@/components/ui/modal'
-import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon, FilterIcon, CheckIcon, UserIcon } from '@/components/icons'
+import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon, FilterIcon, CheckIcon, UserIcon, EditIcon } from '@/components/icons'
 import { cn, fixMojibake } from '@/lib/utils'
 import { toast } from '@/components/ui/toast'
+import { StatusSwitcher } from '@/components/admin/StatusSwitcher'
 
 const CreateAppointmentForm = dynamic(
   () => import('@/components/admin/CreateAppointmentForm').then((m) => ({ default: m.CreateAppointmentForm })),
@@ -73,6 +73,9 @@ export default function AppointmentsPage() {
   const [selectedAppointments, setSelectedAppointments] = useState<Set<string>>(new Set())
   const [masters, setMasters] = useState<any[]>([])
   const [services, setServices] = useState<any[]>([])
+  const [statusFiltersOpen, setStatusFiltersOpen] = useState(false)
+  const selectedDateDetailsRef = useRef<HTMLDivElement | null>(null)
+  const lastAutoScrollDateKeyRef = useRef<string | null>(null)
   const [showCreateForm, setShowCreateForm] = useState(false)
   const [initialCreateTime, setInitialCreateTime] = useState<string | null>(null)
   const [initialMasterId, setInitialMasterId] = useState<string | null>(null)
@@ -80,6 +83,7 @@ export default function AppointmentsPage() {
   const [initialClientName, setInitialClientName] = useState<string>('')
   const [showEditForm, setShowEditForm] = useState(false)
   const [editingAppointment, setEditingAppointment] = useState<Appointment | null>(null)
+  const [viewingAppointment, setViewingAppointment] = useState<Appointment | null>(null)
   const [showQuickClientCard, setShowQuickClientCard] = useState(false)
   const [viewMode, setViewMode] = useState<'calendar' | 'list'>('calendar')
   // Показувати дохід у клітинках календаря, у блоці дня та в підсумку списку (зберігається в localStorage)
@@ -117,6 +121,151 @@ export default function AppointmentsPage() {
       }
       return next
     })
+  }
+
+  const getStatusLabelUa = (status: string): string => {
+    // Keep consistent with Dashboard / StatusSwitcher wording.
+    const s = String(status)
+    if (s === 'Pending' || s === 'Очікує') return 'Очікує'
+    if (s === 'Confirmed' || s === 'Підтверджено') return 'Підтверджено'
+    if (s === 'Done' || s === 'Виконано') return 'Виконано'
+    if (s === 'Cancelled' || s === 'Скасовано') return 'Скасовано'
+    return s
+  }
+
+  const getRowBorderClass = (status: string): string => {
+    const s = String(status)
+    if (s === 'Done' || s === 'Виконано') return 'border-l-sky-500/80'
+    if (s === 'Confirmed' || s === 'Підтверджено') return 'border-l-emerald-500/80'
+    if (s === 'Pending' || s === 'Очікує') return 'border-l-amber-500/80'
+    if (s === 'Cancelled' || s === 'Скасовано') return 'border-l-rose-500/70'
+    return 'border-l-white/20'
+  }
+
+  const getServiceDisplay = (apt: Appointment): string => {
+    // services is list of {id,name,price}. apt.services is JSON array of service ids.
+    try {
+      const ids = apt.services ? JSON.parse(apt.services) : []
+      const arr = Array.isArray(ids) ? ids : [ids]
+      const names = arr
+        .map((id: string) => services.find((s: any) => s.id === id)?.name || id)
+        .filter(Boolean)
+      if (names.length > 0) return names.join(', ')
+    } catch {
+      // ignore
+    }
+    if (apt.customServiceName?.trim()) return apt.customServiceName.trim()
+    return 'Послуги не вказані'
+  }
+
+  const AppointmentRow = ({ appointment }: { appointment: Appointment }) => {
+    const startTime = new Date(appointment.startTime)
+    const endTime = new Date(appointment.endTime)
+    const durationMin = Math.max(0, Math.round((endTime.getTime() - startTime.getTime()) / 60000))
+    const serviceDisplay = getServiceDisplay(appointment)
+    const displayPrice = getAppointmentDisplayPrice(appointment)
+    const hasServicesFromPriceList = (() => {
+      try {
+        const ids = appointment.services ? JSON.parse(appointment.services) : []
+        return Array.isArray(ids) && ids.length > 0
+      } catch {
+        return false
+      }
+    })()
+
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onClick={() => setViewingAppointment(appointment)}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setViewingAppointment(appointment) } }}
+        className={cn(
+          'w-full text-left bg-transparent hover:bg-white/[0.06] transition-colors',
+          'px-3 py-2.5 touch-manipulation cursor-pointer',
+          'border-l-4',
+          getRowBorderClass(appointment.status)
+        )}
+      >
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="text-sm font-semibold text-white tabular-nums">
+                {format(startTime, 'HH:mm')}–{format(endTime, 'HH:mm')}
+              </span>
+              <span className="text-[11px] text-gray-500 tabular-nums">
+                {durationMin} хв
+              </span>
+              <span className="text-gray-700">·</span>
+              <span className="text-[11px] text-gray-400 truncate">
+                {appointment.masterName || appointment.master?.name || '—'}
+              </span>
+              <span className="text-gray-700">·</span>
+              <span className="text-[11px] text-gray-400">
+                {getStatusLabelUa(appointment.status)}
+              </span>
+            </div>
+
+            <div className="mt-1 flex items-center gap-2 min-w-0">
+              <span className="text-sm font-semibold text-white truncate">
+                {fixMojibake(appointment.clientName)}
+              </span>
+              {appointment.clientPhone && (
+                <a
+                  href={`tel:${appointment.clientPhone}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-emerald-400 hover:text-emerald-300 transition-colors p-1 -m-1 touch-manipulation flex-shrink-0"
+                  aria-label="Зателефонувати"
+                  title={appointment.clientPhone}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                </a>
+              )}
+            </div>
+
+            <div className="mt-1.5 text-[11px] text-gray-300 truncate">
+              {serviceDisplay}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            {showRevenue && displayPrice > 0 && (
+              <div className="text-sm font-semibold text-emerald-400 tabular-nums">
+                {displayPrice} грн
+              </div>
+            )}
+            <StatusSwitcher
+              status={appointment.status}
+              isFromBooking={appointment.isFromBooking === true}
+              onStatusChange={(id, st) => handleStatusChange(id, st)}
+              appointmentId={appointment.id}
+              size="sm"
+              customPrice={appointment.customPrice}
+              hasServicesFromPriceList={hasServicesFromPriceList}
+              onDoneWithoutPrice={(id) => {
+                toast({
+                  title: 'Статус не змінено',
+                  description: 'Щоб позначити запис як Виконано, спочатку вкажіть вартість послуги в формі нижче.',
+                  type: 'info',
+                  duration: 4000,
+                })
+                setShowDonePriceModalForId(id)
+              }}
+            />
+            <button
+              type="button"
+              onClick={() => handleEditAppointment(appointment)}
+              className="touch-target p-2 bg-white/10 text-gray-300 rounded-lg hover:bg-white/20 hover:text-white transition-all border border-white/10 touch-manipulation min-h-[40px] min-w-[40px] flex items-center justify-center"
+              title="Редагувати"
+              aria-label="Редагувати запис"
+            >
+              <EditIcon className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   useEffect(() => {
@@ -495,6 +644,28 @@ export default function AppointmentsPage() {
     })
   }
 
+  // Авто-скрол до блоку з інформацією по даті, якщо є записи
+  useEffect(() => {
+    if (viewMode !== 'calendar') return
+    if (!selectedDate || !isValid(selectedDate)) return
+
+    const dateKey = format(selectedDate, 'yyyy-MM-dd')
+    const hasAppointmentsForDay = filteredAppointments.some((apt) => {
+      const start = new Date(apt.startTime)
+      if (!isValid(start)) return false
+      return isSameDay(start, selectedDate)
+    })
+
+    // Скролимо тільки якщо реально є записи (по поточних фільтрах)
+    if (!hasAppointmentsForDay) return
+    if (lastAutoScrollDateKeyRef.current === dateKey) return
+
+    lastAutoScrollDateKeyRef.current = dateKey
+    requestAnimationFrame(() => {
+      selectedDateDetailsRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    })
+  }, [viewMode, selectedDate, filteredAppointments])
+
   // Статистика за обраний день (тільки в режимі календаря, коли вибрано дату)
   const dayAppointmentsForStats = viewMode === 'calendar' && selectedDate && isValid(selectedDate) ? getAppointmentsForDay(selectedDate) : []
   const dayStats = viewMode === 'calendar' && selectedDate && isValid(selectedDate) ? (() => {
@@ -613,10 +784,60 @@ export default function AppointmentsPage() {
               </div>
             ) : (
               <>
-                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-4">
+                {/* Верхній рядок: статус + місяць + навігація */}
+                <div className="flex items-center justify-between gap-2 mb-3 flex-wrap">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <button
+                      type="button"
+                      onClick={() => setStatusFiltersOpen((v) => !v)}
+                      className={cn(
+                        'touch-target min-h-[40px] px-3 py-2 rounded-lg text-xs font-semibold inline-flex items-center gap-2 border transition-colors whitespace-nowrap',
+                        statusFiltersOpen
+                          ? 'bg-white/15 border-white/25 text-white'
+                          : 'bg-white/10 border-white/15 text-gray-300 hover:bg-white/15 hover:text-white'
+                      )}
+                      aria-expanded={statusFiltersOpen}
+                    >
+                      <FilterIcon className="w-4 h-4" />
+                      <span>Статус:</span>
+                      <span className={cn('font-bold', filterStatus !== 'all' ? 'text-white' : 'text-gray-200')}>
+                        {filterStatus === 'all'
+                          ? 'Всі'
+                          : filterStatus === 'Pending'
+                            ? 'Очікує'
+                            : filterStatus === 'Confirmed'
+                              ? 'Підтверджено'
+                              : filterStatus === 'Done'
+                                ? 'Виконано'
+                                : 'Скасовано'}
+                      </span>
+                      <svg
+                        className={cn('w-4 h-4 text-gray-400 transition-transform', statusFiltersOpen && 'rotate-180')}
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                        aria-hidden
+                      >
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                      </svg>
+                    </button>
+
+                    {filterStatus !== 'all' && (
+                      <button
+                        type="button"
+                        onClick={() => setFilterStatus('all')}
+                        className="touch-target min-h-[40px] px-3 py-2 rounded-lg text-xs font-semibold bg-white/10 text-gray-300 hover:bg-white/15 hover:text-white border border-white/10 transition-colors whitespace-nowrap"
+                        title="Скинути фільтр"
+                      >
+                        Скинути
+                      </button>
+                    )}
+                  </div>
+
                   <h2 className="text-lg md:text-xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
                     {safeFormat(currentMonth, 'LLLL yyyy', { locale: uk }) || '—'}
                   </h2>
+
                   <div className="flex gap-2">
                     <button
                       onClick={() => {
@@ -657,22 +878,24 @@ export default function AppointmentsPage() {
                   </div>
                 </div>
 
-                {/* Компактні фільтри над календарем (дубль у блоці дати) */}
-                <div className="flex gap-1.5 mb-3 flex-wrap">
-                  {['all', 'Pending', 'Confirmed', 'Done', 'Cancelled'].map((status) => (
-                    <button
-                      key={status}
-                      onClick={() => setFilterStatus(status)}
-                      className={cn(
-                        'touch-target min-h-[40px] px-2.5 py-2 sm:py-1 rounded-md text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap active:scale-[0.98]',
-                        filterStatus === status ? 'bg-white text-black' : 'bg-white/10 text-gray-400 hover:bg-white/15 hover:text-white border border-white/10'
-                      )}
-                      style={filterStatus === status ? { boxShadow: '0 1px 2px rgba(0,0,0,0.2)' } : {}}
-                    >
-                      {status === 'all' ? 'Всі' : status === 'Pending' ? 'Очікує' : status === 'Confirmed' ? 'Підтверджено' : status === 'Done' ? 'Виконано' : 'Скасовано'}
-                    </button>
-                  ))}
-                </div>
+                {statusFiltersOpen && (
+                  <div className="flex gap-1.5 mb-3 flex-wrap">
+                    {['all', 'Pending', 'Confirmed', 'Done', 'Cancelled'].map((status) => (
+                      <button
+                        key={status}
+                        type="button"
+                        onClick={() => setFilterStatus(status)}
+                        className={cn(
+                          'touch-target min-h-[40px] px-2.5 py-2 sm:py-1 rounded-md text-[11px] sm:text-xs font-medium transition-colors whitespace-nowrap active:scale-[0.98]',
+                          filterStatus === status ? 'bg-white text-black' : 'bg-white/10 text-gray-400 hover:bg-white/15 hover:text-white border border-white/10'
+                        )}
+                        style={filterStatus === status ? { boxShadow: '0 1px 2px rgba(0,0,0,0.2)' } : {}}
+                      >
+                        {status === 'all' ? 'Всі' : status === 'Pending' ? 'Очікує' : status === 'Confirmed' ? 'Підтверджено' : status === 'Done' ? 'Виконано' : 'Скасовано'}
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 {/* Календар — збільшений; min-w-0 щоб не вилітав за екран */}
                 <div className="grid grid-cols-7 gap-2 w-full min-w-0">
@@ -743,7 +966,7 @@ export default function AppointmentsPage() {
               .filter(a => a.status === 'Done' || a.status === 'Виконано')
               .reduce((sum, apt) => sum + getAppointmentDisplayPrice(apt), 0)
             return (
-              <div className="dashboard-card">
+              <div ref={selectedDateDetailsRef} className="dashboard-card scroll-mt-24">
                 <div className="flex flex-col gap-2 mb-3">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <h3 className="dashboard-card-title-lg text-base md:text-lg">
@@ -759,26 +982,9 @@ export default function AppointmentsPage() {
                   {showRevenue && dayRevenue > 0 && (
                     <div className="flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-500/15 border border-emerald-500/30">
                       <span className="text-sm text-gray-300">Дохід за день</span>
-                      <span className="text-lg font-bold text-purple-400">{dayRevenue} грн</span>
+                      <span className="text-lg font-bold text-emerald-400">{dayRevenue} грн</span>
                     </div>
                   )}
-                  <div className="flex flex-wrap gap-1">
-                    {['all', 'Pending', 'Confirmed', 'Done', 'Cancelled'].map((status) => (
-                      <button
-                        key={status}
-                        onClick={() => setFilterStatus(status)}
-                        className={cn(
-                          'touch-target min-h-[44px] px-3 py-2 rounded text-[10px] sm:text-xs font-medium transition-colors whitespace-nowrap active:scale-[0.98]',
-                          filterStatus === status
-                            ? 'bg-white text-black'
-                            : 'bg-white/10 text-gray-400 hover:bg-white/15 hover:text-white border border-white/10'
-                        )}
-                        style={filterStatus === status ? { boxShadow: '0 1px 2px rgba(0,0,0,0.2)' } : {}}
-                      >
-                        {status === 'all' ? 'Всі' : status === 'Pending' ? 'Очікує' : status === 'Confirmed' ? 'Підтверджено' : status === 'Done' ? 'Виконано' : 'Скасовано'}
-                      </button>
-                    ))}
-                  </div>
                 </div>
 
                 {sorted.length === 0 ? (
@@ -797,25 +1003,9 @@ export default function AppointmentsPage() {
                   </div>
                 ) : (
                   <div className="max-h-[50vh] md:max-h-[55vh] overflow-y-auto scrollbar-hide pr-0.5 -mr-0.5">
-                    <div className="space-y-1.5 md:space-y-2">
+                    <div className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden divide-y divide-white/10">
                       {sorted.map((appointment) => (
-                        <MobileAppointmentCard
-                          key={appointment.id}
-                          appointment={appointment}
-                          services={services}
-                          onStatusChange={handleStatusChange}
-                          onEdit={handleEditAppointment}
-                          onOpenClientHistory={(phone) => router.push(`/dashboard/clients?phone=${encodeURIComponent(phone)}`)}
-                          onDoneWithoutPrice={(id) => {
-                          toast({
-                            title: 'Статус не змінено',
-                            description: 'Щоб позначити запис як Виконано, спочатку вкажіть вартість послуги в формі нижче.',
-                            type: 'info',
-                            duration: 4000,
-                          })
-                          setShowDonePriceModalForId(id)
-                        }}
-                        />
+                        <AppointmentRow key={appointment.id} appointment={appointment} />
                       ))}
                     </div>
                   </div>
@@ -850,27 +1040,11 @@ export default function AppointmentsPage() {
               ) : (
                 <>
                   <div className="max-h-[60vh] overflow-y-auto scrollbar-hide pr-0.5 -mr-0.5">
-                    <div className="space-y-1.5 md:space-y-2">
+                    <div className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden divide-y divide-white/10">
                       {filteredAppointments
                         .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
                         .map((appointment) => (
-                          <MobileAppointmentCard
-                            key={appointment.id}
-                            appointment={appointment}
-                            services={services}
-                            onStatusChange={handleStatusChange}
-                            onEdit={handleEditAppointment}
-                            onOpenClientHistory={(phone) => router.push(`/dashboard/clients?phone=${encodeURIComponent(phone)}`)}
-                            onDoneWithoutPrice={(id) => {
-                          toast({
-                            title: 'Статус не змінено',
-                            description: 'Щоб позначити запис як Виконано, спочатку вкажіть вартість послуги в формі нижче.',
-                            type: 'info',
-                            duration: 4000,
-                          })
-                          setShowDonePriceModalForId(id)
-                        }}
-                          />
+                          <AppointmentRow key={appointment.id} appointment={appointment} />
                         ))}
                     </div>
                   </div>
@@ -945,7 +1119,7 @@ export default function AppointmentsPage() {
               </div>
               <div className="flex items-center justify-between p-3 bg-white/5 rounded-lg border border-white/10">
                 <span className="text-sm text-gray-300">{dayStats ? 'Дохід за день' : 'Дохід за період'}</span>
-                <span className="text-sm font-semibold text-purple-400">{dayStats ? dayStats.revenue : stats.revenue} грн</span>
+                <span className="text-sm font-semibold text-emerald-400">{dayStats ? dayStats.revenue : stats.revenue} грн</span>
               </div>
             </div>
           </div>
@@ -1134,6 +1308,122 @@ export default function AppointmentsPage() {
                   placeholder="Наприклад: Стрижка, Манікюр"
                 />
               </label>
+            </div>
+          </Modal>
+        )
+      })()}
+
+      {/* Модалка: деталі запису (клік по рядку під календарем/в списку) */}
+      {viewingAppointment && business && (() => {
+        const apt = viewingAppointment
+        const startTime = new Date(apt.startTime)
+        const endTime = new Date(apt.endTime)
+        const durationMin = Math.max(0, Math.round((endTime.getTime() - startTime.getTime()) / 60000))
+        const serviceDisplay = getServiceDisplay(apt)
+        const displayPrice = getAppointmentDisplayPrice(apt)
+        const headerBorder = getRowBorderClass(apt.status)
+        const hasServicesFromPriceList = (() => {
+          try {
+            const ids = apt.services ? JSON.parse(apt.services) : []
+            return Array.isArray(ids) && ids.length > 0
+          } catch {
+            return false
+          }
+        })()
+
+        return (
+          <Modal
+            isOpen
+            onClose={() => setViewingAppointment(null)}
+            title="Деталі запису"
+            subtitle={`${format(startTime, 'd MMMM yyyy', { locale: uk })} · ${format(startTime, 'HH:mm')}–${format(endTime, 'HH:mm')} · ${durationMin} хв`}
+            size="md"
+            footer={
+              <div className="flex gap-2">
+                {apt.clientPhone ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setViewingAppointment(null)
+                      router.push(`/dashboard/clients?phone=${encodeURIComponent(apt.clientPhone)}`)
+                    }}
+                    className="flex-1 px-4 py-3 rounded-xl bg-white/10 border border-white/20 text-sm font-medium text-white hover:bg-white/15 transition-colors active:scale-[0.98] inline-flex items-center justify-center gap-2"
+                  >
+                    <CalendarIcon className="w-4 h-4 flex-shrink-0" />
+                    Історія клієнта
+                  </button>
+                ) : null}
+                <button
+                  type="button"
+                  onClick={() => {
+                    setViewingAppointment(null)
+                    handleEditAppointment(apt)
+                  }}
+                  className="flex-1 px-4 py-3 rounded-xl bg-white text-black text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98]"
+                >
+                  Редагувати запис
+                </button>
+              </div>
+            }
+          >
+            <div className={cn('rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden border-l-4', headerBorder)}>
+              <div className="p-3">
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-9 h-9 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center flex-shrink-0 text-sm font-bold text-white">
+                        {fixMojibake(apt.clientName || '—').charAt(0).toUpperCase()}
+                      </div>
+                      <div className="min-w-0">
+                        <div className="text-sm font-bold text-white truncate">{fixMojibake(apt.clientName)}</div>
+                        <div className="text-[11px] text-gray-400 truncate">{apt.masterName || apt.master?.name || '—'}</div>
+                      </div>
+                    </div>
+
+                    {apt.clientPhone && (
+                      <a
+                        href={`tel:${apt.clientPhone}`}
+                        className="mt-2 inline-flex items-center gap-2 text-emerald-400 hover:text-emerald-300 transition-colors text-sm font-mono"
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                        </svg>
+                        {apt.clientPhone}
+                      </a>
+                    )}
+                  </div>
+
+                  <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                    {showRevenue && displayPrice > 0 && (
+                      <div className="text-base font-bold text-emerald-400 tabular-nums">
+                        {displayPrice} грн
+                      </div>
+                    )}
+                    <StatusSwitcher
+                      status={apt.status}
+                      isFromBooking={apt.isFromBooking === true}
+                      onStatusChange={(id, st) => handleStatusChange(id, st)}
+                      appointmentId={apt.id}
+                      size="md"
+                      customPrice={apt.customPrice}
+                      hasServicesFromPriceList={hasServicesFromPriceList}
+                      onDoneWithoutPrice={(id) => {
+                        toast({
+                          title: 'Статус не змінено',
+                          description: 'Щоб позначити запис як Виконано, спочатку вкажіть вартість послуги в формі нижче.',
+                          type: 'info',
+                          duration: 4000,
+                        })
+                        setShowDonePriceModalForId(id)
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="mt-3 text-[11px] text-gray-300">
+                  {serviceDisplay}
+                </div>
+              </div>
             </div>
           </Modal>
         )

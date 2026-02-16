@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { BusinessCardEditor } from '@/components/admin/BusinessCardEditor'
 import { BookingSlotsSettings } from '@/components/admin/BookingSlotsSettings'
-import { TelegramSettings } from '@/components/admin/TelegramSettings'
 import { IntegrationsSettings } from '@/components/admin/IntegrationsSettings'
 import { PasswordForLoginSection } from '@/components/admin/PasswordForLoginSection'
 import {
@@ -97,160 +96,15 @@ const getCategoryColor = (index: number) => {
   return colors[index % colors.length]
 }
 
-type Tab = 'info' | 'schedule' | 'masters' | 'services' | 'businessCard' | 'telegram' | 'integrations'
+type Tab = 'info' | 'schedule' | 'masters' | 'services' | 'businessCard' | 'integrations'
 
 const TAB_LABELS: Record<Tab, string> = {
   info: 'Інформація',
-  schedule: 'Робочі години',
+  schedule: 'Бронювання',
   masters: 'Спеціалісти',
   services: 'Послуги',
   businessCard: 'Візитівка',
-  telegram: 'Telegram',
   integrations: 'Інтеграції',
-}
-
-const DAY_NAMES: Record<string, string> = {
-  monday: 'Понеділок',
-  tuesday: 'Вівторок',
-  wednesday: 'Середа',
-  thursday: 'Четвер',
-  friday: 'П\'ятниця',
-  saturday: 'Субота',
-  sunday: 'Неділя',
-}
-
-const DEFAULT_HOURS = {
-  monday: { enabled: true, start: '09:00', end: '18:00' },
-  tuesday: { enabled: true, start: '09:00', end: '18:00' },
-  wednesday: { enabled: true, start: '09:00', end: '18:00' },
-  thursday: { enabled: true, start: '09:00', end: '18:00' },
-  friday: { enabled: true, start: '09:00', end: '18:00' },
-  saturday: { enabled: false, start: '09:00', end: '18:00' },
-  sunday: { enabled: false, start: '09:00', end: '18:00' },
-}
-
-function BusinessWorkingHoursEditor({
-  businessId,
-  currentHours,
-  onSave,
-}: {
-  businessId: string
-  currentHours?: string
-  onSave: (hours: string) => void
-}) {
-  const [hours, setHours] = useState<Record<string, { enabled: boolean; start: string; end: string }>>(DEFAULT_HOURS)
-  const [saving, setSaving] = useState(false)
-  const [expanded, setExpanded] = useState(false)
-
-  useEffect(() => {
-    if (currentHours) {
-      try {
-        const parsed = JSON.parse(currentHours)
-        setHours({ ...DEFAULT_HOURS, ...parsed })
-      } catch {}
-    }
-  }, [currentHours])
-
-  const updateDay = (day: string, field: string, value: boolean | string) => {
-    setHours((prev) => ({
-      ...prev,
-      [day]: { ...prev[day], [field]: value },
-    }))
-  }
-
-  const handleSave = async () => {
-    setSaving(true)
-    try {
-      const res = await fetch(`/api/business/${businessId}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ workingHours: JSON.stringify(hours) }),
-      })
-      if (res.ok) {
-        onSave(JSON.stringify(hours))
-      } else {
-        const err = await res.json().catch(() => ({}))
-        toast({ title: 'Помилка', description: err.error || 'Не вдалося зберегти', type: 'error' })
-      }
-    } catch {
-      toast({ title: 'Помилка', description: 'Не вдалося зберегти графік', type: 'error' })
-    } finally {
-      setSaving(false)
-    }
-  }
-
-  return (
-    <div className="rounded-xl p-4 md:p-6 card-glass border border-white/10 min-w-0 overflow-hidden">
-      <button
-        type="button"
-        onClick={() => setExpanded((e) => !e)}
-        className="w-full flex items-center justify-between gap-2 text-left"
-      >
-        <div>
-          <h2 className="text-lg font-bold text-white mb-0.5" style={{ letterSpacing: '-0.02em' }}>
-            Робочі години
-          </h2>
-          <p className="text-sm text-gray-400">
-            Загальний графік роботи. Клієнти бачитимуть його при бронюванні.
-          </p>
-        </div>
-        <span className="shrink-0 text-gray-400 transition-transform" aria-hidden>
-          {expanded ? <ChevronUpIcon className="w-5 h-5" /> : <ChevronDownIcon className="w-5 h-5" />}
-        </span>
-      </button>
-      {expanded && (
-        <>
-      <div className="space-y-3 min-w-0 mt-6">
-        {Object.entries(DAY_NAMES).map(([key, name]) => (
-          <div
-            key={key}
-            className={cn(
-              'grid grid-cols-1 sm:grid-cols-[auto_1fr] gap-2 sm:gap-3 sm:items-center p-3 rounded-xl bg-white/5 border border-white/10 min-w-0 overflow-hidden',
-              !hours[key]?.enabled && 'opacity-80'
-            )}
-          >
-            <label className="flex items-center gap-2 cursor-pointer min-w-0 shrink-0 touch-target">
-              <input
-                type="checkbox"
-                checked={hours[key]?.enabled ?? true}
-                onChange={(e) => updateDay(key, 'enabled', e.target.checked)}
-                className="w-5 h-5 shrink-0 rounded border-white/30 bg-white/10 text-emerald-500 focus:ring-emerald-500/50"
-              />
-              <span className="text-sm font-medium text-white truncate">{name}</span>
-            </label>
-            {hours[key]?.enabled ? (
-              <div className="grid grid-cols-[1fr_auto_1fr] gap-2 items-center min-w-0 w-full sm:max-w-[240px]">
-                <input
-                  type="time"
-                  value={hours[key].start}
-                  onChange={(e) => updateDay(key, 'start', e.target.value)}
-                  className="time-slot-input w-full min-w-0 min-h-[40px] px-3 py-2 text-sm font-medium tabular-nums rounded-lg border border-white/25 bg-white/15 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 [&::-webkit-calendar-picker-indicator]:opacity-80 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                />
-                <span className="text-gray-500 text-sm shrink-0">–</span>
-                <input
-                  type="time"
-                  value={hours[key].end}
-                  onChange={(e) => updateDay(key, 'end', e.target.value)}
-                  className="time-slot-input w-full min-w-0 min-h-[40px] px-3 py-2 text-sm font-medium tabular-nums rounded-lg border border-white/25 bg-white/15 text-white focus:outline-none focus:ring-2 focus:ring-emerald-500/50 focus:border-emerald-500/50 [&::-webkit-calendar-picker-indicator]:opacity-80 [&::-webkit-calendar-picker-indicator]:cursor-pointer"
-                />
-              </div>
-            ) : (
-              <span className="text-xs text-gray-500">Вихідний</span>
-            )}
-          </div>
-        ))}
-      </div>
-      <Button
-        onClick={handleSave}
-        disabled={saving}
-        className="mt-6 w-full sm:w-auto px-6 py-3 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl border-0 transition-colors disabled:opacity-50"
-      >
-        {saving ? 'Збереження...' : 'Зберегти графік'}
-      </Button>
-        </>
-      )}
-    </div>
-  )
 }
 
 export default function SettingsPage() {
@@ -271,6 +125,10 @@ export default function SettingsPage() {
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false)
   const serviceFormRef = useRef<HTMLDivElement>(null)
   const businessCardRef = useRef<HTMLDivElement>(null)
+  const [quickNavOpen, setQuickNavOpen] = useState(false)
+  const [infoExtraOpen, setInfoExtraOpen] = useState(false)
+  const [securityOpen, setSecurityOpen] = useState(false)
+  const [dangerZoneOpen, setDangerZoneOpen] = useState(false)
 
   const CONFIRM_DELETE_PHRASE = 'ВИДАЛИТИ'
 
@@ -389,7 +247,7 @@ export default function SettingsPage() {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
     const tabParam = params.get('tab')
-    const allowedTabs: Tab[] = ['info', 'schedule', 'masters', 'services', 'businessCard', 'telegram', 'integrations']
+    const allowedTabs: Tab[] = ['info', 'schedule', 'masters', 'services', 'businessCard', 'integrations']
     if (tabParam && allowedTabs.includes(tabParam as Tab)) {
       setActiveTab(tabParam as Tab)
     }
@@ -701,6 +559,7 @@ export default function SettingsPage() {
           </div>
 
           {/* Status cards - швидкий огляд */}
+          {quickNavOpen && (
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-2 mb-4">
             <button
               onClick={() => setTab('info')}
@@ -736,23 +595,7 @@ export default function SettingsPage() {
                 </div>
               </div>
             </button>
-            <button
-              onClick={() => setTab('telegram')}
-              className={cn(
-                'rounded-xl p-3 text-left transition-all border',
-                activeTab === 'telegram' ? 'card-glass border-white/30 bg-white/15' : 'card-glass-subtle border-white/10 hover:border-white/20'
-              )}
-            >
-              <div className="flex items-center gap-2">
-                <div className={cn('w-8 h-8 rounded-lg flex items-center justify-center', business?.telegramBotToken ? 'bg-sky-500/20 text-sky-400' : 'bg-gray-500/20 text-gray-400')}>
-                  <span className="text-sm">TG</span>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400">Telegram</p>
-                  <p className="text-sm font-bold text-white">{business?.telegramBotToken ? 'Підключено' : '—'}</p>
-                </div>
-              </div>
-            </button>
+            {/* Telegram tab removed; keep Telegram connection inside "Інтеграції" */}
             <button
               onClick={() => setTab('integrations')}
               className={cn(
@@ -782,8 +625,8 @@ export default function SettingsPage() {
                   <ClockIcon className="w-4 h-4" />
                 </div>
                 <div>
-                  <p className="text-xs text-gray-400">Графік</p>
-                  <p className="text-sm font-bold text-white">Бізнес</p>
+                  <p className="text-xs text-gray-400">Бронювання</p>
+                  <p className="text-sm font-bold text-white">Слоти</p>
                 </div>
               </div>
             </button>
@@ -805,11 +648,13 @@ export default function SettingsPage() {
               </div>
             </button>
           </div>
+          )}
 
           {/* Tabs - card-glass dark theme */}
           <div className="rounded-xl p-3 card-glass-subtle">
-            <div className="flex gap-2 flex-wrap">
-              {(['info', 'schedule', 'masters', 'businessCard', 'telegram', 'integrations'] as Tab[]).map((tab) => (
+            <div className="flex items-center justify-between gap-2 flex-wrap">
+              <div className="flex gap-2 flex-wrap">
+              {(['info', 'schedule', 'masters', 'businessCard', 'integrations'] as Tab[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setTab(tab)}
@@ -823,6 +668,14 @@ export default function SettingsPage() {
                   {TAB_LABELS[tab]}
                 </button>
               ))}
+              </div>
+              <button
+                type="button"
+                onClick={() => setQuickNavOpen((v) => !v)}
+                className="px-3 py-2 rounded-lg text-xs font-medium bg-white/10 text-gray-300 border border-white/20 hover:bg-white/15 hover:text-white transition-colors whitespace-nowrap"
+              >
+                {quickNavOpen ? 'Сховати огляд' : 'Швидкий огляд'}
+              </button>
             </div>
           </div>
         </div>
@@ -871,30 +724,6 @@ export default function SettingsPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Адреса</label>
-                  <Input
-                    value={formData.address || ''}
-                    onChange={(e) => setFormData({ ...formData, address: e.target.value })}
-                    placeholder="Місто, вулиця, будинок"
-                    className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Опис</label>
-                  <textarea
-                    value={formData.description || ''}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    placeholder="Коротко про послуги, формат роботи..."
-                    rows={4}
-                    className={cn(
-                      'w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 resize-none',
-                      'border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15'
-                    )}
-                  />
-                </div>
-
-                <div>
                   <label className="block text-sm font-medium mb-2 text-gray-300">Категорія *</label>
                   <select
                     value={formData.niche || 'OTHER'}
@@ -919,17 +748,56 @@ export default function SettingsPage() {
                   </div>
                 )}
 
-                <div>
-                  <label className="block text-sm font-medium mb-2 text-gray-300">Ідентифікатор</label>
-                  <div className="px-4 py-2 rounded-lg bg-white/10 border border-white/20">
-                    <p className="text-lg font-bold text-blue-400">
-                      {formData.businessIdentifier || 'Не встановлено'}
-                    </p>
+                <details
+                  className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden"
+                  open={infoExtraOpen}
+                  onToggle={(e) => setInfoExtraOpen((e.currentTarget as HTMLDetailsElement).open)}
+                >
+                  <summary className="cursor-pointer list-none select-none px-4 py-3 flex items-center justify-between gap-2 bg-white/5">
+                    <div>
+                      <p className="text-sm font-semibold text-white">Додатково</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Адреса, опис, ідентифікатор</p>
+                    </div>
+                    <span className="text-xs text-gray-400">{infoExtraOpen ? 'Сховати' : 'Показати'}</span>
+                  </summary>
+                  <div className="p-4 space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-300">Адреса</label>
+                      <Input
+                        value={formData.address || ''}
+                        onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                        placeholder="Місто, вулиця, будинок"
+                        className="border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:ring-2 focus:ring-white/30 focus:bg-white/15"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-300">Опис</label>
+                      <textarea
+                        value={formData.description || ''}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        placeholder="Коротко про послуги, формат роботи..."
+                        rows={4}
+                        className={cn(
+                          'w-full px-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-400 resize-none',
+                          'border border-white/20 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15'
+                        )}
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2 text-gray-300">Ідентифікатор</label>
+                      <div className="px-4 py-2 rounded-lg bg-white/10 border border-white/20">
+                        <p className="text-lg font-bold text-blue-400">
+                          {formData.businessIdentifier || 'Не встановлено'}
+                        </p>
+                      </div>
+                      <p className="text-xs text-gray-400 mt-1">
+                        Унікальний ідентифікатор посилання (не можна змінити)
+                      </p>
+                    </div>
                   </div>
-                  <p className="text-xs text-gray-400 mt-1">
-                    Унікальний ідентифікатор посилання (не можна змінити)
-                  </p>
-                </div>
+                </details>
 
                 <Button
                   onClick={handleSaveBusiness}
@@ -945,21 +813,27 @@ export default function SettingsPage() {
 
           {/* Пароль для входу по пошті (Telegram-користувачі можуть створити пароль і входити також по email) */}
           {activeTab === 'info' && business && (
-            <PasswordForLoginSection businessId={business.id} email={business.email} />
+            <details
+              className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden"
+              open={securityOpen}
+              onToggle={(e) => setSecurityOpen((e.currentTarget as HTMLDetailsElement).open)}
+            >
+              <summary className="cursor-pointer list-none select-none px-4 py-3 flex items-center justify-between gap-2 bg-white/5">
+                <div>
+                  <p className="text-sm font-semibold text-white">Вхід та безпека</p>
+                  <p className="text-xs text-gray-500 mt-0.5">Пароль для входу по email</p>
+                </div>
+                <span className="text-xs text-gray-400">{securityOpen ? 'Сховати' : 'Показати'}</span>
+              </summary>
+              <div className="p-4">
+                <PasswordForLoginSection businessId={business.id} email={business.email} />
+              </div>
+            </details>
           )}
 
-          {/* Робочі години та налаштування слотів */}
+          {/* Бронювання та налаштування слотів */}
           {activeTab === 'schedule' && business && (
             <div className="space-y-6">
-              <BusinessWorkingHoursEditor
-                businessId={business.id}
-                currentHours={business.workingHours || undefined}
-                onSave={(hours) => {
-                  setBusiness(prev => prev ? { ...prev, workingHours: hours } : null)
-                  setFormData(prev => ({ ...prev, workingHours: hours }))
-                  toast({ title: 'Графік збережено', type: 'success', duration: 1500 })
-                }}
-              />
               <BookingSlotsSettings
                 businessId={business.id}
                 currentSettings={business.settings || undefined}
@@ -1360,6 +1234,15 @@ export default function SettingsPage() {
                     setBusiness(updated.business)
                     setFormData(updated.business)
                     localStorage.setItem('business', JSON.stringify(updated.business))
+                    // Signal booking pages (other tab) to refetch визитівка info
+                    try {
+                      const now = String(Date.now())
+                      if (updated.business.id) localStorage.setItem(`booking_business_updated:${updated.business.id}`, now)
+                      if (updated.business.slug) localStorage.setItem(`booking_business_updated:${updated.business.slug}`, now)
+                      if (updated.business.businessIdentifier) localStorage.setItem(`booking_business_updated:${updated.business.businessIdentifier}`, now)
+                    } catch {
+                      // ignore
+                    }
                     triggerConfetti()
                     toast({ title: 'Збережено', type: 'success', duration: 1500 })
                   } else {
@@ -1372,19 +1255,6 @@ export default function SettingsPage() {
                 }
               }}
             />
-            </div>
-          )}
-
-          {/* Telegram Tab */}
-          {activeTab === 'telegram' && business && (
-            <div className="rounded-xl p-4 md:p-6 card-glass">
-              <TelegramSettings
-                business={business}
-                onUpdate={(updated) => {
-                  setBusiness(updated)
-                  localStorage.setItem('business', JSON.stringify(updated))
-                }}
-              />
             </div>
           )}
 
@@ -1415,58 +1285,68 @@ export default function SettingsPage() {
             </div>
           )}
 
-          {/* Секція видалення акаунта */}
-          <div className="rounded-xl p-4 md:p-6 card-glass border border-red-500/30">
-            <div className="flex items-center gap-2 mb-2">
-              <TrashIcon className="w-5 h-5 text-red-400" />
-              <h2 className="text-lg font-bold text-red-400" style={{ letterSpacing: '-0.02em' }}>
-                Видалити акаунт
-              </h2>
-            </div>
-            <p className="text-sm text-gray-400 mb-4">
-              Видалення акаунта є незворотним. Будуть видалені всі повʼязані дані: записи, клієнти, спеціалісти, послуги, налаштування, фінансові транзакції, інтеграції.
-            </p>
-            {!showDeleteConfirm ? (
-              <Button
-                variant="outline"
-                onClick={() => setShowDeleteConfirm(true)}
-                className="border-red-400/50 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-lg"
-              >
-                Видалити акаунт
-              </Button>
-            ) : (
-              <div className="space-y-3 max-w-md">
-                <p className="text-sm text-gray-300">
-                  Введіть <span className="font-bold text-red-400">{CONFIRM_DELETE_PHRASE}</span> для підтвердження:
-                </p>
-                <Input
-                  value={deleteConfirmText}
-                  onChange={(e) => setDeleteConfirmText(e.target.value)}
-                  placeholder={CONFIRM_DELETE_PHRASE}
-                  className="border border-red-500/50 bg-red-500/10 text-white placeholder-gray-500 focus:ring-2 focus:ring-red-500/50"
-                />
-                <div className="flex gap-2">
-                  <Button
-                    onClick={handleDeleteAccount}
-                    disabled={deleteConfirmText !== CONFIRM_DELETE_PHRASE || isDeleting}
-                    className="bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50"
-                  >
-                    {isDeleting ? 'Видалення...' : 'Підтвердити видалення'}
-                  </Button>
-                  <Button
-                    variant="outline"
-                    onClick={() => {
-                      setShowDeleteConfirm(false)
-                      setDeleteConfirmText('')
-                    }}
-                    className="border-white/20 text-gray-300 hover:bg-white/10 rounded-lg"
-                  >
-                    Скасувати
-                  </Button>
+          {/* Небезпечна зона (згорнута за замовчуванням) */}
+          <details
+            className="rounded-xl border border-red-500/25 bg-red-500/[0.04] overflow-hidden"
+            open={dangerZoneOpen}
+            onToggle={(e) => setDangerZoneOpen((e.currentTarget as HTMLDetailsElement).open)}
+          >
+            <summary className="cursor-pointer list-none select-none px-4 py-3 flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2 min-w-0">
+                <TrashIcon className="w-5 h-5 text-red-400 flex-shrink-0" />
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-red-300">Небезпечна зона</p>
+                  <p className="text-xs text-red-200/60 mt-0.5">Видалення акаунта та даних</p>
                 </div>
               </div>
-            )}
-          </div>
+              <span className="text-xs text-red-200/70 flex-shrink-0">{dangerZoneOpen ? 'Сховати' : 'Відкрити'}</span>
+            </summary>
+            <div className="p-4 md:p-6 border-t border-red-500/20">
+              <p className="text-sm text-gray-300 mb-4">
+                Видалення акаунта є незворотним. Будуть видалені всі повʼязані дані: записи, клієнти, спеціалісти, послуги, налаштування, фінансові транзакції, інтеграції.
+              </p>
+              {!showDeleteConfirm ? (
+                <Button
+                  variant="outline"
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="border-red-400/50 text-red-400 hover:bg-red-500/20 hover:text-red-300 rounded-lg"
+                >
+                  Видалити акаунт
+                </Button>
+              ) : (
+                <div className="space-y-3 max-w-md">
+                  <p className="text-sm text-gray-300">
+                    Введіть <span className="font-bold text-red-400">{CONFIRM_DELETE_PHRASE}</span> для підтвердження:
+                  </p>
+                  <Input
+                    value={deleteConfirmText}
+                    onChange={(e) => setDeleteConfirmText(e.target.value)}
+                    placeholder={CONFIRM_DELETE_PHRASE}
+                    className="border border-red-500/50 bg-red-500/10 text-white placeholder-gray-500 focus:ring-2 focus:ring-red-500/50"
+                  />
+                  <div className="flex gap-2">
+                    <Button
+                      onClick={handleDeleteAccount}
+                      disabled={deleteConfirmText !== CONFIRM_DELETE_PHRASE || isDeleting}
+                      className="bg-red-600 hover:bg-red-700 text-white rounded-lg disabled:opacity-50"
+                    >
+                      {isDeleting ? 'Видалення...' : 'Підтвердити видалення'}
+                    </Button>
+                    <Button
+                      variant="outline"
+                      onClick={() => {
+                        setShowDeleteConfirm(false)
+                        setDeleteConfirmText('')
+                      }}
+                      className="border-white/20 text-gray-300 hover:bg-white/10 rounded-lg"
+                    >
+                      Скасувати
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </details>
 
         </div>
       </div>

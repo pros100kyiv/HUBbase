@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { PhoneIcon, MoneyIcon, CheckIcon, XIcon, AlertCircleIcon } from '@/components/icons'
+import { PhoneIcon, MoneyIcon, CheckIcon, XIcon, AlertCircleIcon, BotIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
+import { TelegramOAuth } from './TelegramOAuth'
 
 interface IntegrationsSettingsProps {
   business: any
@@ -15,6 +16,7 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
   const [isSaving, setIsSaving] = useState(false)
   const [testing, setTesting] = useState<string | null>(null)
   const [testResults, setTestResults] = useState<Record<string, { success: boolean, message: string }>>({})
+  const businessId = typeof business?.id === 'string' ? business.id : ''
   
   // SMS
   const [smsProvider, setSmsProvider] = useState(business?.smsProvider || 'smsc')
@@ -131,6 +133,22 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
   
   return (
     <div className="space-y-6">
+      {/* Telegram (тільки як інтеграція, не спосіб входу) */}
+      <div className="card-candy p-6">
+        <div className="flex items-center gap-2 mb-2">
+          <BotIcon className="w-5 h-5 text-candy-blue" />
+          <h3 className="text-lg font-black text-gray-900 dark:text-white">Telegram</h3>
+        </div>
+        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+          Підключіть Telegram для сповіщень/повідомлень та роботи з ботом.
+        </p>
+        {businessId ? (
+          <TelegramOAuth businessId={businessId} onConnected={() => { /* handled inside TelegramOAuth */ }} />
+        ) : (
+          <p className="text-sm text-gray-500">BusinessId не знайдено</p>
+        )}
+      </div>
+
       {/* Статус інтеграцій */}
       <div className="card-candy p-6 bg-gradient-to-br from-candy-purple/10 to-candy-blue/10">
         <h3 className="text-lg font-black text-gray-900 dark:text-white mb-4">Статус інтеграцій</h3>

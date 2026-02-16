@@ -10,6 +10,7 @@ import { StatusSwitcher, type StatusValue } from './StatusSwitcher'
 import { toast } from '@/components/ui/toast'
 import { cn, fixMojibake } from '@/lib/utils'
 import { normalizeUaPhone } from '@/lib/utils/phone'
+import { VisitHistorySections, type VisitHistoryItem, type VisitTone } from '@/components/admin/VisitHistorySections'
 
 interface Appointment {
   id: string
@@ -431,6 +432,15 @@ export function MyDayCard({
     }
   }
 
+  const toTone = (status: string): VisitTone => {
+    const s = String(status || '')
+    if (s === 'Done' || s === 'Виконано') return 'done'
+    if (s === 'Confirmed' || s === 'Підтверджено') return 'confirmed'
+    if (s === 'Pending' || s === 'Очікує') return 'pending'
+    if (s === 'Cancelled' || s === 'Скасовано') return 'cancelled'
+    return 'other'
+  }
+
   const getFilteredAppointments = (type: 'pending' | 'confirmed' | 'done') => {
     return appointmentsForSelectedDay.filter(apt => {
       const status = apt.status
@@ -605,12 +615,16 @@ export function MyDayCard({
     const isPending = apt.status === 'Pending' || apt.status === 'Очікує'
     const isConfirmed = apt.status === 'Confirmed' || apt.status === 'Підтверджено'
     const serviceNames = getServiceNamesList(apt.services, apt.customServiceName)
-    const serviceDisplay = serviceNames.length > 0 ? serviceNames.join(', ') : (apt.customServiceName?.trim() ? apt.customServiceName.trim() : 'Послуга не вказана')
     const displayPrice = getDisplayPrice(apt)
-    const statusBorder =
-      isDone ? 'border-l-4 border-l-sky-500' :
-      isConfirmed ? 'border-l-4 border-l-emerald-500' :
-      isPending ? 'border-l-4 border-l-amber-500' : 'border-l-4 border-l-rose-500/70'
+    const statusBorderColor =
+      isDone ? 'border-l-sky-500/80' :
+      isConfirmed ? 'border-l-emerald-500/80' :
+      isPending ? 'border-l-amber-500/80' : 'border-l-rose-500/70'
+    const statusLabel = getStatusLabel(apt.status, apt.isFromBooking === true)
+    const serviceDisplay =
+      serviceNames.length > 0
+        ? serviceNames.join(', ')
+        : (apt.customServiceName?.trim() ? apt.customServiceName.trim() : 'Послуги не вказані')
 
     return (
       <div
@@ -618,77 +632,79 @@ export function MyDayCard({
         tabIndex={0}
         onClick={onClick}
         onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick() } }}
-        className={`w-full text-left bg-white/5 border border-white/10 rounded-xl p-2.5 md:p-3 hover:bg-white/10 transition-all active:scale-[0.99] group relative overflow-hidden touch-manipulation cursor-pointer ${statusBorder}`}
+        className={cn(
+          'w-full text-left bg-transparent hover:bg-white/[0.06] transition-colors',
+          'px-3 py-2.5 touch-manipulation cursor-pointer',
+          'border-l-4',
+          statusBorderColor
+        )}
       >
-        <div className="flex flex-row items-stretch gap-2 sm:gap-3">
-          <div className="flex items-start gap-2.5 sm:gap-3 min-w-0 flex-1">
-            {/* Час запису — блок з табular-nums для вирівнювання */}
-            <div className="flex flex-col items-center justify-center w-11 h-11 sm:w-12 sm:h-12 md:w-14 md:h-14 rounded-xl border border-white/15 bg-white/10 flex-shrink-0">
-              <span className="text-sm font-semibold tabular-nums text-white leading-none">
-                {format(startTime, 'HH:mm')}
+        <div className="flex items-start justify-between gap-3">
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+              <span className="text-sm font-semibold text-white tabular-nums">
+                {format(startTime, 'HH:mm')}–{format(endTime, 'HH:mm')}
               </span>
-              <span className="text-[10px] text-gray-400 mt-1 tabular-nums">{durationMin} хв</span>
+              <span className="text-[11px] text-gray-500 tabular-nums">
+                {durationMin} хв
+              </span>
+              <span className="text-gray-700">·</span>
+              <span className="text-[11px] text-gray-400 truncate">
+                {apt.masterName || 'Невідомий спеціаліст'}
+              </span>
+              <span className="text-gray-700">·</span>
+              <span className="text-[11px] text-gray-400">
+                {statusLabel}
+              </span>
             </div>
 
-            {/* Info + price */}
-            <div className="flex-1 min-w-0 py-0.5">
-              <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                <h5 className="text-sm font-bold text-white truncate leading-tight">
-                  {fixMojibake(apt.clientName)}
-                </h5>
-                {displayPrice != null && (
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-emerald-500/15 text-emerald-400 text-[11px] font-semibold border border-emerald-500/30 flex-shrink-0">
-                    {displayPrice} грн
-                  </span>
-                )}
-                {apt.clientPhone && (
-                  <a
-                    href={`tel:${apt.clientPhone}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="text-gray-400 hover:text-white transition-colors p-1.5 -m-1.5 touch-manipulation"
-                    aria-label="Зателефонувати"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                    </svg>
-                  </a>
-                )}
-              </div>
-              <div className="text-xs text-gray-300 font-medium truncate mb-0.5">
-                {serviceDisplay}
-              </div>
-              <div className="flex items-center gap-1.5 text-[10px] text-gray-500">
-                <svg className="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-                <span className="truncate">{apt.masterName || 'Невідомий спеціаліст'}</span>
-                <span className="text-gray-600">·</span>
-                <span className="tabular-nums">{format(startTime, 'HH:mm')}–{format(endTime, 'HH:mm')}</span>
-              </div>
+            <div className="mt-1 flex items-center gap-2 min-w-0">
+              <span className="text-sm font-semibold text-white truncate">
+                {fixMojibake(apt.clientName)}
+              </span>
+              {apt.clientPhone && (
+                <a
+                  href={`tel:${apt.clientPhone}`}
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-emerald-400 hover:text-emerald-300 transition-colors p-1 -m-1 touch-manipulation flex-shrink-0"
+                  aria-label="Зателефонувати"
+                  title={apt.clientPhone}
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                </a>
+              )}
+            </div>
+
+            <div className="mt-1.5 text-[11px] text-gray-300 truncate">
+              {serviceDisplay}
             </div>
           </div>
 
-          <div
-            className="flex items-center justify-center flex-shrink-0"
-            onClick={(e) => e.stopPropagation()}
-          >
+          <div className="flex flex-col items-end gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+            {displayPrice != null && (
+              <div className="text-sm font-semibold text-emerald-400 tabular-nums">
+                {displayPrice} грн
+              </div>
+            )}
             <StatusSwitcher
               status={apt.status}
               isFromBooking={apt.isFromBooking === true}
               onStatusChange={handleStatusChange}
               appointmentId={apt.id}
-              size="xs"
+              size="sm"
               customPrice={apt.customPrice}
               hasServicesFromPriceList={(parseServices(apt.services) as string[]).length > 0}
               onDoneWithoutPrice={(id) => {
-              toast({
-                title: 'Статус не змінено',
-                description: 'Щоб позначити запис як Виконано, спочатку вкажіть вартість послуги в формі нижче.',
-                type: 'info',
-                duration: 4000,
-              })
-              setShowDonePriceModalForId(id)
-            }}
+                toast({
+                  title: 'Статус не змінено',
+                  description: 'Щоб позначити запис як Виконано, спочатку вкажіть вартість послуги в формі нижче.',
+                  type: 'info',
+                  duration: 4000,
+                })
+                setShowDonePriceModalForId(id)
+              }}
             />
           </div>
         </div>
@@ -820,15 +836,17 @@ export function MyDayCard({
               isExpanded ? '' : 'max-h-48 md:max-h-64 overflow-y-auto scrollbar-hide'
             }`}
           >
-            {appointmentsForSelectedDay
-              .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
-              .map((apt) => (
-              <AppointmentItem 
-                key={apt.id} 
-                apt={apt} 
-                onClick={() => handleAppointmentClick(apt.id)} 
-              />
-            ))}
+            <div className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden divide-y divide-white/10">
+              {appointmentsForSelectedDay
+                .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                .map((apt) => (
+                  <AppointmentItem
+                    key={apt.id}
+                    apt={apt}
+                    onClick={() => handleAppointmentClick(apt.id)}
+                  />
+                ))}
+            </div>
           </div>
         </div>
       ) : (
@@ -856,7 +874,7 @@ export function MyDayCard({
       {appointmentsForSelectedDay.length > 0 && dayTotalRevenue > 0 && (
         <div className="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-sm">
           <span className="text-gray-400">Дохід за день</span>
-          <span className="font-semibold text-purple-400 tabular-nums">{dayTotalRevenue} грн</span>
+          <span className="font-semibold text-emerald-400 tabular-nums">{dayTotalRevenue} грн</span>
         </div>
       )}
 
@@ -925,7 +943,8 @@ export function MyDayCard({
                 {/* Список записів або пустий стан */}
                 <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide py-4">
                   {filtered.length > 0 ? (
-                    <div className="space-y-2">
+                    <div className="px-4">
+                      <div className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden divide-y divide-white/10">
                       {filtered.map((apt) => (
                         <AppointmentItem
                           key={apt.id}
@@ -936,6 +955,7 @@ export function MyDayCard({
                           }}
                         />
                       ))}
+                      </div>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center justify-center py-12 px-4 text-center">
@@ -1004,116 +1024,151 @@ export function MyDayCard({
 
               {/* Контент: профіль клієнта + запис */}
               <div className="flex-1 min-h-0 overflow-y-auto scrollbar-hide py-4 space-y-3">
-                {/* Картка клієнта: аватар, ім'я, контакт, статус */}
-                <div className="rounded-xl bg-white/10 border border-white/15 p-3 flex items-start gap-3">
-                  <div className="w-12 h-12 rounded-xl bg-white/15 border border-white/20 flex items-center justify-center flex-shrink-0 text-xl font-bold text-white">
-                    {fixMojibake(clientProfile?.name || selectedAppointment.clientName).charAt(0).toUpperCase()}
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center gap-2">
-                      <h3 className="text-lg font-bold text-white truncate">
-                        {fixMojibake(clientProfile?.name ?? selectedAppointment.clientName)}
-                      </h3>
-                      {selectedAppointment.clientPhone && (
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); openClientProfile(selectedAppointment.clientPhone) }}
-                          className="flex-shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/15 transition-colors touch-target"
-                          title="Відкрити профіль клієнта"
-                          aria-label="Відкрити профіль клієнта"
-                        >
-                          <UserIcon className="w-5 h-5" />
-                        </button>
+                {/* Клієнт + цей запис — один компактний блок */}
+                <div className="rounded-xl border border-white/10 bg-white/[0.03] overflow-hidden">
+                  <div className="p-3 flex items-start gap-3">
+                    <div className="w-11 h-11 rounded-xl bg-white/10 border border-white/15 flex items-center justify-center flex-shrink-0 text-lg font-bold text-white">
+                      {fixMojibake(clientProfile?.name || selectedAppointment.clientName).charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-base font-bold text-white truncate">
+                          {fixMojibake(clientProfile?.name ?? selectedAppointment.clientName)}
+                        </h3>
+                        {selectedAppointment.clientPhone && (
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); openClientProfile(selectedAppointment.clientPhone) }}
+                            className="flex-shrink-0 p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors touch-target"
+                            title="Відкрити профіль клієнта"
+                            aria-label="Відкрити профіль клієнта"
+                          >
+                            <UserIcon className="w-5 h-5" />
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="mt-0.5 flex items-center gap-2 flex-wrap">
+                        {selectedAppointment.clientPhone && (
+                          <a
+                            href={`tel:${selectedAppointment.clientPhone}`}
+                            onClick={(e) => e.stopPropagation()}
+                            className="text-sm font-mono text-emerald-400 hover:text-emerald-300 transition-colors inline-flex items-center gap-1.5"
+                            title="Зателефонувати"
+                          >
+                            <svg className="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                            </svg>
+                            {selectedAppointment.clientPhone}
+                          </a>
+                        )}
+                        {clientProfile?.email && (
+                          <span className="text-xs text-gray-500 truncate">{clientProfile.email}</span>
+                        )}
+                        {clientProfileLoading && (
+                          <span className="text-xs text-gray-500">Завантаження…</span>
+                        )}
+                      </div>
+
+                      {!clientProfileLoading && clientProfile && (
+                        <div className="mt-2 flex flex-wrap items-center gap-2">
+                          {clientProfile.status && clientProfile.status !== 'new' && (
+                            <span className={cn(
+                              'px-2 py-0.5 rounded-full text-[11px] font-medium border',
+                              clientProfile.status === 'vip' && 'bg-amber-500/15 text-amber-200 border-amber-400/30',
+                              clientProfile.status === 'regular' && 'bg-emerald-500/15 text-emerald-200 border-emerald-400/30',
+                              clientProfile.status === 'inactive' && 'bg-white/10 text-gray-200 border-white/20',
+                              clientProfile.status === 'new' && 'bg-white/10 text-gray-200 border-white/20'
+                            )}>
+                              {clientProfile.status === 'vip' ? 'VIP' : clientProfile.status === 'regular' ? 'Постійний' : clientProfile.status === 'inactive' ? 'Неактивний' : 'Новий'}
+                            </span>
+                          )}
+                          <span className="px-2 py-0.5 rounded-lg text-[11px] bg-white/5 border border-white/10 text-gray-300">
+                            Візитів: <span className="font-semibold text-purple-300 tabular-nums">{clientProfile.totalAppointments}</span>
+                          </span>
+                          <span className="px-2 py-0.5 rounded-lg text-[11px] bg-white/5 border border-white/10 text-gray-300">
+                            Зароблено: <span className="font-semibold text-purple-300 tabular-nums">{Math.round(clientProfile.totalSpent / 100)} грн</span>
+                          </span>
+                        </div>
                       )}
                     </div>
-                    {selectedAppointment.clientPhone && (
-                      <p className="text-sm font-mono text-gray-400 mt-0.5">{selectedAppointment.clientPhone}</p>
-                    )}
-                    {clientProfile?.email && (
-                      <p className="text-xs text-gray-400 mt-0.5 truncate">{clientProfile.email}</p>
-                    )}
-                    {clientProfileLoading && (
-                      <p className="text-xs text-gray-500 mt-2">Завантаження профілю…</p>
-                    )}
-                    {!clientProfileLoading && clientProfile && (
-                      <div className="flex flex-wrap items-center gap-2 mt-2">
-                        {clientProfile.status && clientProfile.status !== 'new' && (
-                          <span className={cn(
-                            'px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase',
-                            clientProfile.status === 'vip' && 'bg-amber-500/25 text-amber-200 border border-amber-400/50',
-                            clientProfile.status === 'regular' && 'bg-emerald-500/25 text-emerald-200 border border-emerald-400/50',
-                            clientProfile.status === 'inactive' && 'bg-gray-500/25 text-gray-300 border border-gray-400/50',
-                            clientProfile.status === 'new' && 'bg-white/15 text-gray-300 border border-white/20'
-                          )}>
-                            {clientProfile.status === 'vip' ? 'VIP' : clientProfile.status === 'regular' ? 'Постійний' : clientProfile.status === 'inactive' ? 'Неактивний' : 'Новий'}
-                          </span>
-                        )}
-                        <span className="text-[11px] text-gray-500">
-                          Візитів: <span className="font-semibold text-purple-400 tabular-nums">{clientProfile.totalAppointments}</span>
-                        </span>
-                        <span className="text-[11px] text-gray-500">
-                          Зароблено: <span className="font-semibold text-purple-400 tabular-nums">{Math.round(clientProfile.totalSpent / 100)} грн</span>
-                        </span>
-                      </div>
-                    )}
                   </div>
-                </div>
 
-                {/* Цей запис: час, спеціаліст, послуги, статус */}
-                <div className="rounded-xl bg-white/5 border border-white/10 p-3">
-                  <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-2">Цей запис</p>
-                  <div className="flex flex-wrap items-center gap-2 mb-2">
-                    <span className="text-sm tabular-nums text-white">
-                      {format(new Date(selectedAppointment.startTime), 'HH:mm')}–{format(new Date(selectedAppointment.endTime), 'HH:mm')}
-                    </span>
-                    <span className="text-gray-500">·</span>
-                    <span className="text-sm text-gray-300">{selectedAppointment.masterName || '—'}</span>
-                    <div onClick={(e) => e.stopPropagation()} className="ml-auto">
-                      <StatusSwitcher
-                        status={selectedAppointment.status}
-                        isFromBooking={selectedAppointment.isFromBooking === true}
-                        onStatusChange={handleStatusChange}
-                        appointmentId={selectedAppointment.id}
-                        size="sm"
-                        customPrice={selectedAppointment.customPrice}
-                        hasServicesFromPriceList={(parseServices(selectedAppointment.services) as string[]).length > 0}
-                        onDoneWithoutPrice={(id) => {
-                          toast({
-                            title: 'Статус не змінено',
-                            description: 'Щоб позначити запис як Виконано, спочатку вкажіть вартість послуги в формі нижче.',
-                            type: 'info',
-                            duration: 4000,
-                          })
-                          setShowDonePriceModalForId(id)
-                        }}
-                      />
+                  <div className="border-t border-white/10 p-3">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-sm font-semibold text-white tabular-nums">
+                            {format(new Date(selectedAppointment.startTime), 'HH:mm')}–{format(new Date(selectedAppointment.endTime), 'HH:mm')}
+                          </span>
+                          <span className="text-[11px] text-gray-400 truncate">
+                            {selectedAppointment.masterName || '—'}
+                          </span>
+                          <span className="text-[11px] text-gray-500">
+                            {getStatusLabel(selectedAppointment.status, selectedAppointment.isFromBooking === true)}
+                          </span>
+                        </div>
+                        <div className="mt-1 text-[11px] text-gray-300 truncate">
+                          {getServiceNamesList(selectedAppointment.services, selectedAppointment.customServiceName).length > 0
+                            ? getServiceNamesList(selectedAppointment.services, selectedAppointment.customServiceName).join(', ')
+                            : (selectedAppointment.customServiceName?.trim() || 'Послуги не вказані')}
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col items-end gap-2 flex-shrink-0" onClick={(e) => e.stopPropagation()}>
+                        {getDisplayPrice(selectedAppointment) != null && (
+                          <div className="text-sm font-semibold text-emerald-400 tabular-nums">
+                            {getDisplayPrice(selectedAppointment)} грн
+                          </div>
+                        )}
+                        <StatusSwitcher
+                          status={selectedAppointment.status}
+                          isFromBooking={selectedAppointment.isFromBooking === true}
+                          onStatusChange={handleStatusChange}
+                          appointmentId={selectedAppointment.id}
+                          size="sm"
+                          customPrice={selectedAppointment.customPrice}
+                          hasServicesFromPriceList={(parseServices(selectedAppointment.services) as string[]).length > 0}
+                          onDoneWithoutPrice={(id) => {
+                            toast({
+                              title: 'Статус не змінено',
+                              description: 'Щоб позначити запис як Виконано, спочатку вкажіть вартість послуги в формі нижче.',
+                              type: 'info',
+                              duration: 4000,
+                            })
+                            setShowDonePriceModalForId(id)
+                          }}
+                        />
+                      </div>
                     </div>
                   </div>
-                  <p className="text-sm text-gray-300">
-                    {getServiceNamesList(selectedAppointment.services, selectedAppointment.customServiceName).length > 0
-                      ? getServiceNamesList(selectedAppointment.services, selectedAppointment.customServiceName).join(', ')
-                      : (selectedAppointment.customServiceName?.trim() || 'Послуга не вказана')}
-                  </p>
-                  {getDisplayPrice(selectedAppointment) != null && (
-                    <p className="text-sm font-semibold text-purple-400 mt-1">{getDisplayPrice(selectedAppointment)} грн</p>
-                  )}
                 </div>
 
                 {/* Минулі візити (якщо є профіль з історією) */}
                 {!clientProfileLoading && clientProfile?.appointments && clientProfile.appointments.length > 0 && (
                   <div className="rounded-xl bg-white/5 border border-white/10 p-3">
                     <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-2">Минулі візити</p>
-                    <ul className="space-y-1.5 max-h-32 overflow-y-auto">
-                      {clientProfile.appointments
-                        .filter((a) => a.id !== selectedAppointment.id)
-                        .slice(0, 5)
-                        .map((a) => (
-                          <li key={a.id} className="text-xs text-gray-400 flex items-center justify-between gap-2">
-                            <span>{format(new Date(a.startTime), 'd MMM yyyy, HH:mm', { locale: uk })}</span>
-                            <span className={a.status === 'Done' || a.status === 'Виконано' ? 'text-emerald-400' : 'text-gray-500'}>{a.status === 'Done' || a.status === 'Виконано' ? 'Виконано' : a.status}</span>
-                          </li>
-                        ))}
-                    </ul>
+                    <div className="max-h-56 overflow-y-auto pr-1 scrollbar-hide">
+                      <VisitHistorySections
+                        items={clientProfile.appointments
+                          .filter((a) => a.id !== selectedAppointment.id)
+                          .slice(0, 8)
+                          .map((a): VisitHistoryItem => {
+                            const serviceNames = getServiceNamesList(a.services, a.customServiceName)
+                            return {
+                              id: String(a.id),
+                              startTime: a.startTime,
+                              endTime: a.endTime,
+                              statusLabel: getStatusLabel(a.status, false),
+                              tone: toTone(String(a.status)),
+                              masterName: null,
+                              services: serviceNames,
+                              amountGrn: null,
+                            }
+                          })}
+                        emptyText="Немає минулих візитів"
+                      />
+                    </div>
                   </div>
                 )}
 
@@ -1125,35 +1180,7 @@ export function MyDayCard({
                   </div>
                 )}
 
-                {/* Дії: дзвінок, копіювати */}
-                {selectedAppointment.clientPhone && (
-                  <div className="rounded-xl bg-white/5 border border-white/10 p-3">
-                    <p className="text-[10px] font-medium uppercase tracking-wider text-gray-500 mb-2">Контакт</p>
-                    <div className="flex items-center gap-2 flex-wrap">
-                      <a
-                        href={`tel:${selectedAppointment.clientPhone}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-sm font-medium transition-colors"
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
-                        </svg>
-                        Зателефонувати
-                      </a>
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          navigator.clipboard.writeText(selectedAppointment.clientPhone!)
-                          toast({ title: 'Скопійовано', type: 'success' })
-                        }}
-                        className="inline-flex items-center gap-2 px-3 py-2 rounded-lg bg-white/10 text-gray-300 text-sm font-medium hover:bg-white/15 transition-colors"
-                      >
-                        Копіювати номер
-                      </button>
-                    </div>
-                  </div>
-                )}
+                {/* Контакт виніс в шапку (посилання tel:), копіювання номера прибрано */}
 
                 {selectedAppointment.procedureDone && (
                   <div className="rounded-xl bg-white/5 border border-white/10 p-3">
@@ -1304,49 +1331,35 @@ export function MyDayCard({
                       <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-2">
                         Усі записи ({clientHistoryData.appointments.length})
                       </p>
-                      <ul className="space-y-2 max-h-[50vh] overflow-y-auto pr-1">
-                        {clientHistoryData.appointments.map((apt) => {
-                          const start = new Date(apt.startTime)
-                          const end = new Date(apt.endTime)
-                          const serviceNames = getServiceNamesList(apt.services, apt.customServiceName)
-                          const serviceDisplay = serviceNames.length > 0 ? serviceNames.join(', ') : (apt.customServiceName?.trim() || '—')
-                          const priceGrn = apt.customPrice != null && apt.customPrice > 0 ? Math.round(Number(apt.customPrice) / 100) : null
-                          const isDone = apt.status === 'Done' || apt.status === 'Виконано'
-                          return (
-                            <li
-                              key={apt.id}
-                              className={cn(
-                                'rounded-xl p-3 border text-left',
-                                isDone ? 'bg-white/5 border-white/10' : 'bg-white/[0.03] border-white/5'
-                              )}
-                            >
-                              <div className="flex items-start justify-between gap-2">
-                                <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-semibold text-white tabular-nums">
-                                    {format(start, 'd MMM yyyy', { locale: uk })} · {format(start, 'HH:mm')}–{format(end, 'HH:mm')}
-                                  </p>
-                                  <p className="text-xs text-gray-400 mt-0.5 truncate">{apt.master?.name ?? '—'}</p>
-                                  <p className="text-xs text-gray-300 mt-1 truncate">{serviceDisplay}</p>
-                                </div>
-                                <div className="flex flex-col items-end gap-0.5 shrink-0">
-                                  <span className={cn(
-                                    'text-[10px] font-medium px-2 py-0.5 rounded',
-                                    isDone && 'bg-emerald-500/20 text-emerald-400',
-                                    (apt.status === 'Confirmed' || apt.status === 'Підтверджено') && 'bg-emerald-500/15 text-emerald-300',
-                                    (apt.status === 'Pending' || apt.status === 'Очікує') && 'bg-amber-500/20 text-amber-400',
-                                    (apt.status === 'Cancelled' || apt.status === 'Скасовано') && 'bg-gray-500/20 text-gray-400'
-                                  )}>
-                                    {apt.status === 'Done' || apt.status === 'Виконано' ? 'Виконано' : apt.status === 'Confirmed' || apt.status === 'Підтверджено' ? 'Підтверджено' : apt.status === 'Pending' || apt.status === 'Очікує' ? 'Очікує' : apt.status === 'Cancelled' || apt.status === 'Скасовано' ? 'Скасовано' : apt.status}
-                                  </span>
-                                  {priceGrn != null && (
-                                    <span className="text-xs font-semibold text-purple-400 tabular-nums">{priceGrn} грн</span>
-                                  )}
-                                </div>
-                              </div>
-                            </li>
-                          )
-                        })}
-                      </ul>
+                      <div className="max-h-[50vh] overflow-y-auto pr-1 scrollbar-hide">
+                        <VisitHistorySections
+                          items={clientHistoryData.appointments.map((apt): VisitHistoryItem => {
+                            const serviceNames = getServiceNamesList(apt.services, apt.customServiceName)
+                            const amountGrn =
+                              apt.customPrice != null && apt.customPrice > 0 ? Math.round(Number(apt.customPrice) / 100) : null
+                            return {
+                              id: String(apt.id),
+                              startTime: apt.startTime,
+                              endTime: apt.endTime,
+                              statusLabel:
+                                apt.status === 'Done' || apt.status === 'Виконано'
+                                  ? 'Виконано'
+                                  : apt.status === 'Confirmed' || apt.status === 'Підтверджено'
+                                    ? 'Підтверджено'
+                                    : apt.status === 'Pending' || apt.status === 'Очікує'
+                                      ? 'Очікує'
+                                      : apt.status === 'Cancelled' || apt.status === 'Скасовано'
+                                        ? 'Скасовано'
+                                        : String(apt.status),
+                              tone: toTone(String(apt.status)),
+                              masterName: apt.master?.name ?? '—',
+                              services: serviceNames,
+                              amountGrn,
+                            }
+                          })}
+                          emptyText="Немає записів"
+                        />
+                      </div>
                     </div>
 
                     {clientHistoryData.notes && (
