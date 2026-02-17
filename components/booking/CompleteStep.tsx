@@ -129,6 +129,46 @@ export function CompleteStep({ businessName, businessLocation, timeZone }: Compl
     }
   }
 
+  const getPushRegistration = async (): Promise<ServiceWorkerRegistration> => {
+    // `navigator.serviceWorker.ready` waits for an active SW *controlling this page*.
+    // On first install (or on some iOS/PWA edge cases) that can take a reload, so we
+    // instead work with the registration directly and only wait for activation.
+    const existing = await navigator.serviceWorker.getRegistration().catch(() => null)
+    const reg =
+      existing ||
+      (await navigator.serviceWorker.register('/sw.js', { scope: '/' }).catch((e) => {
+        throw new Error(e instanceof Error ? e.message : 'Не вдалося зареєструвати Service Worker')
+      }))
+
+    if (reg.active) return reg
+
+    // Wait until the installing/waiting worker becomes activated.
+    await withTimeout(
+      new Promise<void>((resolve) => {
+        const tryResolve = () => {
+          if (reg.active) resolve()
+        }
+
+        tryResolve()
+
+        const onStateChange = () => tryResolve()
+        const attach = (w?: ServiceWorker | null) => {
+          if (!w) return
+          w.addEventListener('statechange', onStateChange)
+        }
+
+        attach(reg.installing)
+        attach(reg.waiting)
+
+        reg.addEventListener('updatefound', () => attach(reg.installing))
+      }),
+      20000,
+      'Service Worker не активувався (timeout)'
+    )
+
+    return reg
+  }
+
   const handleEnablePush = async () => {
     if (pushBusy) return
 
@@ -173,14 +213,7 @@ export function CompleteStep({ businessName, businessLocation, timeZone }: Compl
         return
       }
 
-      // Ensure service worker exists; `navigator.serviceWorker.ready` can hang if SW wasn't registered.
-      try {
-        await navigator.serviceWorker.register('/sw.js')
-      } catch {
-        // Non-fatal; we still try `ready` afterwards.
-      }
-
-      const reg = await withTimeout(navigator.serviceWorker.ready, 20000, 'Service Worker не активувався (timeout)')
+      const reg = await getPushRegistration()
 
       let sub = await withTimeout(reg.pushManager.getSubscription(), 10000, 'Не вдалося перевірити підписку (timeout)')
       if (!sub) {
