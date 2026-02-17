@@ -115,7 +115,23 @@ export function CompleteStep({ businessName, businessLocation, timeZone }: Compl
     return outputArray
   }
 
+  const withTimeout = async <T,>(promise: Promise<T>, ms: number, message: string): Promise<T> => {
+    let timer: ReturnType<typeof setTimeout> | null = null
+    try {
+      return await Promise.race([
+        promise,
+        new Promise<never>((_, reject) => {
+          timer = setTimeout(() => reject(new Error(message)), ms)
+        }),
+      ])
+    } finally {
+      if (timer) clearTimeout(timer)
+    }
+  }
+
   const handleEnablePush = async () => {
+    if (pushBusy) return
+
     const token = state.confirmation?.manageToken
     if (!token) {
       toast({ title: 'Помилка', description: 'Немає токена доступу до запису. Оновіть сторінку та спробуйте ще раз.', type: 'error' })
@@ -125,32 +141,67 @@ export function CompleteStep({ businessName, businessLocation, timeZone }: Compl
       toast({ title: 'Непідтримується', description: 'Push-нагадування недоступні в цьому браузері/режимі.', type: 'info' })
       return
     }
-    if (!vapidPublicKey) {
-      // No toast here: show inline state instead of "hanging" messages.
-      setPushEnabled(false)
-      return
-    }
 
     setPushBusy(true)
     try {
-      const permission = await Notification.requestPermission()
+      // Re-check config right before enabling to avoid stale UI.
+      let publicKey = vapidPublicKey
+      if (!publicKey) {
+        try {
+          const res = await withTimeout(fetch('/api/push/config', { cache: 'no-store' }), 8000, 'Сервер push не відповідає (timeout)')
+          const data = await res.json().catch(() => ({} as any))
+          publicKey = typeof data?.publicKey === 'string' ? data.publicKey.trim() : null
+        } catch {
+          publicKey = null
+        }
+        setVapidPublicKey(publicKey)
+      }
+      if (!publicKey) {
+        // No toast here: show inline state instead of "hanging" messages.
+        setPushEnabled(false)
+        return
+      }
+
+      if (typeof Notification === 'undefined' || typeof Notification.requestPermission !== 'function') {
+        throw new Error('Сповіщення не підтримуються у цьому браузері/режимі.')
+      }
+
+      const permission = await withTimeout(Notification.requestPermission(), 20000, 'Очікуємо дозвіл на сповіщення (timeout)')
       if (permission !== 'granted') {
         setPushEnabled(false)
         toast({ title: 'Доступ заборонено', description: 'Щоб отримувати нагадування, дозвольте сповіщення в браузері.', type: 'info' })
         return
       }
 
-      const reg = await navigator.serviceWorker.ready
-      const sub = await reg.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
-      })
+      // Ensure service worker exists; `navigator.serviceWorker.ready` can hang if SW wasn't registered.
+      try {
+        await navigator.serviceWorker.register('/sw.js')
+      } catch {
+        // Non-fatal; we still try `ready` afterwards.
+      }
 
+      const reg = await withTimeout(navigator.serviceWorker.ready, 20000, 'Service Worker не активувався (timeout)')
+
+      let sub = await withTimeout(reg.pushManager.getSubscription(), 10000, 'Не вдалося перевірити підписку (timeout)')
+      if (!sub) {
+        sub = await withTimeout(
+          reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(publicKey),
+          }),
+          20000,
+          'Не вдалося створити підписку Push (timeout)'
+        )
+      }
+
+      const ac = new AbortController()
+      const reqTimeout = setTimeout(() => ac.abort(), 15000)
       const res = await fetch('/api/push/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ token, subscription: sub }),
-      })
+        signal: ac.signal,
+      }).finally(() => clearTimeout(reqTimeout))
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
         throw new Error(data?.error || 'Не вдалося увімкнути push')
@@ -160,7 +211,13 @@ export function CompleteStep({ businessName, businessLocation, timeZone }: Compl
     } catch (e) {
       console.error(e)
       setPushEnabled(false)
-      toast({ title: 'Помилка', description: e instanceof Error ? e.message : 'Не вдалося увімкнути push', type: 'error' })
+      const msg =
+        e instanceof Error && e.name === 'AbortError'
+          ? 'Сервер довго не відповідає. Спробуйте ще раз.'
+          : e instanceof Error
+            ? e.message
+            : 'Не вдалося увімкнути push'
+      toast({ title: 'Помилка', description: msg, type: 'error' })
     } finally {
       setPushBusy(false)
     }
