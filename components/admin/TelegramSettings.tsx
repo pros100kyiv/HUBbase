@@ -241,7 +241,7 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
 
       {/* Налаштування повідомлень бота */}
       {telegramBotToken && (
-        <details className="card-candy p-4">
+        <details className="card-candy p-4" open>
           <summary className="cursor-pointer list-none">
             <h2 className="text-subheading inline">Налаштування повідомлень бота</h2>
           </summary>

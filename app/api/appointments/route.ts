@@ -216,10 +216,14 @@ export async function POST(request: Request) {
       const tgChatId = typeof telegramChatId === 'string' && telegramChatId.trim() ? telegramChatId.trim() : null
 
       if (isFromTelegram && tgChatId) {
-        await tx.client.update({
-          where: { id: ensuredClient.id },
-          data: { telegramChatId: tgChatId },
-        })
+        try {
+          await tx.client.update({
+            where: { id: ensuredClient.id },
+            data: { telegramChatId: tgChatId },
+          })
+        } catch {
+          // telegramChatId column may not exist if migration not applied
+        }
       }
 
       const createdAppointment = await tx.appointment.create({
