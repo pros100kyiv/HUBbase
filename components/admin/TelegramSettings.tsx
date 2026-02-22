@@ -10,6 +10,8 @@ interface TelegramBotMessageSettings {
   bookingEnabled?: boolean
   /** 'both' = вибір з прайсу або без | 'pricelist_only' = тільки з прайсу | 'simple_only' = тільки без послуги */
   bookingServiceMode?: 'both' | 'pricelist_only' | 'simple_only'
+  /** true = приймати повідомлення тільки після натискання кнопки «Написати повідомлення» */
+  messagesOnlyViaButton?: boolean
 }
 
 const DEFAULT_WELCOME = '✅ Вітаємо, {{name}}!\n\nВаша роль: {{role}}\n\nВи отримуватимете сповіщення про нові записи та нагадування.\n\nОберіть дію:'
@@ -266,6 +268,18 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
                 rows={2}
                 className="w-full px-3 py-2 rounded-lg border border-black/10 dark:border-white/15 bg-black/[0.02] dark:bg-white/5 text-sm"
               />
+            </div>
+            <div className="flex items-center gap-2 mb-4">
+              <input
+                type="checkbox"
+                id="messagesOnlyViaButton"
+                checked={botSettings.messagesOnlyViaButton !== false}
+                onChange={(e) => setBotSettings((s) => ({ ...s, messagesOnlyViaButton: e.target.checked }))}
+                className="w-4 h-4"
+              />
+              <label htmlFor="messagesOnlyViaButton" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Повідомлення тільки через кнопку — прибрати ввід тексту в рядку, приймати лише після «✉️ Написати повідомлення»
+              </label>
             </div>
             <div className="flex items-center gap-2 mb-4">
               <input
