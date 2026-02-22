@@ -74,6 +74,7 @@ export async function GET(request: Request) {
 
     // Режим: повна історія переписки по чату
     if (chatId && platform) {
+      const limit = Math.min(500, Math.max(50, parseInt(searchParams.get('limit') || '200', 10)))
       const rows = await prisma.socialInboxMessage.findMany({
         where: {
           businessId,
@@ -81,7 +82,7 @@ export async function GET(request: Request) {
           platform,
         },
         orderBy: { createdAt: 'asc' },
-        take: 200,
+        take: limit,
       })
 
       const thread = rows.map((m) => ({
@@ -163,6 +164,34 @@ export async function PATCH(request: Request) {
   } catch (error) {
     console.error('Error marking message read:', error)
     return NextResponse.json({ error: 'Failed to update' }, { status: 500 })
+  }
+}
+
+// DELETE — видалити всі повідомлення чату
+// ?chatId=X&platform=Y&businessId=Z
+export async function DELETE(request: Request) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const businessId = searchParams.get('businessId')
+    const chatId = searchParams.get('chatId')
+    const platform = searchParams.get('platform')
+
+    if (!businessId || !chatId || !platform) {
+      return NextResponse.json({ error: 'businessId, chatId and platform required' }, { status: 400 })
+    }
+
+    const result = await prisma.socialInboxMessage.deleteMany({
+      where: {
+        businessId,
+        externalChatId: chatId,
+        platform,
+      },
+    })
+
+    return NextResponse.json({ success: true, deleted: result.count })
+  } catch (error) {
+    console.error('Error deleting chat messages:', error)
+    return NextResponse.json({ error: 'Failed to delete' }, { status: 500 })
   }
 }
 

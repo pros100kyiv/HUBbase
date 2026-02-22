@@ -540,8 +540,9 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
                       const reqStart = r.requestedStartTime ? new Date(r.requestedStartTime) : null
                       const reqEnd = r.requestedEndTime ? new Date(r.requestedEndTime) : null
                       const typeLabel = r.type === 'CANCEL' ? 'Скасування' : r.type === 'RESCHEDULE' ? 'Перенесення' : r.type
+                      const reqBorderColor = r.status === 'PENDING' || r.status === 'Очікує' ? 'border-l-amber-500/80' : 'border-l-white/20'
                       return (
-                        <article key={r.id} className="rounded-2xl p-4 bg-white/[0.04] border border-white/10">
+                        <article key={r.id} className={cn('rounded-2xl p-4 bg-white/[0.04] border border-white/10 outline-none border-l-4', reqBorderColor)}>
                           <div className="flex items-start justify-between gap-2">
                             <div className="min-w-0">
                               <p className="text-sm font-bold text-white truncate">{fixMojibake(r.appointment.clientName)}</p>

@@ -239,7 +239,9 @@ export default function SocialPage() {
 
   useEffect(() => {
     const tab = searchParams.get('tab')
-    if (tab === 'booking' || tab === 'chat') setActiveTab(tab)
+    const openChat = searchParams.get('openChat')
+    if (openChat) setActiveTab('chat')
+    else if (tab === 'booking' || tab === 'chat') setActiveTab(tab)
   }, [searchParams])
 
   const setTab = (t: SocialTab) => {
@@ -430,7 +432,17 @@ export default function SocialPage() {
             </button>
           </div>
 
-          {activeTab === 'chat' && business?.id && <SocialMessagesCard businessId={business.id} />}
+          {activeTab === 'chat' && business?.id && (
+            <SocialMessagesCard
+              businessId={business.id}
+              initialOpenChat={(() => {
+                const open = searchParams.get('openChat')
+                if (!open || !open.includes('::')) return null
+                const [platform, externalChatId] = open.split('::')
+                return platform && externalChatId ? { platform, externalChatId } : null
+              })()}
+            />
+          )}
           {activeTab === 'booking' && business?.id && (
             <TelegramBookingsCard businessId={business.id} bookingEnabled={bookingEnabled} />
           )}

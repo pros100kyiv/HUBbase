@@ -14,7 +14,6 @@ import {
   ChevronDownIcon,
   ChevronUpIcon,
   UserIcon,
-  UsersIcon,
   ChartIcon,
   TrashIcon,
   MoneyIcon,
@@ -51,15 +50,6 @@ interface Business {
   profileCompleted?: boolean
   telegramBotToken?: string | null
   settings?: string | null
-}
-
-interface Master {
-  id: string
-  name: string
-  photo?: string
-  bio?: string
-  rating: number
-  workingHours?: any
 }
 
 interface Service {
@@ -99,12 +89,11 @@ const getCategoryColor = (index: number) => {
   return colors[index % colors.length]
 }
 
-type Tab = 'info' | 'schedule' | 'masters' | 'services' | 'businessCard' | 'integrations'
+type Tab = 'info' | 'schedule' | 'services' | 'businessCard' | 'integrations'
 
 const TAB_LABELS: Record<Tab, string> = {
   info: 'Інформація',
   schedule: 'Бронювання',
-  masters: 'Спеціалісти',
   services: 'Послуги',
   businessCard: 'Візитівка',
   integrations: 'Інтеграції',
@@ -114,7 +103,6 @@ export default function SettingsPage() {
   const router = useRouter()
   const [activeTab, setActiveTab] = useState<Tab>('info')
   const [business, setBusiness] = useState<Business | null>(null)
-  const [masters, setMasters] = useState<Master[]>([])
   const [services, setServices] = useState<Service[]>([])
   const [formData, setFormData] = useState<Partial<Business>>({})
   const [isLoading, setIsLoading] = useState(true)
@@ -191,9 +179,8 @@ export default function SettingsPage() {
       // Потім завантажуємо актуальні дані з сервера (неблокуюче)
       Promise.all([
         fetch(`/api/business/${parsed.id}`).then(res => res.ok ? res.json() : null).catch(() => null),
-        fetch(`/api/masters?businessId=${parsed.id}`).then(res => res.ok ? res.json() : null).catch(() => null),
         fetch(`/api/services?businessId=${parsed.id}`).then(res => res.ok ? res.json() : null).catch(() => null),
-      ]).then(([businessData, mastersData, servicesData]) => {
+      ]).then(([businessData, servicesData]) => {
         if (businessData?.business) {
           // Перевіряємо чи є ID в даних з сервера, якщо ні - використовуємо з localStorage
           const updatedBusiness = {
@@ -203,9 +190,6 @@ export default function SettingsPage() {
           setBusiness(updatedBusiness)
           setFormData(updatedBusiness)
           localStorage.setItem('business', JSON.stringify(updatedBusiness))
-        }
-        if (mastersData) {
-          setMasters(mastersData)
         }
         if (servicesData) {
           setServices(servicesData)
@@ -250,7 +234,7 @@ export default function SettingsPage() {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
     const tabParam = params.get('tab')
-    const allowedTabs: Tab[] = ['info', 'schedule', 'masters', 'services', 'businessCard', 'integrations']
+    const allowedTabs: Tab[] = ['info', 'schedule', 'services', 'businessCard', 'integrations']
     if (tabParam === 'telegram') {
       setActiveTab('integrations')
     } else if (tabParam && allowedTabs.includes(tabParam as Tab)) {
@@ -583,23 +567,6 @@ export default function SettingsPage() {
                 </div>
               </div>
             </button>
-            <button
-              onClick={() => setTab('masters')}
-              className={cn(
-                'rounded-xl p-3 text-left transition-all border',
-                activeTab === 'masters' ? 'card-glass border-white/30 bg-white/15' : 'card-glass-subtle border-white/10 hover:border-white/20'
-              )}
-            >
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center">
-                  <UsersIcon className="w-4 h-4" />
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400">Спеціалісти</p>
-                  <p className="text-sm font-bold text-white">{masters.length}</p>
-                </div>
-              </div>
-            </button>
             {/* Telegram tab removed; keep Telegram connection inside "Інтеграції" */}
             <button
               onClick={() => setTab('integrations')}
@@ -659,7 +626,7 @@ export default function SettingsPage() {
           <div className="rounded-xl p-3 card-glass-subtle">
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex gap-2 flex-wrap">
-              {(['info', 'schedule', 'masters', 'businessCard', 'integrations'] as Tab[]).map((tab) => (
+              {(['info', 'schedule', 'businessCard', 'integrations'] as Tab[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setTab(tab)}
@@ -858,26 +825,6 @@ export default function SettingsPage() {
                 onSave={(nextRaw) => setBusiness((prevB) => (prevB ? { ...prevB, settings: nextRaw } : prevB))}
               />
               <div className="flex justify-end">
-                <Button
-                  onClick={() => router.push('/dashboard/schedule')}
-                  className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] inline-flex items-center gap-2"
-                  style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.3)' }}
-                >
-                  <ClockIcon className="w-5 h-5" />
-                  Перейти до графіка та спеціалістів
-                </Button>
-              </div>
-            </div>
-          )}
-
-          {/* Спеціалісти — керуються в Графік роботи */}
-          {activeTab === 'masters' && (
-            <div className="space-y-6">
-              <h2 className="text-lg font-bold text-white" style={{ letterSpacing: '-0.02em' }}>Спеціалісти</h2>
-              <div className="rounded-xl p-6 md:p-8 card-glass border border-white/10 text-center">
-                <UserIcon className="w-12 h-12 text-gray-400 mx-auto mb-3" />
-                <p className="text-white font-medium mb-1">Спеціалісти та їх графіки об’єднані в одному місці.</p>
-                <p className="text-sm text-gray-400 mb-4">Додавання, редагування профілю, графік роботи та видалення — у розділі «Графік роботи».</p>
                 <Button
                   onClick={() => router.push('/dashboard/schedule')}
                   className="px-4 py-2 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors active:scale-[0.98] inline-flex items-center gap-2"
