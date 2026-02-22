@@ -1,10 +1,13 @@
 /**
- * Надсилання сповіщень клієнту про записи через Telegram
+ * Надсилання сповіщень про записи через Telegram.
+ * Важливо: відправляється ТІЛЬКИ конкретному клієнту запису (appointment.client.telegramChatId),
+ * ніколи не розсилається всім клієнтам.
  */
 import { prisma } from '@/lib/prisma'
 import { Telegraf } from 'telegraf'
-import { format } from 'date-fns'
+import { formatInTimeZone } from 'date-fns-tz'
 import { uk } from 'date-fns/locale'
+import { parseBookingTimeZone } from '@/lib/utils/booking-settings'
 
 type NotifyType = 'confirmed' | 'rescheduled' | 'cancelled'
 
@@ -19,36 +22,40 @@ export async function sendAppointmentNotificationToTelegram(
       where: { id: appointmentId, businessId },
       include: {
         master: { select: { name: true } },
-        client: { select: { telegramChatId: true } },
-        business: { select: { name: true, telegramBotToken: true } },
+        client: { select: { id: true, telegramChatId: true } },
+        business: { select: { name: true, telegramBotToken: true, settings: true } },
       },
     })
 
-    if (!appointment || !appointment.client?.telegramChatId || !appointment.business?.telegramBotToken) {
+    // Сповіщення ТІЛЬКИ клієнту цього запису — ніколи не розсилати всім
+    if (!appointment || !appointment.clientId || !appointment.client?.telegramChatId?.trim() || !appointment.business?.telegramBotToken) {
       return { sent: false }
     }
 
-    const chatId = appointment.client.telegramChatId
+    const chatId = appointment.client.telegramChatId.trim()
     const masterName = appointment.master?.name ?? 'Спеціаліст'
     const businessName = appointment.business.name ?? 'Салон'
+    const timeZone = parseBookingTimeZone(appointment.business.settings)
 
     let text = ''
     if (type === 'confirmed') {
       const dt = new Date(appointment.startTime)
+      const dateStr = formatInTimeZone(dt, timeZone, 'd MMMM, HH:mm', { locale: uk })
       text =
         `✅ <b>Запис підтверджено!</b>\n\n` +
         `${businessName}\n` +
         `Спеціаліст: ${masterName}\n` +
-        `Дата та час: ${format(dt, 'd MMMM, HH:mm', { locale: uk })}\n\n` +
+        `Дата та час: ${dateStr}\n\n` +
         `Чекаємо на вас!\n\n` +
         `Перенести або скасувати можна лише після підтвердження майстра в кабінеті. Посилання для керування — у підтвердженні запису.`
     } else if (type === 'rescheduled' && extra?.newStartTime && extra?.newEndTime) {
       const dt = new Date(extra.newStartTime)
+      const dateStr = formatInTimeZone(dt, timeZone, 'd MMMM, HH:mm', { locale: uk })
       text =
         `🔄 <b>Запис перенесено</b>\n\n` +
         `${businessName}\n` +
         `Спеціаліст: ${masterName}\n` +
-        `Новий час: ${format(dt, 'd MMMM, HH:mm', { locale: uk })}\n\n` +
+        `Новий час: ${dateStr}\n\n` +
         `Чекаємо на вас!\n\n` +
         `Щоб скасувати або змінити час — лише після підтвердження майстра в кабінеті.`
     } else if (type === 'cancelled') {

@@ -165,6 +165,7 @@ export function QuickClientCard({
               body: JSON.stringify({
                 businessId,
                 name: formData.name.trim(),
+                phone: normalizedPhone,
                 email: formData.email.trim() || null,
                 status: normalizeStatusForSend(formData.status),
                 notes: formData.notes.trim() || null,

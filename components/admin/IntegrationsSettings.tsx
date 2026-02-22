@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { PhoneIcon, MoneyIcon, CheckIcon, XIcon, AlertCircleIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { TelegramSettings } from './TelegramSettings'
 
@@ -15,27 +14,24 @@ interface IntegrationsSettingsProps {
 
 export function IntegrationsSettings({ business, onUpdate, onRefetchBusiness }: IntegrationsSettingsProps) {
   const [isSaving, setIsSaving] = useState(false)
-  
+
   // SMS
-  const [smsProvider, setSmsProvider] = useState(business?.smsProvider || 'smsc')
   const [smsApiKey, setSmsApiKey] = useState(business?.smsApiKey || '')
   const [smsSender, setSmsSender] = useState(business?.smsSender || 'Xbase')
   const [showSmsApiKey, setShowSmsApiKey] = useState(false)
-  
+
   // Email
-  const [emailProvider, setEmailProvider] = useState(business?.emailProvider || 'sendgrid')
   const [emailApiKey, setEmailApiKey] = useState(business?.emailApiKey || '')
   const [emailFrom, setEmailFrom] = useState(business?.emailFrom || '')
   const [emailFromName, setEmailFromName] = useState(business?.emailFromName || 'Xbase')
   const [showEmailApiKey, setShowEmailApiKey] = useState(false)
-  
+
   // Payment
   const [paymentEnabled, setPaymentEnabled] = useState(business?.paymentEnabled || false)
-  const [paymentProvider, setPaymentProvider] = useState(business?.paymentProvider || 'liqpay')
   const [paymentApiKey, setPaymentApiKey] = useState(business?.paymentApiKey || '')
   const [paymentMerchantId, setPaymentMerchantId] = useState(business?.paymentMerchantId || '')
   const [showPaymentApiKey, setShowPaymentApiKey] = useState(false)
-  
+
   // Reminders
   const [remindersEnabled, setRemindersEnabled] = useState(business?.remindersEnabled || false)
   const [reminderSmsEnabled, setReminderSmsEnabled] = useState(business?.reminderSmsEnabled || false)
@@ -52,19 +48,15 @@ export function IntegrationsSettings({ business, onUpdate, onRefetchBusiness }: 
     } catch {}
     return 24
   })
-  
-  // Оновлюємо стан при зміні business
+
   useEffect(() => {
     if (business) {
-      setSmsProvider(business.smsProvider || 'smsc')
       setSmsApiKey(business.smsApiKey || '')
       setSmsSender(business.smsSender || 'Xbase')
-      setEmailProvider(business.emailProvider || 'sendgrid')
       setEmailApiKey(business.emailApiKey || '')
       setEmailFrom(business.emailFrom || '')
       setEmailFromName(business.emailFromName || 'Xbase')
       setPaymentEnabled(business.paymentEnabled || false)
-      setPaymentProvider(business.paymentProvider || 'liqpay')
       setPaymentApiKey(business.paymentApiKey || '')
       setPaymentMerchantId(business.paymentMerchantId || '')
       setRemindersEnabled(business.remindersEnabled || false)
@@ -79,329 +71,221 @@ export function IntegrationsSettings({ business, onUpdate, onRefetchBusiness }: 
       } catch {}
     }
   }, [business])
-  
+
   const handleSave = async () => {
     setIsSaving(true)
     try {
       await onUpdate({
-        smsProvider,
+        smsProvider: 'smsc',
         smsApiKey: smsApiKey || undefined,
         smsSender: smsSender || undefined,
-        emailProvider,
+        emailProvider: 'sendgrid',
         emailApiKey: emailApiKey || undefined,
         emailFrom: emailFrom || undefined,
         emailFromName: emailFromName || undefined,
         paymentEnabled,
-        paymentProvider,
+        paymentProvider: 'liqpay',
         paymentApiKey: paymentApiKey || undefined,
         paymentMerchantId: paymentMerchantId || undefined,
-      remindersEnabled,
-      reminderSmsEnabled,
-      reminderEmailEnabled,
-      reminderTelegramEnabled,
-      reminderHoursBefore: reminderHoursBefore || 24
+        remindersEnabled,
+        reminderSmsEnabled,
+        reminderEmailEnabled,
+        reminderTelegramEnabled,
+        reminderHoursBefore: reminderHoursBefore || 24
       })
     } finally {
       setIsSaving(false)
     }
   }
-  
-  const getStatusIcon = (enabled: boolean, configured: boolean) => {
-    if (!enabled) return <XIcon className="w-4 h-4 text-gray-400" />
-    if (configured) return <CheckIcon className="w-4 h-4 text-green-500" />
-    return <AlertCircleIcon className="w-4 h-4 text-yellow-500" />
-  }
-  
+
+  const StatusBadge = ({ configured, label }: { configured: boolean; label: string }) => (
+    <span
+      className={cn(
+        'text-xs px-2 py-0.5 rounded-full',
+        configured ? 'bg-green-500/20 text-green-600 dark:text-green-400' : 'bg-gray-500/20 text-gray-500 dark:text-gray-400'
+      )}
+    >
+      {configured ? 'Підключено' : label}
+    </span>
+  )
+
+  const inputClass =
+    'w-full px-3 py-2 text-sm rounded-lg border border-black/10 dark:border-white/15 bg-black/[0.02] dark:bg-white/5 text-foreground'
+
   return (
-    <div className="space-y-6">
-      {/* Telegram — кожен бізнес підключає свій бот */}
-      {business ? (
+    <div className="space-y-4">
+      {/* Telegram */}
+      {business && (
         <TelegramSettings
           business={business}
           onUpdate={onUpdate}
           onRefetchBusiness={onRefetchBusiness}
         />
-      ) : (
-        <p className="text-sm text-gray-500">BusinessId не знайдено</p>
       )}
 
-      {/* SMS */}
-      <div className="card-candy p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <PhoneIcon className="w-5 h-5 text-candy-blue" />
-            <h3 className="text-lg font-black text-gray-900 dark:text-white">SMS Розсилки</h3>
-          </div>
-          {getStatusIcon(true, !!smsApiKey)}
-        </div>
-        <div className="space-y-4">
+      {/* SMS — згорнуто */}
+      <details className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
+        <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none select-none hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
+          <span className="font-medium text-foreground">SMS</span>
+          <StatusBadge configured={!!smsApiKey} label="Не налаштовано" />
+        </summary>
+        <div className="p-4 pt-0 space-y-3 border-t border-black/5 dark:border-white/5">
           <div>
-            <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Провайдер</label>
-            <select
-              value={smsProvider}
-              onChange={(e) => setSmsProvider(e.target.value)}
-              className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-candy-xs bg-white dark:bg-gray-700"
-            >
-              <option value="smsc">SMSC.ua</option>
-            </select>
-            <a href="https://smsc.ua" target="_blank" rel="noopener noreferrer" className="text-xs text-candy-blue hover:underline">SMSC.ua →</a>
-          </div>
-          <div>
-            <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">API Ключ (login:password)</label>
+            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">API (SMSC.ua — login:password)</label>
             <div className="relative">
               <Input
-                type={showSmsApiKey ? "text" : "password"}
+                type={showSmsApiKey ? 'text' : 'password'}
                 value={smsApiKey}
                 onChange={(e) => setSmsApiKey(e.target.value)}
                 placeholder="login:password"
-                className="text-xs pr-10"
+                className={cn(inputClass, 'pr-20')}
               />
               <button
                 type="button"
                 onClick={() => setShowSmsApiKey(!showSmsApiKey)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-gray-700"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-foreground"
               >
                 {showSmsApiKey ? 'Сховати' : 'Показати'}
               </button>
             </div>
           </div>
           <div>
-            <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Відправник (назва)</label>
-            <Input
-              value={smsSender}
-              onChange={(e) => setSmsSender(e.target.value)}
-              placeholder="Xbase"
-              className="text-xs"
-            />
+            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Відправник</label>
+            <Input value={smsSender} onChange={(e) => setSmsSender(e.target.value)} placeholder="Xbase" className={inputClass} />
           </div>
         </div>
-      </div>
-      
-      {/* Email */}
-      <div className="card-candy p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <PhoneIcon className="w-5 h-5 text-candy-mint" />
-            <h3 className="text-lg font-black text-gray-900 dark:text-white">Email Розсилки</h3>
-          </div>
-          {getStatusIcon(true, !!emailApiKey)}
-        </div>
-        <div className="space-y-4">
+      </details>
+
+      {/* Email — згорнуто */}
+      <details className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
+        <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none select-none hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
+          <span className="font-medium text-foreground">Email</span>
+          <StatusBadge configured={!!emailApiKey} label="Не налаштовано" />
+        </summary>
+        <div className="p-4 pt-0 space-y-3 border-t border-black/5 dark:border-white/5">
           <div>
-            <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Провайдер</label>
-            <select
-              value={emailProvider}
-              onChange={(e) => setEmailProvider(e.target.value)}
-              className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-candy-xs bg-white dark:bg-gray-700"
-            >
-              <option value="sendgrid">SendGrid</option>
-            </select>
-            <a href="https://sendgrid.com" target="_blank" rel="noopener noreferrer" className="text-xs text-candy-blue hover:underline">SendGrid →</a>
-          </div>
-          <div>
-            <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">API Ключ</label>
+            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">API ключ (SendGrid)</label>
             <div className="relative">
               <Input
-                type={showEmailApiKey ? "text" : "password"}
+                type={showEmailApiKey ? 'text' : 'password'}
                 value={emailApiKey}
                 onChange={(e) => setEmailApiKey(e.target.value)}
-                placeholder="Введіть API ключ"
-                className="text-xs pr-10"
+                placeholder="SG.xxx"
+                className={cn(inputClass, 'pr-20')}
               />
               <button
                 type="button"
                 onClick={() => setShowEmailApiKey(!showEmailApiKey)}
-                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-gray-700"
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-foreground"
               >
                 {showEmailApiKey ? 'Сховати' : 'Показати'}
               </button>
             </div>
           </div>
           <div>
-            <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Email відправника</label>
+            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Відправник</label>
             <Input
               type="email"
               value={emailFrom}
               onChange={(e) => setEmailFrom(e.target.value)}
               placeholder="noreply@example.com"
-              className="text-xs"
+              className={inputClass}
             />
           </div>
           <div>
-            <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Ім'я відправника</label>
-            <Input
-              value={emailFromName}
-              onChange={(e) => setEmailFromName(e.target.value)}
-              placeholder="Xbase"
-              className="text-xs"
-            />
+            <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Імʼя відправника</label>
+            <Input value={emailFromName} onChange={(e) => setEmailFromName(e.target.value)} placeholder="Xbase" className={inputClass} />
           </div>
         </div>
-      </div>
-      
-      {/* Payment */}
-      <div className="card-candy p-6">
-        <div className="flex items-center justify-between mb-4">
-          <div className="flex items-center gap-2">
-            <MoneyIcon className="w-5 h-5 text-candy-pink" />
-            <h3 className="text-lg font-black text-gray-900 dark:text-white">Платежі</h3>
-          </div>
-          {getStatusIcon(paymentEnabled, !!paymentApiKey && !!paymentMerchantId)}
-        </div>
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="paymentEnabled"
-              checked={paymentEnabled}
-              onChange={(e) => setPaymentEnabled(e.target.checked)}
-              className="w-4 h-4"
-            />
-            <label htmlFor="paymentEnabled" className="text-sm font-bold">Увімкнути платежі</label>
-          </div>
+      </details>
+
+      {/* Платежі — згорнуто */}
+      <details className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
+        <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none select-none hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
+          <span className="font-medium text-foreground">Платежі (LiqPay)</span>
+          <StatusBadge configured={paymentEnabled && !!paymentApiKey && !!paymentMerchantId} label="Вимкнено" />
+        </summary>
+        <div className="p-4 pt-0 space-y-3 border-t border-black/5 dark:border-white/5">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" checked={paymentEnabled} onChange={(e) => setPaymentEnabled(e.target.checked)} className="w-4 h-4 rounded" />
+            <span className="text-sm">Увімкнути онлайн-оплату</span>
+          </label>
           {paymentEnabled && (
             <>
               <div>
-                <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Провайдер</label>
-                <select
-                  value={paymentProvider}
-                  onChange={(e) => setPaymentProvider(e.target.value)}
-                  className="w-full px-3 py-2 text-xs border border-gray-300 dark:border-gray-600 rounded-candy-xs bg-white dark:bg-gray-700"
-                >
-                  <option value="liqpay">LiqPay</option>
-                </select>
-                <a href="https://www.liqpay.ua" target="_blank" rel="noopener noreferrer" className="text-xs text-candy-blue hover:underline">LiqPay →</a>
-              </div>
-              <div>
-                <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Private Key (API Ключ)</label>
+                <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Private Key</label>
                 <div className="relative">
                   <Input
-                    type={showPaymentApiKey ? "text" : "password"}
+                    type={showPaymentApiKey ? 'text' : 'password'}
                     value={paymentApiKey}
                     onChange={(e) => setPaymentApiKey(e.target.value)}
-                    placeholder="Введіть Private Key"
-                    className="text-xs pr-10"
+                    placeholder="Приватний ключ"
+                    className={cn(inputClass, 'pr-20')}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPaymentApiKey(!showPaymentApiKey)}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-gray-700"
+                    className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-foreground"
                   >
                     {showPaymentApiKey ? 'Сховати' : 'Показати'}
                   </button>
                 </div>
               </div>
               <div>
-                <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Public Key (Merchant ID)</label>
+                <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">Public Key</label>
                 <Input
                   value={paymentMerchantId}
                   onChange={(e) => setPaymentMerchantId(e.target.value)}
-                  placeholder="Введіть Public Key"
-                  className="text-xs"
+                  placeholder="Публічний ключ"
+                  className={inputClass}
                 />
               </div>
             </>
           )}
         </div>
-      </div>
-      
-      {/* Reminders */}
-      <div className="card-candy p-6">
-        <h3 className="text-lg font-black text-gray-900 dark:text-white mb-4">Автоматичні нагадування</h3>
-        <div className="space-y-4">
-          <div className="flex items-center gap-2">
-            <input
-              type="checkbox"
-              id="remindersEnabled"
-              checked={remindersEnabled}
-              onChange={(e) => setRemindersEnabled(e.target.checked)}
-              className="w-4 h-4"
-            />
-            <label htmlFor="remindersEnabled" className="text-sm font-bold">Увімкнути нагадування</label>
+      </details>
+
+      {/* Нагадування — компактний блок */}
+      <div className="rounded-xl border border-black/10 dark:border-white/10 p-4 space-y-3">
+        <h3 className="text-sm font-semibold text-foreground">Нагадування клієнтам</h3>
+        <label className="flex items-center gap-2 cursor-pointer">
+          <input type="checkbox" checked={remindersEnabled} onChange={(e) => setRemindersEnabled(e.target.checked)} className="w-4 h-4 rounded" />
+          <span className="text-sm">Відправляти нагадування про запис</span>
+        </label>
+        {remindersEnabled && (
+          <div className="space-y-2 pl-6">
+            <div className="flex items-center gap-2">
+              <Input
+                type="number"
+                value={reminderHoursBefore}
+                onChange={(e) => setReminderHoursBefore(parseInt(e.target.value) || 24)}
+                min={1}
+                max={168}
+                className={cn(inputClass, 'w-20')}
+              />
+              <span className="text-xs text-gray-500">годин до візиту</span>
+            </div>
+            <div className="flex flex-wrap gap-4">
+              <label className={cn('flex items-center gap-2 cursor-pointer', !smsApiKey && 'opacity-50')}>
+                <input type="checkbox" checked={reminderSmsEnabled} onChange={(e) => setReminderSmsEnabled(e.target.checked)} disabled={!smsApiKey} className="w-4 h-4 rounded" />
+                <span className="text-xs">SMS</span>
+              </label>
+              <label className={cn('flex items-center gap-2 cursor-pointer', !emailApiKey && 'opacity-50')}>
+                <input type="checkbox" checked={reminderEmailEnabled} onChange={(e) => setReminderEmailEnabled(e.target.checked)} disabled={!emailApiKey} className="w-4 h-4 rounded" />
+                <span className="text-xs">Email</span>
+              </label>
+              <label className={cn('flex items-center gap-2 cursor-pointer', !business?.telegramBotToken && 'opacity-50')}>
+                <input type="checkbox" checked={reminderTelegramEnabled} onChange={(e) => setReminderTelegramEnabled(e.target.checked)} disabled={!business?.telegramBotToken} className="w-4 h-4 rounded" />
+                <span className="text-xs">Telegram</span>
+              </label>
+            </div>
           </div>
-          {remindersEnabled && (
-            <>
-              <div>
-                <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">
-                  Нагадувати за (годин до запису)
-                </label>
-                <Input
-                  type="number"
-                  value={reminderHoursBefore}
-                  onChange={(e) => setReminderHoursBefore(parseInt(e.target.value) || 24)}
-                  min="1"
-                  max="168"
-                  className="text-xs"
-                />
-              </div>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="reminderSmsEnabled"
-                    checked={reminderSmsEnabled}
-                    onChange={(e) => setReminderSmsEnabled(e.target.checked)}
-                    disabled={!smsApiKey}
-                    className="w-4 h-4"
-                  />
-                  <label htmlFor="reminderSmsEnabled" className={cn(
-                    "text-sm font-bold",
-                    !smsApiKey && "text-gray-400"
-                  )}>
-                    SMS нагадування
-                    {!smsApiKey && " (спочатку налаштуйте SMS)"}
-                  </label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="reminderEmailEnabled"
-                    checked={reminderEmailEnabled}
-                    onChange={(e) => setReminderEmailEnabled(e.target.checked)}
-                    disabled={!emailApiKey}
-                    className="w-4 h-4"
-                  />
-                  <label htmlFor="reminderEmailEnabled" className={cn(
-                    "text-sm font-bold",
-                    !emailApiKey && "text-gray-400"
-                  )}>
-                    Email нагадування
-                    {!emailApiKey && " (спочатку налаштуйте Email)"}
-                  </label>
-                </div>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="checkbox"
-                    id="reminderTelegramEnabled"
-                    checked={reminderTelegramEnabled}
-                    onChange={(e) => setReminderTelegramEnabled(e.target.checked)}
-                    disabled={!business?.telegramBotToken}
-                    className="w-4 h-4"
-                  />
-                  <label htmlFor="reminderTelegramEnabled" className={cn(
-                    "text-sm font-bold",
-                    !business?.telegramBotToken && "text-gray-400"
-                  )}>
-                    Telegram нагадування
-                    {!business?.telegramBotToken && " (спочатку підключіть бота)"}
-                  </label>
-                </div>
-              </div>
-            </>
-          )}
-        </div>
+        )}
       </div>
-      
-      {/* Кнопка збереження */}
-      <div className="flex gap-3">
-        <Button
-          onClick={handleSave}
-          disabled={isSaving}
-          className="flex-1 bg-gradient-to-r from-candy-purple to-candy-blue text-white hover:shadow-soft-xl"
-        >
-          {isSaving ? 'Збереження...' : 'Зберегти'}
-        </Button>
-      </div>
+
+      <Button onClick={handleSave} disabled={isSaving} className="w-full h-11 font-medium">
+        {isSaving ? 'Збереження…' : 'Зберегти налаштування'}
+      </Button>
     </div>
   )
 }

@@ -163,7 +163,9 @@ export default function ClientsPage() {
         
         const clientsWithStats = clientsData.map((client: any) => {
           const clientAppointments = appointmentsForMerge.filter(
-            (apt: any) => apt.clientPhone === client.phone
+            (apt: any) =>
+              (apt.clientId && apt.clientId === client.id) ||
+              apt.clientPhone === client.phone
           )
           const appointmentsDesc = [...clientAppointments].sort(
             (a: any, b: any) =>

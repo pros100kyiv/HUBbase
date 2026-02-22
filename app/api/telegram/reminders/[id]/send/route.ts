@@ -16,7 +16,7 @@ export async function POST(
       where: { id: resolvedParams.id },
       include: { 
         business: true,
-        client: true,
+        client: { select: { id: true, telegramChatId: true } },
       },
     })
 
@@ -33,43 +33,18 @@ export async function POST(
     let sentCount = 0
     let failedCount = 0
 
-    if (reminder.targetType === 'client' && reminder.clientId) {
-      // Персональне нагадування
-      const telegramUser = await prisma.telegramUser.findFirst({
-        where: {
-          businessId: reminder.businessId,
-          role: 'CLIENT',
-          isActive: true,
-          notificationsEnabled: true,
-          activatedAt: { not: null },
-        },
-        // Можна додати зв'язок з клієнтом через phone або інший ідентифікатор
-        // Поки що відправляємо всім клієнтам
-      })
-
-      // Якщо є конкретний клієнт, спробуємо знайти його Telegram
-      // Поки що відправляємо всім активним клієнтам
-      const clients = await prisma.telegramUser.findMany({
-        where: {
-          businessId: reminder.businessId,
-          role: 'CLIENT',
-          isActive: true,
-          notificationsEnabled: true,
-          activatedAt: { not: null },
-        },
-      })
-
-      for (const client of clients) {
-        try {
-          await bot.telegram.sendMessage(Number(client.telegramId), reminder.message, { parse_mode: 'HTML' })
-          sentCount++
-        } catch (error) {
-          console.error(`Error sending to client ${client.telegramId}:`, error)
-          failedCount++
-        }
+    if (reminder.targetType === 'client' && reminder.clientId && reminder.client?.telegramChatId) {
+      // Персональне нагадування — ТІЛЬКИ конкретному клієнту (Client.telegramChatId)
+      const chatId = reminder.client.telegramChatId.trim()
+      try {
+        await bot.telegram.sendMessage(chatId, reminder.message, { parse_mode: 'HTML' })
+        sentCount++
+      } catch (error) {
+        console.error(`Error sending to client ${chatId}:`, error)
+        failedCount++
       }
     } else {
-      // Відправка всім клієнтам
+      // targetType 'all' або інший — відправка всім Telegram-користувачам з роль CLIENT (активованим)
       const clients = await prisma.telegramUser.findMany({
         where: {
           businessId: reminder.businessId,

@@ -100,6 +100,15 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     return rolePermissions.includes('*') || rolePermissions.includes(permission)
   }
 
+  // Клавіатура «Написати повідомлення» — для клієнтів та нових користувачів
+  const getWriteMessageKeyboard = (bookingEnabled: boolean) => {
+    const buttons: any[] = [[Markup.button.callback('✉️ Написати повідомлення', 'menu_write_message')]]
+    if (bookingEnabled) {
+      buttons.unshift([Markup.button.callback('📅 Записатися до спеціаліста', 'book_start')])
+    }
+    return Markup.inlineKeyboard(buttons)
+  }
+
   // Головне меню з кнопками (спрощене - тільки сповіщення)
   const getMainMenu = (role: string) => {
     const buttons: any[] = []
@@ -110,6 +119,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
       buttons.push([Markup.button.callback('📝 Мої нагадування', 'menu_reminders')])
     }
 
+    buttons.push([Markup.button.callback('✉️ Написати повідомлення', 'menu_write_message')])
     buttons.push([Markup.button.callback('ℹ️ Допомога', 'menu_help')])
 
     return Markup.inlineKeyboard(buttons)
@@ -154,10 +164,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
       }
 
       const newUserMsg = settings.newUserMessage?.trim() || DEFAULT_NEW_USER
-      const kb = settings.bookingEnabled
-        ? Markup.inlineKeyboard([[Markup.button.callback('📅 Записатися до спеціаліста', 'book_start')]])
-        : undefined
-      await ctx.reply(newUserMsg, kb)
+      await ctx.reply(newUserMsg, getWriteMessageKeyboard(!!settings.bookingEnabled))
     } catch (error) {
       console.error('Error in /start command:', error)
       await ctx.reply('❌ Помилка при обробці команди.')
@@ -368,6 +375,20 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     const user = await getUser(ctx)
     await ctx.answerCbQuery('Скасовано')
     await ctx.editMessageText('Операцію скасовано.\n\nОберіть дію:', getMainMenu(user?.role || 'VIEWER'))
+  })
+
+  // Кнопка «Написати повідомлення» — показує підказку, далі користувач вводить текст
+  bot.action('menu_write_message', async (ctx: Context) => {
+    const user = await getUser(ctx)
+    await ctx.answerCbQuery('✉️ Написати повідомлення')
+    const msg =
+      '💬 Напишіть ваше повідомлення нижче.\n\nМи отримаємо його та відповімо найближчим часом.'
+    if (user && user.businessId === config.businessId) {
+      await ctx.reply(msg, getMainMenu(user.role))
+    } else {
+      const settings = await getBotSettings(config.businessId)
+      await ctx.reply(msg, getWriteMessageKeyboard(!!settings.bookingEnabled))
+    }
   })
 
   // Callback для допомоги
@@ -1023,10 +1044,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
 
       const settings = await getBotSettings(config.businessId)
       const autoReply = settings.autoReplyMessage?.trim() || DEFAULT_AUTO_REPLY
-      const autoKb = settings.bookingEnabled
-        ? Markup.inlineKeyboard([[Markup.button.callback('📅 Записатися до спеціаліста', 'book_start')]])
-        : undefined
-      await ctx.reply(autoReply, autoKb)
+      await ctx.reply(autoReply, getWriteMessageKeyboard(!!settings.bookingEnabled))
     } catch (err) {
       console.error('Error saving Telegram inbox message:', err)
       await ctx.reply('❌ Не вдалося зберегти повідомлення. Спробуйте пізніше.')

@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
+import { format, parse } from 'date-fns'
 import { formatInTimeZone } from 'date-fns-tz'
 import { uk } from 'date-fns/locale'
+import { startOfDay } from 'date-fns'
 import { toast } from '@/components/ui/toast'
 import { cn } from '@/lib/utils'
 
@@ -62,6 +64,12 @@ export default function ManageAppointmentClient({ slug, token }: { slug: string;
   const [newTime, setNewTime] = useState('')
   const [note, setNote] = useState('')
 
+  const [recommendedSlots, setRecommendedSlots] = useState<Array<{ date: string; time: string; slot: string }>>([])
+  const [recommendedSlotsLoading, setRecommendedSlotsLoading] = useState(false)
+  const [availableSlotsForDate, setAvailableSlotsForDate] = useState<string[]>([])
+  const [slotsLoading, setSlotsLoading] = useState(false)
+  const [rescheduleDateStep, setRescheduleDateStep] = useState<'dates' | 'times'>('dates')
+
   const tz = data?.business?.timeZone || 'Europe/Kyiv'
 
   useEffect(() => {
@@ -74,18 +82,9 @@ export default function ManageAppointmentClient({ slug, token }: { slug: string;
         if (!res.ok) throw new Error(json?.error || 'Не вдалося завантажити запис')
         if (cancelled) return
         setData(json as ManageData)
-
-        // Pre-fill with current appointment local date/time.
-        try {
-          const start = new Date((json as ManageData).appointment.startTime)
-          const tzFromRes = (json as ManageData)?.business?.timeZone || tz
-          const localDate = formatInTimeZone(start, tzFromRes, 'yyyy-MM-dd', { locale: uk })
-          const localTime = formatInTimeZone(start, tzFromRes, 'HH:mm', { locale: uk })
-          setNewDate(localDate)
-          setNewTime(localTime)
-        } catch {
-          // ignore
-        }
+        setNewDate('')
+        setNewTime('')
+        setRescheduleDateStep('dates')
       } catch (e) {
         if (!cancelled) {
           toast({ title: 'Помилка', description: e instanceof Error ? e.message : 'Не вдалося завантажити', type: 'error' })
@@ -113,6 +112,82 @@ export default function ManageAppointmentClient({ slug, token }: { slug: string;
     const s = String(data?.appointment?.status || '').toLowerCase()
     return s.includes('cancel') || s.includes('скас') || s.includes('done') || s.includes('викон')
   }, [data])
+
+  const datesWithSlots = useMemo(() => {
+    const seen = new Set<string>()
+    const out: string[] = []
+    for (const rec of recommendedSlots) {
+      if (rec.date && !seen.has(rec.date)) {
+        seen.add(rec.date)
+        out.push(rec.date)
+      }
+    }
+    return out.sort()
+  }, [recommendedSlots])
+
+  useEffect(() => {
+    if (!data || !data.appointment.businessId || !data.appointment.masterId || isFinalStatus) return
+    const fromStr = format(startOfDay(new Date()), 'yyyy-MM-dd')
+    const params = new URLSearchParams({
+      businessId: data.appointment.businessId,
+      masterId: data.appointment.masterId,
+      from: fromStr,
+      days: '14',
+      limit: '24',
+      durationMinutes: String(durationMinutes),
+    })
+    setRecommendedSlotsLoading(true)
+    fetch(`/api/availability?${params.toString()}`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : { recommendedSlots: [] }))
+      .then((d) => {
+        const list = Array.isArray(d?.recommendedSlots) ? d.recommendedSlots : []
+        const safe = list.filter(
+          (rec: { date?: string; time?: string; slot?: string }) =>
+            rec?.slot && /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(String(rec.slot))
+        )
+        setRecommendedSlots(safe)
+      })
+      .catch(() => setRecommendedSlots([]))
+      .finally(() => setRecommendedSlotsLoading(false))
+  }, [data?.appointment?.businessId, data?.appointment?.masterId, durationMinutes, isFinalStatus])
+
+  useEffect(() => {
+    if (!newDate || !data?.appointment?.businessId || !data?.appointment?.masterId) {
+      setAvailableSlotsForDate([])
+      return
+    }
+    setSlotsLoading(true)
+    const params = new URLSearchParams({
+      businessId: data.appointment.businessId,
+      masterId: data.appointment.masterId,
+      date: newDate,
+      durationMinutes: String(durationMinutes),
+    })
+    fetch(`/api/availability?${params.toString()}`, { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : { availableSlots: [] }))
+      .then((d) => {
+        const raw = Array.isArray(d?.availableSlots) ? d.availableSlots : []
+        setAvailableSlotsForDate(raw.filter((s: string) => typeof s === 'string' && s.startsWith(newDate)))
+      })
+      .catch(() => setAvailableSlotsForDate([]))
+      .finally(() => setSlotsLoading(false))
+  }, [newDate, data?.appointment?.businessId, data?.appointment?.masterId, durationMinutes])
+
+  const handleSelectDate = (dateNorm: string) => {
+    setNewDate(dateNorm)
+    setNewTime('')
+    setRescheduleDateStep('times')
+  }
+
+  const handleSelectTime = (time: string) => {
+    setNewTime(time)
+  }
+
+  const handleBackToDates = () => {
+    setNewDate('')
+    setNewTime('')
+    setRescheduleDateStep('dates')
+  }
 
   const latestRequestText = useMemo(() => {
     if (!data?.latestRequest) return null
@@ -297,32 +372,156 @@ export default function ManageAppointmentClient({ slug, token }: { slug: string;
             Можна змінити мінімум за {data.clientChangeSettings.minHoursBefore} год до візиту. Потрібне підтвердження майстра.
           </p>
 
-          <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-2">
-            <input
-              type="date"
-              value={newDate}
-              onChange={(e) => setNewDate(e.target.value)}
-              className="touch-target px-3 py-3 rounded-xl border border-black/10 dark:border-white/15 bg-black/[0.03] dark:bg-white/10 text-foreground dark:text-white focus:outline-none focus:ring-2 focus:ring-black/15 dark:focus:ring-white/25 min-h-[48px]"
-            />
-            <input
-              type="time"
-              value={newTime}
-              onChange={(e) => setNewTime(e.target.value)}
-              className="touch-target px-3 py-3 rounded-xl border border-black/10 dark:border-white/15 bg-black/[0.03] dark:bg-white/10 text-foreground dark:text-white focus:outline-none focus:ring-2 focus:ring-black/15 dark:focus:ring-white/25 min-h-[48px]"
-            />
-          </div>
+          {rescheduleDateStep === 'dates' && (
+            <div className="mt-3 space-y-3">
+              {recommendedSlots.length > 0 && (
+                <div>
+                  <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Найближчі вільні:</p>
+                  <div className="flex flex-wrap gap-2">
+                    {recommendedSlots.slice(0, 6).map((rec) => {
+                      const isSelected = newDate === rec.date && newTime === rec.time
+                      const label = (() => {
+                        try {
+                          const d = parse(rec.date, 'yyyy-MM-dd', new Date())
+                          const today = startOfDay(new Date())
+                          if (format(d, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')) return `Сьогодні ${rec.time}`
+                          const tomorrow = new Date(today.getTime() + 86400000)
+                          if (format(d, 'yyyy-MM-dd') === format(tomorrow, 'yyyy-MM-dd')) return `Завтра ${rec.time}`
+                          return `${format(d, 'd MMM', { locale: uk })} ${rec.time}`
+                        } catch {
+                          return `${rec.date} ${rec.time}`
+                        }
+                      })()
+                      return (
+                        <button
+                          key={rec.slot}
+                          type="button"
+                          onClick={() => {
+                            setNewDate(rec.date)
+                            setNewTime(rec.time)
+                            setRescheduleDateStep('times')
+                            setSlotsLoading(true)
+                            fetch(`/api/availability?date=${rec.date}&durationMinutes=${durationMinutes}&limit=24`, { cache: 'no-store' })
+                              .then((r) => (r.ok ? r.json() : { availableSlots: [] }))
+                              .then((d: { availableSlots?: string[] }) => {
+                                const list = Array.isArray(d?.availableSlots) ? d.availableSlots : []
+                                setAvailableSlotsForDate(list.length > 0 ? list : [rec.slot])
+                              })
+                              .catch(() => setAvailableSlotsForDate([rec.slot]))
+                              .finally(() => setSlotsLoading(false))
+                          }}
+                          className={cn(
+                            'min-h-[40px] px-3 py-2 rounded-lg text-xs font-medium transition-colors active:scale-[0.98]',
+                            isSelected
+                              ? 'bg-white text-black shadow-md ring-2 ring-black/20'
+                              : 'bg-black/[0.04] dark:bg-white/10 border border-black/10 dark:border-white/15 text-foreground dark:text-white hover:bg-black/[0.06] dark:hover:bg-white/15'
+                          )}
+                        >
+                          {label}
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
+              <div>
+                <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">Або оберіть дату:</p>
+              {recommendedSlotsLoading ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400 py-3">Завантаження вільних дат...</p>
+              ) : datesWithSlots.length === 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400 py-3">Немає вільних дат на найближчі 14 днів.</p>
+              ) : (
+                <div className="grid grid-cols-2 gap-2">
+                  {datesWithSlots.slice(0, 10).map((dateNorm) => {
+                    try {
+                      const d = parse(dateNorm, 'yyyy-MM-dd', new Date())
+                      const today = startOfDay(new Date())
+                      const label =
+                        format(d, 'yyyy-MM-dd') === format(today, 'yyyy-MM-dd')
+                          ? 'Сьогодні'
+                          : format(d, 'yyyy-MM-dd') === format(new Date(today.getTime() + 86400000), 'yyyy-MM-dd')
+                            ? 'Завтра'
+                            : format(d, 'EEE d.MM', { locale: uk })
+                      return (
+                        <button
+                          key={dateNorm}
+                          type="button"
+                          onClick={() => handleSelectDate(dateNorm)}
+                          className="min-h-[44px] px-3 py-2.5 rounded-xl text-sm font-medium bg-black/[0.04] dark:bg-white/10 border border-black/10 dark:border-white/15 text-foreground dark:text-white hover:bg-black/[0.06] dark:hover:bg-white/15 transition-colors active:scale-[0.98]"
+                        >
+                          {label}
+                        </button>
+                      )
+                    } catch {
+                      return null
+                    }
+                  })}
+                </div>
+              )}
+              </div>
+            </div>
+          )}
 
-          <button
-            type="button"
-            onClick={requestReschedule}
-            disabled={busy || isFinalStatus || data.clientChangeSettings.allowReschedule !== true}
-            className={cn(
-              'mt-3 w-full min-h-[48px] px-4 py-3 rounded-xl text-sm font-semibold transition-colors active:scale-[0.98]',
-              'bg-white text-black hover:bg-gray-100 disabled:opacity-60'
-            )}
-          >
-            {busy ? 'Відправлення...' : 'Надіслати запит на перенесення'}
-          </button>
+          {rescheduleDateStep === 'times' && newDate && (
+            <div className="mt-3">
+              <button
+                type="button"
+                onClick={handleBackToDates}
+                className="text-xs text-gray-600 dark:text-gray-400 hover:text-foreground dark:hover:text-white mb-2 flex items-center gap-1"
+              >
+                ← Інша дата
+              </button>
+              <p className="text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                Оберіть вільний час на {format(parse(newDate, 'yyyy-MM-dd', new Date()), 'd MMMM', { locale: uk })}:
+              </p>
+              {slotsLoading ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400 py-3">Завантаження...</p>
+              ) : availableSlotsForDate.length === 0 ? (
+                <p className="text-sm text-gray-500 dark:text-gray-400 py-3">На цю дату немає вільних годин.</p>
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  {availableSlotsForDate.slice(0, 18).map((slotStr) => {
+                    const time = String(slotStr).slice(11, 16)
+                    const isSelected = newTime === time
+                    return (
+                      <button
+                        key={slotStr}
+                        type="button"
+                        onClick={() => handleSelectTime(time)}
+                        className={cn(
+                          'min-h-[44px] px-3 py-2.5 rounded-xl text-sm font-medium transition-colors active:scale-[0.98]',
+                          isSelected
+                            ? 'bg-white text-black shadow-md ring-2 ring-black/20 dark:ring-white/50'
+                            : 'bg-black/[0.04] dark:bg-white/10 border border-black/10 dark:border-white/15 text-foreground dark:text-white hover:bg-black/[0.06] dark:hover:bg-white/15'
+                        )}
+                      >
+                        {time}
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+              {availableSlotsForDate.length > 0 && newTime && (
+                <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
+                  Обрано: {newDate} о {newTime}
+                </p>
+              )}
+            </div>
+          )}
+
+          {newDate && newTime && (
+            <button
+              type="button"
+              onClick={requestReschedule}
+              disabled={busy || isFinalStatus || data.clientChangeSettings.allowReschedule !== true}
+              className={cn(
+                'mt-3 w-full min-h-[48px] px-4 py-3 rounded-xl text-sm font-semibold transition-colors active:scale-[0.98]',
+                'bg-white text-black hover:bg-gray-100 disabled:opacity-60'
+              )}
+            >
+              {busy ? 'Відправлення...' : 'Надіслати запит на перенесення'}
+            </button>
+          )}
         </div>
 
         <div className="rounded-2xl p-4 card-glass border border-black/10 dark:border-white/10">

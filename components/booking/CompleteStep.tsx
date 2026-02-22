@@ -22,7 +22,7 @@ function formatStatusLabel(status?: string | null): { label: string; tone: 'neut
   if (!s) return { label: 'Статус невідомий', tone: 'neutral' }
   if (s === 'pending') return { label: 'Очікує підтвердження', tone: 'warning' }
   if (s === 'confirmed') return { label: 'Підтверджено', tone: 'success' }
-  if (s === 'completed') return { label: 'Виконано', tone: 'success' }
+  if (s === 'done' || s === 'completed') return { label: 'Виконано', tone: 'success' }
   if (s === 'cancelled') return { label: 'Скасовано', tone: 'error' }
   // UA / other legacy statuses
   if (s.includes('очіку')) return { label: 'Очікує підтвердження', tone: 'warning' }
@@ -408,12 +408,28 @@ export function CompleteStep({ businessName, businessLocation, timeZone, busines
             <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
               За цим посиланням можна попросити перенести або скасувати запис (потрібне підтвердження майстра).
             </p>
-            <a
-              href={manageUrl}
-              className="w-full min-h-[48px] py-3 rounded-xl bg-white text-black text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] inline-flex items-center justify-center"
-            >
-              Відкрити керування записом
-            </a>
+            <div className="flex gap-2">
+              <a
+                href={manageUrl}
+                className="flex-1 min-h-[48px] py-3 rounded-xl bg-white text-black text-sm font-semibold hover:bg-gray-100 transition-colors active:scale-[0.98] inline-flex items-center justify-center"
+              >
+                Відкрити керування записом
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  const full = typeof window !== 'undefined' ? `${window.location.origin}${manageUrl.startsWith('/') ? '' : '/'}${manageUrl}` : manageUrl
+                  navigator.clipboard?.writeText(full).then(
+                    () => toast({ title: 'Посилання скопійовано', type: 'success', duration: 2000 }),
+                    () => {}
+                  )
+                }}
+                className="min-h-[48px] px-4 py-3 rounded-xl border border-black/10 dark:border-white/20 bg-black/[0.04] dark:bg-white/10 text-foreground dark:text-white text-sm font-medium hover:bg-black/[0.06] dark:hover:bg-white/15 transition-colors"
+                title="Копіювати посилання"
+              >
+                📋
+              </button>
+            </div>
           </div>
         )}
 

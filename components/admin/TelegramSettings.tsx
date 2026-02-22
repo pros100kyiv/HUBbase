@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
 interface TelegramBotMessageSettings {
@@ -146,17 +145,13 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
   }
 
   return (
-    <div className="card-candy p-6 space-y-4">
-      <div className="flex items-center gap-2 mb-2">
-        <span className="text-xl">🤖</span>
-        <h3 className="text-lg font-black text-gray-900 dark:text-white">Telegram</h3>
+    <div className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden space-y-0">
+      <div className="px-4 py-3">
+        <h3 className="font-semibold text-foreground">Telegram</h3>
+        <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Бот для записів та сповіщень</p>
       </div>
-      <p className="text-sm text-gray-600 dark:text-gray-400">
-        Кожен бізнес підключає свій бот — повідомлення надходитимуть тільки до вашого кабінету.
-      </p>
 
-      {/* Токен бота — обов'язково спочатку */}
-      <div className="space-y-2">
+      <div className="px-4 pb-4 space-y-2">
         <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block">Токен бота (з @BotFather)</label>
         <div className="flex gap-2">
           <input
@@ -164,20 +159,20 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
             value={tokenInput}
             onChange={(e) => { setTokenInput(e.target.value); setTokenError(null) }}
             placeholder={telegramBotToken ? 'Змінити токен...' : '123456789:ABCdefGHI...'}
-            className="flex-1 px-3 py-2 rounded-candy-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"
+            className="flex-1 px-3 py-2 rounded-lg border border-black/10 dark:border-white/15 bg-black/[0.02] dark:bg-white/5 text-sm"
           />
           <Button
             onClick={saveToken}
             disabled={savingToken || !tokenInput.trim()}
             size="sm"
-            className="bg-candy-blue hover:bg-candy-blue/90 text-white"
+            className="shrink-0 bg-sky-600 hover:bg-sky-700 text-white"
           >
             {savingToken ? '...' : telegramBotToken ? 'Змінити' : 'Підключити'}
           </Button>
         </div>
         {telegramBotToken && (
           <div className="flex items-center gap-2 flex-wrap">
-            <p className="text-xs text-green-600 dark:text-green-400">Бот підключено ({telegramBotToken.substring(0, 15)}...)</p>
+            <span className="text-xs text-green-600 dark:text-green-400">Підключено</span>
             <Button
               variant="outline"
               size="sm"
@@ -213,39 +208,26 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
         {tokenError && <p className="text-xs text-red-500">{tokenError}</p>}
       </div>
 
-      {/* Отримання повідомлень у кабінеті — один клік: Натиснути → Підтвердити → Готово */}
+      {/* Повідомлення в кабінеті */}
       {telegramBotToken && (
-        <div className="card-candy p-4 bg-sky-50 dark:bg-sky-900/20 border border-sky-200 dark:border-sky-800">
-          <h3 className="text-sm font-black text-foreground mb-2">📬 Повідомлення в кабінеті</h3>
+        <div className="px-4 pb-4">
           {webhookSet === null ? (
-            <p className="text-xs text-gray-500">Перевірка...</p>
+            <p className="text-xs text-gray-500">Перевірка…</p>
           ) : webhookSet ? (
-            <p className="text-sm text-sky-800 dark:text-sky-200">
-              Готово. Повідомлення з Telegram надходять у розділ <strong>Соцмережі → Повідомлення</strong>.
-            </p>
+            <p className="text-xs text-green-600 dark:text-green-400">Повідомлення надходять у Соцмережі → Повідомлення</p>
           ) : (
-            <>
-              <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-                Увімкніть отримання повідомлень — один клік, підтвердження, готово.
-              </p>
-              <Button
-                size="sm"
-                disabled={settingWebhook}
-                onClick={enableMessagesInCabinet}
-                className="bg-sky-600 hover:bg-sky-700 text-white"
-              >
-                {settingWebhook ? 'Налаштування…' : 'Увімкнути отримання повідомлень'}
-              </Button>
-            </>
+            <Button size="sm" disabled={settingWebhook} onClick={enableMessagesInCabinet} className="bg-sky-600 hover:bg-sky-700 text-white">
+              {settingWebhook ? 'Налаштування…' : 'Увімкнути повідомлення в кабінеті'}
+            </Button>
           )}
         </div>
       )}
 
-      {/* Налаштування повідомлень бота */}
+      {/* Налаштування повідомлень — згорнуто */}
       {telegramBotToken && (
-        <details className="card-candy p-4" open>
-          <summary className="cursor-pointer list-none">
-            <h2 className="text-subheading inline">Налаштування повідомлень бота</h2>
+        <details className="border-t border-black/10 dark:border-white/10">
+          <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-foreground hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
+            Налаштування повідомлень бота
           </summary>
           <div className="mt-4 space-y-4">
             <div>
@@ -257,7 +239,7 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
                 onChange={(e) => setBotSettings((s) => ({ ...s, welcomeMessage: e.target.value }))}
                 placeholder={DEFAULT_WELCOME}
                 rows={4}
-                className="w-full px-3 py-2 rounded-candy-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-black/10 dark:border-white/15 bg-black/[0.02] dark:bg-white/5 text-sm"
               />
               <p className="text-[10px] text-gray-500 mt-1">Плейсхолдери: {'{{name}}'}, {'{{role}}'}</p>
             </div>
@@ -270,7 +252,7 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
                 onChange={(e) => setBotSettings((s) => ({ ...s, newUserMessage: e.target.value }))}
                 placeholder={DEFAULT_NEW_USER}
                 rows={3}
-                className="w-full px-3 py-2 rounded-candy-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-black/10 dark:border-white/15 bg-black/[0.02] dark:bg-white/5 text-sm"
               />
             </div>
             <div>
@@ -282,7 +264,7 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
                 onChange={(e) => setBotSettings((s) => ({ ...s, autoReplyMessage: e.target.value }))}
                 placeholder={DEFAULT_AUTO_REPLY}
                 rows={2}
-                className="w-full px-3 py-2 rounded-candy-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"
+                className="w-full px-3 py-2 rounded-lg border border-black/10 dark:border-white/15 bg-black/[0.02] dark:bg-white/5 text-sm"
               />
             </div>
             <div className="flex items-center gap-2 mb-4">
@@ -348,15 +330,14 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
         </details>
       )}
 
-      {/* Користувачі — згорнутий */}
-      <details className="card-candy p-4">
-        <summary className="cursor-pointer list-none">
-          <h2 className="text-subheading inline">Користувачі бота</h2>
-          {telegramUsers.length > 0 && (
-            <span className="text-xs text-gray-500 ml-2">({telegramUsers.length})</span>
-          )}
+      {/* Користувачі бота */}
+      {telegramBotToken && (
+      <details className="border-t border-black/10 dark:border-white/10">
+        <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-foreground hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
+          Користувачі бота
+          {telegramUsers.length > 0 && <span className="text-gray-500 ml-1">({telegramUsers.length})</span>}
         </summary>
-        <div className="mt-4">
+        <div className="px-4 pb-4 pt-2">
         
         {telegramUsers.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-4">
@@ -365,7 +346,7 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
         ) : (
           <div className="space-y-2">
             {telegramUsers.map((user) => (
-              <div key={user.id} className="p-3 rounded-candy-sm bg-gray-100 dark:bg-gray-800">
+              <div key={user.id} className="p-3 rounded-lg bg-black/[0.04] dark:bg-white/[0.04]">
                 <div className="flex justify-between items-start">
                   <div>
                     <p className="text-sm font-black text-foreground">
@@ -388,12 +369,7 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
         )}
         </div>
       </details>
-
-      {/* Короткі підказки */}
-      <p className="text-xs text-gray-500">
-        Швидке підключення: <Link href="/dashboard/social" className="text-candy-blue hover:underline">Соцмережі</Link> → Підключити.
-        Власний бот: @BotFather → токен вище → увімкнути повідомлення.
-      </p>
+      )}
     </div>
   )
 }

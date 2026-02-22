@@ -202,13 +202,14 @@ export async function POST(request: Request) {
     })
 
     if (existing) {
-      // Оновлюємо існуючого клієнта
+      // Оновлюємо існуючого клієнта (те саме число — повторний запит, уточнення даних)
       const updated = await prisma.client.update({
         where: { id: existing.id },
         data: {
           name: name.trim(),
           email: email?.trim() || null,
           notes: notes?.trim() || null,
+          status: normalizeStatus(status),
           ...(tags !== undefined ? { tags: normalizeTags(tags) } : {}),
           ...(metadata !== undefined ? { metadata: normalizeMetadata(metadata) } : {}),
         },

@@ -112,8 +112,9 @@ export function QuickRecordByPhoneModal({
       }
       const data = await res.json()
       const list = Array.isArray(data) ? data : []
-      if (list.length > 0 && list[0].name) {
-        setClient({ id: list[0].id, name: list[0].name, phone: list[0].phone || normalized })
+      if (list.length > 0) {
+        const c = list[0]
+        setClient({ id: c.id, name: c.name || '', phone: c.phone || normalized })
         setClientBadge('found')
         setStep('quick_record')
       } else {

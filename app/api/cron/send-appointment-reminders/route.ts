@@ -5,12 +5,13 @@
  */
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { addHours, subHours } from 'date-fns'
-import { format } from 'date-fns'
+import { addHours } from 'date-fns'
+import { formatInTimeZone } from 'date-fns-tz'
 import { uk } from 'date-fns/locale'
 import { Telegraf } from 'telegraf'
 import { SMSService } from '@/lib/services/sms-service'
 import { EmailService } from '@/lib/services/email-service'
+import { parseBookingTimeZone } from '@/lib/utils/booking-settings'
 
 const CRON_SECRET = process.env.CRON_SECRET || process.env.VERCEL_CRON_SECRET
 
@@ -83,10 +84,12 @@ export async function GET(request: Request) {
       let failed = 0
       const errors: string[] = []
 
+      const timeZone = parseBookingTimeZone(biz.settings)
+
       for (const apt of appointments) {
         const masterName = apt.master?.name ?? 'Спеціаліст'
         const startDate = new Date(apt.startTime)
-        const dateStr = format(startDate, 'd MMMM, HH:mm', { locale: uk })
+        const dateStr = formatInTimeZone(startDate, timeZone, 'd MMMM, HH:mm', { locale: uk })
         const msgText = `Нагадування: ${biz.name}. Запис до ${masterName} — ${dateStr}. Чекаємо на вас!`
         let aptSent = false
 
