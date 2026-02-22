@@ -136,6 +136,14 @@ export async function PATCH(
       const updated = await prisma.appointment.findUniqueOrThrow({
         where: { id: appointmentId },
       })
+      if (newStatus === 'Confirmed' || newStatus === 'Cancelled') {
+        const { sendAppointmentNotificationToTelegram } = await import('@/lib/services/appointment-telegram-notify')
+        sendAppointmentNotificationToTelegram(
+          businessId,
+          appointmentId,
+          newStatus === 'Confirmed' ? 'confirmed' : 'cancelled'
+        ).catch((e) => console.error('TG notify:', e))
+      }
       return NextResponse.json(updated)
     } catch (err: unknown) {
       const code = (err as { code?: string })?.code
@@ -211,6 +219,25 @@ export async function PATCH(
       where: { id: appointmentId },
       data,
     })
+    const isReschedule = startTime && endTime
+    const statusChanged = newStatus && (newStatus === 'Confirmed' || newStatus === 'Cancelled')
+    if (statusChanged || isReschedule) {
+      const { sendAppointmentNotificationToTelegram } = await import('@/lib/services/appointment-telegram-notify')
+      if (newStatus === 'Cancelled') {
+        sendAppointmentNotificationToTelegram(businessId, appointmentId, 'cancelled').catch((e) =>
+          console.error('TG notify:', e)
+        )
+      } else if (newStatus === 'Confirmed') {
+        sendAppointmentNotificationToTelegram(businessId, appointmentId, 'confirmed').catch((e) =>
+          console.error('TG notify:', e)
+        )
+      } else if (isReschedule && startTime && endTime) {
+        sendAppointmentNotificationToTelegram(businessId, appointmentId, 'rescheduled', {
+          newStartTime: startTime,
+          newEndTime: endTime,
+        }).catch((e) => console.error('TG notify:', e))
+      }
+    }
     return NextResponse.json(updated)
   } catch (err: unknown) {
     const code = (err as { code?: string })?.code

@@ -4,12 +4,24 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 
+interface TelegramBotMessageSettings {
+  welcomeMessage?: string
+  newUserMessage?: string
+  autoReplyMessage?: string
+  bookingEnabled?: boolean
+}
+
+const DEFAULT_WELCOME = '✅ Вітаємо, {{name}}!\n\nВаша роль: {{role}}\n\nВи отримуватимете сповіщення про нові записи та нагадування.\n\nОберіть дію:'
+const DEFAULT_NEW_USER = '👋 Цей бот для сповіщень від бізнесу.\n\nДля доступу зверніться до адміністратора.'
+const DEFAULT_AUTO_REPLY = '✅ Дякуємо! Ваше повідомлення отримано. Ми відповімо найближчим часом.'
+
 interface TelegramSettingsProps {
   business: {
     id: string
     telegramBotToken?: string | null
     telegramChatId?: string | null
     telegramNotificationsEnabled?: boolean
+    telegramSettings?: string | null
   }
   onUpdate: (updated: any) => void
   onRefetchBusiness?: () => Promise<void>
@@ -21,27 +33,34 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
   const [savingToken, setSavingToken] = useState(false)
   const [tokenError, setTokenError] = useState<string | null>(null)
   const [telegramUsers, setTelegramUsers] = useState<any[]>([])
-  const [activePasswords, setActivePasswords] = useState<any[]>([])
-  const [clientPasswordCount, setClientPasswordCount] = useState(1)
   const [webhookSet, setWebhookSet] = useState<boolean | null>(null)
   const [settingWebhook, setSettingWebhook] = useState(false)
+  const [botSettings, setBotSettings] = useState<TelegramBotMessageSettings>(() => {
+    try {
+      const s = (business as { telegramSettings?: string | null }).telegramSettings
+      if (s) return JSON.parse(s) as TelegramBotMessageSettings
+    } catch {}
+    return {}
+  })
+  const [savingSettings, setSavingSettings] = useState(false)
 
   useEffect(() => {
     setTelegramBotToken(business.telegramBotToken || '')
   }, [business.telegramBotToken])
 
+  useEffect(() => {
+    try {
+      const s = (business as { telegramSettings?: string | null }).telegramSettings
+      if (s) setBotSettings(JSON.parse(s) as TelegramBotMessageSettings)
+    } catch {}
+  }, [business])
+
   const loadData = () => {
     if (business.id) {
-      Promise.all([
-        fetch(`/api/telegram/users?businessId=${business.id}`)
-          .then(res => res.json())
-          .then(data => setTelegramUsers(Array.isArray(data) ? data : []))
-          .catch(() => setTelegramUsers([])),
-        fetch(`/api/telegram/passwords?businessId=${business.id}`)
-          .then(res => res.json())
-          .then(data => setActivePasswords(Array.isArray(data) ? data : []))
-          .catch(() => setActivePasswords([]))
-      ])
+      fetch(`/api/telegram/users?businessId=${business.id}`)
+        .then(res => res.json())
+        .then(data => setTelegramUsers(Array.isArray(data) ? data : []))
+        .catch(() => setTelegramUsers([]))
     }
   }
 
@@ -121,50 +140,6 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
       toast({ title: 'Помилка', description: 'Не вдалося налаштувати.', type: 'error' })
     } finally {
       setSettingWebhook(false)
-    }
-  }
-
-  const generatePassword = async (role: 'ADMIN' | 'CLIENT', count: number = 1) => {
-    try {
-      const promises = []
-      for (let i = 0; i < count; i++) {
-        promises.push(
-          fetch('/api/telegram/generate-password', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              businessId: business.id,
-              role,
-            }),
-          })
-        )
-      }
-
-      const responses = await Promise.all(promises)
-      const results = await Promise.all(responses.map(r => r.json()))
-
-      const failed = results.filter(r => !r.success)
-      if (failed.length > 0) {
-        const { toast } = await import('@/components/ui/toast')
-        toast({ title: 'Помилка', description: `Не вдалося згенерувати ${failed.length} паролів`, type: 'error' })
-      }
-
-      const successCount = results.filter(r => r.success).length
-      if (successCount > 0) {
-        // Оновлюємо список активних паролів
-        loadData()
-        const { toast } = await import('@/components/ui/toast')
-        toast({ 
-          title: 'Паролі згенеровано!', 
-          description: `Успішно згенеровано ${successCount} паролів`,
-          type: 'success', 
-          duration: 3000 
-        })
-      }
-    } catch (error) {
-      console.error('Error generating password:', error)
-      const { toast } = await import('@/components/ui/toast')
-      toast({ title: 'Помилка', description: 'Помилка при генерації пароля', type: 'error' })
     }
   }
 
@@ -264,148 +239,84 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
         </div>
       )}
 
-      {/* Паролі активації — згорнутий за замовчуванням */}
-      <details className="card-candy p-4">
-        <summary className="cursor-pointer list-none">
-          <h2 className="text-subheading inline">Паролі активації</h2>
-        </summary>
-        <div className="mt-4">
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Згенеруйте паролі для адміністратора та клієнтів. Користувачі використовують команду <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">/start &lt;пароль&gt;</code> в Telegram боті.
-        </p>
-
-        {/* Пароль для адміністратора */}
-        <div className="space-y-3 mb-4">
-          <div className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-candy-sm">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-sm font-black text-foreground">🔐 Пароль для адміністратора</h3>
-              <Button
-                size="sm"
-                onClick={() => generatePassword('ADMIN', 1)}
-              >
-                Згенерувати
-              </Button>
+      {/* Налаштування повідомлень бота */}
+      {telegramBotToken && (
+        <details className="card-candy p-4">
+          <summary className="cursor-pointer list-none">
+            <h2 className="text-subheading inline">Налаштування повідомлень бота</h2>
+          </summary>
+          <div className="mt-4 space-y-4">
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Привітання (існуючі користувачі)
+              </label>
+              <textarea
+                value={botSettings.welcomeMessage ?? DEFAULT_WELCOME}
+                onChange={(e) => setBotSettings((s) => ({ ...s, welcomeMessage: e.target.value }))}
+                placeholder={DEFAULT_WELCOME}
+                rows={4}
+                className="w-full px-3 py-2 rounded-candy-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"
+              />
+              <p className="text-[10px] text-gray-500 mt-1">Плейсхолдери: {'{{name}}'}, {'{{role}}'}</p>
             </div>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-              Можна згенерувати кілька паролів для різних адміністраторів або пристроїв
-            </p>
-          </div>
-
-          {/* Пароль для клієнтів */}
-          <div className="p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-candy-sm">
-            <div className="flex justify-between items-center mb-2">
-              <h3 className="text-sm font-black text-foreground">📢 Паролі для клієнтів (розсилки)</h3>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Повідомлення для нових (без доступу)
+              </label>
+              <textarea
+                value={botSettings.newUserMessage ?? DEFAULT_NEW_USER}
+                onChange={(e) => setBotSettings((s) => ({ ...s, newUserMessage: e.target.value }))}
+                placeholder={DEFAULT_NEW_USER}
+                rows={3}
+                className="w-full px-3 py-2 rounded-candy-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"
+              />
             </div>
-            <div className="flex gap-2 items-end">
-              <div className="flex-1">
-                <label className="block text-xs font-medium mb-1 text-gray-700 dark:text-gray-300">
-                  Кількість паролів
-                </label>
-                <input
-                  type="number"
-                  min="1"
-                  max="100"
-                  value={clientPasswordCount}
-                  onChange={(e) => setClientPasswordCount(Math.max(1, Math.min(100, parseInt(e.target.value) || 1)))}
-                  className="w-full p-2 rounded-candy-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"
-                />
-              </div>
-              <Button
-                size="sm"
-                onClick={() => generatePassword('CLIENT', clientPasswordCount)}
-              >
-                Згенерувати {clientPasswordCount > 1 ? `${clientPasswordCount} паролів` : 'пароль'}
-              </Button>
+            <div>
+              <label className="block text-xs font-medium text-gray-700 dark:text-gray-300 mb-1">
+                Автовідповідь при надходженні повідомлення
+              </label>
+              <textarea
+                value={botSettings.autoReplyMessage ?? DEFAULT_AUTO_REPLY}
+                onChange={(e) => setBotSettings((s) => ({ ...s, autoReplyMessage: e.target.value }))}
+                placeholder={DEFAULT_AUTO_REPLY}
+                rows={2}
+                className="w-full px-3 py-2 rounded-candy-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"
+              />
             </div>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-              Генеруйте стільки паролів, скільки потрібно клієнтів. Кожен клієнт отримує свій унікальний пароль.
-            </p>
+            <div className="flex items-center gap-2 mb-4">
+              <input
+                type="checkbox"
+                id="bookingEnabled"
+                checked={!!botSettings.bookingEnabled}
+                onChange={(e) => setBotSettings((s) => ({ ...s, bookingEnabled: e.target.checked }))}
+                className="w-4 h-4"
+              />
+              <label htmlFor="bookingEnabled" className="text-sm font-medium text-gray-700 dark:text-gray-300">
+                Запис через бота — клієнти можуть записатися до спеціаліста кнопками (без введення тексту)
+              </label>
+            </div>
+            <Button
+              size="sm"
+              disabled={savingSettings}
+              onClick={async () => {
+                setSavingSettings(true)
+                try {
+                  await onUpdate({ telegramSettings: JSON.stringify(botSettings) })
+                  const { toast } = await import('@/components/ui/toast')
+                  toast({ title: 'Налаштування збережено', type: 'success' })
+                } catch (e: any) {
+                  const { toast } = await import('@/components/ui/toast')
+                  toast({ title: 'Помилка', description: e?.message, type: 'error' })
+                } finally {
+                  setSavingSettings(false)
+                }
+              }}
+            >
+              {savingSettings ? 'Збереження…' : 'Зберегти'}
+            </Button>
           </div>
-        </div>
-
-        {/* Список активних паролів */}
-        {activePasswords.length > 0 && (
-          <div className="mt-4 pt-4 border-t border-gray-200 dark:border-gray-700">
-            <h3 className="text-sm font-black text-foreground mb-3">📋 Всі активні паролі активації</h3>
-            <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-              Тут відображаються всі паролі, які ще не використані. Після активації користувачем пароль автоматично видаляється зі списку.
-            </p>
-            
-            {/* Паролі адміністраторів */}
-            {activePasswords.filter(p => p.role === 'ADMIN').length > 0 && (
-              <div className="mb-4">
-                <h4 className="text-xs font-black text-foreground mb-2">🔐 Паролі адміністраторів</h4>
-                <div className="space-y-2">
-                  {activePasswords.filter(p => p.role === 'ADMIN').map((user) => (
-                    <div key={user.id} className="p-3 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-candy-sm">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">
-                            🔐 Адміністратор
-                          </p>
-                          {user.firstName && (
-                            <p className="text-xs text-gray-500">
-                              {user.firstName} {user.lastName || ''}
-                            </p>
-                          )}
-                          <p className="text-xs text-gray-500 mt-1">
-                            Створено: {new Date(user.createdAt).toLocaleDateString('uk-UA')} {new Date(user.createdAt).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <code className="block text-lg font-black text-candy-blue dark:text-candy-mint">
-                            {user.activationPassword}
-                          </code>
-                          <p className="text-xs text-gray-500 mt-1">
-                            /start {user.activationPassword}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Паролі клієнтів */}
-            {activePasswords.filter(p => p.role === 'CLIENT').length > 0 && (
-              <div>
-                <h4 className="text-xs font-black text-foreground mb-2">📢 Паролі клієнтів ({activePasswords.filter(p => p.role === 'CLIENT').length})</h4>
-                <div className="space-y-2 max-h-96 overflow-y-auto">
-                  {activePasswords.filter(p => p.role === 'CLIENT').map((user) => (
-                    <div key={user.id} className="p-3 bg-purple-50 dark:bg-purple-900/20 border border-purple-200 dark:border-purple-800 rounded-candy-sm">
-                      <div className="flex justify-between items-start">
-                        <div>
-                          <p className="text-sm font-medium text-foreground">
-                            📢 Клієнт
-                          </p>
-                          {user.firstName && (
-                            <p className="text-xs text-gray-500">
-                              {user.firstName} {user.lastName || ''}
-                            </p>
-                          )}
-                          <p className="text-xs text-gray-500 mt-1">
-                            Створено: {new Date(user.createdAt).toLocaleDateString('uk-UA')} {new Date(user.createdAt).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit' })}
-                          </p>
-                        </div>
-                        <div className="text-right">
-                          <code className="block text-lg font-black text-candy-purple dark:text-candy-mint">
-                            {user.activationPassword}
-                          </code>
-                          <p className="text-xs text-gray-500 mt-1">
-                            /start {user.activationPassword}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        )}
-        </div>
-      </details>
+        </details>
+      )}
 
       {/* Користувачі — згорнутий */}
       <details className="card-candy p-4">
@@ -451,7 +362,7 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
       {/* Короткі підказки */}
       <p className="text-xs text-gray-500">
         Швидке підключення: <Link href="/dashboard/social" className="text-candy-blue hover:underline">Соцмережі</Link> → Підключити.
-        Власний бот: @BotFather → токен → увімкнути повідомлення.
+        Власний бот: @BotFather → токен вище → увімкнути повідомлення.
       </p>
     </div>
   )

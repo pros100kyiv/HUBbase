@@ -39,18 +39,8 @@ async function resolveBusinessIdFromUpdate(update: any): Promise<string | null> 
   const chatId = getChatId(update)
   const senderId = getSenderTelegramId(update)
 
-  // 1) /start <пароль> — activationPassword (TelegramUser)
+  // 1) /start <businessIdentifier> — quick connect (платформний бот)
   if (startParam) {
-    const userWithPassword = await prisma.telegramUser.findFirst({
-      where: {
-        activationPassword: startParam,
-        activatedAt: null,
-      },
-      select: { businessId: true },
-    })
-    if (userWithPassword?.businessId) return userWithPassword.businessId
-
-    // 2) /start <businessIdentifier> — quick connect (платформний бот)
     const byIdentifier = await prisma.business.findFirst({
       where: { businessIdentifier: startParam, telegramBotToken: { not: null } },
       select: { id: true },
@@ -65,7 +55,7 @@ async function resolveBusinessIdFromUpdate(update: any): Promise<string | null> 
     }
   }
 
-  // 3) chatId -> businessId (вже був /start раніше)
+  // 2) chatId -> businessId (вже був /start раніше)
   if (chatId) {
     const mapping = await prisma.telegramChatMapping.findUnique({
       where: { chatId },
@@ -74,7 +64,7 @@ async function resolveBusinessIdFromUpdate(update: any): Promise<string | null> 
     if (mapping) return mapping.businessId
   }
 
-  // 4) telegramId в TelegramUser (активований користувач)
+  // 3) telegramId в TelegramUser
   if (senderId) {
     try {
       const telegramId = BigInt(senderId)

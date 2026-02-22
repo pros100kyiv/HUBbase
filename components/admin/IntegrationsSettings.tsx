@@ -40,6 +40,9 @@ export function IntegrationsSettings({ business, onUpdate, onRefetchBusiness }: 
   const [remindersEnabled, setRemindersEnabled] = useState(business?.remindersEnabled || false)
   const [reminderSmsEnabled, setReminderSmsEnabled] = useState(business?.reminderSmsEnabled || false)
   const [reminderEmailEnabled, setReminderEmailEnabled] = useState(business?.reminderEmailEnabled || false)
+  const [reminderTelegramEnabled, setReminderTelegramEnabled] = useState(
+    (business as { reminderTelegramEnabled?: boolean })?.reminderTelegramEnabled || false
+  )
   const [reminderHoursBefore, setReminderHoursBefore] = useState(() => {
     try {
       if (business?.settings) {
@@ -67,6 +70,7 @@ export function IntegrationsSettings({ business, onUpdate, onRefetchBusiness }: 
       setRemindersEnabled(business.remindersEnabled || false)
       setReminderSmsEnabled(business.reminderSmsEnabled || false)
       setReminderEmailEnabled(business.reminderEmailEnabled || false)
+      setReminderTelegramEnabled((business as { reminderTelegramEnabled?: boolean })?.reminderTelegramEnabled || false)
       try {
         if (business.settings) {
           const s = JSON.parse(business.settings)
@@ -94,6 +98,7 @@ export function IntegrationsSettings({ business, onUpdate, onRefetchBusiness }: 
       remindersEnabled,
       reminderSmsEnabled,
       reminderEmailEnabled,
+      reminderTelegramEnabled,
       reminderHoursBefore: reminderHoursBefore || 24
       })
     } finally {
@@ -362,6 +367,23 @@ export function IntegrationsSettings({ business, onUpdate, onRefetchBusiness }: 
                   )}>
                     Email нагадування
                     {!emailApiKey && " (спочатку налаштуйте Email)"}
+                  </label>
+                </div>
+                <div className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id="reminderTelegramEnabled"
+                    checked={reminderTelegramEnabled}
+                    onChange={(e) => setReminderTelegramEnabled(e.target.checked)}
+                    disabled={!business?.telegramBotToken}
+                    className="w-4 h-4"
+                  />
+                  <label htmlFor="reminderTelegramEnabled" className={cn(
+                    "text-sm font-bold",
+                    !business?.telegramBotToken && "text-gray-400"
+                  )}>
+                    Telegram нагадування
+                    {!business?.telegramBotToken && " (спочатку підключіть бота)"}
                   </label>
                 </div>
               </div>

@@ -23,6 +23,8 @@ interface Appointment {
   customServiceName?: string | null
   customPrice?: number | null
   notes?: string
+  source?: string | null
+  isFromBooking?: boolean
 }
 
 type ServicesMap = Record<string, { name: string; price?: number }>
@@ -126,7 +128,9 @@ function AppointmentCard({ appointment, servicesMap, onConfirm, onReschedule, on
       <div className="text-[11px] text-gray-500 flex items-center gap-2 flex-wrap mb-3">
         <span className="truncate">{appointment.masterName ?? '—'}</span>
         <span className="text-gray-700">·</span>
-        <span className="truncate">Бронювання</span>
+        <span className="truncate" title={appointment.source === 'telegram' ? 'Запис через Telegram (зовнішній)' : undefined}>
+          {appointment.source === 'telegram' ? '📱 TG · Зовнішній запис' : 'Бронювання'}
+        </span>
       </div>
 
       <div className="mb-4">

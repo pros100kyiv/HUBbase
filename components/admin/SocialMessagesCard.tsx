@@ -6,15 +6,26 @@ import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { ModalPortal } from '@/components/ui/modal-portal'
 
-interface SocialMessage {
+interface SocialChat {
+  platform: string
+  externalChatId: string
+  senderName: string
+  senderId?: string
+  lastMessage: string
+  lastMessageAt: string
+  unreadCount: number
+  firstInboundId: string
+}
+
+interface ThreadMessage {
   id: string
-  platform: 'telegram' | 'instagram' | 'whatsapp' | 'facebook' | 'viber'
+  platform: string
+  direction: 'inbound' | 'outbound'
   senderName: string
   senderId?: string
   message: string
   timestamp: string
   isRead: boolean
-  avatar?: string
 }
 
 interface SocialMessagesCardProps {
@@ -22,48 +33,100 @@ interface SocialMessagesCardProps {
 }
 
 export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
-  const [messages, setMessages] = useState<SocialMessage[]>([])
+  const [chats, setChats] = useState<SocialChat[]>([])
   const [loading, setLoading] = useState(true)
   const [collapsed, setCollapsed] = useState(true)
-  const [selectedMessage, setSelectedMessage] = useState<SocialMessage | null>(null)
+  const [selectedChat, setSelectedChat] = useState<SocialChat | null>(null)
+  const [thread, setThread] = useState<ThreadMessage[]>([])
+  const [threadLoading, setThreadLoading] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [sending, setSending] = useState(false)
   const [replyError, setReplyError] = useState<string | null>(null)
 
-  const hasUnread = messages.some((m) => !m.isRead)
+  const hasUnread = chats.some((c) => c.unreadCount > 0)
+  const unreadTotal = chats.reduce((sum, c) => sum + c.unreadCount, 0)
   const pollIntervalMs = hasUnread || !collapsed ? 20_000 : 120_000
 
   useEffect(() => {
-    loadMessages(false)
+    loadChats(false)
   }, [businessId])
 
   useEffect(() => {
-    if (!collapsed) loadMessages(true)
+    if (!collapsed) loadChats(true)
   }, [collapsed])
 
   useEffect(() => {
-    const interval = setInterval(() => loadMessages(true), pollIntervalMs)
+    const interval = setInterval(() => loadChats(true), pollIntervalMs)
     return () => clearInterval(interval)
   }, [businessId, pollIntervalMs])
 
-  const loadMessages = async (silent = false) => {
+  useEffect(() => {
+    if (selectedChat) {
+      loadThread(selectedChat)
+      markChatRead(selectedChat)
+    } else {
+      setThread([])
+    }
+  }, [selectedChat?.externalChatId, selectedChat?.platform])
+
+  const loadChats = async (silent = false) => {
     try {
       if (!silent) setLoading(true)
-      const response = await fetch(`/api/social-messages?businessId=${businessId}`)
+      const response = await fetch(`/api/social-messages?businessId=${businessId}&mode=chats`)
       if (response.ok) {
         const data = await response.json()
-        setMessages(data || [])
+        setChats(data || [])
       }
     } catch (error) {
-      console.error('Error loading messages:', error)
-      setMessages([])
+      console.error('Error loading chats:', error)
+      setChats([])
     } finally {
       if (!silent) setLoading(false)
     }
   }
 
+  const loadThread = async (chat: SocialChat) => {
+    setThreadLoading(true)
+    try {
+      const response = await fetch(
+        `/api/social-messages?businessId=${businessId}&chatId=${encodeURIComponent(chat.externalChatId)}&platform=${encodeURIComponent(chat.platform)}`
+      )
+      if (response.ok) {
+        const data = await response.json()
+        setThread(data || [])
+      }
+    } catch (error) {
+      console.error('Error loading thread:', error)
+      setThread([])
+    } finally {
+      setThreadLoading(false)
+    }
+  }
+
+  const markChatRead = (chat: SocialChat) => {
+    if (chat.unreadCount === 0) return
+    fetch(
+      `/api/social-messages?businessId=${businessId}&chatId=${encodeURIComponent(chat.externalChatId)}&platform=${encodeURIComponent(chat.platform)}`,
+      { method: 'PATCH' }
+    )
+      .then(() => {
+        setChats((prev) =>
+          prev.map((c) =>
+            c.externalChatId === chat.externalChatId && c.platform === chat.platform
+              ? { ...c, unreadCount: 0 }
+              : c
+          )
+        )
+      })
+      .catch(() => {})
+  }
+
   const handleReply = async () => {
-    if (!selectedMessage || !replyText.trim()) return
+    if (!selectedChat || !replyText.trim()) return
+    if (!selectedChat.firstInboundId) {
+      setReplyError('Неможливо відповісти в цей чат')
+      return
+    }
     setReplyError(null)
     try {
       setSending(true)
@@ -72,17 +135,16 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           businessId,
-          messageId: selectedMessage.id,
-          platform: selectedMessage.platform,
+          messageId: selectedChat.firstInboundId,
+          platform: selectedChat.platform,
           reply: replyText.trim(),
         }),
       })
       const data = await response.json().catch(() => ({}))
       if (response.ok && data.success !== false) {
         setReplyText('')
-        setSelectedMessage(null)
-        setReplyError(null)
-        loadMessages(true)
+        loadThread(selectedChat)
+        loadChats(true)
       } else {
         setReplyError(data.error || data.details || 'Не вдалося відправити. Спробуйте ще раз.')
       }
@@ -157,9 +219,8 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
     return colors[platform] || 'bg-gray-500'
   }
 
-  const unreadCount = messages.filter(m => !m.isRead).length
-  const hasAny = messages.length > 0
-  const latest = messages[0]
+  const hasAny = chats.length > 0
+  const latest = chats[0]
 
   return (
     <div className="rounded-xl p-4 md:p-6 card-glass-subtle min-w-0 w-full max-w-full overflow-hidden">
@@ -180,7 +241,7 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
             </h3>
             {hasUnread && (
               <div className="w-5 h-5 md:w-6 md:h-6 bg-red-500 rounded-full flex items-center justify-center flex-shrink-0">
-                <span className="text-[10px] md:text-xs font-bold text-white">{unreadCount}</span>
+                <span className="text-[10px] md:text-xs font-bold text-white">{unreadTotal}</span>
               </div>
             )}
             {!hasUnread && hasAny && (
@@ -196,13 +257,13 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
                 : hasUnread
                   ? 'Є нові повідомлення'
                   : hasAny
-                    ? 'Є повідомлення'
+                    ? 'Є переписки'
                     : 'Немає повідомлень'
               : 'З соціальних мереж'}
           </p>
           {collapsed && !loading && latest && (
-            <p className="text-[10px] md:text-xs text-gray-400 mt-1 line-clamp-1 break-words min-w-0" title={`${latest.senderName}: ${latest.message}`}>
-              {latest.senderName}: {latest.message}
+            <p className="text-[10px] md:text-xs text-gray-400 mt-1 line-clamp-1 break-words min-w-0" title={`${latest.senderName}: ${latest.lastMessage}`}>
+              {latest.senderName}: {latest.lastMessage}
             </p>
           )}
         </div>
@@ -222,7 +283,7 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
         <div className="text-center py-8">
           <div className="text-sm text-gray-400">Завантаження...</div>
         </div>
-      ) : messages.length === 0 ? (
+      ) : chats.length === 0 ? (
         <div className="text-center py-8">
           <svg className="w-12 h-12 mx-auto text-gray-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.72C3.512 15.042 3 13.574 3 12c0-4.418 4.03-8 9-8s9 3.582 9 8z" />
@@ -233,54 +294,46 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
       ) : (
         <>
           <div className="space-y-2 md:space-y-3 max-h-[300px] md:max-h-[400px] overflow-y-auto pr-1">
-            {messages.map((message) => (
+            {chats.map((chat) => (
               <button
-                key={message.id}
+                key={`${chat.platform}::${chat.externalChatId}`}
                 onClick={() => {
-                  setSelectedMessage(message)
+                  setSelectedChat(chat)
                   setReplyError(null)
-                  if (!message.isRead) {
-                    fetch(`/api/social-messages?businessId=${businessId}&messageId=${message.id}`, {
-                      method: 'PATCH',
-                    })
-                      .then(() => {
-                        setMessages((prev) => prev.map((m) => (m.id === message.id ? { ...m, isRead: true } : m)))
-                        loadMessages(true)
-                      })
-                      .catch(() => {})
-                  }
                 }}
                 className={cn(
                   'w-full text-left rounded-lg p-3 md:p-3 transition-colors active:scale-[0.98] touch-manipulation min-h-[64px]',
-                  !message.isRead
+                  chat.unreadCount > 0
                     ? 'bg-white/10 border border-white/20'
                     : 'bg-white/5 border border-white/10 hover:bg-white/8'
                 )}
               >
                 <div className="flex items-start gap-2 md:gap-3">
-                  {/* Platform Icon */}
                   <div className={cn(
                     'w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white',
-                    getPlatformBgColor(message.platform)
+                    getPlatformBgColor(chat.platform)
                   )}>
-                    {getPlatformIcon(message.platform)}
+                    {getPlatformIcon(chat.platform)}
                   </div>
-
-                  {/* Content */}
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-1.5 md:gap-2 mb-0.5 md:mb-1 flex-wrap">
                       <span className="text-xs md:text-sm font-bold text-white truncate">
-                        {message.senderName}
+                        {chat.senderName}
                       </span>
                       <span className="px-1.5 md:px-2 py-0.5 bg-blue-500/20 text-blue-400 border border-blue-500/50 rounded text-[9px] md:text-[10px] font-medium flex-shrink-0">
-                        {getPlatformShortName(message.platform)}
+                        {getPlatformShortName(chat.platform)}
                       </span>
+                      {chat.unreadCount > 0 && (
+                        <span className="w-5 h-5 bg-red-500 rounded-full flex items-center justify-center text-[10px] font-bold text-white flex-shrink-0">
+                          {chat.unreadCount}
+                        </span>
+                      )}
                     </div>
                     <p className="text-[10px] md:text-xs text-gray-300 line-clamp-2 mb-1 md:mb-1.5">
-                      {message.message}
+                      {chat.lastMessage}
                     </p>
                     <p className="text-[9px] md:text-[10px] text-gray-500">
-                      {format(new Date(message.timestamp), 'd MMM, HH:mm', { locale: uk })}
+                      {format(new Date(chat.lastMessageAt), 'd MMM, HH:mm', { locale: uk })}
                     </p>
                   </div>
                 </div>
@@ -288,17 +341,17 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
             ))}
           </div>
 
-          {/* Reply Modal */}
-          {selectedMessage && (
+          {/* Thread Modal — історія переписки */}
+          {selectedChat && (
             <ModalPortal>
-              <div className="modal-overlay sm:!p-4" onClick={() => setSelectedMessage(null)}>
+              <div className="modal-overlay sm:!p-4" onClick={() => setSelectedChat(null)}>
                 <div
                   className="relative w-[95%] sm:w-full max-w-md modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
                     type="button"
-                    onClick={() => setSelectedMessage(null)}
+                    onClick={() => setSelectedChat(null)}
                     className="modal-close touch-target text-gray-400 hover:text-white rounded-xl"
                     aria-label="Закрити"
                   >
@@ -309,57 +362,75 @@ export function SocialMessagesCard({ businessId }: SocialMessagesCardProps) {
                   <div className="pr-10 mb-1.5 flex-shrink-0 flex items-center gap-2">
                     <div className={cn(
                       'w-10 h-10 rounded-full flex items-center justify-center text-white flex-shrink-0',
-                      getPlatformBgColor(selectedMessage.platform)
+                      getPlatformBgColor(selectedChat.platform)
                     )}>
-                      {getPlatformIcon(selectedMessage.platform)}
+                      {getPlatformIcon(selectedChat.platform)}
                     </div>
                     <div className="min-w-0 flex-1">
-                      <div className="modal-title truncate">{selectedMessage.senderName}</div>
-                      <div className="modal-subtitle">{getPlatformShortName(selectedMessage.platform)}</div>
+                      <div className="modal-title truncate">{selectedChat.senderName}</div>
+                      <div className="modal-subtitle">{getPlatformShortName(selectedChat.platform)}</div>
                     </div>
                   </div>
-                  <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-4 py-3 pt-0">
-                  {/* Original Message */}
-                  <div className="bg-white/5 rounded-lg p-3 mb-4">
-                    <p className="text-sm text-gray-300 whitespace-pre-wrap break-words">{selectedMessage.message}</p>
-                    <p className="text-xs text-gray-500 mt-2">
-                      {format(new Date(selectedMessage.timestamp), 'd MMMM yyyy, HH:mm', { locale: uk })}
-                    </p>
+                  <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-4 py-3 pt-0 flex flex-col">
+                    {/* Історія переписки */}
+                    <div className="flex-1 min-h-0 space-y-3 mb-4">
+                      {threadLoading ? (
+                        <div className="text-sm text-gray-400 py-4 text-center">Завантаження...</div>
+                      ) : thread.length === 0 ? (
+                        <div className="text-sm text-gray-500 py-4 text-center">Немає повідомлень</div>
+                      ) : (
+                        thread.map((msg) => (
+                          <div
+                            key={msg.id}
+                            className={cn(
+                              'rounded-lg p-3 max-w-[90%]',
+                              msg.direction === 'outbound'
+                                ? 'ml-auto bg-blue-600/30 border border-blue-500/30'
+                                : 'mr-auto bg-white/5 border border-white/10'
+                            )}
+                          >
+                            <p className="text-xs text-gray-400 mb-0.5">{msg.senderName}</p>
+                            <p className="text-sm text-gray-100 whitespace-pre-wrap break-words">{msg.message}</p>
+                            <p className="text-[10px] text-gray-500 mt-1">
+                              {format(new Date(msg.timestamp), 'd MMM, HH:mm', { locale: uk })}
+                            </p>
+                          </div>
+                        ))
+                      )}
+                    </div>
+
+                    {/* Reply Input */}
+                    <div className="space-y-3 flex-shrink-0">
+                      <textarea
+                        value={replyText}
+                        onChange={(e) => { setReplyText(e.target.value); setReplyError(null) }}
+                        placeholder="Введіть відповідь..."
+                        className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder-gray-400 resize-none focus:outline-none focus:border-white/20"
+                        rows={3}
+                        style={{ letterSpacing: '-0.01em' }}
+                      />
+                      {replyError && (
+                        <p className="text-xs text-red-400" role="alert">{replyError}</p>
+                      )}
+                    </div>
                   </div>
 
-                  {/* Reply Input */}
-                  <div className="space-y-3">
-                    <textarea
-                      value={replyText}
-                      onChange={(e) => { setReplyText(e.target.value); setReplyError(null) }}
-                      placeholder="Введіть відповідь..."
-                      className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder-gray-400 resize-none focus:outline-none focus:border-white/20"
-                      rows={4}
+                  <div className="flex gap-2 p-4 sm:p-6 pt-3 sm:pt-4 flex-shrink-0 border-t border-white/10">
+                    <button
+                      onClick={() => setSelectedChat(null)}
+                      className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm font-medium text-white hover:bg-white/10 transition-colors active:scale-[0.98]"
+                    >
+                      Закрити
+                    </button>
+                    <button
+                      onClick={handleReply}
+                      disabled={!replyText.trim() || sending || !selectedChat.firstInboundId}
+                      className="flex-1 px-4 py-2.5 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
                       style={{ letterSpacing: '-0.01em' }}
-                    />
-                    {replyError && (
-                      <p className="text-xs text-red-400" role="alert">{replyError}</p>
-                    )}
+                    >
+                      {sending ? 'Відправка...' : 'Відправити'}
+                    </button>
                   </div>
-                </div>
-
-                {/* Footer - Fixed */}
-                <div className="flex gap-2 p-4 sm:p-6 pt-3 sm:pt-4 flex-shrink-0 border-t border-white/10">
-                  <button
-                    onClick={() => setSelectedMessage(null)}
-                    className="flex-1 px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm font-medium text-white hover:bg-white/10 transition-colors active:scale-[0.98]"
-                  >
-                    Скасувати
-                  </button>
-                  <button
-                    onClick={handleReply}
-                    disabled={!replyText.trim() || sending}
-                    className="flex-1 px-4 py-2.5 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 hover:text-gray-900 transition-colors disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98]"
-                    style={{ letterSpacing: '-0.01em' }}
-                  >
-                    {sending ? 'Відправка...' : 'Відправити'}
-                  </button>
-                </div>
                 </div>
               </div>
             </ModalPortal>

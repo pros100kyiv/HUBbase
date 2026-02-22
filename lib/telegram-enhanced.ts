@@ -1,9 +1,45 @@
 import { Telegraf, Context, Markup } from 'telegraf'
 import { prisma } from './prisma'
+import { parseBookingSlotsOptions } from './utils/booking-settings'
 
 interface TelegramBotConfig {
   token: string
   businessId: string
+}
+
+interface TelegramBotMessageSettings {
+  welcomeMessage?: string
+  newUserMessage?: string
+  autoReplyMessage?: string
+  bookingEnabled?: boolean
+}
+
+interface BookingState {
+  step: 'master' | 'slot' | 'contact'
+  masterId?: string
+  slot?: string
+  masterName?: string
+  slotLabel?: string
+  durationMinutes?: number
+}
+
+const bookingSession = new Map<string, BookingState>()
+
+const DEFAULT_WELCOME = '✅ Вітаємо, {{name}}!\n\nВаша роль: {{role}}\n\nВи отримуватимете сповіщення про нові записи та нагадування.\n\nОберіть дію:'
+const DEFAULT_NEW_USER = '👋 Цей бот для сповіщень від бізнесу.\n\nДля доступу зверніться до адміністратора.'
+const DEFAULT_AUTO_REPLY = '✅ Дякуємо! Ваше повідомлення отримано. Ми відповімо найближчим часом.'
+
+async function getBotSettings(businessId: string): Promise<TelegramBotMessageSettings> {
+  try {
+    const b = await prisma.business.findUnique({
+      where: { id: businessId },
+      select: { telegramSettings: true },
+    })
+    if (b?.telegramSettings) {
+      return JSON.parse(b.telegramSettings) as TelegramBotMessageSettings
+    }
+  } catch {}
+  return {}
 }
 
 /**
@@ -68,29 +104,20 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     return Markup.inlineKeyboard(buttons)
   }
 
-  // Команда /start - активація через пароль
+  // Команда /start
   bot.command('start', async (ctx: Context) => {
     try {
       const telegramId = BigInt(ctx.from?.id || 0)
-      const messageText = ctx.message && 'text' in ctx.message ? ctx.message.text : ''
-      const args = messageText ? messageText.split(' ') : []
-      const password = args[1] // Пароль з команди /start <password>
 
-      await logAction('command', 'start', password || null, ctx.from?.id?.toString())
+      await logAction('command', 'start', null, ctx.from?.id?.toString())
 
-      // Перевіряємо чи користувач вже зареєстрований
-      let telegramUser = await prisma.telegramUser.findUnique({
+      const telegramUser = await prisma.telegramUser.findUnique({
         where: { telegramId },
       })
 
-      if (telegramUser) {
-        // Користувач вже зареєстрований
-        if (telegramUser.businessId !== config.businessId) {
-          await ctx.reply('❌ Ви не маєте доступу до цього бота.')
-          return
-        }
+      const settings = await getBotSettings(config.businessId)
 
-        // Оновлюємо дані
+      if (telegramUser && telegramUser.businessId === config.businessId) {
         await prisma.telegramUser.update({
           where: { id: telegramUser.id },
           data: {
@@ -101,64 +128,25 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
           },
         })
 
-        await ctx.reply(
-          `✅ Вітаємо, ${ctx.from?.first_name || 'користувач'}!\n\n` +
-          `Ваша роль: ${getRoleName(telegramUser.role)}\n\n` +
-          `Ви отримуватимете сповіщення про нові записи та нагадування.\n\n` +
-          `Оберіть дію:`,
-          getMainMenu(telegramUser.role)
-        )
+        const welcome = settings.welcomeMessage?.trim() || DEFAULT_WELCOME
+        const text = welcome
+          .replace(/\{\{name\}\}/g, ctx.from?.first_name || 'користувач')
+          .replace(/\{\{role\}\}/g, getRoleName(telegramUser.role))
+
+        await ctx.reply(text, getMainMenu(telegramUser.role))
         return
       }
 
-      // Новий користувач - потрібна активація
-      if (!password) {
-        await ctx.reply(
-          `🔐 Для активації бота потрібен пароль.\n\n` +
-          `Отримайте пароль активації в особистому кабінеті бізнесу:\n` +
-          `Налаштування → Telegram → Генерувати пароль\n\n` +
-          `Потім використайте команду:\n` +
-          `/start <пароль>`
-        )
+      if (telegramUser && telegramUser.businessId !== config.businessId) {
+        await ctx.reply('❌ Ви не маєте доступу до цього бота.')
         return
       }
 
-      // Шукаємо користувача з таким паролем активації
-      const userWithPassword = await prisma.telegramUser.findFirst({
-        where: {
-          businessId: config.businessId,
-          activationPassword: password,
-          activatedAt: null, // Ще не активований
-        },
-      })
-
-      if (!userWithPassword) {
-        await ctx.reply('❌ Невірний пароль активації. Перевірте пароль та спробуйте знову.')
-        return
-      }
-
-      // Активуємо користувача
-      await prisma.telegramUser.update({
-        where: { id: userWithPassword.id },
-        data: {
-          telegramId,
-          username: ctx.from?.username,
-          firstName: ctx.from?.first_name,
-          lastName: ctx.from?.last_name,
-          activatedAt: new Date(),
-          activationPassword: null, // Видаляємо пароль після активації
-          lastActivity: new Date(),
-        },
-      })
-
-      await ctx.reply(
-        `✅ Активація успішна!\n\n` +
-        `Вітаємо, ${ctx.from?.first_name || 'користувач'}!\n` +
-        `Ваша роль: ${getRoleName(userWithPassword.role)}\n\n` +
-        `Ви отримуватимете сповіщення про нові записи та нагадування.\n\n` +
-        `Оберіть дію:`,
-        getMainMenu(userWithPassword.role)
-      )
+      const newUserMsg = settings.newUserMessage?.trim() || DEFAULT_NEW_USER
+      const kb = settings.bookingEnabled
+        ? Markup.inlineKeyboard([[Markup.button.callback('📅 Записатися до спеціаліста', 'book_start')]])
+        : undefined
+      await ctx.reply(newUserMsg, kb)
     } catch (error) {
       console.error('Error in /start command:', error)
       await ctx.reply('❌ Помилка при обробці команди.')
@@ -221,6 +209,36 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
       `📝 Мої нагадування:\n\n${remindersText}\n\nОберіть дію:`,
       getMainMenu(user.role)
     )
+  })
+
+  // Команда /book — початок запису (для клієнтів)
+  bot.command('book', async (ctx: Context) => {
+    const settings = await getBotSettings(config.businessId)
+    if (!settings.bookingEnabled) {
+      await ctx.reply('Запис через бота вимкнено. Зв\'яжіться з нами напряму.')
+      return
+    }
+    const chatId = String(ctx.chat?.id ?? '')
+    const sessionKey = `${config.businessId}:${chatId}`
+
+    const masters = await prisma.master.findMany({
+      where: { businessId: config.businessId, isActive: true },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+      take: 10,
+    })
+
+    if (masters.length === 0) {
+      await ctx.reply('❌ Немає доступних спеціалістів. Зв\'яжіться з адміністратором.')
+      return
+    }
+
+    bookingSession.set(sessionKey, { step: 'master' })
+
+    const buttons = masters.map((m) => [Markup.button.callback(m.name, `book_m_${m.id}`)])
+    buttons.push([Markup.button.callback('❌ Скасувати', 'book_cancel')])
+
+    await ctx.reply('👤 Оберіть спеціаліста:', Markup.inlineKeyboard(buttons))
   })
 
   // Команда для створення нагадування
@@ -353,6 +371,217 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     )
   })
 
+  // ——— Запис через бота (кнопки) ———
+  const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'
+
+  bot.action('book_start', async (ctx: Context) => {
+    const settings = await getBotSettings(config.businessId)
+    if (!settings.bookingEnabled) {
+      await ctx.answerCbQuery('Запис через бота вимкнено.')
+      return
+    }
+    await ctx.answerCbQuery('Запис')
+    const chatId = String(ctx.chat?.id ?? '')
+    const sessionKey = `${config.businessId}:${chatId}`
+
+    const masters = await prisma.master.findMany({
+      where: { businessId: config.businessId, isActive: true },
+      select: { id: true, name: true },
+      orderBy: { name: 'asc' },
+      take: 10,
+    })
+
+    if (masters.length === 0) {
+      await ctx.reply('❌ Немає доступних спеціалістів. Зв\'яжіться з адміністратором.')
+      return
+    }
+
+    bookingSession.set(sessionKey, { step: 'master' })
+
+    const buttons = masters.map((m) => [Markup.button.callback(m.name, `book_m_${m.id}`)])
+    buttons.push([Markup.button.callback('❌ Скасувати', 'book_cancel')])
+
+    await ctx.reply('👤 Оберіть спеціаліста:', Markup.inlineKeyboard(buttons))
+  })
+
+  bot.action(/^book_m_(.+)$/, async (ctx: Context) => {
+    const settings = await getBotSettings(config.businessId)
+    if (!settings.bookingEnabled) {
+      await ctx.answerCbQuery('Запис вимкнено.')
+      return
+    }
+    const match = ctx.match
+    const masterId = match?.[1]?.trim?.()
+    if (!masterId) return
+
+    const master = await prisma.master.findFirst({
+      where: { id: masterId, businessId: config.businessId, isActive: true },
+      select: { id: true, name: true },
+    })
+    if (!master) {
+      await ctx.answerCbQuery('Спеціаліст не знайдено.')
+      return
+    }
+
+    await ctx.answerCbQuery(master.name)
+
+    const chatId = String(ctx.chat?.id ?? '')
+    const sessionKey = `${config.businessId}:${chatId}`
+
+    const business = await prisma.business.findUnique({
+      where: { id: config.businessId },
+      select: { settings: true },
+    })
+    const bookingOptions = parseBookingSlotsOptions(business?.settings ?? null)
+    const daysAhead = bookingOptions.maxDaysAhead
+    const durationMin = [15, 30, 60].includes(bookingOptions.slotStepMinutes)
+      ? bookingOptions.slotStepMinutes
+      : 30
+    const slotLimit = Math.min(20, Math.max(12, Math.min(daysAhead, 24)))
+
+    const today = new Date()
+    const fromStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+
+    const slotsRes = await fetch(
+      `${baseUrl}/api/availability?businessId=${config.businessId}&masterId=${masterId}&from=${fromStr}&days=${daysAhead}&limit=${slotLimit}&durationMinutes=${durationMin}`
+    ).then((r) => r.json())
+
+    const recommendedSlots: Array<{ date: string; time: string; slot: string }> = slotsRes?.recommendedSlots ?? []
+
+    if (recommendedSlots.length === 0) {
+      const daysLabel = daysAhead === 1 ? '1 день' : daysAhead < 5 ? `${daysAhead} дні` : `${daysAhead} днів`
+      await ctx.reply(`❌ Немає вільних слотів на найближчі ${daysLabel}. Спробуйте пізніше або зв'яжіться з нами.`)
+      return
+    }
+
+    bookingSession.set(sessionKey, {
+      step: 'slot',
+      masterId: master.id,
+      masterName: master.name,
+      durationMinutes: durationMin,
+    })
+
+    const slotButtons = recommendedSlots.map((s) => {
+      const slotSafe = s.slot.replace(/:/g, '_')
+      return [Markup.button.callback(`${s.date.slice(8, 10)}.${s.date.slice(5, 7)} ${s.time}`, `book_slot_${slotSafe}`)]
+    })
+    slotButtons.push([Markup.button.callback('❌ Скасувати', 'book_cancel')])
+
+    await ctx.reply('📅 Оберіть час:', Markup.inlineKeyboard(slotButtons))
+  })
+
+  bot.action(/^book_slot_(.+)$/, async (ctx: Context) => {
+    const settings = await getBotSettings(config.businessId)
+    if (!settings.bookingEnabled) return
+
+    const match = ctx.match
+    const slotRaw = match?.[1]?.trim?.()
+    if (!slotRaw) return
+
+    const chatId = String(ctx.chat?.id ?? '')
+    const sessionKey = `${config.businessId}:${chatId}`
+    const state = bookingSession.get(sessionKey)
+    if (!state || state.step !== 'slot' || !state.masterId || !state.masterName) {
+      await ctx.answerCbQuery('Сесію скинуто. Почніть з /start')
+      return
+    }
+
+    const slot = slotRaw.replace(/_/g, ':')
+    const slotLabel = slot.length >= 16 ? `${slot.slice(8, 10)}.${slot.slice(5, 7)} ${slot.slice(11, 16)}` : slot
+
+    await ctx.answerCbQuery(slotLabel)
+
+    bookingSession.set(sessionKey, {
+      step: 'contact',
+      masterId: state.masterId,
+      masterName: state.masterName,
+      slot,
+      slotLabel,
+      durationMinutes: state.durationMinutes ?? 30,
+    })
+
+    const contactKb = Markup.keyboard([[Markup.button.contact('📱 Поділитися номером')]])
+      .resize()
+      .oneTime()
+
+    await ctx.reply(
+      `📞 Підтвердіть запис до ${state.masterName} на ${slotLabel}\n\n` +
+        `Натисніть кнопку нижче або напишіть номер (наприклад 0671234567):`,
+      contactKb
+    )
+  })
+
+  bot.action('book_cancel', async (ctx: Context) => {
+    await ctx.answerCbQuery('Скасовано')
+    const chatId = String(ctx.chat?.id ?? '')
+    bookingSession.delete(`${config.businessId}:${chatId}`)
+    await ctx.reply('Запис скасовано. Напишіть /start, щоб почати знову.')
+  })
+
+  bot.on('contact', async (ctx) => {
+    const contact = ctx.message?.contact
+    const chatId = ctx.chat?.id
+    if (!contact?.phone_number || !chatId) return
+
+    const sessionKey = `${config.businessId}:${String(chatId)}`
+    const state = bookingSession.get(sessionKey)
+    if (!state || state.step !== 'contact' || !state.masterId || !state.slot) {
+      await ctx.reply('Сесію скинуто. Напишіть /start, щоб почати запис.')
+      return
+    }
+
+    const phone = contact.phone_number.replace(/\s/g, '')
+    const { normalizeUaPhone, isValidUaPhone } = await import('@/lib/utils/phone')
+    const normalizedPhone = normalizeUaPhone(phone)
+    if (!isValidUaPhone(normalizedPhone)) {
+      await ctx.reply('❌ Невірний формат номера. Потрібен український номер (0671234567). Спробуйте ще раз.')
+      return
+    }
+
+    const clientName = [ctx.from?.first_name, ctx.from?.last_name].filter(Boolean).join(' ') || 'Клієнт'
+    const durationMin = state.durationMinutes ?? 30
+
+    try {
+      const res = await fetch(`${baseUrl}/api/appointments`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          businessId: config.businessId,
+          masterId: state.masterId,
+          clientName,
+          clientPhone: normalizedPhone,
+          slot: state.slot,
+          durationMinutes: durationMin,
+          services: [],
+          isFromBooking: true,
+          source: 'telegram',
+          telegramChatId: String(chatId),
+        }),
+      })
+      const data = await res.json()
+
+      bookingSession.delete(sessionKey)
+      const removeKb = Markup.removeKeyboard()
+
+      if (res.ok && !data.error) {
+        await ctx.reply(
+          `✅ Запис створено!\n\n` +
+            `Спеціаліст: ${state.masterName}\n` +
+            `Дата та час: ${state.slotLabel}\n\n` +
+            `Ми підтвердимо запис найближчим часом.`,
+          removeKb
+        )
+      } else {
+        const errMsg = data?.error || data?.message || 'Не вдалося створити запис.'
+        await ctx.reply(`❌ ${errMsg}\n\nСпробуйте інший час або зв'яжіться з нами.`, removeKb)
+      }
+    } catch (err: unknown) {
+      bookingSession.delete(sessionKey)
+      await ctx.reply('❌ Помилка з\'єднання. Спробуйте пізніше.', Markup.removeKeyboard())
+      console.error('Telegram booking error:', err)
+    }
+  })
+
   // Будь-яке текстове повідомлення (не команда) — зберігаємо в кабінет як вхідне, щоб можна було відповісти
   bot.on('text', async (ctx) => {
     const text = ctx.message && 'text' in ctx.message ? ctx.message.text : ''
@@ -378,7 +607,63 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
           isRead: false,
         },
       })
-      await ctx.reply('✅ Дякуємо! Ваше повідомлення отримано. Ми відповімо найближчим часом.')
+      const sessionKey = `${config.businessId}:${String(chatId)}`
+      const bookingState = bookingSession.get(sessionKey)
+      if (bookingState?.step === 'contact' && bookingState.masterId && bookingState.slot) {
+        const { normalizeUaPhone, isValidUaPhone } = await import('@/lib/utils/phone')
+        const normalizedPhone = normalizeUaPhone(text)
+        if (isValidUaPhone(normalizedPhone)) {
+          const clientName = [from.first_name, from.last_name].filter(Boolean).join(' ') || 'Клієнт'
+          const durationMin = bookingState.durationMinutes ?? 30
+          try {
+            const res = await fetch(`${baseUrl}/api/appointments`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                businessId: config.businessId,
+                masterId: bookingState.masterId,
+                clientName,
+                clientPhone: normalizedPhone,
+                slot: bookingState.slot,
+                durationMinutes: durationMin,
+                services: [],
+                isFromBooking: true,
+                source: 'telegram',
+                telegramChatId: String(chatId),
+              }),
+            })
+            const data = await res.json()
+            bookingSession.delete(sessionKey)
+
+            if (res.ok && !data.error) {
+              await ctx.reply(
+                `✅ Запис створено!\n\n` +
+                  `Спеціаліст: ${bookingState.masterName}\n` +
+                  `Дата та час: ${bookingState.slotLabel}\n\n` +
+                  `Ми підтвердимо запис найближчим часом.`,
+                Markup.removeKeyboard()
+              )
+            } else {
+              const errMsg = data?.error || data?.message || 'Не вдалося створити запис.'
+              await ctx.reply(`❌ ${errMsg}\n\nСпробуйте інший час або зв'яжіться з нами.`, Markup.removeKeyboard())
+            }
+          } catch (err: unknown) {
+            bookingSession.delete(sessionKey)
+            await ctx.reply('❌ Помилка з\'єднання. Спробуйте пізніше.', Markup.removeKeyboard())
+            console.error('Telegram booking error:', err)
+          }
+          return
+        }
+        await ctx.reply('❌ Невірний формат номера. Введіть український номер, наприклад 0671234567')
+        return
+      }
+
+      const settings = await getBotSettings(config.businessId)
+      const autoReply = settings.autoReplyMessage?.trim() || DEFAULT_AUTO_REPLY
+      const autoKb = settings.bookingEnabled
+        ? Markup.inlineKeyboard([[Markup.button.callback('📅 Записатися до спеціаліста', 'book_start')]])
+        : undefined
+      await ctx.reply(autoReply, autoKb)
     } catch (err) {
       console.error('Error saving Telegram inbox message:', err)
       await ctx.reply('❌ Не вдалося зберегти повідомлення. Спробуйте пізніше.')

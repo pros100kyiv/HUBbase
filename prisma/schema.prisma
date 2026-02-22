@@ -61,6 +61,7 @@ model Business {
   remindersEnabled             Boolean                    @default(false)
   reminderSmsEnabled           Boolean                    @default(false)
   reminderEmailEnabled         Boolean                    @default(false)
+  reminderTelegramEnabled      Boolean                    @default(false)
   trustedDevices               String?
   createdAt                    DateTime                   @default(now())
   updatedAt                    DateTime                   @updatedAt
@@ -155,6 +156,7 @@ model Client {
   name                 String
   phone                String
   email                String?
+  telegramChatId       String?
   totalAppointments    Int                @default(0)
   totalSpent           BigInt             @default(0)
   averageOrderValue    BigInt             @default(0)
@@ -942,6 +944,9 @@ enum AppointmentChangeRequestStatus {
 
 enum ReminderChannel {
   PUSH
+  SMS
+  EMAIL
+  TELEGRAM
 }
 
 enum ReminderStatus {

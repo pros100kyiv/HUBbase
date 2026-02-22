@@ -75,6 +75,8 @@ export async function POST(request: Request) {
       customServiceName,
       customService,
       isFromBooking,
+      source,
+      telegramChatId,
     } = body
 
     const hasSlotPayload = typeof slot === 'string' && slot.trim()
@@ -209,6 +211,17 @@ export async function POST(request: Request) {
         throw new Error('APPOINTMENT_CONFLICT')
       }
 
+      const sourceVal = typeof source === 'string' && source.trim() ? source.trim() : null
+      const isFromTelegram = isFromBookingFlag && sourceVal === 'telegram'
+      const tgChatId = typeof telegramChatId === 'string' && telegramChatId.trim() ? telegramChatId.trim() : null
+
+      if (isFromTelegram && tgChatId) {
+        await tx.client.update({
+          where: { id: ensuredClient.id },
+          data: { telegramChatId: tgChatId },
+        })
+      }
+
       const createdAppointment = await tx.appointment.create({
         data: {
           businessId: bid,
@@ -225,6 +238,7 @@ export async function POST(request: Request) {
           customPrice: typeof customPrice === 'number' && customPrice > 0 ? customPrice : null,
           status: initialStatus,
           isFromBooking: isFromBookingFlag,
+          source: isFromTelegram ? 'telegram' : sourceVal,
         },
       })
 

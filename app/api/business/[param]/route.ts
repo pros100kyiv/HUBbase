@@ -57,6 +57,7 @@ const businessPrivateSelect = {
   telegramChatId: true,
   telegramId: true,
   telegramNotificationsEnabled: true,
+  telegramSettings: true,
   aiChatEnabled: true,
   aiProvider: true,
   aiApiKey: true,
@@ -75,6 +76,7 @@ const businessPrivateSelect = {
   remindersEnabled: true,
   reminderSmsEnabled: true,
   reminderEmailEnabled: true,
+  reminderTelegramEnabled: true,
   settings: true,
   subscriptionPlan: true,
   trialEndsAt: true,
@@ -293,11 +295,14 @@ export async function PATCH(
       remindersEnabled,
       reminderSmsEnabled,
       reminderEmailEnabled,
+      reminderTelegramEnabled,
       reminderHoursBefore,
       bookingSlots,
       clientChangeRequests,
       // Block/Unblock
       isActive,
+      // Telegram bot
+      telegramSettings,
     } = body
 
     // Отримуємо поточний бізнес для порівняння телефону та settings (для merge)
@@ -376,6 +381,7 @@ export async function PATCH(
         ...(remindersEnabled !== undefined && { remindersEnabled }),
         ...(reminderSmsEnabled !== undefined && { reminderSmsEnabled }),
         ...(reminderEmailEnabled !== undefined && { reminderEmailEnabled }),
+        ...(reminderTelegramEnabled !== undefined && { reminderTelegramEnabled }),
         // reminderHoursBefore, bookingSlots, clientChangeRequests зберігаються в settings JSON
         ...((reminderHoursBefore !== undefined || bookingSlots !== undefined || clientChangeRequests !== undefined) && (() => {
           try {
@@ -416,6 +422,12 @@ export async function PATCH(
         })()),
         // Block/Unblock
         ...(isActive !== undefined && { isActive }),
+        // Telegram bot налаштування (JSON)
+        ...(telegramSettings !== undefined && {
+          telegramSettings: typeof telegramSettings === 'string'
+            ? telegramSettings
+            : JSON.stringify(telegramSettings || {}),
+        }),
       },
       select: businessPrivateSelect,
       })
