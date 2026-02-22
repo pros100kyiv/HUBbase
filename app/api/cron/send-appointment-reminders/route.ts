@@ -63,15 +63,15 @@ export async function GET(request: Request) {
 
     for (const biz of businesses) {
       const hoursBefore = getReminderHoursBefore(biz.settings)
-      const windowStart = addHours(now, hoursBefore - 1)
-      const windowEnd = addHours(now, hoursBefore + 1)
+      // Слот нагадування: startTime в [now, now + hoursBefore] — час надсилати
+      const windowEnd = addHours(now, hoursBefore)
 
       const appointments = await prisma.appointment.findMany({
         where: {
           businessId: biz.id,
           reminderSent: false,
           status: { notIn: ['Cancelled', 'Скасовано'] },
-          startTime: { gte: windowStart, lte: windowEnd },
+          startTime: { gt: now, lte: windowEnd },
         },
         include: {
           master: { select: { name: true } },
