@@ -18,7 +18,7 @@ interface TelegramBotMessageSettings {
 }
 
 interface BookingState {
-  step: 'master' | 'service_choice' | 'service' | 'slot_date' | 'slot_time' | 'contact'
+  step: 'master' | 'service_choice' | 'service' | 'slot' | 'slot_date' | 'slot_time' | 'contact'
   masterId?: string
   masterName?: string
   /** З прайсу */
