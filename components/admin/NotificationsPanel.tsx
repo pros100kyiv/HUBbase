@@ -128,9 +128,19 @@ function AppointmentCard({ appointment, servicesMap, onConfirm, onReschedule, on
       <div className="text-[11px] text-gray-500 flex items-center gap-2 flex-wrap mb-3">
         <span className="truncate">{appointment.masterName ?? '—'}</span>
         <span className="text-gray-700">·</span>
-        <span className="truncate" title={appointment.source === 'telegram' ? 'Запис через Telegram (зовнішній)' : undefined}>
-          {appointment.source === 'telegram' ? '📱 TG · Зовнішній запис' : 'Бронювання'}
-        </span>
+        {appointment.source === 'telegram' ? (
+          <span
+            className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-lg bg-[#0088cc]/20 text-[#6eb8e8] border border-[#0088cc]/40"
+            title="Запис через Telegram — клієнт отримає сповіщення в боті"
+          >
+            <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.192l-1.87 8.803c-.14.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.053 5.56-5.022c.24-.213-.054-.334-.373-.12l-6.87 4.326-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.941z" />
+            </svg>
+            TG · Зовнішній запис
+          </span>
+        ) : (
+          <span className="truncate">Бронювання</span>
+        )}
       </div>
 
       <div className="mb-4">

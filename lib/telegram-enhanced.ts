@@ -1,4 +1,6 @@
 import { Telegraf, Context, Markup } from 'telegraf'
+import { format, parseISO } from 'date-fns'
+import { uk } from 'date-fns/locale'
 import { prisma } from './prisma'
 import { parseBookingSlotsOptions } from './utils/booking-settings'
 
@@ -12,13 +14,22 @@ interface TelegramBotMessageSettings {
   newUserMessage?: string
   autoReplyMessage?: string
   bookingEnabled?: boolean
+  bookingServiceMode?: 'both' | 'pricelist_only' | 'simple_only'
 }
 
 interface BookingState {
-  step: 'master' | 'slot' | 'contact'
+  step: 'master' | 'service_choice' | 'service' | 'slot_date' | 'slot_time' | 'contact'
   masterId?: string
-  slot?: string
   masterName?: string
+  /** З прайсу */
+  serviceId?: string
+  serviceName?: string
+  serviceDuration?: number
+  servicePrice?: number
+  /** Без послуги */
+  withoutService?: boolean
+  selectedDate?: string
+  slot?: string
   slotLabel?: string
   durationMinutes?: number
 }
@@ -404,6 +415,125 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     await ctx.reply('👤 Оберіть спеціаліста:', Markup.inlineKeyboard(buttons))
   })
 
+  /** Фільтр послуг по майстру: masterIds = null/'' = для всіх; JSON-масив = лише для тих майстрів */
+  const filterServicesForMaster = (services: { id: string; name: string; duration: number; price: number; masterIds?: string | null }[], masterId: string) => {
+    return services.filter((s) => {
+      const raw = s.masterIds
+      if (!raw || typeof raw !== 'string' || !raw.trim()) return true
+      try {
+        const ids = JSON.parse(raw)
+        if (!Array.isArray(ids)) return true
+        return ids.includes(masterId)
+      } catch {
+        return true
+      }
+    })
+  }
+
+  /** Крок 1: показуємо дати з вільними слотами */
+  const goToSlotDateStep = async (
+    ctx: Context,
+    sessionKey: string,
+    state: BookingState,
+    durationMin: number
+  ) => {
+    const business = await prisma.business.findUnique({
+      where: { id: config.businessId },
+      select: { settings: true },
+    })
+    const bookingOptions = parseBookingSlotsOptions(business?.settings ?? null)
+    const daysAhead = Math.min(bookingOptions.maxDaysAhead, 14)
+    const today = new Date()
+    const fromStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+
+    const slotsRes = await fetch(
+      `${baseUrl}/api/availability?businessId=${config.businessId}&masterId=${state.masterId}&from=${fromStr}&days=${daysAhead}&limit=60&durationMinutes=${durationMin}`
+    ).then((r) => r.json())
+
+    const recommendedSlots: Array<{ date: string; time: string; slot: string }> = slotsRes?.recommendedSlots ?? []
+
+    if (recommendedSlots.length === 0) {
+      const daysLabel = daysAhead === 1 ? '1 день' : daysAhead < 5 ? `${daysAhead} дні` : `${daysAhead} днів`
+      await ctx.reply(`❌ Немає вільних слотів на найближчі ${daysLabel}. Спробуйте пізніше або зв'яжіться з нами.`)
+      return
+    }
+
+    const datesWithSlots = [...new Set(recommendedSlots.map((s) => s.date))].sort().slice(0, 10)
+
+    bookingSession.set(sessionKey, {
+      ...state,
+      step: 'slot_date',
+      durationMinutes: durationMin,
+    })
+
+    const dateButtons: ReturnType<typeof Markup.button.callback>[][] = []
+    for (let i = 0; i < datesWithSlots.length; i += 2) {
+      const row = datesWithSlots.slice(i, i + 2).map((d) => {
+        try {
+          const dt = parseISO(d + 'T12:00:00')
+          const label = format(dt, 'EEE d.MM', { locale: uk })
+          return Markup.button.callback(label, `book_date_${d}`)
+        } catch {
+          return Markup.button.callback(`${d.slice(8, 10)}.${d.slice(5, 7)}`, `book_date_${d}`)
+        }
+      })
+      dateButtons.push(row)
+    }
+    dateButtons.push([Markup.button.callback('❌ Скасувати', 'book_cancel')])
+
+    await ctx.reply('📅 Оберіть дату:', Markup.inlineKeyboard(dateButtons))
+  }
+
+  /** Крок 2: показуємо години на обрану дату */
+  const goToSlotTimeStep = async (
+    ctx: Context,
+    sessionKey: string,
+    state: BookingState,
+    dateNorm: string,
+    durationMin: number
+  ) => {
+    const slotsRes = await fetch(
+      `${baseUrl}/api/availability?businessId=${config.businessId}&masterId=${state.masterId}&date=${dateNorm}&durationMinutes=${durationMin}`
+    ).then((r) => r.json())
+
+    const availableSlots: string[] = slotsRes?.availableSlots ?? []
+
+    if (availableSlots.length === 0) {
+      await ctx.reply('❌ На цю дату немає вільних слотів. Оберіть іншу дату.')
+      return goToSlotDateStep(ctx, sessionKey, { ...state, step: 'slot_date', durationMinutes: durationMin }, durationMin)
+    }
+
+    const dateLabel = (() => {
+      try {
+        return format(parseISO(dateNorm + 'T12:00:00'), 'd MMMM', { locale: uk })
+      } catch {
+        return `${dateNorm.slice(8, 10)}.${dateNorm.slice(5, 7)}`
+      }
+    })()
+
+    bookingSession.set(sessionKey, {
+      ...state,
+      step: 'slot_time',
+      selectedDate: dateNorm,
+      durationMinutes: durationMin,
+    })
+
+    const slotsToShow = availableSlots.slice(0, 18)
+    const timeButtons: ReturnType<typeof Markup.button.callback>[][] = []
+    for (let i = 0; i < slotsToShow.length; i += 3) {
+      const row = slotsToShow.slice(i, i + 3).map((slot) => {
+        const time = slot.slice(11, 16)
+        const slotSafe = slot.replace(/:/g, '_')
+        return Markup.button.callback(time, `book_slot_${slotSafe}`)
+      })
+      timeButtons.push(row)
+    }
+    timeButtons.push([Markup.button.callback('◀️ Інша дата', 'book_back_dates')])
+    timeButtons.push([Markup.button.callback('❌ Скасувати', 'book_cancel')])
+
+    await ctx.reply(`🕐 Оберіть час на ${dateLabel}:`, Markup.inlineKeyboard(timeButtons))
+  }
+
   bot.action(/^book_m_(.+)$/, async (ctx: Context) => {
     const settings = await getBotSettings(config.businessId)
     if (!settings.bookingEnabled) {
@@ -434,41 +564,236 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
       select: { settings: true },
     })
     const bookingOptions = parseBookingSlotsOptions(business?.settings ?? null)
-    const daysAhead = bookingOptions.maxDaysAhead
     const durationMin = [15, 30, 60].includes(bookingOptions.slotStepMinutes)
       ? bookingOptions.slotStepMinutes
       : 30
-    const slotLimit = Math.min(20, Math.max(12, Math.min(daysAhead, 24)))
 
-    const today = new Date()
-    const fromStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, '0')}-${String(today.getDate()).padStart(2, '0')}`
+    const mode = settings.bookingServiceMode || 'both'
 
-    const slotsRes = await fetch(
-      `${baseUrl}/api/availability?businessId=${config.businessId}&masterId=${masterId}&from=${fromStr}&days=${daysAhead}&limit=${slotLimit}&durationMinutes=${durationMin}`
-    ).then((r) => r.json())
-
-    const recommendedSlots: Array<{ date: string; time: string; slot: string }> = slotsRes?.recommendedSlots ?? []
-
-    if (recommendedSlots.length === 0) {
-      const daysLabel = daysAhead === 1 ? '1 день' : daysAhead < 5 ? `${daysAhead} дні` : `${daysAhead} днів`
-      await ctx.reply(`❌ Немає вільних слотів на найближчі ${daysLabel}. Спробуйте пізніше або зв'яжіться з нами.`)
+    if (mode === 'simple_only') {
+      const baseState: BookingState = {
+        step: 'slot',
+        masterId: master.id,
+        masterName: master.name,
+        withoutService: true,
+        durationMinutes: durationMin,
+      }
+      await goToSlotDateStep(ctx, sessionKey, baseState, durationMin)
       return
     }
 
-    bookingSession.set(sessionKey, {
-      step: 'slot',
+    if (mode === 'both') {
+      bookingSession.set(sessionKey, {
+        step: 'service_choice',
+        masterId: master.id,
+        masterName: master.name,
+        durationMinutes: durationMin,
+      })
+      const choiceButtons = [
+        [Markup.button.callback('📋 З прайсу', 'book_show_services')],
+        [Markup.button.callback('⏱ Без послуги', 'book_without_svc')],
+        [Markup.button.callback('❌ Скасувати', 'book_cancel')],
+      ]
+      await ctx.reply(
+        'Оберіть варіант запису:',
+        Markup.inlineKeyboard(choiceButtons)
+      )
+      return
+    }
+
+    if (mode === 'pricelist_only') {
+      const services = await prisma.service.findMany({
+        where: { businessId: config.businessId, isActive: true },
+        select: { id: true, name: true, duration: true, price: true, masterIds: true },
+        orderBy: { name: 'asc' },
+        take: 20,
+      })
+      const filtered = filterServicesForMaster(services, master.id)
+
+      if (filtered.length === 0) {
+        const baseState: BookingState = {
+          step: 'slot',
+          masterId: master.id,
+          masterName: master.name,
+          withoutService: true,
+          durationMinutes: durationMin,
+        }
+        await goToSlotDateStep(ctx, sessionKey, baseState, durationMin)
+        return
+      }
+
+      bookingSession.set(sessionKey, {
+        step: 'service',
+        masterId: master.id,
+        masterName: master.name,
+        durationMinutes: durationMin,
+      })
+      const svcButtons = filtered.slice(0, 12).map((s) => [
+        Markup.button.callback(
+          `${s.name} · ${s.price} грн`,
+          `book_svc_${s.id}`
+        ),
+      ])
+      svcButtons.push([Markup.button.callback('❌ Скасувати', 'book_cancel')])
+      await ctx.reply('📋 Оберіть послугу з прайсу:', Markup.inlineKeyboard(svcButtons))
+      return
+    }
+
+    await goToSlotDateStep(ctx, sessionKey, {
+      step: 'slot_date',
       masterId: master.id,
       masterName: master.name,
       durationMinutes: durationMin,
-    })
+    }, durationMin)
+  })
 
-    const slotButtons = recommendedSlots.map((s) => {
-      const slotSafe = s.slot.replace(/:/g, '_')
-      return [Markup.button.callback(`${s.date.slice(8, 10)}.${s.date.slice(5, 7)} ${s.time}`, `book_slot_${slotSafe}`)]
-    })
-    slotButtons.push([Markup.button.callback('❌ Скасувати', 'book_cancel')])
+  bot.action('book_show_services', async (ctx: Context) => {
+    const settings = await getBotSettings(config.businessId)
+    if (!settings.bookingEnabled) return
 
-    await ctx.reply('📅 Оберіть час:', Markup.inlineKeyboard(slotButtons))
+    const chatId = String(ctx.chat?.id ?? '')
+    const sessionKey = `${config.businessId}:${chatId}`
+    const state = bookingSession.get(sessionKey)
+    if (!state || state.step !== 'service_choice' || !state.masterId) {
+      await ctx.answerCbQuery('Сесію скинуто. Почніть з /start')
+      return
+    }
+
+    await ctx.answerCbQuery('З прайсу')
+
+    const services = await prisma.service.findMany({
+      where: { businessId: config.businessId, isActive: true },
+      select: { id: true, name: true, duration: true, price: true, masterIds: true },
+      orderBy: { name: 'asc' },
+      take: 20,
+    })
+    const filtered = filterServicesForMaster(services, state.masterId)
+
+    if (filtered.length === 0) {
+      const choiceButtons = [
+        [Markup.button.callback('⏱ Без послуги', 'book_without_svc')],
+        [Markup.button.callback('❌ Скасувати', 'book_cancel')],
+      ]
+      await ctx.reply(
+        'Немає послуг у прайсі. Оберіть «Без послуги»:',
+        Markup.inlineKeyboard(choiceButtons)
+      )
+      return
+    }
+
+    bookingSession.set(sessionKey, { ...state, step: 'service' })
+    const svcButtons = filtered.slice(0, 12).map((s) => [
+      Markup.button.callback(`${s.name} · ${s.price} грн`, `book_svc_${s.id}`),
+    ])
+    svcButtons.push([Markup.button.callback('❌ Скасувати', 'book_cancel')])
+    await ctx.reply('📋 Оберіть послугу з прайсу:', Markup.inlineKeyboard(svcButtons))
+  })
+
+  bot.action('book_without_svc', async (ctx: Context) => {
+    const settings = await getBotSettings(config.businessId)
+    if (!settings.bookingEnabled) return
+
+    const chatId = String(ctx.chat?.id ?? '')
+    const sessionKey = `${config.businessId}:${chatId}`
+    const state = bookingSession.get(sessionKey)
+    if (!state || !state.masterId || !state.masterName) {
+      await ctx.answerCbQuery('Сесію скинуто. Почніть з /start')
+      return
+    }
+
+    await ctx.answerCbQuery('Без послуги')
+
+    const durationMin = state.durationMinutes ?? 30
+    const baseState: BookingState = {
+      ...state,
+      step: 'slot_date',
+      withoutService: true,
+      durationMinutes: durationMin,
+    }
+    await goToSlotDateStep(ctx, sessionKey, baseState, durationMin)
+  })
+
+  bot.action(/^book_svc_(.+)$/, async (ctx: Context) => {
+    const settings = await getBotSettings(config.businessId)
+    if (!settings.bookingEnabled) return
+
+    const data = typeof (ctx.callbackQuery as any)?.data === 'string' ? (ctx.callbackQuery as any).data : ''
+    const match = data.match(/^book_svc_(.+)$/)
+    const serviceId = match?.[1]?.trim?.()
+    if (!serviceId) return
+
+    const chatId = String(ctx.chat?.id ?? '')
+    const sessionKey = `${config.businessId}:${chatId}`
+    const state = bookingSession.get(sessionKey)
+    if (!state || (state.step !== 'service' && state.step !== 'service_choice') || !state.masterId) {
+      await ctx.answerCbQuery('Сесію скинуто. Почніть з /start')
+      return
+    }
+
+    const service = await prisma.service.findFirst({
+      where: { id: serviceId, businessId: config.businessId, isActive: true },
+      select: { id: true, name: true, duration: true, price: true },
+    })
+    if (!service) {
+      await ctx.answerCbQuery('Послугу не знайдено.')
+      return
+    }
+
+    await ctx.answerCbQuery(service.name)
+
+    const durationMin = Math.max(15, Math.min(480, service.duration || 30))
+    const baseState: BookingState = {
+      ...state,
+      step: 'slot_date',
+      serviceId: service.id,
+      serviceName: service.name,
+      serviceDuration: durationMin,
+      servicePrice: service.price,
+      withoutService: false,
+      durationMinutes: durationMin,
+    }
+    await goToSlotDateStep(ctx, sessionKey, baseState, durationMin)
+  })
+
+  bot.action(/^book_date_(.+)$/, async (ctx: Context) => {
+    const settings = await getBotSettings(config.businessId)
+    if (!settings.bookingEnabled) return
+
+    const data = typeof (ctx.callbackQuery as any)?.data === 'string' ? (ctx.callbackQuery as any).data : ''
+    const match = data.match(/^book_date_(.+)$/)
+    const dateNorm = match?.[1]?.trim?.()
+    if (!dateNorm || !/^\d{4}-\d{2}-\d{2}$/.test(dateNorm)) return
+
+    const chatId = String(ctx.chat?.id ?? '')
+    const sessionKey = `${config.businessId}:${chatId}`
+    const state = bookingSession.get(sessionKey)
+    if (!state || state.step !== 'slot_date' || !state.masterId) {
+      await ctx.answerCbQuery('Сесію скинуто. Почніть з /start')
+      return
+    }
+
+    await ctx.answerCbQuery(dateNorm)
+
+    const durationMin = state.durationMinutes ?? 30
+    await goToSlotTimeStep(ctx, sessionKey, state, dateNorm, durationMin)
+  })
+
+  bot.action('book_back_dates', async (ctx: Context) => {
+    const settings = await getBotSettings(config.businessId)
+    if (!settings.bookingEnabled) return
+
+    const chatId = String(ctx.chat?.id ?? '')
+    const sessionKey = `${config.businessId}:${chatId}`
+    const state = bookingSession.get(sessionKey)
+    if (!state || (state.step !== 'slot_time' && state.step !== 'slot_date') || !state.masterId) {
+      await ctx.answerCbQuery('Сесію скинуто.')
+      return
+    }
+
+    await ctx.answerCbQuery('Інша дата')
+    const durationMin = state.durationMinutes ?? 30
+    const backState: BookingState = { ...state, step: 'slot_date', selectedDate: undefined }
+    await goToSlotDateStep(ctx, sessionKey, backState, durationMin)
   })
 
   bot.action(/^book_slot_(.+)$/, async (ctx: Context) => {
@@ -483,7 +808,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     const chatId = String(ctx.chat?.id ?? '')
     const sessionKey = `${config.businessId}:${chatId}`
     const state = bookingSession.get(sessionKey)
-    if (!state || state.step !== 'slot' || !state.masterId || !state.masterName) {
+    if (!state || (state.step !== 'slot' && state.step !== 'slot_time') || !state.masterId || !state.masterName) {
       await ctx.answerCbQuery('Сесію скинуто. Почніть з /start')
       return
     }
@@ -493,13 +818,13 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
 
     await ctx.answerCbQuery(slotLabel)
 
+    const serviceInfo = state.serviceName ? `\nПослуга: ${state.serviceName}` : state.withoutService ? '\nБез послуги (консультація)' : ''
+
     bookingSession.set(sessionKey, {
+      ...state,
       step: 'contact',
-      masterId: state.masterId,
-      masterName: state.masterName,
       slot,
       slotLabel,
-      durationMinutes: state.durationMinutes ?? 30,
     })
 
     const contactKb = Markup.keyboard([[Markup.button.contactRequest('📱 Поділитися номером')]])
@@ -507,7 +832,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
       .oneTime()
 
     await ctx.reply(
-      `📞 Підтвердіть запис до ${state.masterName} на ${slotLabel}\n\n` +
+      `📞 Підтвердіть запис до ${state.masterName} на ${slotLabel}${serviceInfo}\n\n` +
         `Натисніть кнопку нижче або напишіть номер (наприклад 0671234567):`,
       contactKb
     )
@@ -542,6 +867,8 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
 
     const clientName = [ctx.from?.first_name, ctx.from?.last_name].filter(Boolean).join(' ') || 'Клієнт'
     const durationMin = state.durationMinutes ?? 30
+    const servicesPayload = state.serviceId ? [state.serviceId] : []
+    const customServiceName = state.withoutService ? 'Консультація (без послуги)' : undefined
 
     try {
       const res = await fetch(`${baseUrl}/api/appointments`, {
@@ -554,7 +881,8 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
           clientPhone: normalizedPhone,
           slot: state.slot,
           durationMinutes: durationMin,
-          services: [],
+          services: servicesPayload,
+          customServiceName,
           isFromBooking: true,
           source: 'telegram',
           telegramChatId: String(chatId),
@@ -566,11 +894,26 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
       const removeKb = Markup.removeKeyboard()
 
       if (res.ok && !data.error) {
+        const svcLine = state.serviceName
+          ? `Послуга: ${state.serviceName}\n`
+          : state.withoutService
+            ? 'Без послуги (консультація)\n'
+            : ''
+        const managePath = data.manageUrl
+        const fullManageUrl = managePath
+          ? `${baseUrl.replace(/\/$/, '')}${managePath.startsWith('/') ? '' : '/'}${managePath}`
+          : null
+        const manageBlock =
+          fullManageUrl
+            ? `\n\n🔗 Збережіть посилання — ним можна перенести або скасувати запис (лише після підтвердження майстра в кабінеті):\n${fullManageUrl}`
+            : ''
         await ctx.reply(
           `✅ Запис створено!\n\n` +
             `Спеціаліст: ${state.masterName}\n` +
-            `Дата та час: ${state.slotLabel}\n\n` +
-            `Ми підтвердимо запис найближчим часом.`,
+            `Дата та час: ${state.slotLabel}\n` +
+            svcLine +
+            `\nМи підтвердимо запис найближчим часом.` +
+            manageBlock,
           removeKb
         )
       } else {
@@ -617,6 +960,8 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
         if (isValidUaPhone(normalizedPhone)) {
           const clientName = [from.first_name, from.last_name].filter(Boolean).join(' ') || 'Клієнт'
           const durationMin = bookingState.durationMinutes ?? 30
+          const servicesPayload = bookingState.serviceId ? [bookingState.serviceId] : []
+          const customServiceName = bookingState.withoutService ? 'Консультація (без послуги)' : undefined
           try {
             const res = await fetch(`${baseUrl}/api/appointments`, {
               method: 'POST',
@@ -628,7 +973,8 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
                 clientPhone: normalizedPhone,
                 slot: bookingState.slot,
                 durationMinutes: durationMin,
-                services: [],
+                services: servicesPayload,
+                customServiceName,
                 isFromBooking: true,
                 source: 'telegram',
                 telegramChatId: String(chatId),
@@ -638,11 +984,26 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
             bookingSession.delete(sessionKey)
 
             if (res.ok && !data.error) {
+              const svcLine = bookingState.serviceName
+                ? `Послуга: ${bookingState.serviceName}\n`
+                : bookingState.withoutService
+                  ? 'Без послуги (консультація)\n'
+                  : ''
+              const managePath = data.manageUrl
+              const fullManageUrl = managePath
+                ? `${baseUrl.replace(/\/$/, '')}${managePath.startsWith('/') ? '' : '/'}${managePath}`
+                : null
+              const manageBlock =
+                fullManageUrl
+                  ? `\n\n🔗 Збережіть посилання — ним можна перенести або скасувати запис (лише після підтвердження майстра в кабінеті):\n${fullManageUrl}`
+                  : ''
               await ctx.reply(
                 `✅ Запис створено!\n\n` +
                   `Спеціаліст: ${bookingState.masterName}\n` +
-                  `Дата та час: ${bookingState.slotLabel}\n\n` +
-                  `Ми підтвердимо запис найближчим часом.`,
+                  `Дата та час: ${bookingState.slotLabel}\n` +
+                  svcLine +
+                  `\nМи підтвердимо запис найближчим часом.` +
+                  manageBlock,
                 Markup.removeKeyboard()
               )
             } else {

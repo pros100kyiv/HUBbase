@@ -142,7 +142,9 @@ export async function GET(request: Request) {
         if (biz.reminderTelegramEnabled && biz.telegramBotToken && apt.client?.telegramChatId) {
           try {
             const bot = new Telegraf(biz.telegramBotToken)
-            await bot.telegram.sendMessage(apt.client.telegramChatId, `⏰ ${msgText}`, { parse_mode: 'HTML' })
+            const tgMsg = `⏰ ${msgText}\n\n` +
+              `Перенести або скасувати запис можна лише після підтвердження в кабінеті. Посилання для керування — у підтвердженні запису.`
+            await bot.telegram.sendMessage(apt.client.telegramChatId, tgMsg, { parse_mode: 'HTML' })
             sent++
             await prisma.reminderLog.create({
               data: { businessId: biz.id, appointmentId: apt.id, channel: 'TELEGRAM', status: 'SENT', triggeredBy: 'cron' },

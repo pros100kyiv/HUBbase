@@ -176,7 +176,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
             <p className="text-sm font-medium text-amber-800 dark:text-amber-200 mb-3">{submitError}</p>
             <button
               type="button"
-              onClick={() => { setSubmitError(null); setStep(2) }}
+              onClick={() => { setSubmitError(null); setStep(3) }}
               className="w-full min-h-[44px] py-2.5 rounded-lg bg-amber-500/20 border border-amber-500/40 text-amber-900 dark:text-amber-100 text-sm font-semibold hover:bg-amber-500/30 transition-colors"
             >
               ← Назад до вибору часу

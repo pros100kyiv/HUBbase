@@ -1,12 +1,15 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { useBooking } from '@/contexts/BookingContext'
 import { InstallAppBadges } from '@/components/layout/InstallAppBadges'
 import { cn } from '@/lib/utils'
 import { XbaseLogo } from '@/components/layout/XbaseLogo'
 
 interface Business {
+  id?: string
   name?: string
+  slug?: string
   description?: string | null
   logo?: string | null
   avatar?: string | null
@@ -21,8 +24,25 @@ interface LandingStepProps {
   business?: Business | null
 }
 
+const TelegramIcon = () => (
+  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.192l-1.87 8.803c-.14.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.053 5.56-5.022c.24-.213-.054-.334-.373-.12l-6.87 4.326-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.941z" />
+  </svg>
+)
+
 export function LandingStep({ business }: LandingStepProps) {
   const { setStep } = useBooking()
+  const [tgInviteLink, setTgInviteLink] = useState<string | null>(null)
+
+  useEffect(() => {
+    const slug = business?.slug
+    const bid = business?.id
+    if (!slug && !bid) return
+    fetch(`/api/booking/telegram-invite?${slug ? `slug=${encodeURIComponent(slug)}` : `businessId=${encodeURIComponent(bid!)}`}`)
+      .then((r) => r.json())
+      .then((d) => (d?.hasTelegram && d?.inviteLink ? setTgInviteLink(d.inviteLink) : null))
+      .catch(() => {})
+  }, [business?.slug, business?.id])
   const logoSrc = business?.logo || business?.avatar || null
   const headline = (business?.slogan?.trim() || business?.description?.trim() || '').trim()
   const subText = (business?.additionalInfo?.trim() || '').trim()
@@ -137,14 +157,28 @@ export function LandingStep({ business }: LandingStepProps) {
               </div>
             )}
 
-            <button
-              type="button"
-              className="px-6 md:px-8 py-3 md:py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-colors active:scale-[0.98] hidden md:inline-flex text-sm md:text-base"
-              style={{ boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.35)' }}
-              onClick={() => setStep(1)}
-            >
-              Запис онлайн
-            </button>
+            <div className="hidden md:flex flex-col sm:flex-row items-center justify-center gap-2 md:gap-3">
+              <button
+                type="button"
+                className="px-6 md:px-8 py-3 md:py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-colors active:scale-[0.98] text-sm md:text-base inline-flex items-center gap-2"
+                style={{ boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.35)' }}
+                onClick={() => setStep(1)}
+              >
+                Запис онлайн
+              </button>
+              {tgInviteLink && (
+                <a
+                  href={tgInviteLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="px-6 md:px-8 py-3 md:py-4 rounded-xl bg-[#0088cc] hover:bg-[#0077b5] text-white font-semibold transition-colors active:scale-[0.98] text-sm md:text-base inline-flex items-center gap-2 border border-[#0088cc]/50"
+                  style={{ boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.25)' }}
+                >
+                  <TelegramIcon />
+                  Запис у Telegram
+                </a>
+              )}
+            </div>
           </div>
         </div>
       </div>
@@ -153,14 +187,28 @@ export function LandingStep({ business }: LandingStepProps) {
         <div className="flex justify-center">
           <InstallAppBadges variant="compact" />
         </div>
-        <button
-          type="button"
-          className="w-full min-h-[48px] py-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-colors active:scale-[0.98] text-sm touch-target"
-          style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}
-          onClick={() => setStep(1)}
-        >
-          Запис онлайн
-        </button>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            className="flex-1 min-h-[48px] py-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-colors active:scale-[0.98] text-sm touch-target"
+            style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}
+            onClick={() => setStep(1)}
+          >
+            Запис онлайн
+          </button>
+          {tgInviteLink && (
+            <a
+              href={tgInviteLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 min-h-[48px] py-4 rounded-lg bg-[#0088cc] hover:bg-[#0077b5] text-white font-semibold transition-colors active:scale-[0.98] text-sm touch-target inline-flex items-center justify-center gap-1.5"
+              style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}
+            >
+              <TelegramIcon />
+              Telegram
+            </a>
+          )}
+        </div>
       </div>
 
       <div className="fixed top-4 left-1/2 -translate-x-1/2 z-20 flex items-center">

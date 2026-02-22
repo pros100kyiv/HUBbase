@@ -13,6 +13,8 @@ interface CompleteStepProps {
   businessLocation?: string | null
   /** Business booking timezone (from business settings). */
   timeZone?: string
+  /** Slug for fetching Telegram invite link. */
+  businessSlug?: string | null
 }
 
 function formatStatusLabel(status?: string | null): { label: string; tone: 'neutral' | 'success' | 'warning' | 'error' } {
@@ -30,12 +32,27 @@ function formatStatusLabel(status?: string | null): { label: string; tone: 'neut
   return { label: status || 'Статус', tone: 'neutral' }
 }
 
-export function CompleteStep({ businessName, businessLocation, timeZone }: CompleteStepProps) {
+const TelegramIcon = () => (
+  <svg className="w-5 h-5 flex-shrink-0" fill="currentColor" viewBox="0 0 24 24" aria-hidden>
+    <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.192l-1.87 8.803c-.14.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.053 5.56-5.022c.24-.213-.054-.334-.373-.12l-6.87 4.326-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.941z" />
+  </svg>
+)
+
+export function CompleteStep({ businessName, businessLocation, timeZone, businessSlug }: CompleteStepProps) {
   const { state, reset, setStep } = useBooking()
   const [pushBusy, setPushBusy] = useState(false)
   const [pushEnabled, setPushEnabled] = useState<boolean | null>(null)
   const [vapidPublicKey, setVapidPublicKey] = useState<string | null>(null)
   const [pushConfigChecked, setPushConfigChecked] = useState(false)
+  const [tgInviteLink, setTgInviteLink] = useState<string | null>(null)
+
+  useEffect(() => {
+    if (!businessSlug?.trim()) return
+    fetch(`/api/booking/telegram-invite?slug=${encodeURIComponent(businessSlug)}`)
+      .then((r) => r.json())
+      .then((d) => (d?.hasTelegram && d?.inviteLink ? setTgInviteLink(d.inviteLink) : null))
+      .catch(() => {})
+  }, [businessSlug])
 
   const isPriceAfterProcedure =
     state.bookingWithoutService || (state.customServiceName && state.customServiceName.trim().length > 0)
@@ -363,6 +380,27 @@ export function CompleteStep({ businessName, businessLocation, timeZone }: Compl
             </p>
           )}
         </div>
+
+        {tgInviteLink && (
+          <div className="rounded-xl p-4 mb-4 card-glass border border-[#0088cc]/30 bg-[#0088cc]/5">
+            <p className="text-sm font-semibold text-foreground mb-2 flex items-center gap-2">
+              <TelegramIcon />
+              Сповіщення в Telegram
+            </p>
+            <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
+              Підключіть бота — отримуйте підтвердження, нагадування про візит та можливість перенести або скасувати запис.
+            </p>
+            <a
+              href={tgInviteLink}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full min-h-[48px] py-3 rounded-xl bg-[#0088cc] hover:bg-[#0077b5] text-white text-sm font-semibold transition-colors active:scale-[0.98] inline-flex items-center justify-center gap-2"
+            >
+              <TelegramIcon />
+              Відкрити Telegram-бота
+            </a>
+          </div>
+        )}
 
         {manageUrl && (
           <div className="rounded-xl p-4 mb-4 card-glass border border-black/10 dark:border-white/10">

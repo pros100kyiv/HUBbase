@@ -9,6 +9,8 @@ interface TelegramBotMessageSettings {
   newUserMessage?: string
   autoReplyMessage?: string
   bookingEnabled?: boolean
+  /** 'both' = вибір з прайсу або без | 'pricelist_only' = тільки з прайсу | 'simple_only' = тільки без послуги */
+  bookingServiceMode?: 'both' | 'pricelist_only' | 'simple_only'
 }
 
 const DEFAULT_WELCOME = '✅ Вітаємо, {{name}}!\n\nВаша роль: {{role}}\n\nВи отримуватимете сповіщення про нові записи та нагадування.\n\nОберіть дію:'
@@ -295,6 +297,34 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
                 Запис через бота — клієнти можуть записатися до спеціаліста кнопками (без введення тексту)
               </label>
             </div>
+            {botSettings.bookingEnabled && (
+              <div className="mb-4 pl-6 border-l-2 border-gray-200 dark:border-gray-600">
+                <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
+                  Вибір послуги при записі
+                </label>
+                <div className="space-y-2">
+                  {(['both', 'pricelist_only', 'simple_only'] as const).map((mode) => (
+                    <label key={mode} className="flex items-center gap-2 cursor-pointer">
+                      <input
+                        type="radio"
+                        name="bookingServiceMode"
+                        checked={(botSettings.bookingServiceMode || 'both') === mode}
+                        onChange={() => setBotSettings((s) => ({ ...s, bookingServiceMode: mode }))}
+                        className="w-4 h-4"
+                      />
+                      <span className="text-sm text-gray-700 dark:text-gray-300">
+                        {mode === 'both' && 'Вибір: з прайсу або без — клієнт сам обирає'}
+                        {mode === 'pricelist_only' && 'Тільки з прайсу — показувати каталог послуг'}
+                        {mode === 'simple_only' && 'Тільки без послуги — консультація, слот без вибору'}
+                      </span>
+                    </label>
+                  ))}
+                </div>
+                <p className="text-[10px] text-gray-500 mt-2">
+                  Якщо прайс порожній, при «Тільки з прайсу» буде показано «Без послуги».
+                </p>
+              </div>
+            )}
             <Button
               size="sm"
               disabled={savingSettings}

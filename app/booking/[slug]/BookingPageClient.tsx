@@ -113,14 +113,15 @@ export default function BookingPageClient({ slug }: { slug: string }) {
   const steps = [
     <LandingStep key="landing" business={business} />,
     <MasterStep key="master" businessId={business?.id} />,
-    <TimeStep key="time" businessId={business?.id} />,
     <ServiceStep key="service" businessId={business?.id} />,
+    <TimeStep key="time" businessId={business?.id} />,
     <FinalStep key="final" businessId={business?.id} />,
     <CompleteStep
       key="complete"
       businessName={business?.name}
       businessLocation={business?.location ?? null}
       timeZone={businessTimeZone}
+      businessSlug={business?.slug ?? null}
     />,
   ]
 

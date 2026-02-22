@@ -69,6 +69,7 @@ export default function AppointmentsPage() {
   }, [])
   const [filterStatus, setFilterStatus] = useState<string>('all')
   const [filterMaster, setFilterMaster] = useState<string>('all')
+  const [filterSource, setFilterSource] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState<string>('')
   const [selectedAppointments, setSelectedAppointments] = useState<Set<string>>(new Set())
   const [masters, setMasters] = useState<any[]>([])
@@ -283,17 +284,20 @@ export default function AppointmentsPage() {
     }
   }, [router])
 
-  // Встановити фільтри з URL при переході з аналітики (?status=...&masterId=...)
+  // Встановити фільтри з URL при переході з аналітики (?status=...&masterId=...) або з TG (?source=telegram)
   useEffect(() => {
     if (searchParams.get('create') === 'true') return
     const statusParam = searchParams.get('status')
     const masterParam = searchParams.get('masterId')
+    const sourceParam = searchParams.get('source')
     if (statusParam && ['Pending', 'Confirmed', 'Done', 'Cancelled'].includes(statusParam)) {
       setFilterStatus(statusParam)
     }
     if (masterParam && typeof masterParam === 'string' && masterParam.trim()) {
       setFilterMaster(masterParam.trim())
     }
+    if (sourceParam === 'telegram') setFilterSource('telegram')
+    else setFilterSource(null)
   }, [searchParams])
 
   // Відкрити модалку «Записати» при переході з верхньої панелі (?create=true), з Клієнтів (clientPhone, clientName) або з «Вільні години» (?date=...&time=...)
@@ -383,7 +387,7 @@ export default function AppointmentsPage() {
     // Intentionally NOT depending on `masters` to avoid refetch loops.
     // Master names will be patched in a separate effect below.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [business, currentMonth])
+  }, [business, currentMonth, filterSource])
 
   // Patch masterName when masters list arrives/changes (without refetching appointments)
   useEffect(() => {
@@ -427,7 +431,9 @@ export default function AppointmentsPage() {
       const startStr = format(start, 'yyyy-MM-dd')
       const endStr = format(end, 'yyyy-MM-dd')
       
-      const res = await fetch(`/api/appointments?businessId=${business.id}&startDate=${startStr}&endDate=${endStr}`)
+      const src = filterSource ? `&source=${encodeURIComponent(filterSource)}` : ''
+      const srcReload = filterSource ? `&source=${encodeURIComponent(filterSource)}` : ''
+      const res = await fetch(`/api/appointments?businessId=${business.id}&startDate=${startStr}&endDate=${endStr}${srcReload}`)
       if (!res.ok) throw new Error(`Failed to fetch appointments: ${res.status}`)
       
       const data = await res.json()
@@ -823,6 +829,19 @@ export default function AppointmentsPage() {
                       </svg>
                     </button>
 
+                    {filterSource === 'telegram' && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFilterSource(null)
+                          router.replace('/dashboard/appointments', { scroll: false })
+                        }}
+                        className="px-2.5 py-1 rounded-lg text-[11px] font-medium bg-[#0088cc]/20 text-[#6eb8e8] border border-[#0088cc]/40 hover:bg-[#0088cc]/30 transition-colors"
+                        title="Показати всі записи"
+                      >
+                        📱 Тільки TG ×
+                      </button>
+                    )}
                     {filterStatus !== 'all' && (
                       <button
                         type="button"

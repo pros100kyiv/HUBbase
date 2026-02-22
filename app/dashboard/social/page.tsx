@@ -1,12 +1,13 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { BotIcon, CheckIcon, XIcon } from '@/components/icons'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui/toast'
 import { SocialMessagesCard } from '@/components/admin/SocialMessagesCard'
+import { TelegramBookingsCard } from '@/components/admin/TelegramBookingsCard'
 
 function TelegramQuickConnectButton({
   businessId,
@@ -218,12 +219,35 @@ const PLATFORM_META: Record<string, { icon: React.ReactNode; shortDesc: string }
   viber: { icon: <span className="text-xl">V</span>, shortDesc: 'Скоро' },
 }
 
+type SocialTab = 'chat' | 'booking'
+
 export default function SocialPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const [business, setBusiness] = useState<any>(null)
   const [integrations, setIntegrations] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [activeTab, setActiveTab] = useState<SocialTab>(() => (searchParams.get('tab') === 'booking' ? 'booking' : 'chat'))
+
+  const bookingEnabled = useMemo(() => {
+    try {
+      const s = business?.telegramSettings
+      if (s) return (JSON.parse(s) as { bookingEnabled?: boolean }).bookingEnabled
+    } catch {}
+    return false
+  }, [business?.telegramSettings])
+
+  useEffect(() => {
+    const tab = searchParams.get('tab')
+    if (tab === 'booking' || tab === 'chat') setActiveTab(tab)
+  }, [searchParams])
+
+  const setTab = (t: SocialTab) => {
+    setActiveTab(t)
+    const u = new URL(window.location.href)
+    u.searchParams.set('tab', t)
+    router.replace(u.pathname + u.search, { scroll: false })
+  }
 
   useEffect(() => {
     const instagram = searchParams.get('instagram')
@@ -378,7 +402,39 @@ export default function SocialPage() {
         </div>
 
         <div className="dashboard-sidebar-col space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
-          {business?.id && <SocialMessagesCard businessId={business.id} />}
+          {/* Tabs: Chat | Booking */}
+          <div className="rounded-xl p-1 card-glass flex w-full sm:w-fit sm:inline-flex">
+            <button
+              type="button"
+              onClick={() => setTab('chat')}
+              className={cn(
+                'flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-semibold transition-all',
+                activeTab === 'chat'
+                  ? 'bg-white/15 text-white shadow-sm'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+              )}
+            >
+              💬 Чат
+            </button>
+            <button
+              type="button"
+              onClick={() => setTab('booking')}
+              className={cn(
+                'flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-1.5',
+                activeTab === 'booking'
+                  ? 'bg-white/15 text-white shadow-sm'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+              )}
+            >
+              📅 Запис
+            </button>
+          </div>
+
+          {activeTab === 'chat' && business?.id && <SocialMessagesCard businessId={business.id} />}
+          {activeTab === 'booking' && business?.id && (
+            <TelegramBookingsCard businessId={business.id} bookingEnabled={bookingEnabled} />
+          )}
+
           <div className="rounded-xl p-4 card-glass">
             <h3 className="text-sm font-semibold text-white mb-2">Швидкі дії</h3>
             <div className="flex flex-wrap gap-2">

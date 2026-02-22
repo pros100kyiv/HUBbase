@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useBooking, Service } from '@/contexts/BookingContext'
 import { cn } from '@/lib/utils'
-import { format } from 'date-fns'
 import { toast } from '@/components/ui/toast'
 
 interface ServiceStepProps {
@@ -85,61 +84,13 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
   const totalPrice = state.selectedServices.reduce((sum, s) => sum + s.price, 0)
   const totalDuration = state.selectedServices.reduce((sum, s) => sum + s.duration, 0)
 
-  const handleProceed = async () => {
-    // Flow safety: this step comes after choosing master + time.
+  const handleProceed = () => {
     if (!state.selectedMaster?.id) {
       toast({ title: 'Оберіть спеціаліста', type: 'error' })
       setStep(1)
       return
     }
-    if (!state.selectedDate || !state.selectedTime) {
-      toast({ title: 'Оберіть дату та час', type: 'error' })
-      setStep(2)
-      return
-    }
-    const bid = businessId || state.businessId
-    if (!bid) {
-      toast({ title: 'Помилка', description: 'Бізнес не визначено. Оновіть сторінку.', type: 'error' })
-      setStep(0)
-      return
-    }
-
-    // If services/custom change duration after the time was chosen, revalidate the slot.
-    const isWithoutService =
-      state.bookingWithoutService || (state.customServiceName && state.customServiceName.trim().length > 0)
-    const durationMinutes = isWithoutService
-      ? DEFAULT_DURATION_NO_SERVICE
-      : (totalDuration > 0 ? totalDuration : DEFAULT_DURATION_NO_SERVICE)
-
-    try {
-      const dateStr = format(state.selectedDate, 'yyyy-MM-dd')
-      const params = new URLSearchParams({
-        masterId: state.selectedMaster.id,
-        businessId: bid,
-        date: dateStr,
-        durationMinutes: String(durationMinutes),
-      })
-      const res = await fetch(`/api/availability?${params.toString()}`)
-      if (res.ok) {
-        const data = await res.json()
-        const available = Array.isArray(data?.availableSlots) ? data.availableSlots : []
-        const key = `${dateStr}T${state.selectedTime}`
-        if (available.length > 0 && !available.includes(key)) {
-          toast({
-            title: 'Час недоступний',
-            description: 'Обраний час більше не підходить під тривалість. Оберіть інший час.',
-            type: 'error',
-            duration: 5000,
-          })
-          setStep(2)
-          return
-        }
-      }
-    } catch {
-      // If validation fails (network), still allow proceeding; server will reject conflicts.
-    }
-
-    setStep(4)
+    setStep(3)
   }
 
   const filteredServices = services.filter((s) => {
@@ -198,7 +149,7 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
             </button>
           </div>
           <p className="text-xs text-gray-600 dark:text-gray-400 mt-2">
-            Оберіть з каталогу або вкажіть варіант без послуги/свою назву.
+            Оберіть з каталогу або вкажіть варіант без послуги/свою назву. Далі покажемо вільні години з урахуванням тривалості.
           </p>
         </div>
 
@@ -316,7 +267,7 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
         <div className="flex gap-3">
           <button
             type="button"
-            onClick={() => setStep(2)}
+            onClick={() => setStep(1)}
             className="touch-target flex-1 min-h-[52px] py-3 rounded-xl bg-black/[0.04] dark:bg-white/10 border border-black/10 dark:border-white/15 text-foreground dark:text-white text-sm font-semibold hover:bg-black/[0.06] dark:hover:bg-white/20 transition-colors active:scale-[0.98] outline-none"
           >
             Назад

@@ -40,7 +40,8 @@ export async function sendAppointmentNotificationToTelegram(
         `${businessName}\n` +
         `Спеціаліст: ${masterName}\n` +
         `Дата та час: ${format(dt, 'd MMMM, HH:mm', { locale: uk })}\n\n` +
-        `Чекаємо на вас!`
+        `Чекаємо на вас!\n\n` +
+        `Перенести або скасувати можна лише після підтвердження майстра в кабінеті. Посилання для керування — у підтвердженні запису.`
     } else if (type === 'rescheduled' && extra?.newStartTime && extra?.newEndTime) {
       const dt = new Date(extra.newStartTime)
       text =
@@ -48,7 +49,8 @@ export async function sendAppointmentNotificationToTelegram(
         `${businessName}\n` +
         `Спеціаліст: ${masterName}\n` +
         `Новий час: ${format(dt, 'd MMMM, HH:mm', { locale: uk })}\n\n` +
-        `Якщо є питання — напишіть нам.`
+        `Чекаємо на вас!\n\n` +
+        `Щоб скасувати або змінити час — лише після підтвердження майстра в кабінеті.`
     } else if (type === 'cancelled') {
       text =
         `❌ <b>Запис скасовано</b>\n\n` +

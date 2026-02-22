@@ -356,6 +356,7 @@ export async function GET(request: Request) {
     const businessId = searchParams.get('businessId')
     const status = searchParams.get('status')
     const clientPhone = searchParams.get('clientPhone')
+    const source = searchParams.get('source')
 
     if (!businessId) {
       return NextResponse.json({ error: 'businessId is required' }, { status: 400 })
@@ -399,6 +400,10 @@ export async function GET(request: Request) {
     if (clientPhone) {
       // For client history search: normalize UA phone to match stored format
       where.clientPhone = normalizeUaPhone(clientPhone)
+    }
+
+    if (source) {
+      where.source = source
     }
 
     const baseSelect = {
