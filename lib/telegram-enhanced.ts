@@ -410,7 +410,8 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
       await ctx.answerCbQuery('Запис вимкнено.')
       return
     }
-    const match = ctx.match
+    const data = typeof (ctx.callbackQuery as any)?.data === 'string' ? (ctx.callbackQuery as any).data : ''
+    const match = data.match(/^book_m_(.+)$/)
     const masterId = match?.[1]?.trim?.()
     if (!masterId) return
 
@@ -474,7 +475,8 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     const settings = await getBotSettings(config.businessId)
     if (!settings.bookingEnabled) return
 
-    const match = ctx.match
+    const data = typeof (ctx.callbackQuery as any)?.data === 'string' ? (ctx.callbackQuery as any).data : ''
+    const match = data.match(/^book_slot_(.+)$/)
     const slotRaw = match?.[1]?.trim?.()
     if (!slotRaw) return
 
@@ -500,7 +502,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
       durationMinutes: state.durationMinutes ?? 30,
     })
 
-    const contactKb = Markup.keyboard([[Markup.button.contact('📱 Поділитися номером')]])
+    const contactKb = Markup.keyboard([[Markup.button.contactRequest('📱 Поділитися номером')]])
       .resize()
       .oneTime()
 
