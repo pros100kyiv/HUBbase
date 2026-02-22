@@ -28,6 +28,7 @@
     "telegram:webhook-all": "tsx scripts/setup-webhook-all.ts",
     "telegram:update-tokens": "tsx scripts/update-telegram-token.ts",
     "telegram:set-photo": "tsx scripts/set-telegram-bot-photo.ts",
+    "telegram:verify": "tsx scripts/verify-telegram-integration.ts",
     "db:cleanup": "tsx scripts/cleanup-database.ts",
     "db:sync-management": "tsx scripts/sync-all-businesses-to-management-center.ts",
     "db:migrate-neon": "tsx scripts/migrate-neon-account.ts",
@@ -43,10 +44,10 @@
     "auto-dev": "node scripts/auto-run-dev.js",
     "business:update-identifiers": "tsx scripts/update-business-identifiers.ts",
     "business:block": "tsx scripts/block-business.ts",
-    "business:unblock": "tsx scripts/block-business.ts"
+    "business:unblock": "tsx scripts/block-business.ts",
+    "ai:setup-lm": "tsx scripts/setup-lm-studio.ts"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.21.0",
     "@prisma/client": "^5.20.0",
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-select": "^2.1.2",

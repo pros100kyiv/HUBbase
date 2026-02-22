@@ -2,37 +2,220 @@
 
 import { useEffect, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { BotIcon, PhoneIcon, CheckIcon, XIcon } from '@/components/icons'
+import { BotIcon, CheckIcon, XIcon } from '@/components/icons'
+import { ModalPortal } from '@/components/ui/modal-portal'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui/toast'
-import { TelegramOAuth } from '@/components/admin/TelegramOAuth'
 import { SocialMessagesCard } from '@/components/admin/SocialMessagesCard'
 
-// Telegram тимчасово вимкнено — не викликає /api/telegram/* на цій сторінці
-const SHOW_TELEGRAM = false
+function TelegramQuickConnectButton({
+  businessId,
+  connected,
+  onConnected,
+  onDisconnected,
+  onOpenSettings,
+}: {
+  businessId?: string
+  connected: boolean
+  onConnected: () => void
+  onDisconnected?: () => void
+  onOpenSettings?: () => void
+}) {
+  const [connecting, setConnecting] = useState(false)
+  const [disconnecting, setDisconnecting] = useState(false)
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false)
 
-// Метадані платформ для іконок та опису (API повертає лише id, name, connected)
-const PLATFORM_META: Record<string, { icon: React.ReactNode; description: string }> = {
-  telegram: {
-    icon: <BotIcon className="w-5 h-5" />,
-    description: 'Отримуйте сповіщення та керуйте ботом',
-  },
-  instagram: {
-    icon: <span className="text-xl">📷</span>,
-    description: 'Листи з Direct приходять у кабінет, можна відповідати',
-  },
-  whatsapp: {
-    icon: <PhoneIcon className="w-5 h-5" />,
-    description: 'Скоро...',
-  },
-  facebook: {
-    icon: <span className="text-xl">f</span>,
-    description: 'Скоро...',
-  },
-  viber: {
-    icon: <span className="text-xl">V</span>,
-    description: 'Скоро...',
-  },
+  const handleConnect = async () => {
+    if (!businessId || connecting) return
+    setShowConfirm(false)
+    setConnecting(true)
+    try {
+      const res = await fetch('/api/telegram/quick-connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessId }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        toast({
+          title: data.message || 'Telegram підключено!',
+          description: data.inviteLink ? `Посилання: ${data.inviteLink}` : undefined,
+          type: 'success',
+          duration: 6000,
+        })
+        onConnected()
+      } else {
+        toast({ title: 'Помилка', description: data.error || 'Не вдалося підключити', type: 'error' })
+      }
+    } catch (e) {
+      toast({ title: 'Помилка', description: 'Спробуйте пізніше', type: 'error' })
+    } finally {
+      setConnecting(false)
+    }
+  }
+
+  const handleDisconnect = async () => {
+    if (!businessId || disconnecting) return
+    setShowDisconnectConfirm(false)
+    setDisconnecting(true)
+    try {
+      const res = await fetch('/api/telegram/disconnect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessId }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        toast({ title: data.message || 'Telegram відключено', type: 'success' })
+        onDisconnected?.()
+      } else {
+        toast({ title: 'Помилка', description: data.error || 'Не вдалося відключити', type: 'error' })
+      }
+    } catch (e) {
+      toast({ title: 'Помилка', description: 'Спробуйте пізніше', type: 'error' })
+    } finally {
+      setDisconnecting(false)
+    }
+  }
+
+  if (connected) {
+    return (
+      <div className="flex flex-col gap-1.5">
+        <div className="w-full px-3 py-1.5 rounded-lg text-xs font-medium border border-green-500/30 bg-green-500/10 text-green-400 text-center">
+          Підключено
+        </div>
+        <div className="flex gap-1">
+          <button
+            type="button"
+            onClick={() => setShowDisconnectConfirm(true)}
+            disabled={disconnecting}
+            className="flex-1 px-2 py-1 rounded text-[10px] font-medium border border-white/20 text-gray-400 hover:text-white hover:bg-white/10 disabled:opacity-50"
+          >
+            {disconnecting ? '...' : 'Відключити'}
+          </button>
+          {onOpenSettings && (
+            <button
+              type="button"
+              onClick={onOpenSettings}
+              className="flex-1 px-2 py-1 rounded text-[10px] font-medium border border-white/20 text-gray-400 hover:text-white hover:bg-white/10"
+            >
+              Змінити
+            </button>
+          )}
+        </div>
+        {showDisconnectConfirm && (
+          <ModalPortal>
+            <div
+              className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70"
+              onClick={() => setShowDisconnectConfirm(false)}
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="disconnect-title"
+            >
+              <div
+                className="rounded-xl p-6 card-glass max-w-sm w-full shadow-xl"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <h3 id="disconnect-title" className="text-lg font-bold text-white mb-2">
+                  Відключити Telegram?
+                </h3>
+                <p className="text-sm text-gray-300 mb-4">
+                  Повідомлення більше не надходитимуть. Можна підключити знову в будь-який момент.
+                </p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setShowDisconnectConfirm(false)}
+                    className="flex-1 px-4 py-2 rounded-lg border border-white/20 text-gray-300 hover:bg-white/10"
+                  >
+                    Скасувати
+                  </button>
+                  <button
+                    onClick={handleDisconnect}
+                    disabled={disconnecting}
+                    className="flex-1 px-4 py-2 rounded-lg bg-red-600 hover:bg-red-500 text-white font-semibold disabled:opacity-50"
+                  >
+                    {disconnecting ? '...' : 'Відключити'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </ModalPortal>
+        )}
+      </div>
+    )
+  }
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setShowConfirm(true)}
+        disabled={connecting || !businessId}
+        className={cn(
+          'w-full px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors active:scale-[0.98] text-center',
+          'bg-[#0088cc] hover:bg-[#0088cc]/90 text-white'
+        )}
+      >
+        {connecting ? 'Підключення...' : 'Підключити'}
+      </button>
+      {showConfirm && (
+        <TelegramConfirmModal
+          onConfirm={handleConnect}
+          onCancel={() => setShowConfirm(false)}
+          loading={connecting}
+        />
+      )}
+    </>
+  )
+}
+
+function TelegramConfirmModal({
+  onConfirm,
+  onCancel,
+  loading,
+}: {
+  onConfirm: () => void
+  onCancel: () => void
+  loading: boolean
+}) {
+  return (
+    <ModalPortal>
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70" onClick={onCancel}>
+        <div
+          className="rounded-xl p-6 card-glass max-w-sm w-full shadow-xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+        <h3 className="text-lg font-bold text-white mb-2">Підключити Telegram?</h3>
+        <p className="text-sm text-gray-300 mb-4">
+          Повідомлення з Telegram з&apos;являтимуться у цьому кабінеті. Діліться посиланням з клієнтами.
+        </p>
+        <div className="flex gap-2">
+          <button
+            onClick={onCancel}
+            className="flex-1 px-4 py-2 rounded-lg border border-white/20 text-gray-300 hover:bg-white/10"
+          >
+            Скасувати
+          </button>
+          <button
+            onClick={onConfirm}
+            disabled={loading}
+            className="flex-1 px-4 py-2 rounded-lg bg-[#0088cc] text-white font-semibold hover:bg-[#0088cc]/90 disabled:opacity-50"
+          >
+            {loading ? '...' : 'Підключити'}
+          </button>
+        </div>
+      </div>
+    </div>
+    </ModalPortal>
+  )
+}
+
+const PLATFORM_META: Record<string, { icon: React.ReactNode; shortDesc: string }> = {
+  telegram: { icon: <BotIcon className="w-5 h-5" />, shortDesc: 'Повідомлення від клієнтів' },
+  instagram: { icon: <span className="text-xl">📷</span>, shortDesc: 'Direct-листи' },
+  whatsapp: { icon: <span className="text-xl">💬</span>, shortDesc: 'Скоро' },
+  facebook: { icon: <span className="text-xl">f</span>, shortDesc: 'Скоро' },
+  viber: { icon: <span className="text-xl">V</span>, shortDesc: 'Скоро' },
 }
 
 export default function SocialPage() {
@@ -78,75 +261,37 @@ export default function SocialPage() {
   const loadIntegrations = async () => {
     try {
       const response = await fetch(`/api/social/integrations?businessId=${business.id}`)
-      if (response.ok) {
-        const data = await response.json()
-        const list = data.integrations || []
-        setIntegrations(
-          list.map((i: { id: string; name?: string; connected?: boolean }) => ({
-            ...i,
-            icon: PLATFORM_META[i.id]?.icon,
-            description: PLATFORM_META[i.id]?.description ?? 'Скоро...',
-            connected:
-              i.id === 'telegram' ? (i.connected || !!business?.telegramChatId) : i.connected,
-          }))
+      const list: { id: string; name?: string; connected?: boolean }[] = response.ok
+        ? ((await response.json()).integrations || [])
+        : []
+      if (list.length === 0) {
+        list.push(
+          { id: 'telegram', name: 'Telegram', connected: !!business?.telegramBotToken },
+          { id: 'instagram', name: 'Instagram', connected: false },
+          { id: 'whatsapp', name: 'WhatsApp', connected: false },
+          { id: 'facebook', name: 'Facebook', connected: false },
+          { id: 'viber', name: 'Viber', connected: false }
         )
-      } else {
-        // Якщо API не існує, створюємо базовий список
-        setIntegrations([
-          {
-            id: 'telegram',
-            name: 'Telegram',
-            icon: <BotIcon className="w-5 h-5" />,
-            color: 'from-blue-500 to-blue-600',
-            connected: !!business?.telegramChatId,
-            description: 'Отримуйте сповіщення та керуйте ботом'
-          },
-          {
-            id: 'instagram',
-            name: 'Instagram',
-            icon: <span className="text-xl">📷</span>,
-            color: 'from-pink-500 to-purple-600',
-            connected: false,
-            description: 'Скоро...'
-          },
-          {
-            id: 'whatsapp',
-            name: 'WhatsApp',
-            icon: <PhoneIcon className="w-5 h-5" />,
-            color: 'from-green-500 to-green-600',
-            connected: false,
-            description: 'Скоро...'
-          }
-        ])
       }
-    } catch (error) {
-      console.error('Error loading integrations:', error)
-      // Базовий список якщо помилка
+      setIntegrations(
+        list.map((i) => ({
+          ...i,
+          icon: PLATFORM_META[i.id]?.icon,
+          shortDesc: PLATFORM_META[i.id]?.shortDesc ?? '',
+          connected: i.id === 'telegram' ? (i.connected || !!business?.telegramBotToken) : i.connected,
+        }))
+      )
+    } catch {
       setIntegrations([
-        {
-          id: 'telegram',
-          name: 'Telegram',
-          icon: <BotIcon className="w-6 h-6" />,
-          color: 'from-blue-500 to-blue-600',
-          connected: !!business?.telegramChatId,
-          description: 'Отримуйте сповіщення та керуйте ботом'
-        }
+        { id: 'telegram', name: 'Telegram', icon: PLATFORM_META.telegram?.icon, shortDesc: 'Повідомлення', connected: !!business?.telegramBotToken },
+        { id: 'instagram', name: 'Instagram', icon: PLATFORM_META.instagram?.icon, shortDesc: 'Direct', connected: false },
+        { id: 'whatsapp', name: 'WhatsApp', icon: PLATFORM_META.whatsapp?.icon, shortDesc: 'Скоро', connected: false },
+        { id: 'facebook', name: 'Facebook', icon: PLATFORM_META.facebook?.icon, shortDesc: 'Скоро', connected: false },
+        { id: 'viber', name: 'Viber', icon: PLATFORM_META.viber?.icon, shortDesc: 'Скоро', connected: false },
       ])
     } finally {
       setLoading(false)
     }
-  }
-
-  const handleTelegramConnected = (data: any) => {
-    // Оновлюємо локальні дані
-    const businessData = localStorage.getItem('business')
-    if (businessData) {
-      const parsed = JSON.parse(businessData)
-      parsed.telegramChatId = data.user?.telegramId?.toString()
-      localStorage.setItem('business', JSON.stringify(parsed))
-      setBusiness(parsed)
-    }
-    loadIntegrations()
   }
 
   if (loading) {
@@ -157,123 +302,104 @@ export default function SocialPage() {
     )
   }
 
+  const onTelegramConnected = async () => {
+    await loadIntegrations()
+    if (business?.id) {
+      const r = await fetch(`/api/business/${business.id}`)
+      if (r.ok) {
+        const d = await r.json()
+        if (d.business) {
+          setBusiness(d.business)
+          localStorage.setItem('business', JSON.stringify(d.business))
+        }
+      }
+    }
+  }
+
   return (
     <div className="w-full max-w-7xl mx-auto min-w-0 overflow-hidden">
       <div className="grid grid-cols-dashboard-main lg:grid-cols-dashboard-main-lg gap-3 md:gap-6 min-w-0 w-full">
         <div className="space-y-3 md:space-y-6 min-w-0 overflow-hidden">
-          {/* Header - same as Dashboard */}
-          <div className="flex items-center justify-between gap-3">
-            <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
-              Соціальні мережі
-            </h1>
-          </div>
+          <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
+            Соціальні мережі
+          </h1>
 
-          {/* Telegram OAuth — показується тільки якщо SHOW_TELEGRAM = true */}
-          {SHOW_TELEGRAM && business && (
-            <div className="rounded-xl p-4 md:p-6 card-glass">
-              <TelegramOAuth businessId={business.id} onConnected={handleTelegramConnected} />
-            </div>
-          )}
-
-          {/* Integrations — дві картки в ряд, компактний вигляд */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3">
+          {/* Компактні картки: тільки Telegram і Instagram */}
+          <div className="flex flex-wrap gap-2 md:gap-3">
             {integrations.map((integration) => (
               <div
                 key={integration.id}
                 className={cn(
-                  'rounded-xl p-3 md:p-4 card-glass relative overflow-hidden',
-                  integration.connected && 'ring-2 ring-white/30'
+                  'rounded-xl p-3 md:p-4 card-glass min-w-[140px] flex-1 max-w-[200px]',
+                  integration.connected && 'ring-1 ring-green-500/50'
                 )}
               >
-                <div className="relative">
-                  <div className="flex items-center justify-between mb-2">
-                    <div className="w-9 h-9 rounded-lg bg-white/20 flex items-center justify-center text-white flex-shrink-0">
-                      {integration.icon}
-                    </div>
-                    {integration.connected ? (
-                      <div className="flex items-center gap-1 text-green-400">
-                        <CheckIcon className="w-3.5 h-3.5" />
-                        <span className="text-[10px] font-semibold">Підключено</span>
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-1 text-gray-400">
-                        <XIcon className="w-3.5 h-3.5" />
-                        <span className="text-[10px] font-semibold">Не підключено</span>
-                      </div>
-                    )}
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center text-white">
+                    {integration.icon}
                   </div>
-                  <h3 className="text-sm font-semibold text-white mb-1">
-                    {integration.name}
-                  </h3>
-                  <p className="text-[11px] text-gray-400 mb-3 line-clamp-2">
-                    {integration.description}
-                  </p>
-                  {integration.id === 'telegram' ? (
-                    <button
-                      type="button"
-                      disabled
-                      className="w-full px-3 py-1.5 rounded-lg text-xs font-medium border border-white/10 bg-white/5 text-gray-500 cursor-not-allowed"
-                    >
-                      Скоро
-                    </button>
-                  ) : integration.id === 'instagram' ? (
-                    <a
-                      href={integration.connected ? '#' : `/api/instagram/oauth?businessId=${business?.id}`}
-                      className={cn(
-                        'block w-full px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors active:scale-[0.98] text-center',
-                        integration.connected
-                          ? 'border border-white/20 bg-white/10 text-white hover:bg-white/20 cursor-default'
-                          : 'bg-gradient-to-r from-[#f09433] via-[#e6683c] to-[#dc2743] text-white hover:opacity-90'
-                      )}
-                      style={!integration.connected ? { boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' } : {}}
-                      onClick={(e) => integration.connected && e.preventDefault()}
-                    >
-                      {integration.connected ? 'Підключено' : 'Підключити'}
-                    </a>
+                  <span className="text-sm font-semibold text-white">{integration.name}</span>
+                  {integration.connected ? (
+                    <CheckIcon className="w-4 h-4 text-green-400 ml-auto" />
                   ) : (
-                    <button
-                      type="button"
-                      disabled
-                      className="w-full px-3 py-1.5 rounded-lg text-xs font-medium border border-white/10 bg-white/5 text-gray-500 cursor-not-allowed"
-                    >
-                      Скоро
-                    </button>
+                    <XIcon className="w-4 h-4 text-gray-500 ml-auto" />
                   )}
                 </div>
+                <p className="text-[10px] text-gray-400 mb-2">{integration.shortDesc}</p>
+                {integration.id === 'telegram' ? (
+                  <TelegramQuickConnectButton
+                    businessId={business?.id}
+                    connected={integration.connected}
+                    onConnected={onTelegramConnected}
+                    onDisconnected={onTelegramConnected}
+                    onOpenSettings={() => router.push('/dashboard/settings?tab=integrations')}
+                  />
+                ) : integration.id === 'instagram' ? (
+                  <a
+                    href={integration.connected ? '#' : `/api/instagram/oauth?businessId=${business?.id}`}
+                    className={cn(
+                      'block w-full px-2 py-1.5 rounded-lg text-[11px] font-semibold text-center transition-colors',
+                      integration.connected
+                        ? 'border border-white/20 bg-white/5 text-gray-400 cursor-default'
+                        : 'bg-gradient-to-r from-[#f09433] to-[#e6683c] text-white hover:opacity-90'
+                    )}
+                    onClick={(e) => integration.connected && e.preventDefault()}
+                  >
+                    {integration.connected ? 'Підключено' : 'Підключити'}
+                  </a>
+                ) : (
+                  <div className="w-full px-2 py-1.5 rounded-lg text-[11px] font-medium text-center border border-white/10 bg-white/5 text-gray-500">
+                    Скоро
+                  </div>
+                )}
               </div>
             ))}
           </div>
         </div>
 
         <div className="dashboard-sidebar-col space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
-          {/* Повідомлення з соцмереж — дубль у кабінет, можливість відповісти */}
-          {business?.id && (
-            <SocialMessagesCard businessId={business.id} />
-          )}
-          <div className="rounded-xl p-4 md:p-6 card-glass min-w-0 overflow-hidden">
-            <h3 className="text-base md:text-lg font-semibold text-white mb-3 md:mb-4" style={{ letterSpacing: '-0.01em' }}>
-              Швидкі дії
-            </h3>
-            <div className="space-y-2">
+          {business?.id && <SocialMessagesCard businessId={business.id} />}
+          <div className="rounded-xl p-4 card-glass">
+            <h3 className="text-sm font-semibold text-white mb-2">Швидкі дії</h3>
+            <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => router.push('/dashboard/settings?tab=telegram')}
-                className="w-full px-3 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-sm font-semibold transition-colors active:scale-[0.98] text-left"
-                style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}
+                onClick={() => router.push('/dashboard/settings?tab=integrations')}
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-white/20 text-white hover:bg-white/10"
               >
-                Налаштування Telegram
+                Інтеграції
               </button>
               <button
                 type="button"
                 onClick={() => router.push('/dashboard/main')}
-                className="w-full px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors text-left"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-white/20 text-white hover:bg-white/10"
               >
-                Головна (повідомлення)
+                Головна
               </button>
               <button
                 type="button"
                 onClick={() => router.push('/dashboard/appointments')}
-                className="w-full px-3 py-2 border border-white/20 bg-white/10 text-white hover:bg-white/20 rounded-lg text-sm font-medium transition-colors text-left"
+                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-white/20 text-white hover:bg-white/10"
               >
                 Записи
               </button>

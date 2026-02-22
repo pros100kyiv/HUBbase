@@ -477,7 +477,7 @@ export async function POST(request: Request) {
         phone: null,
         avatar: telegramData.photo_url || null,
         telegramId: telegramId,
-        telegramBotToken: botToken,
+        telegramBotToken: null,
         telegramChatId: telegramData.id.toString(),
         telegramNotificationsEnabled: true,
         smsProvider: 'smsc',
@@ -537,18 +537,6 @@ export async function POST(request: Request) {
         lastSyncAt: new Date()
       }
     })
-
-    // Налаштовуємо webhook
-    try {
-      const webhookUrl = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'}/api/telegram/webhook?businessId=${newBusiness.id}`
-      await fetch(`https://api.telegram.org/bot${botToken}/setWebhook`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: webhookUrl })
-      })
-    } catch (error) {
-      console.error('Помилка налаштування webhook:', error)
-    }
 
     return NextResponse.json({
       success: true,

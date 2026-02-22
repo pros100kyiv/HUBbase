@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { TelegramOAuth } from './TelegramOAuth'
 
 interface TelegramSettingsProps {
   business: {
@@ -12,15 +12,23 @@ interface TelegramSettingsProps {
     telegramNotificationsEnabled?: boolean
   }
   onUpdate: (updated: any) => void
+  onRefetchBusiness?: () => Promise<void>
 }
 
-export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) {
-  const [telegramBotToken] = useState(business.telegramBotToken || '')
+export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: TelegramSettingsProps) {
+  const [telegramBotToken, setTelegramBotToken] = useState(business.telegramBotToken || '')
+  const [tokenInput, setTokenInput] = useState('')
+  const [savingToken, setSavingToken] = useState(false)
+  const [tokenError, setTokenError] = useState<string | null>(null)
   const [telegramUsers, setTelegramUsers] = useState<any[]>([])
   const [activePasswords, setActivePasswords] = useState<any[]>([])
   const [clientPasswordCount, setClientPasswordCount] = useState(1)
   const [webhookSet, setWebhookSet] = useState<boolean | null>(null)
   const [settingWebhook, setSettingWebhook] = useState(false)
+
+  useEffect(() => {
+    setTelegramBotToken(business.telegramBotToken || '')
+  }, [business.telegramBotToken])
 
   const loadData = () => {
     if (business.id) {
@@ -40,6 +48,33 @@ export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) 
   useEffect(() => {
     loadData()
   }, [business.id])
+
+  const saveToken = async () => {
+    if (!business.id || !tokenInput.trim()) return
+    setTokenError(null)
+    setSavingToken(true)
+    try {
+      const res = await fetch('/api/telegram/set-token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ businessId: business.id, token: tokenInput.trim() }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setTelegramBotToken(tokenInput.trim())
+        setTokenInput('')
+        await onRefetchBusiness?.()
+        const { toast } = await import('@/components/ui/toast')
+        toast({ title: data.message || 'Бот підключено', type: 'success', duration: 4000 })
+      } else {
+        setTokenError(data.error || 'Не вдалося підключити')
+      }
+    } catch (e: any) {
+      setTokenError(e?.message || 'Помилка з\'єднання')
+    } finally {
+      setSavingToken(false)
+    }
+  }
 
   // Статус webhook для отримання повідомлень у кабінеті
   useEffect(() => {
@@ -134,29 +169,72 @@ export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) 
   }
 
   return (
-    <div className="space-y-4">
-      {/* Telegram OAuth */}
-      <TelegramOAuth
-        businessId={business.id}
-        onConnected={(data) => {
-          onUpdate({
-            ...business,
-            telegramChatId: data.user?.telegramId?.toString()
-          })
-        }}
-      />
+    <div className="card-candy p-6 space-y-4">
+      <div className="flex items-center gap-2 mb-2">
+        <span className="text-xl">🤖</span>
+        <h3 className="text-lg font-black text-gray-900 dark:text-white">Telegram</h3>
+      </div>
+      <p className="text-sm text-gray-600 dark:text-gray-400">
+        Кожен бізнес підключає свій бот — повідомлення надходитимуть тільки до вашого кабінету.
+      </p>
 
-      {/* Інформація про токен бота */}
-      {telegramBotToken && (
-        <div className="card-candy p-4 bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800">
-          <p className="text-sm font-medium text-green-800 dark:text-green-200">
-            ✅ Токен бота встановлено автоматично при реєстрації
-          </p>
-          <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-            Токен: {telegramBotToken.substring(0, 10)}...
-          </p>
+      {/* Токен бота — обов'язково спочатку */}
+      <div className="space-y-2">
+        <label className="text-xs font-medium text-gray-600 dark:text-gray-400 block">Токен бота (з @BotFather)</label>
+        <div className="flex gap-2">
+          <input
+            type="password"
+            value={tokenInput}
+            onChange={(e) => { setTokenInput(e.target.value); setTokenError(null) }}
+            placeholder={telegramBotToken ? 'Змінити токен...' : '123456789:ABCdefGHI...'}
+            className="flex-1 px-3 py-2 rounded-candy-xs border border-gray-300 dark:border-gray-600 bg-white dark:bg-gray-700 text-sm"
+          />
+          <Button
+            onClick={saveToken}
+            disabled={savingToken || !tokenInput.trim()}
+            size="sm"
+            className="bg-candy-blue hover:bg-candy-blue/90 text-white"
+          >
+            {savingToken ? '...' : telegramBotToken ? 'Змінити' : 'Підключити'}
+          </Button>
         </div>
-      )}
+        {telegramBotToken && (
+          <div className="flex items-center gap-2 flex-wrap">
+            <p className="text-xs text-green-600 dark:text-green-400">Бот підключено ({telegramBotToken.substring(0, 15)}...)</p>
+            <Button
+              variant="outline"
+              size="sm"
+              className="text-xs h-7"
+              onClick={async () => {
+                if (!window.confirm('Відключити Telegram? Повідомлення більше не надходитимуть.')) return
+                try {
+                  const res = await fetch('/api/telegram/disconnect', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ businessId: business.id }),
+                  })
+                  const data = await res.json()
+                  if (res.ok && data.success) {
+                    setTelegramBotToken('')
+                    await onRefetchBusiness?.()
+                    const { toast } = await import('@/components/ui/toast')
+                    toast({ title: 'Telegram відключено', type: 'success' })
+                  } else {
+                    const { toast } = await import('@/components/ui/toast')
+                    toast({ title: 'Помилка', description: data.error, type: 'error' })
+                  }
+                } catch (e: any) {
+                  const { toast } = await import('@/components/ui/toast')
+                  toast({ title: 'Помилка', description: e?.message, type: 'error' })
+                }
+              }}
+            >
+              Відключити
+            </Button>
+          </div>
+        )}
+        {tokenError && <p className="text-xs text-red-500">{tokenError}</p>}
+      </div>
 
       {/* Отримання повідомлень у кабінеті — один клік: Натиснути → Підтвердити → Готово */}
       {telegramBotToken && (
@@ -186,9 +264,12 @@ export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) 
         </div>
       )}
 
-      {/* Паролі активації */}
-      <div className="card-candy p-4">
-        <h2 className="text-subheading mb-4">Паролі активації</h2>
+      {/* Паролі активації — згорнутий за замовчуванням */}
+      <details className="card-candy p-4">
+        <summary className="cursor-pointer list-none">
+          <h2 className="text-subheading inline">Паролі активації</h2>
+        </summary>
+        <div className="mt-4">
         <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
           Згенеруйте паролі для адміністратора та клієнтів. Користувачі використовують команду <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">/start &lt;пароль&gt;</code> в Telegram боті.
         </p>
@@ -323,11 +404,18 @@ export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) 
             )}
           </div>
         )}
-      </div>
+        </div>
+      </details>
 
-      {/* Користувачі */}
-      <div className="card-candy p-4">
-        <h2 className="text-subheading mb-4">Користувачі Telegram бота</h2>
+      {/* Користувачі — згорнутий */}
+      <details className="card-candy p-4">
+        <summary className="cursor-pointer list-none">
+          <h2 className="text-subheading inline">Користувачі бота</h2>
+          {telegramUsers.length > 0 && (
+            <span className="text-xs text-gray-500 ml-2">({telegramUsers.length})</span>
+          )}
+        </summary>
+        <div className="mt-4">
         
         {telegramUsers.length === 0 ? (
           <p className="text-sm text-gray-500 text-center py-4">
@@ -357,18 +445,14 @@ export function TelegramSettings({ business, onUpdate }: TelegramSettingsProps) 
             ))}
           </div>
         )}
-      </div>
+        </div>
+      </details>
 
-      {/* Інструкції */}
-      <div className="card-candy p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-        <h3 className="text-sm font-black text-foreground mb-2">📋 Інструкції</h3>
-        <ol className="text-xs text-gray-700 dark:text-gray-300 space-y-1 list-decimal list-inside">
-          <li>Токен бота встановлено автоматично при реєстрації</li>
-          <li>Натисніть «Увімкнути отримання повідомлень» — підтвердіть — готово</li>
-          <li>Згенеруйте паролі для адміністратора та клієнтів</li>
-          <li>Користувачі відправляють <code className="bg-gray-200 dark:bg-gray-700 px-1 rounded">/start &lt;пароль&gt;</code> боту</li>
-        </ol>
-      </div>
+      {/* Короткі підказки */}
+      <p className="text-xs text-gray-500">
+        Швидке підключення: <Link href="/dashboard/social" className="text-candy-blue hover:underline">Соцмережі</Link> → Підключити.
+        Власний бот: @BotFather → токен → увімкнути повідомлення.
+      </p>
     </div>
   )
 }

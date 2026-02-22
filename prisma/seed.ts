@@ -13,7 +13,7 @@ async function main() {
 
   const business = await prisma.business.upsert({
     where: { id: 'business-1' },
-    update: {},
+    update: { aiChatEnabled: true },
     create: {
       id: 'business-1',
       name: '045 Barbershop',
@@ -26,6 +26,7 @@ async function main() {
       trialEndsAt,
       subscriptionStatus: 'trial',
       telegramNotificationsEnabled: true,
+      aiChatEnabled: true,
     },
   })
 
@@ -106,10 +107,35 @@ async function main() {
     },
   })
 
+  await prisma.$executeRawUnsafe(`
+    CREATE TABLE IF NOT EXISTS "SystemSetting" (
+      "key" TEXT PRIMARY KEY,
+      "value" TEXT,
+      "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+      "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+  `)
+  await prisma.systemSetting.upsert({
+    where: { key: 'ai_provider' },
+    update: { value: 'lm_studio' },
+    create: { key: 'ai_provider', value: 'lm_studio' },
+  })
+  await prisma.systemSetting.upsert({
+    where: { key: 'lm_studio_base_url' },
+    update: { value: 'http://127.0.0.1:1234/v1' },
+    create: { key: 'lm_studio_base_url', value: 'http://127.0.0.1:1234/v1' },
+  })
+  await prisma.systemSetting.upsert({
+    where: { key: 'lm_studio_model' },
+    update: { value: '' },
+    create: { key: 'lm_studio_model', value: '' },
+  })
+
   console.log('Seed data created:', { business, service1, service2, service3, master1, master2 })
   console.log('\nТестовий акаунт:')
   console.log('Email: admin@045barbershop.com')
   console.log('Password: password123')
+  console.log('\nLM Studio: ai_provider=lm_studio, base_url=http://127.0.0.1:1234/v1')
 }
 
 main()

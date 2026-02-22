@@ -118,9 +118,6 @@ export async function POST(request: Request) {
       // Хешуємо пароль
       const hashedPassword = validated.password ? await hashPassword(validated.password) : null
 
-      // Автоматично встановлюємо токен Telegram бота
-      const defaultTelegramBotToken = process.env.DEFAULT_TELEGRAM_BOT_TOKEN || '8258074435:AAHTKLTw6UDd92BV0Go-2ZQ_f2g_3QTXiIo'
-
       // Генеруємо унікальний businessIdentifier
       let businessIdentifier: string
       let attempts = 0
@@ -150,7 +147,7 @@ export async function POST(request: Request) {
           businessIdentifier: businessIdentifier,
           niche: BusinessNiche.OTHER,
           customNiche: null,
-          telegramBotToken: defaultTelegramBotToken,
+          telegramBotToken: null,
           telegramNotificationsEnabled: true,
           trialEndsAt: getTrialEndDate(),
           subscriptionStatus: 'trial',

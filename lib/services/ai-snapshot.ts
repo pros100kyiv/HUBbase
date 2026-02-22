@@ -3,7 +3,7 @@ import { toolAnalyticsKpi, toolAppointmentsStats, toolBizOverview, toolPaymentsK
 
 type CacheEntry = { value: string; expiresAt: number }
 
-const MEMORY_TTL_MS = 60_000
+const MEMORY_TTL_MS = 150_000 // Довше кеш = менше перебудов snapshot
 const DB_TTL_MS = 24 * 60 * 60 * 1000
 
 declare global {
@@ -75,26 +75,23 @@ export async function getBusinessSnapshotText(businessId: string): Promise<strin
 
   // Compact, token-friendly snapshot string (not pretty JSON)
   const snapshot = [
-    `BIZ_OVERVIEW ${compactJson(overview.data, 800)}`,
-    `KPI_7D ${compactJson(kpi7d.data, 900)}`,
-    `APPT_STATS_7D ${compactJson(stats7d.data, 900)}`,
-    `PAYMENTS_30D ${compactJson(payments30d.data, 900)}`,
-    `OPS ${compactJson(ops, 220)}`,
+    `BIZ_OVERVIEW ${compactJson(overview.data, 450)}`,
+    `KPI_7D ${compactJson(kpi7d.data, 500)}`,
+    `APPT_STATS_7D ${compactJson(stats7d.data, 500)}`,
+    `PAYMENTS_30D ${compactJson(payments30d.data, 500)}`,
+    `OPS ${compactJson(ops, 120)}`,
   ].join('\n')
 
-  // Persist
-  try {
-    await prisma.businessAiSnapshot.upsert({
+  c.set(businessId, { value: snapshot, expiresAt: nowMs() + MEMORY_TTL_MS })
+  // Persist in background (don't block response)
+  prisma.businessAiSnapshot
+    .upsert({
       where: { businessId },
       create: { businessId, snapshot },
       update: { snapshot },
       select: { id: true },
     })
-  } catch {
-    // ignore if migration not applied yet
-  }
-
-  c.set(businessId, { value: snapshot, expiresAt: nowMs() + MEMORY_TTL_MS })
+    .catch(() => {})
   return snapshot
 }
 

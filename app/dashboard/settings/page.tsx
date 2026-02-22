@@ -251,7 +251,9 @@ export default function SettingsPage() {
     const params = new URLSearchParams(window.location.search)
     const tabParam = params.get('tab')
     const allowedTabs: Tab[] = ['info', 'schedule', 'masters', 'services', 'businessCard', 'integrations']
-    if (tabParam && allowedTabs.includes(tabParam as Tab)) {
+    if (tabParam === 'telegram') {
+      setActiveTab('integrations')
+    } else if (tabParam && allowedTabs.includes(tabParam as Tab)) {
       setActiveTab(tabParam as Tab)
     }
   }, [])
@@ -1271,6 +1273,16 @@ export default function SettingsPage() {
             <div className="rounded-xl p-4 md:p-6 card-glass">
             <IntegrationsSettings
               business={business}
+              onRefetchBusiness={async () => {
+                const r = await fetch(`/api/business/${business.id}`)
+                if (r.ok) {
+                  const d = await r.json()
+                  if (d.business) {
+                    setBusiness(d.business)
+                    localStorage.setItem('business', JSON.stringify(d.business))
+                  }
+                }
+              }}
               onUpdate={async (data) => {
                 const response = await fetch(`/api/business/${business.id}`, {
                   method: 'PATCH',

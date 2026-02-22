@@ -1,173 +1,101 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
 
-// DATABASE_URL — pooled (Neon: -pooler). Для міграцій на Neon додай DIRECT_URL (без -pooler) в .env
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-// Типи ніш для модульної архітектури
-enum BusinessNiche {
-  SALON // Салон краси
-  BARBERSHOP // Барбершоп
-  STO // СТО (Станція технічного обслуговування)
-  CAR_WASH // Автомийка
-  SPA // СПА
-  FITNESS // Фітнес тренер
-  BEAUTY // Бюті сфера
-  TIRE_SERVICE // Шиномонтаж
-  EDUCATION // Освіта
-  MEDICINE // Медицина
-  RESTAURANT // Ресторан
-  OTHER // Інше
-}
-
-// Тарифи підписки
-enum SubscriptionPlan {
-  FREE     // Безкоштовний / після trial без оплати
-  START    // Старт — 1 майстер, базовий функціонал
-  BUSINESS // Бізнес — кілька майстрів, аналітика, Telegram
-  PRO      // Про — все включено, Instagram, AI
-}
-
-// Ролі користувачів
-enum UserRole {
-  OWNER // Власник
-  ADMIN // Адміністратор
-  MANAGER // Менеджер
-  EMPLOYEE // Співробітник
-  VIEWER // Переглядач
-  CLIENT // Клієнт (тільки розсилки)
-  DEVELOPER // Розробник (повний контроль)
-}
-
-// Запити клієнта на зміну запису (перенесення / скасування)
-enum AppointmentChangeRequestType {
-  RESCHEDULE
-  CANCEL
-}
-
-enum AppointmentChangeRequestStatus {
-  PENDING
-  APPROVED
-  REJECTED
-  WITHDRAWN
-}
-
-// Логи нагадувань (поки що тільки Push)
-enum ReminderChannel {
-  PUSH
-}
-
-enum ReminderStatus {
-  SENT
-  FAILED
-}
-
 model Business {
-  id                           String              @id @default(cuid())
+  id                           String                     @id @default(cuid())
   name                         String
-  slug                         String              @unique // для URL: /booking/[slug]
-  email                        String              @unique
-  password                     String? // хешований пароль (опціональний для OAuth)
-  resetToken                   String? // Токен для відновлення паролю
-  resetTokenExpiry             DateTime? // Термін дії токену відновлення
-  googleId                     String?             @unique // Google OAuth ID
-  telegramId                   BigInt?             @unique // Telegram OAuth ID (для автоматичної реєстрації/входу)
+  slug                         String                     @unique
+  email                        String                     @unique
+  password                     String?
+  resetToken                   String?
+  resetTokenExpiry             DateTime?
+  googleId                     String?                    @unique
+  telegramId                   BigInt?                    @unique
   phone                        String?
   address                      String?
   description                  String?
   logo                         String?
-  avatar                       String? // Аватар користувача (з Telegram OAuth або завантажений)
-  primaryColor                 String?             @default("#C5A059")
-  secondaryColor               String?             @default("#FFFFFF")
-  backgroundColor              String?             @default("#050505")
-  surfaceColor                 String?             @default("#121212")
-  hideRevenue                  Boolean             @default(false)
-  isActive                     Boolean             @default(true)
-  // Модульна архітектура
-  niche                        BusinessNiche       @default(OTHER) // Ніша бізнесу
-  customNiche                  String? // Кастомна категорія (якщо вибрано OTHER або створено свою)
-  businessIdentifier           String?             @unique // Унікальний ідентифікатор бізнесу (наприклад 11122)
-  profileCompleted             Boolean             @default(false) // Чи заповнений профіль
-  settings                     String? // JSON: додаткові налаштування для ніші
-  // Візитівка
-  businessCardBackgroundImage  String? // URL до фонового зображення
-  slogan                       String? // Слоган бізнесу
-  additionalInfo               String? // Додаткова інформація (JSON або текст)
-  socialMedia                  String? // JSON: { "facebook": "...", "instagram": "...", "telegram": "..." }
-  workingHours                 String? // JSON: { "monday": { "start": "09:00", "end": "18:00", "enabled": true }, ... }
-  location                     String? // Розташування/адреса для візитівки
-  // Telegram інтеграція
-  telegramBotToken             String? // Токен Telegram бота для бізнесу
-  telegramChatId               String? // ID чату для сповіщень
-  telegramNotificationsEnabled Boolean             @default(false) // Чи увімкнені сповіщення
-  telegramSettings             String? // JSON: налаштування бота (розсилки, команди тощо)
-  telegramWebhookSetAt         DateTime? // Коли останній раз успішно встановлено webhook (щоб після оновлення сторінки показувати «Готово»)
-  // AI Чат
-  aiChatEnabled                Boolean             @default(false) // Чи увімкнений AI чат
-  aiProvider                   String? // 'gemini', 'openai'
-  aiApiKey                     String? // API ключ для AI
-  aiSettings                   String? // JSON: налаштування AI (temperature, model, тощо)
-  // SMS/Email
-  smsProvider                  String? // 'twilio', 'smsc'
+  avatar                       String?
+  primaryColor                 String?                    @default("#C5A059")
+  secondaryColor               String?                    @default("#FFFFFF")
+  backgroundColor              String?                    @default("#050505")
+  surfaceColor                 String?                    @default("#121212")
+  hideRevenue                  Boolean                    @default(false)
+  isActive                     Boolean                    @default(true)
+  niche                        BusinessNiche              @default(OTHER)
+  customNiche                  String?
+  businessIdentifier           String?                    @unique
+  profileCompleted             Boolean                    @default(false)
+  settings                     String?
+  businessCardBackgroundImage  String?
+  slogan                       String?
+  additionalInfo               String?
+  socialMedia                  String?
+  workingHours                 String?
+  location                     String?
+  telegramBotToken             String?
+  telegramChatId               String?
+  telegramNotificationsEnabled Boolean                    @default(false)
+  telegramSettings             String?
+  aiChatEnabled                Boolean                    @default(false)
+  aiProvider                   String?
+  aiApiKey                     String?
+  aiSettings                   String?
+  smsProvider                  String?
   smsApiKey                    String?
-  smsSender                    String? // Ім'я відправника
-  emailProvider                String? // 'sendgrid', 'mailgun'
+  smsSender                    String?
+  emailProvider                String?
   emailApiKey                  String?
-  emailFrom                    String? // Email відправника
-  emailFromName                String? // Ім'я відправника
-  // Платежі
-  paymentProvider              String? // 'liqpay', 'fondy', 'portmone'
+  emailFrom                    String?
+  emailFromName                String?
+  paymentProvider              String?
   paymentApiKey                String?
   paymentMerchantId            String?
-  paymentEnabled               Boolean             @default(false)
-  // Нагадування
-  remindersEnabled             Boolean             @default(false)
-  reminderSmsEnabled           Boolean             @default(false)
-  reminderEmailEnabled         Boolean             @default(false)
-  // Підписка та trial
-  subscriptionPlan             SubscriptionPlan    @default(FREE)
-  trialEndsAt                  DateTime? // Кінець безкоштовного trial (14 днів з реєстрації)
-  subscriptionStatus           String? // trial | active | expired | cancelled
-  subscriptionCurrentPeriodEnd DateTime? // Кінець поточного оплаченого періоду
-  // Безпека пристроїв
-  trustedDevices               String? // JSON: масив deviceId дозволених пристроїв
-  // Відносини
-  masters                      Master[]
-  services                     Service[]
+  paymentEnabled               Boolean                    @default(false)
+  remindersEnabled             Boolean                    @default(false)
+  reminderSmsEnabled           Boolean                    @default(false)
+  reminderEmailEnabled         Boolean                    @default(false)
+  trustedDevices               String?
+  createdAt                    DateTime                   @default(now())
+  updatedAt                    DateTime                   @updatedAt
+  telegramWebhookSetAt         DateTime?
+  subscriptionPlan             SubscriptionPlan           @default(FREE)
+  trialEndsAt                  DateTime?
+  subscriptionStatus           String?
+  subscriptionCurrentPeriodEnd DateTime?
+  aiChatMessages               AIChatMessage[]
+  analytics                    AnalyticsReport[]
   appointments                 Appointment[]
-  users                        BusinessUser[] // Користувачі бізнесу
-  telegramUsers                TelegramUser[] // Користувачі Telegram бота
-  telegramBroadcasts           TelegramBroadcast[] // Розсилки Telegram
-  telegramReminders            TelegramReminder[] // Нагадування Telegram
-  clients                      Client[] // Клієнти
-  analytics                    AnalyticsReport[] // Аналітичні звіти
-  imports                      DataImport[] // Імпорти даних
-  exports                      DataExport[] // Експорти даних
-  aiChatMessages               AIChatMessage[] // AI чат повідомлення
-  aiSnapshot                   BusinessAiSnapshot?
-  broadcasts                   Broadcast[] // Розсилки SMS/Email
-  payments                     Payment[] // Платежі
-  clientSegments               ClientSegment[] // Сегменти клієнтів
-  smsMessages                  SMSMessage[] // SMS повідомлення
-  socialIntegrations           SocialIntegration[] // Інтеграції з соцмережами
-  socialInboxMessages          SocialInboxMessage[] // Вхідні/исхідні повідомлення з соцмереж (дубль в кабінет)
-  notes                        Note[] // Нотатки
-  modules                      BusinessModule[] // Модулі/розширення бізнесу
-  // Запити/нагодування/пуш-підписки (multi-tenant обов'язково через businessId)
   appointmentAccessTokens      AppointmentAccessToken[]
   appointmentChangeRequests    AppointmentChangeRequest[]
-  pushSubscriptions            PushSubscription[]
   appointmentEvents            AppointmentEvent[]
+  broadcasts                   Broadcast[]
+  aiSnapshot                   BusinessAiSnapshot?
+  modules                      BusinessModule[]
+  users                        BusinessUser[]
+  clients                      Client[]
+  clientSegments               ClientSegment[]
+  exports                      DataExport[]
+  imports                      DataImport[]
+  masters                      Master[]
+  notes                        Note[]
+  payments                     Payment[]
+  pushSubscriptions            PushSubscription[]
   reminderLogs                 ReminderLog[]
-  createdAt                    DateTime            @default(now())
-  updatedAt                    DateTime            @updatedAt
+  services                     Service[]
+  socialInboxMessages          SocialInboxMessage[]
+  socialIntegrations           SocialIntegration[]
+  telegramBroadcasts           TelegramBroadcast[]
+  telegramChatMappings         TelegramChatMapping[]
+  telegramReminders            TelegramReminder[]
+  telegramUsers                TelegramUser[]
+  smsMessages                  SMSMessage[]
 
   @@index([slug])
   @@index([email])
@@ -177,28 +105,26 @@ model Business {
 }
 
 model Master {
-  id                 String              @id @default(cuid())
-  businessId         String
-  business           Business            @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  name               String
-  photo              String?
-  bio                String?
-  rating             Float               @default(0)
-  isActive           Boolean             @default(true)
-  workingHours           String? // JSON: { "monday": { "start": "09:00", "end": "18:00", "enabled": true }, ... }
-  scheduleDateOverrides  String? // JSON: { "2025-02-15": { "enabled": true, "start": "09:00", "end": "18:00" }, "2025-02-20": { "enabled": false } }
-  // Розширені метрики
-  totalAppointments  Int                 @default(0) // Загальна кількість записів
-  totalRevenue       BigInt              @default(0) // Загальний дохід (в копійках)
-  averageRating      Float               @default(0) // Середній рейтинг
-  utilizationRate    Float               @default(0) // Коефіцієнт використання (0-100%)
-  // Додаткові дані для різних ніш
-  metadata           String? // JSON: додаткові дані залежно від ніші
-  appointments       Appointment[]
-  changeRequests     AppointmentChangeRequest[]
-  utilizationMetrics MasterUtilization[] // Метрики використання
-  createdAt          DateTime            @default(now())
-  updatedAt          DateTime            @updatedAt
+  id                    String                     @id @default(cuid())
+  businessId            String
+  name                  String
+  photo                 String?
+  bio                   String?
+  rating                Float                      @default(0)
+  isActive              Boolean                    @default(true)
+  workingHours          String?
+  scheduleDateOverrides String?
+  totalAppointments     Int                        @default(0)
+  totalRevenue          BigInt                     @default(0)
+  averageRating         Float                      @default(0)
+  utilizationRate       Float                      @default(0)
+  metadata              String?
+  createdAt             DateTime                   @default(now())
+  updatedAt             DateTime                   @updatedAt
+  appointments          Appointment[]
+  changeRequests        AppointmentChangeRequest[]
+  business              Business                   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  utilizationMetrics    MasterUtilization[]
 
   @@index([businessId])
   @@index([isActive])
@@ -207,51 +133,47 @@ model Master {
 model Service {
   id          String   @id @default(cuid())
   businessId  String
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   name        String
   price       Int
-  duration    Int // in minutes
+  duration    Int
   category    String?
-  subcategory String? // Підкатегорія (підпапка)
+  subcategory String?
   description String?
   image       String?
   isActive    Boolean  @default(true)
-  masterIds   String? // JSON array of master IDs who can perform this service
+  masterIds   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
 }
 
-// Клієнт як окрема сутність для аналітики
 model Client {
   id                   String             @id @default(cuid())
   businessId           String
-  business             Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
   name                 String
-  phone                String // Унікальний телефон в межах бізнесу
+  phone                String
   email                String?
-  // Аналітичні метрики
-  totalAppointments    Int                @default(0) // Загальна кількість записів
-  totalSpent           BigInt             @default(0) // Загальна сума витрат (в копійках)
-  averageOrderValue    BigInt             @default(0) // Середній чек (в копійках)
-  lifetimeValue        BigInt             @default(0) // Customer Lifetime Value (в копійках)
-  firstAppointmentDate DateTime? // Дата першого запису
-  lastAppointmentDate  DateTime? // Дата останнього запису
-  retentionRate        Float              @default(0) // Коефіцієнт утримання (0-100%)
-  isActive             Boolean            @default(true) // Чи є активним клієнтом
-  // Статус клієнта: new (новий), regular (постійний), vip (VIP), inactive (неактивний)
+  totalAppointments    Int                @default(0)
+  totalSpent           BigInt             @default(0)
+  averageOrderValue    BigInt             @default(0)
+  lifetimeValue        BigInt             @default(0)
+  firstAppointmentDate DateTime?
+  lastAppointmentDate  DateTime?
+  retentionRate        Float              @default(0)
+  isActive             Boolean            @default(true)
   status               String             @default("new")
-  // Додаткові дані
   notes                String?
-  tags                 String? // JSON: масив тегів
-  metadata             String? // JSON: додаткові дані
-  appointments         Appointment[]
-  telegramReminders    TelegramReminder[] // Нагадування для клієнта
-  payments             Payment[] // Платежі клієнта
-  smsMessages          SMSMessage[] // SMS повідомлення клієнту
+  tags                 String?
+  metadata             String?
   createdAt            DateTime           @default(now())
   updatedAt            DateTime           @updatedAt
+  appointments         Appointment[]
+  business             Business           @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  payments             Payment[]
+  telegramReminders    TelegramReminder[]
+  smsMessages          SMSMessage[]
 
   @@unique([businessId, phone])
   @@index([businessId])
@@ -261,44 +183,40 @@ model Client {
 }
 
 model Appointment {
-  id                  String    @id @default(cuid())
+  id                  String                     @id @default(cuid())
   businessId          String
-  business            Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
   masterId            String
-  master              Master    @relation(fields: [masterId], references: [id], onDelete: Cascade)
-  // Зв'язок з клієнтом (опціонально для зворотної сумісності)
-  clientId            String? // ID клієнта, якщо він зареєстрований
-  client              Client?   @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  // Зворотна сумісність
+  clientId            String?
   clientName          String
   clientPhone         String
   clientEmail         String?
   startTime           DateTime
   endTime             DateTime
-  status              String    @default("Pending") // Pending, Confirmed, Done, Cancelled
-  services            String // JSON array of service IDs (може бути [])
-  customServiceName   String? // Текст послуги від клієнта (вартість після процедури)
-  customPrice         Int? // Індивідуальна ціна для клієнта (в копійках), вказується після процедури
-  procedureDone       String? // Що зроблено після візиту (опис виконаних послуг)
+  status              String                     @default("Pending")
+  services            String
+  customServiceName   String?
+  customPrice         Int?
+  procedureDone       String?
   notes               String?
-  reminderSent        Boolean   @default(false)
-  // Циклічні записи
-  isRecurring         Boolean   @default(false)
-  recurrencePattern   String? // JSON: { type: "daily"|"weekly"|"monthly", daysOfWeek: [0-6], endDate: "ISO string" }
-  recurrenceEndDate   DateTime? // Дата закінчення циклу
-  parentAppointmentId String? // ID батьківського запису (для циклічних)
-  isFromBooking       Boolean   @default(false) // Чи створено через публічне бронювання (QR/посилання)
-  source              String? // Джерело запису: "qr", "link", "phone", "walk_in", "ad_campaign_*", тощо
-  campaignId          String? // ID рекламної кампанії (якщо запис з реклами)
-  payments            Payment[] // Платежі за цей запис
-  // Клієнтський доступ + запити на перенесення/скасування + пуш
+  reminderSent        Boolean                    @default(false)
+  isRecurring         Boolean                    @default(false)
+  recurrencePattern   String?
+  recurrenceEndDate   DateTime?
+  parentAppointmentId String?
+  isFromBooking       Boolean                    @default(false)
+  source              String?
+  campaignId          String?
+  createdAt           DateTime                   @default(now())
+  updatedAt           DateTime                   @updatedAt
+  business            Business                   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  client              Client?                    @relation(fields: [clientId], references: [id])
+  master              Master                     @relation(fields: [masterId], references: [id], onDelete: Cascade)
   accessToken         AppointmentAccessToken?
   changeRequests      AppointmentChangeRequest[]
-  pushSubscriptions   PushSubscription[]
   events              AppointmentEvent[]
+  payments            Payment[]
+  pushSubscriptions   PushSubscription[]
   reminderLogs        ReminderLog[]
-  createdAt           DateTime  @default(now())
-  updatedAt           DateTime  @updatedAt
 
   @@index([businessId])
   @@index([masterId])
@@ -310,8 +228,6 @@ model Appointment {
   @@index([businessId, status])
 }
 
-// Токен доступу для клієнта (magic-link без акаунту).
-// Зберігаємо тільки hash; сам токен показуємо клієнту один раз після бронювання.
 model AppointmentAccessToken {
   id            String      @id @default(cuid())
   businessId    String
@@ -321,15 +237,13 @@ model AppointmentAccessToken {
   ip            String?
   revokedAt     DateTime?
   createdAt     DateTime    @default(now())
-
-  business      Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
   appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  business      Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
   @@index([tokenHash])
 }
 
-// Підписка браузера на Web Push для конкретного запису (щоб надсилати нагадування).
 model PushSubscription {
   id            String      @id @default(cuid())
   businessId    String
@@ -340,35 +254,32 @@ model PushSubscription {
   userAgent     String?
   createdAt     DateTime    @default(now())
   updatedAt     DateTime    @updatedAt
-
-  business      Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
   appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  business      Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@unique([appointmentId, endpoint])
   @@index([businessId])
   @@index([appointmentId])
 }
 
-// Запит клієнта на перенесення/скасування, який має підтвердити майстер/адмін.
 model AppointmentChangeRequest {
-  id                 String                        @id @default(cuid())
-  businessId          String
-  appointmentId       String
-  masterId            String
+  id                 String                         @id @default(cuid())
+  businessId         String
+  appointmentId      String
+  masterId           String
   type               AppointmentChangeRequestType
   status             AppointmentChangeRequestStatus @default(PENDING)
-  requestedStartTime  DateTime?
-  requestedEndTime    DateTime?
-  clientNote          String?
-  decisionNote        String?
-  decidedAt           DateTime?
-  decidedBy           String?
-  createdAt           DateTime                      @default(now())
-  updatedAt           DateTime                      @updatedAt
-
-  business            Business                      @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  appointment         Appointment                   @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
-  master              Master                        @relation(fields: [masterId], references: [id], onDelete: Cascade)
+  requestedStartTime DateTime?
+  requestedEndTime   DateTime?
+  clientNote         String?
+  decisionNote       String?
+  decidedAt          DateTime?
+  decidedBy          String?
+  createdAt          DateTime                       @default(now())
+  updatedAt          DateTime                       @updatedAt
+  appointment        Appointment                    @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  business           Business                       @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  master             Master                         @relation(fields: [masterId], references: [id], onDelete: Cascade)
 
   @@index([businessId, status])
   @@index([appointmentId])
@@ -376,7 +287,6 @@ model AppointmentChangeRequest {
   @@index([createdAt])
 }
 
-// Аудит-лог по запису (щоб видно було хто і що змінював).
 model AppointmentEvent {
   id            String      @id @default(cuid())
   businessId    String
@@ -384,160 +294,139 @@ model AppointmentEvent {
   type          String
   data          String?
   createdAt     DateTime    @default(now())
-
-  business      Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
   appointment   Appointment @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  business      Business    @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
   @@index([appointmentId])
   @@index([createdAt])
 }
 
-// Лог ручних нагадувань з кабінету.
 model ReminderLog {
-  id            String        @id @default(cuid())
+  id            String          @id @default(cuid())
   businessId    String
   appointmentId String
   channel       ReminderChannel
-  status        ReminderStatus @default(SENT)
-  triggeredBy   String        @default("manual")
+  status        ReminderStatus  @default(SENT)
+  triggeredBy   String          @default("manual")
   error         String?
-  createdAt     DateTime      @default(now())
-
-  business      Business      @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  appointment   Appointment   @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  createdAt     DateTime        @default(now())
+  appointment   Appointment     @relation(fields: [appointmentId], references: [id], onDelete: Cascade)
+  business      Business        @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
   @@index([appointmentId])
   @@index([createdAt])
 }
 
-// Користувачі бізнесу з ролями
 model BusinessUser {
   id          String    @id @default(cuid())
   businessId  String
-  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
   email       String
-  password    String? // Хешований пароль
+  password    String?
   name        String
   role        UserRole  @default(VIEWER)
-  // Права доступу (JSON)
-  permissions String? // JSON: детальні права доступу
+  permissions String?
   isActive    Boolean   @default(true)
   lastLogin   DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@unique([businessId, email])
   @@index([businessId])
   @@index([email])
 }
 
-// Метрики використання співробітників
 model MasterUtilization {
   id                String   @id @default(cuid())
   masterId          String
-  master            Master   @relation(fields: [masterId], references: [id], onDelete: Cascade)
-  date              DateTime // Дата для метрики
-  // Метрики за день
-  totalHours        Float    @default(0) // Загальна кількість годин роботи
-  bookedHours       Float    @default(0) // Заброньовані години
-  utilizationRate   Float    @default(0) // Коефіцієнт використання (0-100%)
-  appointmentsCount Int      @default(0) // Кількість записів
-  revenue           BigInt   @default(0) // Дохід за день (в копійках)
-  // Додаткові метрики
-  averageRating     Float    @default(0) // Середній рейтинг за день
-  metadata          String? // JSON: додаткові дані
+  date              DateTime
+  totalHours        Float    @default(0)
+  bookedHours       Float    @default(0)
+  utilizationRate   Float    @default(0)
+  appointmentsCount Int      @default(0)
+  revenue           BigInt   @default(0)
+  averageRating     Float    @default(0)
+  metadata          String?
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
+  master            Master   @relation(fields: [masterId], references: [id], onDelete: Cascade)
 
   @@unique([masterId, date])
   @@index([masterId])
   @@index([date])
 }
 
-// Аналітичні звіти
 model AnalyticsReport {
   id         String    @id @default(cuid())
   businessId String
-  business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  name       String // Назва звіту
-  type       String // Тип звіту: revenue, clients, employees, custom
-  // Параметри звіту
-  period     String // Період: day, week, month, quarter, year, custom
+  name       String
+  type       String
+  period     String
   startDate  DateTime?
   endDate    DateTime?
-  filters    String? // JSON: фільтри звіту
-  // Дані звіту
-  data       String // JSON: дані звіту
-  // Налаштування
-  isPublic   Boolean   @default(false) // Чи публічний звіт
-  createdBy  String? // ID користувача, який створив
+  filters    String?
+  data       String
+  isPublic   Boolean   @default(false)
+  createdBy  String?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
+  business   Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
   @@index([type])
   @@index([createdAt])
 }
 
-// Імпорт даних
 model DataImport {
   id           String   @id @default(cuid())
   businessId   String
-  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  filename     String // Назва файлу
-  type         String // Тип імпорту: appointments, clients, services, masters
-  status       String   @default("pending") // pending, processing, completed, failed
-  // Результати
+  filename     String
+  type         String
+  status       String   @default("pending")
   totalRows    Int      @default(0)
   importedRows Int      @default(0)
   failedRows   Int      @default(0)
-  errors       String? // JSON: масив помилок
-  // Файл
-  fileUrl      String? // URL до файлу (якщо зберігається)
+  errors       String?
+  fileUrl      String?
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+  business     Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
   @@index([status])
   @@index([createdAt])
 }
 
-// Експорт даних
 model DataExport {
   id           String    @id @default(cuid())
   businessId   String
-  business     Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  filename     String // Назва файлу
-  type         String // Тип експорту: appointments, clients, services, masters, analytics
-  format       String    @default("csv") // Формат: csv, xlsx, json
-  status       String    @default("pending") // pending, processing, completed, failed
-  // Параметри експорту
-  filters      String? // JSON: фільтри для експорту
+  filename     String
+  type         String
+  format       String    @default("csv")
+  status       String    @default("pending")
+  filters      String?
   startDate    DateTime?
   endDate      DateTime?
-  // Результати
-  fileUrl      String? // URL до експортованого файлу
-  fileSize     BigInt? // Розмір файлу в байтах
+  fileUrl      String?
+  fileSize     BigInt?
   rowsExported Int       @default(0)
-  // Метадані
-  createdBy    String? // ID користувача, який створив
-  expiresAt    DateTime? // Дата закінчення терміну дії файлу
+  createdBy    String?
+  expiresAt    DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  business     Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
   @@index([status])
   @@index([createdAt])
 }
 
-// Користувачі Telegram бота
 model TelegramUser {
   id                   String    @id @default(cuid())
   telegramId           BigInt    @unique
   businessId           String
-  business             Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
   username             String?
   firstName            String?
   lastName             String?
@@ -546,11 +435,12 @@ model TelegramUser {
   isActive             Boolean   @default(true)
   language             String    @default("uk")
   notificationsEnabled Boolean   @default(true)
-  activationPassword   String? // Пароль для активації бота
-  activatedAt          DateTime? // Дата активації
+  activationPassword   String?
+  activatedAt          DateTime?
   lastActivity         DateTime?
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
+  business             Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@unique([businessId, telegramId])
   @@index([businessId])
@@ -558,18 +448,17 @@ model TelegramUser {
   @@index([activationPassword])
 }
 
-// Коди підтвердження для Telegram OAuth
 model TelegramVerification {
   id           String    @id @default(cuid())
-  code         String    @unique // 6-значний код підтвердження
-  telegramId   BigInt // Telegram ID користувача
-  telegramData String? // JSON: дані з Telegram OAuth (first_name, last_name, username, photo_url)
-  action       String // 'login' | 'register'
-  deviceId     String? // ID пристрою (якщо потрібне підтвердження пристрою)
-  businessId   String? // ID бізнесу (для реєстрації)
-  expiresAt    DateTime // Термін дії коду (5 хвилин)
-  verified     Boolean   @default(false) // Чи підтверджено код
-  verifiedAt   DateTime? // Дата підтвердження
+  code         String    @unique
+  telegramId   BigInt
+  telegramData String?
+  action       String
+  deviceId     String?
+  businessId   String?
+  expiresAt    DateTime
+  verified     Boolean   @default(false)
+  verifiedAt   DateTime?
   createdAt    DateTime  @default(now())
 
   @@index([code])
@@ -577,7 +466,16 @@ model TelegramVerification {
   @@index([expiresAt])
 }
 
-// Логи дій в Telegram боті
+model TelegramChatMapping {
+  id         String   @id @default(cuid())
+  chatId     String   @unique
+  businessId String
+  createdAt  DateTime @default(now())
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@index([businessId])
+}
+
 model TelegramLog {
   id             String   @id @default(cuid())
   businessId     String
@@ -593,11 +491,9 @@ model TelegramLog {
   @@index([action])
 }
 
-// Розсилки в Telegram
 model TelegramBroadcast {
   id          String    @id @default(cuid())
   businessId  String
-  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
   title       String
   message     String
   targetRole  UserRole?
@@ -609,6 +505,7 @@ model TelegramBroadcast {
   createdBy   String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
   @@index([status])
@@ -616,21 +513,20 @@ model TelegramBroadcast {
   @@index([createdAt])
 }
 
-// Нагадування в Telegram
 model TelegramReminder {
   id          String    @id @default(cuid())
   businessId  String
-  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  message     String // Текст нагадування
-  targetType  String    @default("all") // all, client
-  clientId    String? // ID клієнта (якщо персональне)
-  client      Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
-  scheduledAt DateTime? // Дата відправки (якщо заплановане)
-  sentAt      DateTime? // Дата відправки
-  status      String    @default("pending") // pending, sent, cancelled
-  createdBy   String? // ID користувача, який створив
+  message     String
+  targetType  String    @default("all")
+  clientId    String?
+  scheduledAt DateTime?
+  sentAt      DateTime?
+  status      String    @default("pending")
+  createdBy   String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  client      Client?   @relation(fields: [clientId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
   @@index([status])
@@ -639,84 +535,79 @@ model TelegramReminder {
   @@index([createdAt])
 }
 
-// AI Чат повідомлення
 model AIChatMessage {
   id         String   @id @default(cuid())
   businessId String
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  sessionId  String // ID сесії чату
-  role       String // 'user' | 'assistant'
-  message    String // Текст повідомлення
-  metadata   String? // JSON: додаткові дані (context, tokens, тощо)
+  sessionId  String
+  role       String
+  message    String
+  metadata   String?
   createdAt  DateTime @default(now())
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
   @@index([sessionId])
   @@index([createdAt])
 }
 
-// Стиснутий snapshot для AI (агрегації/топи), щоб мінімізувати токени
 model BusinessAiSnapshot {
-  id          String   @id @default(cuid())
-  businessId  String   @unique
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  // JSON з агрегатами та короткими "фактами". Тримай компактним.
-  snapshot    String   @db.Text
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String   @id @default(cuid())
+  businessId String   @unique
+  snapshot   String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
   @@index([updatedAt])
 }
 
-// Розсилки SMS/Email
 model Broadcast {
   id            String       @id @default(cuid())
   businessId    String
-  business      Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
   title         String
   message       String
-  type          String // 'sms', 'email', 'both'
-  targetType    String // 'all', 'segment', 'selected'
-  targetSegment String? // ID сегменту
-  targetClients String? // JSON: масив ID клієнтів
-  status        String       @default("draft") // draft, scheduled, sending, sent, failed
+  type          String
+  targetType    String
+  targetSegment String?
+  targetClients String?
+  status        String       @default("draft")
   scheduledAt   DateTime?
   sentAt        DateTime?
   sentCount     Int          @default(0)
   failedCount   Int          @default(0)
-  smsCount      Int          @default(0) // Кількість SMS
-  emailCount    Int          @default(0) // Кількість Email
-  metadata      String? // JSON: додаткові дані
-  smsMessages   SMSMessage[] // Детальна історія SMS повідомлень
+  smsCount      Int          @default(0)
+  emailCount    Int          @default(0)
+  metadata      String?
   createdAt     DateTime     @default(now())
   updatedAt     DateTime     @updatedAt
+  business      Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  smsMessages   SMSMessage[]
 
   @@index([businessId])
   @@index([status])
   @@index([scheduledAt])
 }
 
-// Платежі
 model Payment {
   id                String       @id @default(cuid())
   businessId        String
-  business          Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
   appointmentId     String?
-  appointment       Appointment? @relation(fields: [appointmentId], references: [id], onDelete: SetNull)
   clientId          String?
-  client            Client?      @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  amount            BigInt // в копійках
+  amount            BigInt
   currency          String       @default("UAH")
-  status            String // pending, processing, succeeded, failed, refunded
-  provider          String? // 'liqpay', 'fondy', 'portmone'
-  providerPaymentId String? // ID платежу в провайдері
-  paymentUrl        String? // URL для оплати
-  returnUrl         String? // URL після оплати
-  metadata          String? // JSON: додаткові дані
+  status            String
+  provider          String?
+  providerPaymentId String?
+  paymentUrl        String?
+  returnUrl         String?
+  metadata          String?
   paidAt            DateTime?
   createdAt         DateTime     @default(now())
   updatedAt         DateTime     @updatedAt
+  appointment       Appointment? @relation(fields: [appointmentId], references: [id])
+  business          Business     @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  client            Client?      @relation(fields: [clientId], references: [id])
 
   @@index([businessId])
   @@index([appointmentId])
@@ -725,39 +616,37 @@ model Payment {
   @@index([providerPaymentId])
 }
 
-// Сегменти клієнтів
 model ClientSegment {
   id          String   @id @default(cuid())
   businessId  String
-  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  name        String // 'VIP', 'Активні', 'Неактивні'
-  criteria    String // JSON: критерії сегментації
+  name        String
+  criteria    String
   clientCount Int      @default(0)
   autoUpdate  Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
 }
 
-// SMS Повідомлення (детальна історія)
 model SMSMessage {
   id                String     @id @default(cuid())
   businessId        String
-  business          Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  phone             String // Номер телефону отримувача
-  message           String // Текст повідомлення
-  status            String     @default("pending") // pending, sent, failed, delivered
-  clientId          String? // ID клієнта (якщо відомий)
-  client            Client?    @relation(fields: [clientId], references: [id], onDelete: SetNull)
-  broadcastId       String? // ID розсилки (якщо з розсилки)
-  broadcast         Broadcast? @relation(fields: [broadcastId], references: [id], onDelete: SetNull)
-  providerMessageId String? // ID повідомлення від SMS провайдера
-  errorMessage      String? // Помилка (якщо failed)
-  sentAt            DateTime? // Час відправки
-  deliveredAt       DateTime? // Час доставки
+  phone             String
+  message           String
+  status            String     @default("pending")
+  clientId          String?
+  broadcastId       String?
+  providerMessageId String?
+  errorMessage      String?
+  sentAt            DateTime?
+  deliveredAt       DateTime?
   createdAt         DateTime   @default(now())
   updatedAt         DateTime   @updatedAt
+  broadcast         Broadcast? @relation(fields: [broadcastId], references: [id])
+  business          Business   @relation(fields: [businessId], references: [id], onDelete: Cascade)
+  client            Client?    @relation(fields: [clientId], references: [id])
 
   @@index([businessId])
   @@index([clientId])
@@ -768,22 +657,21 @@ model SMSMessage {
   @@map("sms_messages")
 }
 
-// Інтеграції з соціальними мережами
 model SocialIntegration {
   id           String    @id @default(cuid())
   businessId   String
-  business     Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  platform     String // 'telegram', 'instagram', 'whatsapp', 'facebook', 'viber'
+  platform     String
   isConnected  Boolean   @default(false)
-  accessToken  String? // Токен доступу
-  refreshToken String? // Refresh токен
-  userId       String? // ID користувача в соцмережі
-  username     String? // Username в соцмережі
-  metadata     String? // JSON: додаткові дані (avatar, name, тощо)
-  expiresAt    DateTime? // Термін дії токену
-  lastSyncAt   DateTime? // Остання синхронізація
+  accessToken  String?
+  refreshToken String?
+  userId       String?
+  username     String?
+  metadata     String?
+  expiresAt    DateTime?
+  lastSyncAt   DateTime?
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
+  business     Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@unique([businessId, platform])
   @@index([businessId])
@@ -791,22 +679,21 @@ model SocialIntegration {
   @@index([isConnected])
 }
 
-// Вхідні/исхідні повідомлення з соцмереж — відображаються в кабінеті, можливість відповісти
 model SocialInboxMessage {
-  id               String   @id @default(cuid())
-  businessId       String
-  business         Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  platform         String   // 'telegram', 'instagram', 'whatsapp', ...
-  direction        String   @default("inbound") // inbound | outbound
-  externalId       String?  // ID повідомлення в платформі (напр. message_id в Telegram)
-  externalChatId   String?  // ID чату для відповіді (напр. chat.id в Telegram)
-  senderId         String?  // ID відправника в платформі (напр. from.id)
-  senderName       String   // Відображуване ім'я
-  message         String   @db.Text
-  isRead           Boolean  @default(false)
-  replyToId        String?  // ID повідомлення, на яке це відповідь (в нашій БД)
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  id             String   @id @default(cuid())
+  businessId     String
+  platform       String
+  direction      String   @default("inbound")
+  externalId     String?
+  externalChatId String?
+  senderId       String?
+  senderName     String
+  message        String
+  isRead         Boolean  @default(false)
+  replyToId      String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  business       Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
   @@index([businessId, platform])
@@ -814,36 +701,34 @@ model SocialInboxMessage {
   @@index([isRead])
 }
 
-// Нотатки
 model Note {
   id         String   @id @default(cuid())
   businessId String
-  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
   text       String
   completed  Boolean  @default(false)
-  date       DateTime // Дата нотатки
-  order      Int      @default(0) // Порядок сортування
+  date       DateTime
+  order      Int      @default(0)
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
+  business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
   @@index([date])
   @@index([businessId, date])
 }
 
-// Модулі/розширення бізнесу
 model BusinessModule {
   id          String    @id @default(cuid())
   businessId  String
-  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
-  moduleKey   String // Унікальний ключ модуля (наприклад: 'advanced-analytics', 'custom-reports', 'api-integration')
-  moduleName  String // Назва модуля для відображення
-  isEnabled   Boolean   @default(true) // Чи увімкнений модуль
-  settings    String? // JSON: налаштування модуля
-  metadata    String? // JSON: додаткові метадані (версія, дата активації, тощо)
-  activatedAt DateTime? // Дата активації модуля
+  moduleKey   String
+  moduleName  String
+  isEnabled   Boolean   @default(true)
+  settings    String?
+  metadata    String?
+  activatedAt DateTime?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
+  business    Business  @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@unique([businessId, moduleKey])
   @@index([businessId])
@@ -851,79 +736,65 @@ model BusinessModule {
   @@index([isEnabled])
 }
 
-// ============================================
-// ЦЕНТР УПРАВЛІННЯ (Management Center)
-// ============================================
-// ПОВНЕ ДУБЛЮВАННЯ ВСІХ ДАНИХ З Business
-// Зберігає повну копію всіх даних бізнесу для Центру управління
 model ManagementCenter {
   id                           String        @id @default(cuid())
-  businessId                   String        @unique // ID бізнесу (зв'язок з Business)
-  // Основні дані (дублювання з Business)
-  name                         String // Назва бізнесу
-  slug                         String        @unique // Slug для URL
-  email                        String        @unique // Email (логін)
-  password                     String? // Хешований пароль
-  resetToken                   String? // Токен для відновлення паролю
-  resetTokenExpiry             DateTime? // Термін дії токену відновлення
-  googleId                     String?       @unique // Google OAuth ID
-  telegramId                   BigInt?       @unique // Telegram OAuth ID
-  phone                        String? // Номер телефону
-  address                      String? // Адреса
-  description                  String? // Опис
-  logo                         String? // Логотип
-  avatar                       String? // Аватар
+  businessId                   String        @unique
+  name                         String
+  slug                         String        @unique
+  email                        String        @unique
+  password                     String?
+  resetToken                   String?
+  resetTokenExpiry             DateTime?
+  googleId                     String?       @unique
+  telegramId                   BigInt?       @unique
+  phone                        String?
+  address                      String?
+  description                  String?
+  logo                         String?
+  avatar                       String?
   primaryColor                 String?       @default("#C5A059")
   secondaryColor               String?       @default("#FFFFFF")
   backgroundColor              String?       @default("#050505")
   surfaceColor                 String?       @default("#121212")
   hideRevenue                  Boolean       @default(false)
   isActive                     Boolean       @default(true)
-  // Модульна архітектура
   niche                        BusinessNiche @default(OTHER)
-  customNiche                  String? // Кастомна категорія
-  businessIdentifier           String?       @unique // Унікальний ідентифікатор
+  customNiche                  String?
+  businessIdentifier           String?       @unique
   profileCompleted             Boolean       @default(false)
-  settings                     String? // JSON налаштування
-  // Візитівка
-  businessCardBackgroundImage  String? // URL фонового зображення
-  slogan                       String? // Слоган
-  additionalInfo               String? // Додаткова інформація (JSON)
-  socialMedia                  String? // JSON соцмережі
-  workingHours                 String? // JSON робочі години
-  location                     String? // Розташування
-  // Telegram інтеграція
-  telegramBotToken             String? // Токен Telegram бота
-  telegramChatId               String? // ID чату
+  settings                     String?
+  businessCardBackgroundImage  String?
+  slogan                       String?
+  additionalInfo               String?
+  socialMedia                  String?
+  workingHours                 String?
+  location                     String?
+  telegramBotToken             String?
+  telegramChatId               String?
   telegramNotificationsEnabled Boolean       @default(false)
-  telegramSettings             String? // JSON налаштування Telegram
-  // AI Чат
+  telegramSettings             String?
   aiChatEnabled                Boolean       @default(false)
-  aiProvider                   String? // 'gemini', 'openai'
-  aiApiKey                     String? // API ключ
-  aiSettings                   String? // JSON налаштування AI
-  // SMS/Email
-  smsProvider                  String? // 'twilio', 'smsc'
+  aiProvider                   String?
+  aiApiKey                     String?
+  aiSettings                   String?
+  smsProvider                  String?
   smsApiKey                    String?
-  smsSender                    String? // Ім'я відправника
-  emailProvider                String? // 'sendgrid', 'mailgun'
+  smsSender                    String?
+  emailProvider                String?
   emailApiKey                  String?
-  emailFrom                    String? // Email відправника
-  emailFromName                String? // Ім'я відправника
-  // Платежі
-  paymentProvider              String? // 'liqpay', 'fondy', 'portmone'
+  emailFrom                    String?
+  emailFromName                String?
+  paymentProvider              String?
   paymentApiKey                String?
   paymentMerchantId            String?
   paymentEnabled               Boolean       @default(false)
-  // Нагадування
   remindersEnabled             Boolean       @default(false)
   reminderSmsEnabled           Boolean       @default(false)
   reminderEmailEnabled         Boolean       @default(false)
-  // Додаткові поля для Центру управління
-  registrationType             String // 'telegram', 'google', 'standard'
-  registeredAt                 DateTime      @default(now()) // Дата реєстрації
-  lastLoginAt                  DateTime? // Останній вхід
-  lastSeenAt                   DateTime? // Остання активність (heartbeat з відкритої сторінки дашборду)
+  registrationType             String
+  registeredAt                 DateTime      @default(now())
+  lastLoginAt                  DateTime?
+  lastSeenAt                   DateTime?
   createdAt                    DateTime      @default(now())
   updatedAt                    DateTime      @updatedAt
 
@@ -937,28 +808,18 @@ model ManagementCenter {
   @@index([businessIdentifier])
 }
 
-// ============================================
-// РЕЄСТР ТЕЛЕФОНІВ (Phone Directory)
-// ============================================
-// Зберігає номери телефонів всіх бізнесів та клієнтів, поділені на категорії
-enum PhoneCategory {
-  BUSINESS // Номера бізнесів
-  CLIENT // Номера клієнтів
-}
-
 model PhoneDirectory {
   id           String        @id @default(cuid())
-  phone        String // Номер телефону
-  category     PhoneCategory // Категорія: BUSINESS або CLIENT
-  businessId   String? // ID бізнесу (якщо це номер бізнесу)
-  clientId     String? // ID клієнта (якщо це номер клієнта)
-  businessName String? // Назва бізнесу (для категорії BUSINESS)
-  clientName   String? // Ім'я клієнта (для категорії CLIENT)
-  // Додаткова інформація
-  notes        String? // Примітки
-  isActive     Boolean       @default(true) // Чи активний номер
-  isVerified   Boolean       @default(false) // Чи підтверджений номер
-  lastUsedAt   DateTime? // Останнє використання
+  phone        String
+  category     PhoneCategory
+  businessId   String?
+  clientId     String?
+  businessName String?
+  clientName   String?
+  notes        String?
+  isActive     Boolean       @default(true)
+  isVerified   Boolean       @default(false)
+  lastUsedAt   DateTime?
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
@@ -971,10 +832,128 @@ model PhoneDirectory {
   @@index([createdAt])
 }
 
-// ============================================
-// NEO4J-СТИЛЬ: ВУЗЛИ (Nodes)
-// ============================================
-// Уніфіковане зберігання всіх вузлів графу (подібно до Neo4j)
+model GraphNode {
+  id                String              @id @default(cuid())
+  nodeType          NodeType
+  originalId        String              @unique
+  businessId        String?
+  properties        String
+  labels            String?
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  fromRelationships GraphRelationship[] @relation("FromNode")
+  toRelationships   GraphRelationship[] @relation("ToNode")
+
+  @@index([nodeType])
+  @@index([originalId])
+  @@index([businessId])
+  @@index([createdAt])
+}
+
+model GraphRelationship {
+  id               String           @id @default(cuid())
+  relationshipType RelationshipType
+  fromNodeId       String
+  toNodeId         String
+  businessId       String?
+  properties       String?
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+  fromNode         GraphNode        @relation("FromNode", fields: [fromNodeId], references: [id], onDelete: Cascade)
+  toNode           GraphNode        @relation("ToNode", fields: [toNodeId], references: [id], onDelete: Cascade)
+
+  @@unique([fromNodeId, toNodeId, relationshipType])
+  @@index([relationshipType])
+  @@index([fromNodeId])
+  @@index([toNodeId])
+  @@index([businessId])
+  @@index([createdAt])
+}
+
+model Admin {
+  id          String    @id @default(cuid())
+  email       String    @unique
+  password    String
+  name        String?
+  role        AdminRole @default(ADMIN)
+  permissions String?
+  isActive    Boolean   @default(true)
+  lastLoginAt DateTime?
+  createdBy   String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([email])
+  @@index([role])
+  @@index([isActive])
+  @@index([createdAt])
+}
+
+model SystemSetting {
+  key       String   @id
+  value     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum BusinessNiche {
+  SALON
+  BARBERSHOP
+  STO
+  CAR_WASH
+  SPA
+  FITNESS
+  BEAUTY
+  TIRE_SERVICE
+  EDUCATION
+  MEDICINE
+  RESTAURANT
+  OTHER
+}
+
+enum SubscriptionPlan {
+  FREE
+  START
+  BUSINESS
+  PRO
+}
+
+enum UserRole {
+  OWNER
+  ADMIN
+  MANAGER
+  EMPLOYEE
+  VIEWER
+  CLIENT
+  DEVELOPER
+}
+
+enum AppointmentChangeRequestType {
+  RESCHEDULE
+  CANCEL
+}
+
+enum AppointmentChangeRequestStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum ReminderChannel {
+  PUSH
+}
+
+enum ReminderStatus {
+  SENT
+  FAILED
+}
+
+enum PhoneCategory {
+  BUSINESS
+  CLIENT
+}
+
 enum NodeType {
   BUSINESS
   CLIENT
@@ -986,112 +965,34 @@ enum NodeType {
   BROADCAST
 }
 
-model GraphNode {
-  id         String   @id @default(cuid())
-  nodeType   NodeType // Тип вузла
-  originalId String   @unique // ID оригінальної сутності (з Business, Client, тощо)
-  businessId String? // ID бізнесу (для ізоляції)
-  // Властивості вузла (JSON для гнучкості)
-  properties String // JSON: всі властивості вузла
-  labels     String? // JSON: масив міток (labels) як в Neo4j
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  // Зв'язки (relationships)
-  fromRelationships GraphRelationship[] @relation("FromNode")
-  toRelationships   GraphRelationship[] @relation("ToNode")
-
-  @@index([nodeType])
-  @@index([originalId])
-  @@index([businessId])
-  @@index([createdAt])
-}
-
-// ============================================
-// NEO4J-СТИЛЬ: ЗВ'ЯЗКИ (Relationships)
-// ============================================
-// Зв'язки між вузлами (подібно до Neo4j)
 enum RelationshipType {
-  OWNS // Business OWNS Client/Master/Service
-  HAS // Business HAS Appointment
-  PROVIDES // Master PROVIDES Service
-  BOOKED_BY // Appointment BOOKED_BY Client
-  PERFORMED_BY // Appointment PERFORMED_BY Master
-  INCLUDES // Appointment INCLUDES Service
-  PAYS // Client PAYS Payment
-  RECEIVES // Business RECEIVES Payment
-  SENDS // Business SENDS Broadcast
-  BELONGS_TO // Service BELONGS_TO Business
-  WORKS_FOR // Master WORKS_FOR Business
-  CREATED_BY // Appointment CREATED_BY User
+  OWNS
+  HAS
+  PROVIDES
+  BOOKED_BY
+  PERFORMED_BY
+  INCLUDES
+  PAYS
+  RECEIVES
+  SENDS
+  BELONGS_TO
+  WORKS_FOR
+  CREATED_BY
 }
 
-model GraphRelationship {
-  id               String           @id @default(cuid())
-  relationshipType RelationshipType // Тип зв'язку
-  fromNodeId       String // ID вузла-джерела
-  fromNode         GraphNode        @relation("FromNode", fields: [fromNodeId], references: [id], onDelete: Cascade)
-  toNodeId         String // ID вузла-призначення
-  toNode           GraphNode        @relation("ToNode", fields: [toNodeId], references: [id], onDelete: Cascade)
-  businessId       String? // ID бізнесу (для ізоляції)
-  // Властивості зв'язку (JSON для гнучкості)
-  properties       String? // JSON: додаткові властивості зв'язку
-  createdAt        DateTime         @default(now())
-  updatedAt        DateTime         @updatedAt
-
-  @@unique([fromNodeId, toNodeId, relationshipType])
-  @@index([relationshipType])
-  @@index([fromNodeId])
-  @@index([toNodeId])
-  @@index([businessId])
-  @@index([createdAt])
-}
-
-// ============================================
-// АДМІНІСТРАТОРИ ЦЕНТРУ УПРАВЛІННЯ
-// ============================================
 enum AdminRole {
-  SUPER_ADMIN // Суперадмін (повний доступ)
-  ADMIN // Адмін (обмежений доступ)
-  VIEWER // Переглядач (тільки перегляд)
+  SUPER_ADMIN
+  ADMIN
+  VIEWER
 }
 
 enum AdminPermission {
-  VIEW_BUSINESSES // Перегляд бізнесів
-  EDIT_BUSINESSES // Редагування бізнесів
-  DELETE_BUSINESSES // Видалення бізнесів
-  VIEW_CLIENTS // Перегляд клієнтів
-  VIEW_ANALYTICS // Перегляд аналітики
-  VIEW_FINANCES // Перегляд фінансів
-  MANAGE_ADMINS // Управління адмінами
-  EXPORT_DATA // Експорт даних
-}
-
-model Admin {
-  id          String    @id @default(cuid())
-  email       String    @unique // Email адміна
-  password    String // Хешований пароль
-  name        String? // Ім'я адміна
-  role        AdminRole @default(ADMIN) // Роль адміна
-  permissions String? // JSON: масив AdminPermission
-  isActive    Boolean   @default(true) // Чи активний адмін
-  lastLoginAt DateTime? // Останній вхід
-  createdBy   String? // ID адміна, який створив цього адміна
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
-
-  @@index([email])
-  @@index([role])
-  @@index([isActive])
-  @@index([createdAt])
-}
-
-// ============================================
-// СИСТЕМНІ НАЛАШТУВАННЯ (глобальні ключі/дефолти)
-// ============================================
-model SystemSetting {
-  key       String   @id // e.g. "global_gemini_api_key", "global_gemini_model"
-  value     String?  @db.Text
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  VIEW_BUSINESSES
+  EDIT_BUSINESSES
+  DELETE_BUSINESSES
+  VIEW_CLIENTS
+  VIEW_ANALYTICS
+  VIEW_FINANCES
+  MANAGE_ADMINS
+  EXPORT_DATA
 }

@@ -10,8 +10,7 @@ import type { SubscriptionPlan } from '@prisma/client'
 export const dynamic = 'force-dynamic'
 export const revalidate = 60
 
-// User requirement: only allow this Gemini model everywhere.
-const ENFORCED_GEMINI_MODEL = 'gemini-flash-lite-latest' as const
+const LM_STUDIO_KEYS = ['ai_provider', 'lm_studio_base_url', 'lm_studio_model'] as const
 
 async function getControlCenterStats(): Promise<{
   totalCount: number
@@ -69,19 +68,6 @@ function getRegistrationType(b: { telegramId: bigint | null; googleId: string | 
   return 'standard' as const
 }
 
-function normalizeGeminiModelName(model: unknown): string | null {
-  if (typeof model !== 'string') return null
-  let m = model.trim()
-  if (!m) return null
-  if (m.startsWith('models/')) m = m.slice('models/'.length)
-  if (m === 'gemini-1.5-flash') return 'gemini-flash-lite-latest'
-  if (m === 'gemini-1.5-pro') return 'gemini-pro-latest'
-  return m
-}
-
-const SYSTEM_SETTING_GEMINI_KEY = 'global_gemini_api_key'
-const SYSTEM_SETTING_GEMINI_MODEL = 'global_gemini_model'
-
 async function ensureSystemSettingTableExists(): Promise<void> {
   // We can't rely on prisma migrations in this repo (shadow DB apply errors),
   // so we ensure the table exists at runtime for admin-only operations.
@@ -95,20 +81,24 @@ async function ensureSystemSettingTableExists(): Promise<void> {
   `)
 }
 
-async function getGlobalGeminiConfig(): Promise<{ apiKey: string | null; model: string | null }> {
+async function getLmStudioConfig(): Promise<{ baseUrl: string | null; model: string | null; isConfigured: boolean }> {
   try {
-    const [k, m] = await Promise.all([
-      prisma.systemSetting.findUnique({ where: { key: SYSTEM_SETTING_GEMINI_KEY }, select: { value: true } }),
-      prisma.systemSetting.findUnique({ where: { key: SYSTEM_SETTING_GEMINI_MODEL }, select: { value: true } }),
+    const [provider, url, model] = await Promise.all([
+      prisma.systemSetting.findUnique({ where: { key: 'ai_provider' }, select: { value: true } }),
+      prisma.systemSetting.findUnique({ where: { key: 'lm_studio_base_url' }, select: { value: true } }),
+      prisma.systemSetting.findUnique({ where: { key: 'lm_studio_model' }, select: { value: true } }),
     ])
+    const providerVal = (provider?.value || process.env.AI_PROVIDER || 'lm_studio').trim().toLowerCase()
+    const baseUrl = (url?.value || process.env.LM_STUDIO_URL || 'http://127.0.0.1:1234/v1').trim()
+    const modelVal = (model?.value || '').trim() || null
+    const isConfigured = providerVal === 'lm_studio' && !!baseUrl
     return {
-      apiKey: (k?.value || '').trim() || null,
-      // Even if DB contains something else, we enforce the model.
-      model: ENFORCED_GEMINI_MODEL,
+      baseUrl: isConfigured ? baseUrl : null,
+      model: modelVal,
+      isConfigured,
     }
   } catch {
-    // Table might not exist yet; fall back to env-only.
-    return { apiKey: null, model: ENFORCED_GEMINI_MODEL }
+    return { baseUrl: null, model: null, isConfigured: false }
   }
 }
 
@@ -141,14 +131,7 @@ export async function GET(request: Request) {
   }
 
   try {
-    const globalEnvKey = process.env.GEMINI_API_KEY?.trim() || process.env.GOOGLE_API_KEY?.trim() || null
-    const globalEnvModel = process.env.GEMINI_MODEL?.trim() || null
-    const globalDb = await getGlobalGeminiConfig()
-    const globalAi = {
-      hasKey: !!((globalDb.apiKey || globalEnvKey || '').trim()),
-      model: ENFORCED_GEMINI_MODEL,
-      source: globalDb.apiKey ? 'db' : globalEnvKey ? 'env' : 'none',
-    }
+    const lmStudio = await getLmStudioConfig()
 
     const { searchParams } = new URL(request.url)
     const page = Math.max(1, parseInt(searchParams.get('page') || '1') || 1)
@@ -214,8 +197,6 @@ export async function GET(request: Request) {
               googleId: true,
               aiChatEnabled: true,
               aiProvider: true,
-              aiSettings: true,
-              aiApiKey: true,
             },
           }),
           prisma.business.count({ where }),
@@ -305,12 +286,7 @@ export async function GET(request: Request) {
             phone: b.phone,
             isActive: b.isActive,
             aiChatEnabled: (b as any).aiChatEnabled === true,
-            aiHasKey: !!((b as any).aiApiKey && String((b as any).aiApiKey).trim()),
-            aiProvider: (b as any).aiProvider || null,
-            aiModel: (() => {
-              // UI shows the enforced model (settings are ignored server-side anyway).
-              return ENFORCED_GEMINI_MODEL
-            })(),
+            aiProvider: (b as any).aiProvider || 'lm_studio',
             aiUsage24h: usage24hByBusiness.get(b.id) || emptyAiUsage(),
             aiUsageToday: usageTodayByBusiness.get(b.id) || emptyAiUsage(),
             registeredAt: b.createdAt,
@@ -353,7 +329,7 @@ export async function GET(request: Request) {
       { maxAttempts: 3, delayMs: 2500 }
     )
 
-    return NextResponse.json(jsonSafe({ businesses, pagination, stats, globalAi }))
+    return NextResponse.json(jsonSafe({ businesses, pagination, stats, lmStudio }))
   } catch (error: unknown) {
     console.error('Control center API error:', error)
     return NextResponse.json(
@@ -361,7 +337,7 @@ export async function GET(request: Request) {
         businesses: [],
         pagination: { page: 1, limit: 20, total: 0, totalPages: 1 },
         stats: EMPTY_STATS,
-        globalAi: { hasKey: false, model: 'gemini-flash-lite-latest', source: 'none' },
+        lmStudio: { baseUrl: null, model: null, isConfigured: false },
         error: error instanceof Error ? error.message : 'Помилка завантаження',
       }),
       { status: 200 }
@@ -406,88 +382,45 @@ export async function PATCH(request: Request) {
           return NextResponse.json({ error: 'data is required' }, { status: 400 })
         }
         const aiProviderRaw = (data as any).aiProvider
-        const aiSettingsRaw = (data as any).aiSettings
-        const aiApiKeyRaw = (data as any).aiApiKey
-
         const update: Record<string, unknown> = {}
         if (aiProviderRaw !== undefined) {
-          update.aiProvider = typeof aiProviderRaw === 'string' && aiProviderRaw.trim() ? aiProviderRaw.trim() : null
+          update.aiProvider = typeof aiProviderRaw === 'string' && aiProviderRaw.trim() ? aiProviderRaw.trim() : 'lm_studio'
         }
-        if (aiSettingsRaw !== undefined) {
-          if (typeof aiSettingsRaw === 'string' && aiSettingsRaw.trim()) {
-            // Force the model (user requirement) even if UI sends something else.
-            try {
-              const parsed = JSON.parse(aiSettingsRaw)
-              if (parsed && typeof parsed === 'object') {
-                ;(parsed as any).model = ENFORCED_GEMINI_MODEL
-              }
-              update.aiSettings = JSON.stringify(parsed)
-            } catch {
-              update.aiSettings = aiSettingsRaw.trim()
-            }
-          } else {
-            update.aiSettings = null
-          }
+        if (Object.keys(update).length > 0) {
+          await prisma.business.update({ where: { id: businessId }, data: update as any })
+          await prisma.managementCenter.updateMany({ where: { businessId }, data: update as any })
         }
-        if (aiApiKeyRaw !== undefined) {
-          // Allow clear (null/empty) or set new key. Keep size bounded.
-          const s = typeof aiApiKeyRaw === 'string' ? aiApiKeyRaw.trim() : ''
-          if (s && s.length > 300) return NextResponse.json({ error: 'AI key is too long' }, { status: 400 })
-          update.aiApiKey = s ? s : null
-        }
-
-        if (Object.keys(update).length === 0) {
-          return NextResponse.json({ success: true })
-        }
-
-        await prisma.business.update({ where: { id: businessId }, data: update as any })
-        await prisma.managementCenter.updateMany({ where: { businessId }, data: update as any })
         break
       }
-      case 'setGlobalAiConfig': {
+      case 'setGlobalLmStudioConfig': {
         if (!data || typeof data !== 'object') {
           return NextResponse.json({ error: 'data is required' }, { status: 400 })
         }
-
-        const aiApiKeyRaw = (data as any).aiApiKey
-        const aiModelRaw = (data as any).aiModel
-        const applyToAll = (data as any).applyToAll === true
-
+        const baseUrlRaw = (data as any).lmStudioBaseUrl
+        const modelRaw = (data as any).lmStudioModel
         await ensureSystemSettingTableExists()
-
-        if (aiApiKeyRaw !== undefined) {
-          const s = typeof aiApiKeyRaw === 'string' ? aiApiKeyRaw.trim() : ''
-          if (s && s.length > 300) return NextResponse.json({ error: 'AI key is too long' }, { status: 400 })
+        await prisma.systemSetting.upsert({
+          where: { key: 'ai_provider' },
+          create: { key: 'ai_provider', value: 'lm_studio' },
+          update: { value: 'lm_studio' },
+        })
+        if (baseUrlRaw !== undefined) {
+          const s = typeof baseUrlRaw === 'string' ? baseUrlRaw.trim() : ''
+          if (s && s.length > 500) return NextResponse.json({ error: 'LM Studio URL is too long' }, { status: 400 })
           await prisma.systemSetting.upsert({
-            where: { key: SYSTEM_SETTING_GEMINI_KEY },
-            create: { key: SYSTEM_SETTING_GEMINI_KEY, value: s ? s : null },
-            update: { value: s ? s : null },
+            where: { key: 'lm_studio_base_url' },
+            create: { key: 'lm_studio_base_url', value: s || 'http://127.0.0.1:1234/v1' },
+            update: { value: s || 'http://127.0.0.1:1234/v1' },
           })
         }
-
-        if (aiModelRaw !== undefined) {
-          // Ignore requested model; enforced.
-          const normalized = ENFORCED_GEMINI_MODEL
+        if (modelRaw !== undefined) {
+          const m = typeof modelRaw === 'string' ? modelRaw.trim() : ''
           await prisma.systemSetting.upsert({
-            where: { key: SYSTEM_SETTING_GEMINI_MODEL },
-            create: { key: SYSTEM_SETTING_GEMINI_MODEL, value: normalized },
-            update: { value: normalized },
-          })
-        } else {
-          // Keep DB consistent with enforcement even when only updating the key.
-          await prisma.systemSetting.upsert({
-            where: { key: SYSTEM_SETTING_GEMINI_MODEL },
-            create: { key: SYSTEM_SETTING_GEMINI_MODEL, value: ENFORCED_GEMINI_MODEL },
-            update: { value: ENFORCED_GEMINI_MODEL },
+            where: { key: 'lm_studio_model' },
+            create: { key: 'lm_studio_model', value: m || null },
+            update: { value: m || null },
           })
         }
-
-        if (applyToAll) {
-          // One-click: force all accounts to use the global key by clearing per-business overrides.
-          await prisma.business.updateMany({ data: { aiApiKey: null } })
-          await prisma.managementCenter.updateMany({ data: { aiApiKey: null } })
-        }
-
         break
       }
       case 'update':

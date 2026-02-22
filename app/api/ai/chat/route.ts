@@ -1,17 +1,14 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { AIChatService, type AgentDecision } from '@/lib/services/ai-chat-service'
+import { LmStudioChatService, type AgentDecision } from '@/lib/services/lm-studio-ai-service'
 import { isValidUaPhone, normalizeUaPhone } from '@/lib/utils/phone'
 import { getBusinessSnapshotText } from '@/lib/services/ai-snapshot'
 import { runAiTool, type AiToolName } from '@/lib/services/ai-data-tools'
 import { SMSService } from '@/lib/services/sms-service'
 
 const DEFAULT_APPOINTMENT_DURATION_MINUTES = 60
-const MAX_TOOL_CONTEXT_CHARS = 8000
-const MAX_TOOL_LINE_CHARS = 1600
-// User requirement: always use this model, ignore per-business overrides.
-const ENFORCED_GEMINI_MODEL = 'gemini-flash-lite-latest' as const
-// IMPORTANT: every extra LLM request burns free-tier quota quickly.
+const MAX_TOOL_CONTEXT_CHARS = 3800
+const MAX_TOOL_LINE_CHARS = 1200
 // Keep tool-calling to a single LLM request per user message.
 const MAX_TOOL_CALLS = 1
 const MAX_ASSISTANT_REPLY_CHARS = 900
@@ -21,16 +18,20 @@ const MAX_ASSISTANT_REPLY_CHARS = 900
 const aiCooldownByBusiness = new Map<string, number>()
 const aiLastSuccessAtByBusiness = new Map<string, number>()
 const AI_SUCCESS_TTL_MS = 10 * 60 * 1000
-const GLOBAL_AI_CACHE_MS = 60 * 1000
-const globalAiCache: { apiKey: string | null; model: string | null; expiresAt: number } = {
-  apiKey: null,
-  model: null,
+const LM_CONFIG_CACHE_MS = 60 * 1000
+
+interface LmStudioConfig {
+  baseUrl: string | null
+  model: string | null
+  hasAi: boolean
+}
+
+const lmConfigCache: { config: LmStudioConfig | null; expiresAt: number } = {
+  config: null,
   expiresAt: 0,
 }
 
 async function ensureSystemSettingTableExists(): Promise<void> {
-  // Some deployments have broken migrations/shadow DB; keep runtime resilient.
-  // This is safe because it is idempotent.
   await prisma.$executeRawUnsafe(`
     CREATE TABLE IF NOT EXISTS "SystemSetting" (
       "key" TEXT PRIMARY KEY,
@@ -41,28 +42,42 @@ async function ensureSystemSettingTableExists(): Promise<void> {
   `)
 }
 
-async function getGlobalAiFromSystemSettings(): Promise<{ apiKey: string | null; model: string | null }> {
+async function getLmStudioConfig(): Promise<LmStudioConfig> {
   const now = Date.now()
-  if (now < globalAiCache.expiresAt) {
-    return { apiKey: globalAiCache.apiKey, model: globalAiCache.model }
+  if (lmConfigCache.config && now < lmConfigCache.expiresAt) {
+    return lmConfigCache.config
   }
 
   try {
     await ensureSystemSettingTableExists()
-    const [k, m] = await Promise.all([
-      prisma.systemSetting.findUnique({ where: { key: 'global_gemini_api_key' }, select: { value: true } }),
-      prisma.systemSetting.findUnique({ where: { key: 'global_gemini_model' }, select: { value: true } }),
+    const [providerRow, lmUrlRow, lmModelRow] = await Promise.all([
+      prisma.systemSetting.findUnique({ where: { key: 'ai_provider' }, select: { value: true } }),
+      prisma.systemSetting.findUnique({ where: { key: 'lm_studio_base_url' }, select: { value: true } }),
+      prisma.systemSetting.findUnique({ where: { key: 'lm_studio_model' }, select: { value: true } }),
     ])
-    globalAiCache.apiKey = (k?.value || '').trim() || null
-    globalAiCache.model = (m?.value || '').trim() || null
-  } catch {
-    // Table may not exist yet; ignore.
-    globalAiCache.apiKey = null
-    globalAiCache.model = null
-  }
 
-  globalAiCache.expiresAt = now + GLOBAL_AI_CACHE_MS
-  return { apiKey: globalAiCache.apiKey, model: globalAiCache.model }
+    const providerVal = ((providerRow?.value || process.env.AI_PROVIDER || 'lm_studio') as string).trim().toLowerCase()
+    const lmUrl = (lmUrlRow?.value || process.env.LM_STUDIO_URL || 'http://127.0.0.1:1234/v1').trim()
+    const lmModel = (lmModelRow?.value || '').trim() || null
+    const useLmStudio = providerVal === 'lm_studio' && !!lmUrl
+
+    const config: LmStudioConfig = {
+      baseUrl: useLmStudio ? lmUrl : null,
+      model: useLmStudio ? lmModel : null,
+      hasAi: useLmStudio,
+    }
+
+    lmConfigCache.config = config
+    lmConfigCache.expiresAt = now + LM_CONFIG_CACHE_MS
+    return config
+  } catch {
+    lmConfigCache.config = {
+      baseUrl: null,
+      model: null,
+      hasAi: false,
+    }
+    return lmConfigCache.config
+  }
 }
 
 const parseJson = <T>(raw: string | null | undefined, fallback: T): T => {
@@ -448,8 +463,8 @@ async function tryHeuristicDataReply(params: {
     return {
       reply:
         hasAiKey
-          ? 'Привіт! Якщо AI тимчасово недоступний (квота/помилка) — я все одно можу показати цифри з кабінету.\nНапиши: "скільки записів сьогодні", "KPI за 7 днів", "payments за 30 днів", "інбокс unread".'
-          : 'Привіт! AI ключ не підключений, але я можу показати дані з кабінету напряму.\nНапиши: "огляд кабінету", "скільки записів сьогодні", "payments за 30 днів", "інбокс unread".',
+          ? 'Привіт! Чим можу допомогти? Можу показати записи, KPI, хто працює, клієнтів — просто напиши.'
+          : 'Привіт! Я без AI поки що, але можу показати дані з кабінету. Напиши: "скільки записів", "хто працює", "покажи інбокс".',
       meta: { mode: 'data_fallback', kind: hasAiKey ? 'help' : 'no_key_help' },
     }
   }
@@ -458,7 +473,7 @@ async function tryHeuristicDataReply(params: {
     return {
       reply:
         hasAiKey
-          ? 'Я допомагаю по кабінету.\n\nШвидко можу: KPI/записи/клієнти/платежі/інбокс/нотатки/нагадування/сегменти/топ.\nПриклади: "KPI за 7 днів", "скільки записів сьогодні", "payments за 30 днів", "покажи інбокс", "знайди клієнта Іван".\n\nКоманди: "note: текст", "reminder: текст", "appointment: ...".'
+          ? 'Можу все: KPI, записи, клієнти, платежі, інбокс, нотатки, нагадування. Пиши природно — "скільки записів сьогодні", "знайди Петра", "покажи вільні слоти". Або командами: note:, reminder:, appointment:.'
           : 'Ключ не підключений (червоний індикатор), тому “розумні” відповіді обмежені. Але я можу тягнути дані з кабінету напряму.\nПриклади: "огляд кабінету", "скільки записів сьогодні", "payments за 30 днів", "покажи інбокс", "знайди клієнта Іван".\n\nКоманди: "note: текст", "reminder: текст", "appointment: ...".',
       meta: { mode: 'data_fallback', kind: hasAiKey ? 'help' : 'no_key_help' },
     }
@@ -958,7 +973,7 @@ function buildFallbackDecision(
     return {
       action: 'reply',
       reply:
-        'Я допомагаю по кабінету (записи/клієнти/майстри/послуги/платежі/інбокс/нотатки/нагадування).\n\nПриклади:\n- "скільки записів сьогодні"\n- "покажи вільні слоти на завтра"\n- "payments за 30 днів"\n- "хто сьогодні працює"\n- "знайди клієнта Іван"\n\nЯкщо AI тимчасово недоступний, я все одно можу тягнути цифри з кабінету напряму.',
+        'Я твій помічник по кабінету — записи, клієнти, майстри, послуги, платежі, інбокс, нотатки. Пиши що завгодно: "скільки записів сьогодні", "покажи вільні слоти", "хто працює", "знайди клієнта Іван". Можу і створити запис чи нотатку — просто скажи.',
       confidence: 1,
     }
   }
@@ -966,7 +981,7 @@ function buildFallbackDecision(
   return {
     action: 'reply',
     reply:
-      'AI тимчасово недоступний (квота/ключ/мережа). Напиши запит по кабінету — я спробую відповісти даними напряму.\nПриклади: "скільки записів сьогодні", "хто сьогодні працює", "payments за 30 днів", "покажи інбокс".\n\nЯкщо потрібна саме “розумна” дія (створити запис/послугу) — спробуй повторити через 1-2 хвилини.',
+      'Зараз AI трохи відстає, але я все одно можу показати дані. Напиши: "скільки записів сьогодні", "хто сьогодні працює", "payments за 30 днів", "покажи інбокс".\n\nЯкщо потрібна саме “розумна” дія (створити запис/послугу) — спробуй ще раз через хвилину.',
     confidence: 0.2,
   }
 }
@@ -1266,6 +1281,28 @@ async function executeAgentAction(params: {
     return master || null
   }
 
+  async function resolveClientForChange(): Promise<{ id: string; name: string } | null> {
+    const clientId = safeText((payload as any).clientId)
+    const phoneRaw = safeText((payload as any).clientPhone)
+    if (clientId) {
+      const client = await prisma.client.findFirst({
+        where: { businessId, id: clientId },
+        select: { id: true, name: true },
+      })
+      return client || null
+    }
+    if (phoneRaw) {
+      const phone = normalizeUaPhone(phoneRaw)
+      if (!isValidUaPhone(phone)) return null
+      const client = await prisma.client.findUnique({
+        where: { businessId_phone: { businessId, phone } },
+        select: { id: true, name: true },
+      })
+      return client || null
+    }
+    return null
+  }
+
   async function resolveAppointmentForChange(): Promise<{
     appt: { id: string; masterId: string; startTime: Date; endTime: Date; status: string; clientPhone: string; clientName: string }
     resolution: 'by_id' | 'by_phone_time' | 'by_phone_next' | 'by_name_next'
@@ -1514,6 +1551,101 @@ async function executeAgentAction(params: {
     }
   }
 
+  if (decision.action === 'update_service') {
+    const serviceId = safeText((payload as any).serviceId)
+    const name = safeText((payload as any).name)
+    const priceRaw = (payload as any).price
+    const durationRaw = (payload as any).duration
+    const category = safeText((payload as any).category)
+
+    const service = serviceId
+      ? await prisma.service.findFirst({ where: { id: serviceId, businessId }, select: { id: true, name: true } })
+      : name
+        ? await prisma.service.findFirst({ where: { businessId, name: { contains: name, mode: 'insensitive' } }, select: { id: true, name: true } })
+        : null
+
+    if (!service) {
+      return {
+        message: decision.reply || 'Не знайшов послугу. Дай serviceId або name.',
+        actionData: { action: 'update_service', status: 'service_not_found' },
+      }
+    }
+
+    const updateData: Record<string, unknown> = {}
+    if (name) updateData.name = name
+    if (typeof priceRaw === 'number' && Number.isFinite(priceRaw)) updateData.price = Math.round(priceRaw)
+    if (typeof durationRaw === 'number' && Number.isFinite(durationRaw)) updateData.duration = Math.round(durationRaw)
+    if (category !== null) updateData.category = category || null
+
+    if (Object.keys(updateData).length === 0) {
+      return {
+        message: decision.reply || 'Що саме оновити? (name, price, duration, category)',
+        actionData: { action: 'update_service', status: 'missing_fields' },
+      }
+    }
+
+    const updated = await prisma.service.update({
+      where: { id: service.id },
+      data: updateData as any,
+      select: { id: true, name: true, price: true, duration: true, category: true },
+    })
+
+    return {
+      message: decision.reply || `Готово. Послугу "${updated.name}" оновлено.`,
+      actionData: { action: 'update_service', status: 'completed', service: updated },
+    }
+  }
+
+  if (decision.action === 'update_master') {
+    const master = await resolveMasterForChange()
+    if (!master) {
+      return {
+        message: decision.reply || 'Ок. Для кого оновити? Дай masterId або masterName.',
+        actionData: { action: 'update_master', status: 'master_not_found' },
+      }
+    }
+    const name = safeText((payload as any).name)
+    const bio = safeText((payload as any).bio)
+    const workingHoursJson = toScheduleJson((payload as any).workingHours)
+    const updateData: Record<string, unknown> = {}
+    if (name) updateData.name = name
+    if (bio !== null) updateData.bio = bio || null
+    if (workingHoursJson) updateData.workingHours = workingHoursJson
+    if (Object.keys(updateData).length === 0) {
+      return {
+        message: decision.reply || 'Що саме оновити? (name, bio, workingHours)',
+        actionData: { action: 'update_master', status: 'missing_fields' },
+      }
+    }
+    const updated = await prisma.master.update({
+      where: { id: master.id },
+      data: updateData as any,
+      select: { id: true, name: true, bio: true, workingHours: true },
+    })
+    return {
+      message: decision.reply || `Готово. Майстра "${updated.name}" оновлено.`,
+      actionData: { action: 'update_master', status: 'completed', master: updated },
+    }
+  }
+
+  if (decision.action === 'delete_master') {
+    const master = await resolveMasterForChange()
+    if (!master) {
+      return {
+        message: decision.reply || 'Ок. Кого видалити? Дай masterId або masterName.',
+        actionData: { action: 'delete_master', status: 'master_not_found' },
+      }
+    }
+    await prisma.master.update({
+      where: { id: master.id },
+      data: { isActive: false },
+    })
+    return {
+      message: decision.reply || `Готово. Майстра "${master.name}" деактивовано.`,
+      actionData: { action: 'delete_master', status: 'completed', master: { id: master.id, name: master.name } },
+    }
+  }
+
   if (decision.action === 'add_client_tag') {
     const clientId = safeText((payload as any).clientId)
     const phoneRaw = safeText((payload as any).clientPhone)
@@ -1563,6 +1695,89 @@ async function executeAgentAction(params: {
     return {
       message: decision.reply || `Готово. Додав тег "${tag}" клієнту "${updated.name}".`,
       actionData: { action: 'add_client_tag', status: 'completed', client: { id: updated.id, name: updated.name, tags } },
+    }
+  }
+
+  if (decision.action === 'remove_client_tag') {
+    const clientId = safeText((payload as any).clientId)
+    const phoneRaw = safeText((payload as any).clientPhone)
+    const tag = safeText((payload as any).tag)
+    if (!tag) {
+      return {
+        message: decision.reply || 'Ок. Який тег прибрати?',
+        actionData: { action: 'remove_client_tag', status: 'missing_fields', missing: ['tag'] },
+      }
+    }
+    const client = await (clientId
+      ? prisma.client.findFirst({ where: { id: clientId, businessId }, select: { id: true, name: true, tags: true } })
+      : phoneRaw
+        ? prisma.client.findUnique({ where: { businessId_phone: { businessId, phone: normalizeUaPhone(phoneRaw) } }, select: { id: true, name: true, tags: true } })
+        : null)
+    if (!client) {
+      return {
+        message: 'Не знайшов клієнта. Перевір phone/clientId.',
+        actionData: { action: 'remove_client_tag', status: 'client_not_found' },
+      }
+    }
+    const tagsRaw = parseJson<any>(client.tags, [])
+    const tags = Array.isArray(tagsRaw) ? tagsRaw.filter((t: unknown) => typeof t === 'string' && t !== tag) : []
+    await prisma.client.update({
+      where: { id: client.id },
+      data: { tags: JSON.stringify(tags) },
+    })
+    return {
+      message: decision.reply || `Готово. Прибрав тег "${tag}" у клієнта "${client.name}".`,
+      actionData: { action: 'remove_client_tag', status: 'completed', client: { id: client.id, name: client.name } },
+    }
+  }
+
+  if (decision.action === 'update_client') {
+    const resolved = await resolveClientForChange()
+    if (!resolved) {
+      return {
+        message: decision.reply || 'Ок. Для кого оновити? Дай clientId або clientPhone.',
+        actionData: { action: 'update_client', status: 'client_not_found' },
+      }
+    }
+    const name = safeText((payload as any).name)
+    const email = safeText((payload as any).email)
+    const notes = safeText((payload as any).notes)
+    const updateData: Record<string, unknown> = {}
+    if (name) updateData.name = name
+    if (email !== null) updateData.email = email || null
+    if (notes !== null) updateData.notes = notes || null
+    if (Object.keys(updateData).length === 0) {
+      return {
+        message: decision.reply || 'Що саме оновити? (name, email, notes)',
+        actionData: { action: 'update_client', status: 'missing_fields' },
+      }
+    }
+    const updated = await prisma.client.update({
+      where: { id: resolved.id },
+      data: updateData as any,
+      select: { id: true, name: true, email: true, notes: true },
+    })
+    return {
+      message: decision.reply || `Готово. Клієнта "${updated.name}" оновлено.`,
+      actionData: { action: 'update_client', status: 'completed', client: updated },
+    }
+  }
+
+  if (decision.action === 'delete_client') {
+    const resolved = await resolveClientForChange()
+    if (!resolved) {
+      return {
+        message: decision.reply || 'Ок. Кого видалити? Дай clientId або clientPhone.',
+        actionData: { action: 'delete_client', status: 'client_not_found' },
+      }
+    }
+    await prisma.client.update({
+      where: { id: resolved.id },
+      data: { isActive: false },
+    })
+    return {
+      message: decision.reply || `Готово. Клієнта "${resolved.name}" деактивовано.`,
+      actionData: { action: 'delete_client', status: 'completed', client: { id: resolved.id, name: resolved.name } },
     }
   }
 
@@ -1745,6 +1960,115 @@ async function executeAgentAction(params: {
         updatedExisting: !!existing,
         ...(computedClientCount != null ? { clientCount: computedClientCount } : {}),
       },
+    }
+  }
+
+  if (decision.action === 'update_segment') {
+    const segmentId = safeText((payload as any).segmentId)
+    const name = safeText((payload as any).name)
+    const criteriaRaw = (payload as any).criteria
+
+    const segment = segmentId
+      ? await prisma.clientSegment.findFirst({ where: { id: segmentId, businessId }, select: { id: true, name: true } })
+      : name
+        ? await prisma.clientSegment.findFirst({ where: { businessId, name: { contains: name, mode: 'insensitive' } }, select: { id: true, name: true } })
+        : null
+
+    if (!segment) {
+      return {
+        message: decision.reply || 'Не знайшов сегмент. Дай segmentId або name.',
+        actionData: { action: 'update_segment', status: 'segment_not_found' },
+      }
+    }
+
+    const updateData: Record<string, unknown> = {}
+    if (name) updateData.name = name
+    if (criteriaRaw != null) {
+      const criteria =
+        typeof criteriaRaw === 'string'
+          ? criteriaRaw.trim()
+          : (() => {
+              try {
+                return JSON.stringify(criteriaRaw)
+              } catch {
+                return null
+              }
+            })()
+      if (criteria) updateData.criteria = criteria
+    }
+
+    if (Object.keys(updateData).length === 0) {
+      return {
+        message: decision.reply || 'Що саме оновити? (name, criteria)',
+        actionData: { action: 'update_segment', status: 'missing_fields' },
+      }
+    }
+
+    const updated = await prisma.clientSegment.update({
+      where: { id: segment.id },
+      data: updateData as any,
+      select: { id: true, name: true, criteria: true, updatedAt: true },
+    })
+
+    return {
+      message: decision.reply || `Готово. Сегмент "${updated.name}" оновлено.`,
+      actionData: { action: 'update_segment', status: 'completed', segment: updated },
+    }
+  }
+
+  if (decision.action === 'delete_segment') {
+    const segmentId = safeText((payload as any).segmentId)
+    const segmentName = safeText((payload as any).name)
+
+    const segment = segmentId
+      ? await prisma.clientSegment.findFirst({ where: { id: segmentId, businessId }, select: { id: true, name: true } })
+      : segmentName
+        ? await prisma.clientSegment.findFirst({ where: { businessId, name: { contains: segmentName, mode: 'insensitive' } }, select: { id: true, name: true } })
+        : null
+
+    if (!segment) {
+      return {
+        message: decision.reply || 'Не знайшов сегмент. Дай segmentId або name.',
+        actionData: { action: 'delete_segment', status: 'segment_not_found' },
+      }
+    }
+
+    await prisma.clientSegment.delete({ where: { id: segment.id } })
+
+    return {
+      message: decision.reply || `Готово. Сегмент "${segment.name}" видалено.`,
+      actionData: { action: 'delete_segment', status: 'completed', segment: { id: segment.id, name: segment.name } },
+    }
+  }
+
+  if (decision.action === 'update_business') {
+    const name = safeText((payload as any).name)
+    const description = safeText((payload as any).description)
+    const location = safeText((payload as any).location)
+    const slogan = safeText((payload as any).slogan)
+
+    const updateData: Record<string, unknown> = {}
+    if (name) updateData.name = name
+    if (description !== null) updateData.description = description || null
+    if (location !== null) updateData.location = location || null
+    if (slogan !== null) updateData.slogan = slogan || null
+
+    if (Object.keys(updateData).length === 0) {
+      return {
+        message: decision.reply || 'Що саме оновити? (name, description, location, slogan)',
+        actionData: { action: 'update_business', status: 'missing_fields' },
+      }
+    }
+
+    const updated = await prisma.business.update({
+      where: { id: businessId },
+      data: updateData as any,
+      select: { id: true, name: true, description: true, location: true, slogan: true },
+    })
+
+    return {
+      message: decision.reply || `Готово. Профіль бізнесу оновлено.`,
+      actionData: { action: 'update_business', status: 'completed', business: updated },
     }
   }
 
@@ -2023,6 +2347,65 @@ async function executeAgentAction(params: {
     }
   }
 
+  if (decision.action === 'update_note') {
+    const noteId = safeText((payload as any).noteId)
+    const text = safeText((payload as any).text)
+    const completed = (payload as any).completed
+    if (!noteId) {
+      return {
+        message: decision.reply || 'Ок. Яку нотатку оновити? Дай noteId (з notes_list).',
+        actionData: { action: 'update_note', status: 'missing_fields', missing: ['noteId'] },
+      }
+    }
+    const note = await prisma.note.findFirst({ where: { id: noteId, businessId }, select: { id: true, text: true } })
+    if (!note) {
+      return {
+        message: 'Не знайшов нотатку. Перевір noteId.',
+        actionData: { action: 'update_note', status: 'note_not_found' },
+      }
+    }
+    const updateData: Record<string, unknown> = {}
+    if (text) updateData.text = text
+    if (typeof completed === 'boolean') updateData.completed = completed
+    if (Object.keys(updateData).length === 0) {
+      return {
+        message: decision.reply || 'Що саме оновити? (text, completed)',
+        actionData: { action: 'update_note', status: 'missing_fields' },
+      }
+    }
+    const updated = await prisma.note.update({
+      where: { id: note.id },
+      data: updateData as any,
+      select: { id: true, text: true, completed: true },
+    })
+    return {
+      message: decision.reply || 'Готово, нотатку оновлено.',
+      actionData: { action: 'update_note', status: 'completed', note: updated },
+    }
+  }
+
+  if (decision.action === 'delete_note') {
+    const noteId = safeText((payload as any).noteId)
+    if (!noteId) {
+      return {
+        message: decision.reply || 'Ок. Яку нотатку видалити? Дай noteId (з notes_list).',
+        actionData: { action: 'delete_note', status: 'missing_fields', missing: ['noteId'] },
+      }
+    }
+    const note = await prisma.note.findFirst({ where: { id: noteId, businessId }, select: { id: true, text: true } })
+    if (!note) {
+      return {
+        message: 'Не знайшов нотатку. Перевір noteId.',
+        actionData: { action: 'delete_note', status: 'note_not_found' },
+      }
+    }
+    await prisma.note.delete({ where: { id: note.id } })
+    return {
+      message: decision.reply || 'Готово, нотатку видалено.',
+      actionData: { action: 'delete_note', status: 'completed', noteId: note.id },
+    }
+  }
+
   if (decision.action === 'create_reminder') {
     const reminderMessage = safeText(payload.message) || safeText(message)
     if (!reminderMessage) {
@@ -2073,6 +2456,64 @@ async function executeAgentAction(params: {
     return {
       message: decision.reply || 'Готово, нагадування створено.',
       actionData: { action: 'create_reminder', status: 'completed', reminder },
+    }
+  }
+
+  if (decision.action === 'update_reminder') {
+    const reminderId = safeText((payload as any).reminderId)
+    const msg = safeText((payload as any).message)
+    if (!reminderId) {
+      return {
+        message: decision.reply || 'Ок. Яке нагадування оновити? Дай reminderId (з reminders_list).',
+        actionData: { action: 'update_reminder', status: 'missing_fields', missing: ['reminderId'] },
+      }
+    }
+    const rem = await prisma.telegramReminder.findFirst({ where: { id: reminderId, businessId }, select: { id: true } })
+    if (!rem) {
+      return {
+        message: 'Не знайшов нагадування. Перевір reminderId.',
+        actionData: { action: 'update_reminder', status: 'reminder_not_found' },
+      }
+    }
+    if (!msg) {
+      return {
+        message: decision.reply || 'Який текст нагадування встановити?',
+        actionData: { action: 'update_reminder', status: 'missing_fields', missing: ['message'] },
+      }
+    }
+    const updated = await prisma.telegramReminder.update({
+      where: { id: rem.id },
+      data: { message: msg },
+      select: { id: true, message: true },
+    })
+    return {
+      message: decision.reply || 'Готово, нагадування оновлено.',
+      actionData: { action: 'update_reminder', status: 'completed', reminder: updated },
+    }
+  }
+
+  if (decision.action === 'delete_reminder') {
+    const reminderId = safeText((payload as any).reminderId)
+    if (!reminderId) {
+      return {
+        message: decision.reply || 'Ок. Яке нагадування видалити? Дай reminderId (з reminders_list).',
+        actionData: { action: 'delete_reminder', status: 'missing_fields', missing: ['reminderId'] },
+      }
+    }
+    const rem = await prisma.telegramReminder.findFirst({ where: { id: reminderId, businessId }, select: { id: true } })
+    if (!rem) {
+      return {
+        message: 'Не знайшов нагадування. Перевір reminderId.',
+        actionData: { action: 'delete_reminder', status: 'reminder_not_found' },
+      }
+    }
+    await prisma.telegramReminder.update({
+      where: { id: rem.id },
+      data: { status: 'cancelled' },
+    })
+    return {
+      message: decision.reply || 'Готово, нагадування видалено.',
+      actionData: { action: 'delete_reminder', status: 'completed', reminderId: rem.id },
     }
   }
 
@@ -2206,31 +2647,28 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
     const { businessId, message, sessionId } = body
-    const globalEnvKey = process.env.GEMINI_API_KEY?.trim() || process.env.GOOGLE_API_KEY?.trim() || null
-    const globalDb = await getGlobalAiFromSystemSettings()
-    const globalAiApiKey = globalDb.apiKey || globalEnvKey
-    // Even if env/DB contains something else, we enforce this model server-side.
-    const globalAiModel = ENFORCED_GEMINI_MODEL
 
     if (!businessId || typeof message !== 'string' || !message.trim()) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 })
     }
 
-    const business = await prisma.business.findUnique({
-      where: { id: businessId },
-      include: {
-        services: { where: { isActive: true } },
-        masters: { where: { isActive: true } },
-      },
-    })
+    const [aiConfig, business] = await Promise.all([
+      getLmStudioConfig(),
+      prisma.business.findUnique({
+        where: { id: businessId },
+        include: {
+          services: { where: { isActive: true } },
+          masters: { where: { isActive: true } },
+        },
+      }),
+    ])
     if (!business) {
       return NextResponse.json({ error: 'Business not found' }, { status: 404 })
     }
 
-    const hasAiKey = !!((business.aiApiKey?.trim() || globalAiApiKey || '').trim())
+    const hasAiKey = aiConfig.hasAi
     if (!business.aiChatEnabled) {
       // Don't fail hard: the widget is visible in dashboard for most users.
-      // Return a user-facing message so the UI doesn't show a generic error.
       return NextResponse.json({
         success: true,
         message:
@@ -2245,13 +2683,12 @@ export async function POST(request: Request) {
       })
     }
 
-    const effectiveApiKey = business.aiApiKey?.trim() || globalAiApiKey || null
-    if (!effectiveApiKey) {
-      // User request: disable "no key" assistant mode. When no key, act "offline".
+    const hasAiProvider = aiConfig.hasAi
+    if (!hasAiProvider) {
       return NextResponse.json({
         success: true,
         message:
-          'Зараз я офлайн — в мене обідня перерва. Зайди, будь ласка, трохи пізніше.\n\nПідказка: підключи AI ключ у Центрі управління.',
+          'Зараз я офлайн — в мене обідня перерва. Зайди, будь ласка, трохи пізніше.\n\nПідказка: підключи LM Studio у Центрі управління.',
         action: { action: 'reply', status: 'key_missing' },
         ai: {
           hasKey: false,
@@ -2262,11 +2699,14 @@ export async function POST(request: Request) {
       })
     }
 
-    const chatHistory = await prisma.aIChatMessage.findMany({
-      where: { businessId, sessionId: sessionId || 'default' },
-      orderBy: { createdAt: 'asc' },
-      take: 10,
-    })
+    const [chatHistory, snapshotText] = await Promise.all([
+      prisma.aIChatMessage.findMany({
+        where: { businessId, sessionId: sessionId || 'default' },
+        orderBy: { createdAt: 'asc' },
+        take: 6,
+      }),
+      getBusinessSnapshotText(businessId),
+    ])
 
     const context = {
       businessName: business.name,
@@ -2285,18 +2725,14 @@ export async function POST(request: Request) {
     }
 
     const history = chatHistory.map((msg) => ({ role: msg.role, message: msg.message }))
-    // IMPORTANT: model is mandatory; do not allow business/global overrides.
-    const configuredModel = globalAiModel
-    const aiService = effectiveApiKey
-      ? new AIChatService(effectiveApiKey, configuredModel)
-      : null
-    const isKeyMissing = !effectiveApiKey
+    const aiService =
+      aiConfig.baseUrl ? new LmStudioChatService(aiConfig.baseUrl, aiConfig.model) : null
+    const isKeyMissing = !aiService
 
     let decision: AgentDecision | null = null
     let aiUnavailableReason: string | null = null
     let usedAi = false
     let decisionSource: 'llm' | 'heuristic' | 'fallback' | 'explicit' | null = null
-    const snapshotText = await getBusinessSnapshotText(businessId)
     const toolContextParts: string[] = [snapshotText]
 
     const now = Date.now()
@@ -2414,7 +2850,7 @@ export async function POST(request: Request) {
     } else {
       // IMPORTANT: for "reply" we trust agent-decision. Do not overwrite with getResponse(),
       // otherwise the model will ignore tools/snapshot and switch to generic "client assistant" mode.
-      assistantMessage = decision.reply || 'Ок. Що саме показати: KPI, записи, клієнтів/сегменти, платежі, нотатки або інбокс?'
+      assistantMessage = decision.reply || 'Чим можу допомогти? Можу показати KPI, записи, хто працює, клієнтів, нотатки — просто напиши, що потрібно.'
       actionData = { action: 'reply', status: 'completed', confidence: decision.confidence }
     }
 
@@ -2427,7 +2863,7 @@ export async function POST(request: Request) {
     }
 
     if (!assistantMessage.trim()) {
-      assistantMessage = 'Не вдалося обробити запит. Спробуйте ще раз.'
+      assistantMessage = 'Щось пішло не так — спробуй ще раз, я тут.'
     }
 
     // Keep responses compact to reduce token usage and keep the chat snappy.
@@ -2437,8 +2873,8 @@ export async function POST(request: Request) {
     const aiUsage = {
       usedAi,
       source: decisionSource,
-      provider: (business.aiProvider || 'gemini') as string,
-      model: configuredModel,
+      provider: (business.aiProvider || 'lm_studio') as string,
+      model: aiConfig.model || 'lm_studio',
       unavailableReason: aiUnavailableReason ? truncateText(aiUnavailableReason, 240) : null,
     }
 
@@ -2473,7 +2909,7 @@ export async function POST(request: Request) {
     const lastOk = aiLastSuccessAtByBusiness.get(businessId) || 0
     const isAiRecentlyOk = Date.now() - lastOk < AI_SUCCESS_TTL_MS
     const indicator: 'green' | 'red' =
-      !!effectiveApiKey && business.aiChatEnabled && !aiUnavailableReason && (usedAi || isAiRecentlyOk) ? 'green' : 'red'
+      hasAiKey && business.aiChatEnabled && !aiUnavailableReason && (usedAi || isAiRecentlyOk) ? 'green' : 'red'
 
     return NextResponse.json({
       success: true,
@@ -2481,7 +2917,7 @@ export async function POST(request: Request) {
       tokens,
       action: actionData,
       ai: {
-        hasKey: !!effectiveApiKey,
+        hasKey: hasAiKey,
         indicator,
         usedAi,
         reason: aiUnavailableReason ? truncateText(aiUnavailableReason, 500) : decisionSource ? `source:${decisionSource}` : null,
@@ -2530,10 +2966,8 @@ export async function GET(request: Request) {
       where: { id: businessId },
       select: { aiApiKey: true, aiChatEnabled: true },
     })
-    const globalEnvKey = process.env.GEMINI_API_KEY?.trim() || process.env.GOOGLE_API_KEY?.trim() || null
-    const globalDb = await getGlobalAiFromSystemSettings()
-    const effectiveGlobalKey = globalDb.apiKey || globalEnvKey
-    const hasKey = !!((biz?.aiApiKey?.trim() || effectiveGlobalKey || '').trim())
+    const lmConfig = await getLmStudioConfig()
+    const hasKey = lmConfig.hasAi
     const lastOk = aiLastSuccessAtByBusiness.get(businessId) || 0
     const isAiLikelyWorking = Date.now() - lastOk < AI_SUCCESS_TTL_MS
     return NextResponse.json({

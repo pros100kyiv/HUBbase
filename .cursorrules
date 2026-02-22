@@ -70,7 +70,7 @@ npm run build
 - TypeScript (strict mode)
 - Prisma ORM (PostgreSQL)
 - Tailwind CSS
-- Google Gemini AI
+- LM Studio (локальний LLM)
 - Telegram Bot API
 - Row Level Security (RLS) для ізоляції даних
 
@@ -293,7 +293,7 @@ const response = await aiChatService.chat({
 - `zod` — валідація
 - `bcryptjs` — хешування паролів
 - `telegraf` — Telegram бот
-- `@google/generative-ai` — Gemini AI
+- LM Studio (локальний LLM, без зовнішніх API)
 - `date-fns` — робота з датами
 - `react-hook-form` — форми
 

@@ -3,20 +3,18 @@
 import { useState, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { PhoneIcon, MoneyIcon, CheckIcon, XIcon, AlertCircleIcon, BotIcon } from '@/components/icons'
+import { PhoneIcon, MoneyIcon, CheckIcon, XIcon, AlertCircleIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
-import { TelegramOAuth } from './TelegramOAuth'
+import { TelegramSettings } from './TelegramSettings'
 
 interface IntegrationsSettingsProps {
   business: any
   onUpdate: (data: any) => Promise<void>
+  onRefetchBusiness?: () => Promise<void>
 }
 
-export function IntegrationsSettings({ business, onUpdate }: IntegrationsSettingsProps) {
+export function IntegrationsSettings({ business, onUpdate, onRefetchBusiness }: IntegrationsSettingsProps) {
   const [isSaving, setIsSaving] = useState(false)
-  const [testing, setTesting] = useState<string | null>(null)
-  const [testResults, setTestResults] = useState<Record<string, { success: boolean, message: string }>>({})
-  const businessId = typeof business?.id === 'string' ? business.id : ''
   
   // SMS
   const [smsProvider, setSmsProvider] = useState(business?.smsProvider || 'smsc')
@@ -103,28 +101,6 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
     }
   }
   
-  const testIntegration = async (type: 'sms' | 'email' | 'payment') => {
-    setTesting(type)
-    setTestResults(prev => ({ ...prev, [type]: { success: false, message: 'Тестування...' } }))
-    
-    try {
-      if (type === 'sms') {
-        // Тест SMS через API
-        setTestResults(prev => ({ ...prev, [type]: { success: true, message: 'SMS налаштування збережено. Для тестування відправте тестове SMS.' } }))
-      } else if (type === 'email') {
-        // Тест Email через API
-        setTestResults(prev => ({ ...prev, [type]: { success: true, message: 'Email налаштування збережено. Для тестування відправте тестовий email.' } }))
-      } else if (type === 'payment') {
-        // Тест Payment через API
-        setTestResults(prev => ({ ...prev, [type]: { success: true, message: 'Платежі налаштовано. Створіть тестовий платіж для перевірки.' } }))
-      }
-    } catch (error) {
-      setTestResults(prev => ({ ...prev, [type]: { success: false, message: 'Помилка: ' + (error instanceof Error ? error.message : 'Невідома помилка') } }))
-    } finally {
-      setTesting(null)
-    }
-  }
-  
   const getStatusIcon = (enabled: boolean, configured: boolean) => {
     if (!enabled) return <XIcon className="w-4 h-4 text-gray-400" />
     if (configured) return <CheckIcon className="w-4 h-4 text-green-500" />
@@ -133,40 +109,16 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
   
   return (
     <div className="space-y-6">
-      {/* Telegram (тільки як інтеграція, не спосіб входу) */}
-      <div className="card-candy p-6">
-        <div className="flex items-center gap-2 mb-2">
-          <BotIcon className="w-5 h-5 text-candy-blue" />
-          <h3 className="text-lg font-black text-gray-900 dark:text-white">Telegram</h3>
-        </div>
-        <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
-          Підключіть Telegram для сповіщень/повідомлень та роботи з ботом.
-        </p>
-        {businessId ? (
-          <TelegramOAuth businessId={businessId} onConnected={() => { /* handled inside TelegramOAuth */ }} />
-        ) : (
-          <p className="text-sm text-gray-500">BusinessId не знайдено</p>
-        )}
-      </div>
-
-      {/* Статус інтеграцій */}
-      <div className="card-candy p-6 bg-gradient-to-br from-candy-purple/10 to-candy-blue/10">
-        <h3 className="text-lg font-black text-gray-900 dark:text-white mb-4">Статус інтеграцій</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-          <div className="flex items-center gap-2">
-            {getStatusIcon(true, !!smsApiKey)}
-            <span className="text-xs font-bold">SMS</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {getStatusIcon(true, !!emailApiKey)}
-            <span className="text-xs font-bold">Email</span>
-          </div>
-          <div className="flex items-center gap-2">
-            {getStatusIcon(paymentEnabled, !!paymentApiKey && !!paymentMerchantId)}
-            <span className="text-xs font-bold">Платежі</span>
-          </div>
-        </div>
-      </div>
+      {/* Telegram — кожен бізнес підключає свій бот */}
+      {business ? (
+        <TelegramSettings
+          business={business}
+          onUpdate={onUpdate}
+          onRefetchBusiness={onRefetchBusiness}
+        />
+      ) : (
+        <p className="text-sm text-gray-500">BusinessId не знайдено</p>
+      )}
 
       {/* SMS */}
       <div className="card-candy p-6">
@@ -187,11 +139,7 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
             >
               <option value="smsc">SMSC.ua</option>
             </select>
-            <p className="text-xs text-gray-500 mt-1">
-              <a href="https://smsc.ua" target="_blank" rel="noopener noreferrer" className="text-candy-blue underline">
-                Зареєструватися на SMSC.ua
-              </a>
-            </p>
+            <a href="https://smsc.ua" target="_blank" rel="noopener noreferrer" className="text-xs text-candy-blue hover:underline">SMSC.ua →</a>
           </div>
           <div>
             <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">API Ключ (login:password)</label>
@@ -211,7 +159,6 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
                 {showSmsApiKey ? 'Сховати' : 'Показати'}
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-1">Формат: ваш_логін:ваш_пароль</p>
           </div>
           <div>
             <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Відправник (назва)</label>
@@ -244,11 +191,7 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
             >
               <option value="sendgrid">SendGrid</option>
             </select>
-            <p className="text-xs text-gray-500 mt-1">
-              <a href="https://sendgrid.com" target="_blank" rel="noopener noreferrer" className="text-candy-blue underline">
-                Зареєструватися на SendGrid
-              </a>
-            </p>
+            <a href="https://sendgrid.com" target="_blank" rel="noopener noreferrer" className="text-xs text-candy-blue hover:underline">SendGrid →</a>
           </div>
           <div>
             <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">API Ключ</label>
@@ -268,7 +211,6 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
                 {showEmailApiKey ? 'Сховати' : 'Показати'}
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-1">Отримайте API ключ в SendGrid → Settings → API Keys</p>
           </div>
           <div>
             <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Email відправника</label>
@@ -279,7 +221,6 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
               placeholder="noreply@example.com"
               className="text-xs"
             />
-            <p className="text-xs text-gray-500 mt-1">Email має бути підтверджений в SendGrid</p>
           </div>
           <div>
             <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Ім'я відправника</label>
@@ -324,11 +265,7 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
                 >
                   <option value="liqpay">LiqPay</option>
                 </select>
-                <p className="text-xs text-gray-500 mt-1">
-                  <a href="https://www.liqpay.ua" target="_blank" rel="noopener noreferrer" className="text-candy-blue underline">
-                    Зареєструватися на LiqPay
-                  </a>
-                </p>
+                <a href="https://www.liqpay.ua" target="_blank" rel="noopener noreferrer" className="text-xs text-candy-blue hover:underline">LiqPay →</a>
               </div>
               <div>
                 <label className="text-xs text-gray-600 dark:text-gray-400 mb-1 block">Private Key (API Ключ)</label>
@@ -391,7 +328,6 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
                   max="168"
                   className="text-xs"
                 />
-                <p className="text-xs text-gray-500 mt-1">Рекомендовано: 24 години</p>
               </div>
               <div className="space-y-2">
                 <div className="flex items-center gap-2">
@@ -441,23 +377,8 @@ export function IntegrationsSettings({ business, onUpdate }: IntegrationsSetting
           disabled={isSaving}
           className="flex-1 bg-gradient-to-r from-candy-purple to-candy-blue text-white hover:shadow-soft-xl"
         >
-          {isSaving ? 'Збереження...' : 'Зберегти всі налаштування'}
+          {isSaving ? 'Збереження...' : 'Зберегти'}
         </Button>
-      </div>
-      
-      {/* Інформаційна панель */}
-      <div className="card-candy p-4 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800">
-        <div className="flex items-start gap-2">
-          <AlertCircleIcon className="w-5 h-5 text-blue-500 flex-shrink-0 mt-0.5" />
-          <div className="text-xs text-blue-700 dark:text-blue-300">
-            <p className="font-bold mb-1">Важливо:</p>
-            <ul className="list-disc list-inside space-y-1">
-              <li>API ключі зберігаються в зашифрованому вигляді</li>
-              <li>Після збереження налаштувань перезавантажте сторінку</li>
-              <li>Переконайтеся, що всі API ключі валідні перед збереженням</li>
-            </ul>
-          </div>
-        </div>
       </div>
     </div>
   )

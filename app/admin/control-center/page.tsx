@@ -70,10 +70,10 @@ interface Business {
   subscriptionCurrentPeriodEnd?: Date | string | null
 }
 
-type GlobalAiInfo = {
-  hasKey: boolean
+type LmStudioInfo = {
+  baseUrl: string | null
   model: string | null
-  source?: 'db' | 'env' | 'none'
+  isConfigured: boolean
 }
 
 const ONLINE_THRESHOLD_MS = 2 * 60 * 1000 // 2 хвилини
@@ -115,7 +115,7 @@ export default function ControlCenterPage() {
   const [syncing, setSyncing] = useState(false)
   const [loadError, setLoadError] = useState<string | null>(null)
   const [togglingAi, setTogglingAi] = useState<Record<string, boolean>>({})
-  const [globalAi, setGlobalAi] = useState<GlobalAiInfo>({ hasKey: false, model: 'gemini-flash-lite-latest', source: 'none' })
+  const [lmStudio, setLmStudio] = useState<LmStudioInfo>({ baseUrl: null, model: null, isConfigured: false })
 
   const defaultStats = {
     total: 0,
@@ -278,7 +278,7 @@ export default function ControlCenterPage() {
         businesses?: Business[]
         stats?: typeof defaultStats
         pagination?: { totalPages?: number }
-        globalAi?: GlobalAiInfo
+        lmStudio?: LmStudioInfo
         error?: string
       }
       try {
@@ -297,11 +297,11 @@ export default function ControlCenterPage() {
       setBusinesses(Array.isArray(data.businesses) ? data.businesses : [])
       setStats(data.stats && typeof data.stats === 'object' ? data.stats : defaultStats)
       setTotalPages(data.pagination?.totalPages || 1)
-      if (data.globalAi && typeof data.globalAi === 'object') {
-        setGlobalAi({
-          hasKey: data.globalAi.hasKey === true,
-          model: typeof data.globalAi.model === 'string' ? data.globalAi.model : 'gemini-flash-lite-latest',
-          source: data.globalAi.source,
+      if (data.lmStudio && typeof data.lmStudio === 'object') {
+        setLmStudio({
+          baseUrl: typeof data.lmStudio.baseUrl === 'string' ? data.lmStudio.baseUrl : null,
+          model: typeof data.lmStudio.model === 'string' ? data.lmStudio.model : null,
+          isConfigured: data.lmStudio.isConfigured === true,
         })
       }
 
@@ -500,7 +500,7 @@ export default function ControlCenterPage() {
             refreshTrigger={refreshTrigger}
             onToggleAiChat={handleToggleAiChat}
             togglingAi={togglingAi}
-            globalAi={globalAi}
+            lmStudio={lmStudio}
           />
         )}
 
@@ -772,7 +772,7 @@ function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
 }
 
 // Businesses Tab Component
-function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, setStatusFilter, page, setPage, totalPages, formatDate, onDataChanged, loadData, setRefreshTrigger, refreshTrigger, onToggleAiChat, togglingAi, globalAi }: any) {
+function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, setStatusFilter, page, setPage, totalPages, formatDate, onDataChanged, loadData, setRefreshTrigger, refreshTrigger, onToggleAiChat, togglingAi, lmStudio }: any) {
   const [selectedBusinesses, setSelectedBusinesses] = useState<string[]>([])
   const [bulkAction, setBulkAction] = useState<string>('')
   const [blockModalOpen, setBlockModalOpen] = useState(false)
@@ -788,27 +788,18 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
   const [searchBy, setSearchBy] = useState<'all' | 'id' | 'name' | 'email'>('all')
   const [detailModalBusiness, setDetailModalBusiness] = useState<Business | null>(null)
   const [aiKeyDraft, setAiKeyDraft] = useState('')
-  const [aiModelDraft, setAiModelDraft] = useState('gemini-flash-lite-latest')
+  const [aiModelDraft, setAiModelDraft] = useState('')
   const [savingAiConfig, setSavingAiConfig] = useState(false)
-  const [globalAiKeyDraft, setGlobalAiKeyDraft] = useState('')
-  const [globalAiModelDraft, setGlobalAiModelDraft] = useState('gemini-flash-lite-latest')
-  const [savingGlobalAi, setSavingGlobalAi] = useState(false)
+  const [lmStudioUrlDraft, setLmStudioUrlDraft] = useState('')
+  const [lmStudioModelDraft, setLmStudioModelDraft] = useState('')
+  const [savingLmStudio, setSavingLmStudio] = useState(false)
 
   useEffect(() => {
-    if (!detailModalBusiness) return
-    if (detailModalBusiness.aiModel && typeof detailModalBusiness.aiModel === 'string') {
-      let m = detailModalBusiness.aiModel.trim()
-      if (m.startsWith('models/')) m = m.slice('models/'.length)
-      if (m === 'gemini-1.5-flash') m = 'gemini-flash-lite-latest'
-      if (m === 'gemini-1.5-pro') m = 'gemini-pro-latest'
-      setAiModelDraft(m || 'gemini-flash-lite-latest')
+    if (lmStudio) {
+      setLmStudioUrlDraft(lmStudio.baseUrl || 'http://127.0.0.1:1234/v1')
+      setLmStudioModelDraft(lmStudio.model || '')
     }
-  }, [detailModalBusiness?.businessId])
-
-  useEffect(() => {
-    const m = typeof globalAi?.model === 'string' && globalAi.model.trim() ? globalAi.model.trim() : 'gemini-flash-lite-latest'
-    setGlobalAiModelDraft(m)
-  }, [globalAi?.model])
+  }, [lmStudio?.baseUrl, lmStudio?.model])
   const [quickIdSearch, setQuickIdSearch] = useState('')
   const quickSearchInputRef = useRef<HTMLInputElement>(null)
   const rowRefsMap = useRef<Record<string, HTMLTableRowElement | null>>({})
@@ -1071,112 +1062,67 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
         <span className="text-xs text-gray-500 self-center hidden sm:inline">Ctrl+K — фокус</span>
       </div>
 
-      {/* Global AI (default for all accounts) */}
+      {/* LM Studio (для всіх акаунтів) */}
       <div className="mb-4 p-3 sm:p-4 rounded-xl bg-white/5 border border-white/10">
         <div className="flex items-center justify-between gap-2 mb-2">
-          <div className="text-sm font-semibold text-white">Global Gemini AI (для всіх акаунтів)</div>
-          <div className="text-xs text-gray-300 flex flex-wrap gap-2 justify-end">
-            <span>Key: {globalAi?.hasKey ? 'set' : 'empty'}</span>
-            <span>Model: {globalAi?.model || 'gemini-flash-lite-latest'}</span>
-            <span className="text-gray-500">source: {globalAi?.source || 'none'}</span>
+          <div className="text-sm font-semibold text-white">LM Studio (для всіх акаунтів)</div>
+          <div className="text-xs text-gray-300">
+            {lmStudio?.isConfigured ? 'Налаштовано' : 'Не налаштовано'}
           </div>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
           <input
-            type="password"
-            value={globalAiKeyDraft}
-            onChange={(e) => setGlobalAiKeyDraft(e.target.value)}
-            placeholder="Global Gemini API key (AIza...)"
+            type="text"
+            value={lmStudioUrlDraft}
+            onChange={(e) => setLmStudioUrlDraft(e.target.value)}
+            placeholder="LM Studio URL (http://127.0.0.1:1234/v1)"
             className="w-full min-h-[44px] px-4 py-2.5 border border-white/10 rounded-lg bg-white/5 text-white placeholder-gray-500 text-sm"
           />
-          <select
-            value={globalAiModelDraft}
-            onChange={(e) => setGlobalAiModelDraft(e.target.value)}
-            className="w-full min-h-[44px] px-4 py-2.5 border border-white/10 rounded-lg bg-white/5 text-white text-sm"
-          >
-            <option value="gemini-flash-lite-latest">gemini-flash-lite-latest (default)</option>
-            <option value="gemini-flash-latest">gemini-flash-latest</option>
-            <option value="gemini-2.0-flash">gemini-2.0-flash</option>
-            <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-            <option value="gemini-pro-latest">gemini-pro-latest</option>
-          </select>
+          <input
+            type="text"
+            value={lmStudioModelDraft}
+            onChange={(e) => setLmStudioModelDraft(e.target.value)}
+            placeholder="Модель (порожньо = авто)"
+            className="w-full min-h-[44px] px-4 py-2.5 border border-white/10 rounded-lg bg-white/5 text-white placeholder-gray-500 text-sm"
+          />
         </div>
         <div className="flex flex-col sm:flex-row gap-2 mt-3">
           <button
             type="button"
-            disabled={savingGlobalAi}
+            disabled={savingLmStudio}
             onClick={async () => {
-              setSavingGlobalAi(true)
+              setSavingLmStudio(true)
               try {
-                const body: any = {
-                  businessId: 'global',
-                  action: 'setGlobalAiConfig',
-                  data: {
-                    aiModel: globalAiModelDraft,
-                  },
-                }
-                if (globalAiKeyDraft.trim()) body.data.aiApiKey = globalAiKeyDraft.trim()
                 const res = await fetch('/api/admin/control-center', {
                   method: 'PATCH',
                   headers: getAuthHeaders(),
                   cache: 'no-store',
-                  body: JSON.stringify(body),
+                  body: JSON.stringify({
+                    businessId: 'global',
+                    action: 'setGlobalLmStudioConfig',
+                    data: {
+                      lmStudioBaseUrl: lmStudioUrlDraft.trim() || 'http://127.0.0.1:1234/v1',
+                      lmStudioModel: lmStudioModelDraft.trim() || null,
+                    },
+                  }),
                 })
                 const data = await res.json().catch(() => ({}))
-                if (!res.ok) throw new Error(data.error || 'Не вдалося зберегти global AI')
-                setGlobalAiKeyDraft('')
-                toast({ title: 'Global AI збережено', type: 'success', duration: 1500 })
+                if (!res.ok) throw new Error(data.error || 'Не вдалося зберегти LM Studio')
+                toast({ title: 'LM Studio збережено', type: 'success', duration: 1500 })
                 await onDataChanged?.()
               } catch (e) {
-                toast({ title: 'Помилка', description: e instanceof Error ? e.message : 'Не вдалося зберегти global AI', type: 'error' })
+                toast({ title: 'Помилка', description: e instanceof Error ? e.message : 'Не вдалося зберегти LM Studio', type: 'error' })
               } finally {
-                setSavingGlobalAi(false)
+                setSavingLmStudio(false)
               }
             }}
             className="min-h-[44px] px-4 py-2.5 bg-white/10 text-white rounded-lg hover:bg-white/20 disabled:opacity-50"
           >
-            {savingGlobalAi ? 'Збереження...' : 'Зберегти global'}
-          </button>
-          <button
-            type="button"
-            disabled={savingGlobalAi}
-            onClick={async () => {
-              if (!confirm('Застосувати global key для ВСІХ акаунтів? Це очистить персональні ключі у всіх бізнесів.')) return
-              setSavingGlobalAi(true)
-              try {
-                const body: any = {
-                  businessId: 'global',
-                  action: 'setGlobalAiConfig',
-                  data: {
-                    aiModel: globalAiModelDraft,
-                    applyToAll: true,
-                  },
-                }
-                if (globalAiKeyDraft.trim()) body.data.aiApiKey = globalAiKeyDraft.trim()
-                const res = await fetch('/api/admin/control-center', {
-                  method: 'PATCH',
-                  headers: getAuthHeaders(),
-                  cache: 'no-store',
-                  body: JSON.stringify(body),
-                })
-                const data = await res.json().catch(() => ({}))
-                if (!res.ok) throw new Error(data.error || 'Не вдалося застосувати global AI для всіх')
-                setGlobalAiKeyDraft('')
-                toast({ title: 'Global AI застосовано для всіх', type: 'success', duration: 1800 })
-                await onDataChanged?.()
-              } catch (e) {
-                toast({ title: 'Помилка', description: e instanceof Error ? e.message : 'Не вдалося застосувати global AI', type: 'error' })
-              } finally {
-                setSavingGlobalAi(false)
-              }
-            }}
-            className="min-h-[44px] px-4 py-2.5 bg-purple-600/60 text-white rounded-lg hover:bg-purple-600/80 disabled:opacity-50"
-          >
-            {savingGlobalAi ? 'Застосування...' : 'Застосувати для всіх (1 клік)'}
+            {savingLmStudio ? 'Збереження...' : 'Зберегти'}
           </button>
         </div>
         <div className="text-[11px] text-gray-400 mt-2">
-          Після “Застосувати для всіх” кожен акаунт буде брати ключ з global налаштувань (якщо не заданий власний ключ).
+          Запустіть LM Studio локально, завантажте модель. За замовчуванням: http://127.0.0.1:1234/v1
         </div>
       </div>
 
@@ -1758,10 +1704,6 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                   AI {detailModalBusiness.aiChatEnabled ? 'ON' : 'OFF'}
                 </button>
               </div>
-              <div className="text-xs text-gray-300 flex flex-wrap gap-2">
-                <span>Key: {detailModalBusiness.aiHasKey ? 'set' : 'empty'}</span>
-                <span>Model: {detailModalBusiness.aiModel || '-'}</span>
-              </div>
               <div className="mt-2 text-xs text-gray-300 flex flex-wrap gap-2">
                 <span>
                   Today: {detailModalBusiness.aiUsageToday?.llm ?? 0}/{detailModalBusiness.aiUsageToday?.total ?? 0} LLM
@@ -1770,28 +1712,28 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                 <span>429/cooldown 24h: {detailModalBusiness.aiUsage24h?.rateLimited ?? 0}</span>
               </div>
               <div className="text-[11px] text-gray-400 mt-1">
-                Лічильник показує використання, яке зафіксував наш сервер (Gemini не дає “залишок квоти” напряму по API key).
+                Лічильник показує використання, яке зафіксував наш сервер.
               </div>
 
-              <div className="mt-3 space-y-2">
-                <label className="text-xs text-gray-400">Gemini API key (встав, щоб оновити; порожньо = без змін)</label>
+              <div className="mt-3 space-y-2 hidden">
+                <label className="text-xs text-gray-400">LM Studio (глобально)</label>
                 <input
                   type="password"
                   value={aiKeyDraft}
-                  onChange={(e) => setAiKeyDraft(e.target.value)}
+                  onChange={() => {}}
                   placeholder="AIza..."
                   className="w-full min-h-[40px] px-3 py-2 rounded-lg bg-black/20 border border-white/10 text-white text-sm"
                 />
                 <label className="text-xs text-gray-400">Модель</label>
                 <select
                   value={aiModelDraft}
-                  onChange={(e) => setAiModelDraft(e.target.value)}
+                  onChange={() => {}}
                   className="w-full min-h-[40px] px-3 py-2 rounded-lg bg-black/20 border border-white/10 text-white text-sm"
                 >
-                  <option value="gemini-flash-lite-latest">gemini-flash-lite-latest (default)</option>
-                  <option value="gemini-flash-latest">gemini-flash-latest</option>
-                  <option value="gemini-2.5-flash">gemini-2.5-flash</option>
-                  <option value="gemini-2.0-flash">gemini-2.0-flash</option>
+                  <option value="local-model">local-model</option>
+                  <option value="codellama">codellama</option>
+                  <option value="llama-3.2">llama-3.2</option>
+                  <option value="mistral">mistral</option>
                 </select>
                 <div className="flex gap-2 pt-1">
                   <button
@@ -1801,12 +1743,8 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                         const body: any = {
                           businessId: detailModalBusiness.businessId,
                           action: 'setAiConfig',
-                          data: {
-                            aiProvider: 'gemini',
-                            aiSettings: JSON.stringify({ model: aiModelDraft }),
-                          },
+                          data: { aiProvider: 'lm_studio' },
                         }
-                        if (aiKeyDraft.trim()) body.data.aiApiKey = aiKeyDraft.trim()
 
                         const res = await fetch('/api/admin/control-center', {
                           method: 'PATCH',
@@ -1821,7 +1759,7 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                           prev
                             ? {
                                 ...prev,
-                                aiProvider: 'gemini',
+                                aiProvider: 'lm_studio',
                                 aiModel: aiModelDraft,
                                 aiHasKey: prev.aiHasKey || !!aiKeyDraft.trim(),
                               }
@@ -1847,7 +1785,6 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                   </button>
                   <button
                     onClick={async () => {
-                      if (!confirm('Очистити AI ключ для цього бізнесу?')) return
                       setSavingAiConfig(true)
                       try {
                         const res = await fetch('/api/admin/control-center', {
@@ -1857,13 +1794,13 @@ function BusinessesTab({ businesses, loading, search, setSearch, statusFilter, s
                           body: JSON.stringify({
                             businessId: detailModalBusiness.businessId,
                             action: 'setAiConfig',
-                            data: { aiApiKey: '' },
+                            data: { aiProvider: 'lm_studio' },
                           }),
                         })
                         const data = await res.json().catch(() => ({}))
-                        if (!res.ok) throw new Error(data.error || 'Не вдалося очистити ключ')
-                        setDetailModalBusiness((prev) => (prev ? { ...prev, aiHasKey: false } : prev))
-                        toast({ title: 'AI ключ очищено', type: 'success', duration: 1500 })
+                        if (!res.ok) throw new Error(data.error || 'Не вдалося оновити')
+                        setDetailModalBusiness((prev) => (prev ? { ...prev, aiProvider: 'lm_studio' } : prev))
+                        toast({ title: 'AI: lm_studio', type: 'success', duration: 1500 })
                         await onDataChanged?.()
                       } catch (e) {
                         toast({ title: 'Помилка', description: e instanceof Error ? e.message : 'Не вдалося очистити ключ', type: 'error' })

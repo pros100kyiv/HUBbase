@@ -17,42 +17,78 @@ function getSenderTelegramId(update: any): string | null {
   return String(fromId)
 }
 
-function getStartPassword(update: any): string | null {
+function getStartParam(update: any): string | null {
   const text = update?.message?.text
   if (typeof text !== 'string') return null
   if (!text.startsWith('/start')) return null
   const parts = text.trim().split(/\s+/)
-  const password = parts[1]
-  return password || null
+  return parts[1] || null
+}
+
+function getChatId(update: any): string | null {
+  const chatId =
+    update?.message?.chat?.id ??
+    update?.edited_message?.chat?.id ??
+    update?.callback_query?.message?.chat?.id
+  if (chatId === undefined || chatId === null) return null
+  return String(chatId)
 }
 
 async function resolveBusinessIdFromUpdate(update: any): Promise<string | null> {
-  // 1) Якщо це /start <пароль> — знаходимо бізнес по activationPassword
-  const startPassword = getStartPassword(update)
-  if (startPassword) {
+  const startParam = getStartParam(update)
+  const chatId = getChatId(update)
+  const senderId = getSenderTelegramId(update)
+
+  // 1) /start <пароль> — activationPassword (TelegramUser)
+  if (startParam) {
     const userWithPassword = await prisma.telegramUser.findFirst({
       where: {
-        activationPassword: startPassword,
+        activationPassword: startParam,
         activatedAt: null,
       },
       select: { businessId: true },
     })
     if (userWithPassword?.businessId) return userWithPassword.businessId
+
+    // 2) /start <businessIdentifier> — quick connect (платформний бот)
+    const byIdentifier = await prisma.business.findFirst({
+      where: { businessIdentifier: startParam, telegramBotToken: { not: null } },
+      select: { id: true },
+    })
+    if (byIdentifier && chatId) {
+      await prisma.telegramChatMapping.upsert({
+        where: { chatId },
+        create: { chatId, businessId: byIdentifier.id },
+        update: { businessId: byIdentifier.id },
+      })
+      return byIdentifier.id
+    }
   }
 
-  // 2) Інакше шукаємо бізнес по вже активованому telegramId
-  const senderId = getSenderTelegramId(update)
-  if (!senderId) return null
-  try {
-    const telegramId = BigInt(senderId)
-    const existingUser = await prisma.telegramUser.findUnique({
-      where: { telegramId },
+  // 3) chatId -> businessId (вже був /start раніше)
+  if (chatId) {
+    const mapping = await prisma.telegramChatMapping.findUnique({
+      where: { chatId },
       select: { businessId: true },
     })
-    return existingUser?.businessId || null
-  } catch {
-    return null
+    if (mapping) return mapping.businessId
   }
+
+  // 4) telegramId в TelegramUser (активований користувач)
+  if (senderId) {
+    try {
+      const telegramId = BigInt(senderId)
+      const existingUser = await prisma.telegramUser.findUnique({
+        where: { telegramId },
+        select: { businessId: true },
+      })
+      return existingUser?.businessId || null
+    } catch {
+      // ignore
+    }
+  }
+
+  return null
 }
 
 /**
