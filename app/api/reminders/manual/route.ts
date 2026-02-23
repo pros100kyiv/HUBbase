@@ -35,7 +35,7 @@ export async function POST(request: Request) {
 
   const subs = await prisma.pushSubscription.findMany({
     where: { businessId, appointmentId },
-    select: { endpoint: true, p256dh: true, auth: true },
+    select: { id: true, endpoint: true, p256dh: true, auth: true },
   })
 
   if (subs.length === 0) {
@@ -53,22 +53,34 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, sent: 0, error: 'Клієнт ще не увімкнув push-нагадування для цього запису.' }, { status: 200 })
   }
 
+  const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://xbase.online')).replace(/\/$/, '')
+  const pushUrl = appointment.business?.slug ? `${baseUrl}/booking/${appointment.business.slug}` : baseUrl
   let sent = 0
   const errors: string[] = []
+  const deadIds: string[] = []
+
   for (const s of subs) {
-    try {
-      await sendWebPush(
-        { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
-        {
-          title: appointment.business?.name ? `Нагадування: ${appointment.business.name}` : 'Нагадування',
-          body: `Запис: ${appointment.master?.name || 'майстер'} · ${new Date(appointment.startTime).toLocaleString('uk-UA')}`,
-          url: appointment.business?.slug ? `/booking/${appointment.business.slug}` : '/',
-        }
-      )
-      sent += 1
-    } catch (e) {
-      errors.push(e instanceof Error ? e.message : String(e))
+    const result = await sendWebPush(
+      { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+      {
+        title: appointment.business?.name ? `Нагадування: ${appointment.business.name}` : 'Нагадування',
+        body: `Запис: ${appointment.master?.name || 'майстер'} · ${new Date(appointment.startTime).toLocaleString('uk-UA')}`,
+        url: pushUrl,
+        icon: `${baseUrl}/icon.png`,
+        badge: `${baseUrl}/icon.png`,
+        tag: `reminder-${appointmentId}`,
+        vibrate: [200, 100, 200],
+      }
+    )
+    if (result.ok) sent += 1
+    else {
+      errors.push(result.error)
+      if (result.dead) deadIds.push(s.id)
     }
+  }
+
+  if (deadIds.length > 0) {
+    await prisma.pushSubscription.deleteMany({ where: { id: { in: deadIds } } }).catch(() => {})
   }
 
   await prisma.reminderLog.create({

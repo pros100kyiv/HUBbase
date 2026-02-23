@@ -11,6 +11,7 @@ import { uk } from 'date-fns/locale'
 import { Telegraf } from 'telegraf'
 import { SMSService } from '@/lib/services/sms-service'
 import { EmailService } from '@/lib/services/email-service'
+import { sendWebPush, isVapidConfigured } from '@/lib/services/web-push'
 import { parseBookingTimeZone } from '@/lib/utils/booking-settings'
 
 const CRON_SECRET = process.env.CRON_SECRET || process.env.VERCEL_CRON_SECRET
@@ -23,6 +24,16 @@ function getReminderHoursBefore(settingsRaw: string | null | undefined): number 
     return Number.isFinite(h) && h > 0 ? Math.min(168, Math.round(h)) : 24
   } catch {
     return 24
+  }
+}
+
+function getReminderPushEnabled(settingsRaw: string | null | undefined): boolean {
+  if (!settingsRaw || typeof settingsRaw !== 'string') return true
+  try {
+    const parsed = JSON.parse(settingsRaw) as { reminderPushEnabled?: boolean }
+    return parsed?.reminderPushEnabled !== false
+  } catch {
+    return true
   }
 }
 
@@ -47,6 +58,7 @@ export async function GET(request: Request) {
       select: {
         id: true,
         name: true,
+        slug: true,
         settings: true,
         reminderSmsEnabled: true,
         reminderEmailEnabled: true,
@@ -149,12 +161,62 @@ export async function GET(request: Request) {
               `Перенести або скасувати запис можна лише після підтвердження в кабінеті. Посилання для керування — у підтвердженні запису.`
             await bot.telegram.sendMessage(apt.client.telegramChatId, tgMsg, { parse_mode: 'HTML' })
             sent++
+            aptSent = true
             await prisma.reminderLog.create({
               data: { businessId: biz.id, appointmentId: apt.id, channel: 'TELEGRAM', status: 'SENT', triggeredBy: 'cron' },
             })
           } catch (e) {
             failed++
             errors.push(`TG ${apt.id}: ${e instanceof Error ? e.message : String(e)}`)
+          }
+        }
+
+        if (isVapidConfigured() && getReminderPushEnabled(biz.settings)) {
+          const pushSubs = await prisma.pushSubscription.findMany({
+            where: { businessId: biz.id, appointmentId: apt.id },
+            select: { id: true, endpoint: true, p256dh: true, auth: true },
+          })
+          if (pushSubs.length > 0) {
+            const baseUrl = (process.env.NEXT_PUBLIC_BASE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://xbase.online')).replace(/\/$/, '')
+            const pushUrl = biz.slug ? `${baseUrl}/booking/${biz.slug}` : baseUrl
+            const deadIds: string[] = []
+            let pushSent = 0
+            for (const sub of pushSubs) {
+              try {
+                const result = await sendWebPush(
+                  { endpoint: sub.endpoint, keys: { p256dh: sub.p256dh, auth: sub.auth } },
+                  {
+                    title: biz.name ? `Нагадування: ${biz.name}` : 'Нагадування',
+                    body: msgText,
+                    url: pushUrl,
+                    icon: `${baseUrl}/icon.png`,
+                    badge: `${baseUrl}/icon.png`,
+                    tag: `reminder-${apt.id}`,
+                    vibrate: [200, 100, 200],
+                  }
+                )
+                if (result.ok) {
+                  pushSent++
+                  sent++
+                  aptSent = true
+                } else if (result.dead) deadIds.push(sub.id)
+              } catch (e) {
+                errors.push(`Push ${apt.id}: ${e instanceof Error ? e.message : String(e)}`)
+              }
+            }
+            await prisma.reminderLog.create({
+              data: {
+                businessId: biz.id,
+                appointmentId: apt.id,
+                channel: 'PUSH',
+                status: pushSent > 0 ? 'SENT' : 'FAILED',
+                triggeredBy: 'cron',
+                error: pushSent === 0 && pushSubs.length > 0 ? 'All subscriptions failed or expired' : null,
+              },
+            })
+            if (deadIds.length > 0) {
+              await prisma.pushSubscription.deleteMany({ where: { id: { in: deadIds } } }).catch(() => {})
+            }
           }
         }
 

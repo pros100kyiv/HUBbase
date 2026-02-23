@@ -50,14 +50,14 @@ interface ChangeRequest {
 interface AppointmentCardProps {
   appointment: Appointment
   servicesMap: ServicesMap
-  onConfirm: (id: string) => void
+  onConfirmClick: (id: string) => void
   onReschedule: (id: string, newStartTime: string, newEndTime: string) => void
   onStatusChange: (id: string, status: StatusValue) => void
   onDoneWithoutPrice?: (id: string) => void
   processing: string | null
 }
 
-function AppointmentCard({ appointment, servicesMap, onConfirm, onReschedule, onStatusChange, onDoneWithoutPrice, processing }: AppointmentCardProps) {
+function AppointmentCard({ appointment, servicesMap, onConfirmClick, onReschedule, onStatusChange, onDoneWithoutPrice, processing }: AppointmentCardProps) {
   const startTime = new Date(appointment.startTime)
   const endTime = new Date(appointment.endTime)
   let serviceIds: string[] = []
@@ -234,7 +234,7 @@ function AppointmentCard({ appointment, servicesMap, onConfirm, onReschedule, on
           <div className="flex gap-2 min-w-0">
             <button
               type="button"
-              onClick={() => onConfirm(appointment.id)}
+              onClick={() => onConfirmClick(appointment.id)}
               disabled={processing === appointment.id}
               className="touch-target flex-1 min-w-0 min-h-[44px] px-4 py-2.5 rounded-xl text-sm font-semibold bg-white text-black hover:bg-gray-100 hover:text-gray-900 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5 whitespace-nowrap outline-none"
               style={{ boxShadow: '0 2px 6px rgba(0,0,0,0.25)' }}
@@ -265,12 +265,18 @@ interface NotificationsPanelProps {
   onUpdate: () => void
 }
 
+interface TelegramNotificationSettings {
+  promptCommentOnConfirm?: boolean
+  promptCommentOnReject?: boolean
+}
+
 export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: NotificationsPanelProps) {
   const [appointments, setAppointments] = useState<Appointment[]>([])
   const [changeRequests, setChangeRequests] = useState<ChangeRequest[]>([])
   const [servicesMap, setServicesMap] = useState<Record<string, { name: string; price?: number }>>({})
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState<string | null>(null)
+  const [notificationSettings, setNotificationSettings] = useState<TelegramNotificationSettings>({})
   const [showDonePriceModalForId, setShowDonePriceModalForId] = useState<string | null>(null)
   const [donePriceInputGrn, setDonePriceInputGrn] = useState<number | ''>('')
   const [donePriceServiceName, setDonePriceServiceName] = useState('')
@@ -279,6 +285,20 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
   useEffect(() => {
     if (isOpen && businessId) {
       loadNotifications()
+      fetch(`/api/business/${businessId}`)
+        .then((r) => r.ok ? r.json() : null)
+        .then((res: { business?: { telegramSettings?: string } } | null) => {
+          const ts = res?.business?.telegramSettings
+          if (!ts) return
+          try {
+            const parsed = JSON.parse(ts) as TelegramNotificationSettings
+            setNotificationSettings({
+              promptCommentOnConfirm: parsed.promptCommentOnConfirm !== false,
+              promptCommentOnReject: parsed.promptCommentOnReject !== false,
+            })
+          } catch {}
+        })
+        .catch(() => {})
     }
   }, [isOpen, businessId])
 
@@ -328,16 +348,19 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
     }
   }
 
-  const handleConfirm = async (appointmentId: string) => {
+  const handleConfirm = async (appointmentId: string, businessNote?: string) => {
     setProcessing(appointmentId)
     try {
+      const body: Record<string, string> = { businessId, status: 'Confirmed' }
+      if (businessNote?.trim()) body.businessNote = businessNote.trim()
       const response = await fetch(`/api/appointments/${appointmentId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ businessId, status: 'Confirmed' }),
+        body: JSON.stringify(body),
       })
       if (response.ok) {
         toast({ title: 'Запис підтверджено', type: 'success' })
+        setShowConfirmAppointmentModal(null)
         await loadNotifications()
         onUpdate()
       } else {
@@ -352,17 +375,40 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
     }
   }
 
-  const handleStatusChange = async (id: string, status: StatusValue) => {
+  const [showRejectAppointmentModal, setShowRejectAppointmentModal] = useState<string | null>(null)
+  const [rejectAppointmentNote, setRejectAppointmentNote] = useState('')
+  const [showConfirmAppointmentModal, setShowConfirmAppointmentModal] = useState<string | null>(null)
+  const [confirmAppointmentNote, setConfirmAppointmentNote] = useState('')
+  const [showRejectChangeRequestModal, setShowRejectChangeRequestModal] = useState<string | null>(null)
+  const [rejectChangeRequestNote, setRejectChangeRequestNote] = useState('')
+
+  const handleStatusChange = async (id: string, status: StatusValue, businessNote?: string) => {
+    if (status === 'Cancelled') {
+      if (notificationSettings.promptCommentOnReject !== false) {
+        setShowRejectAppointmentModal(id)
+        setRejectAppointmentNote('')
+        return
+      }
+      await doStatusChange(id, status)
+      return
+    }
+    await doStatusChange(id, status)
+  }
+
+  const doStatusChange = async (id: string, status: StatusValue, businessNote?: string) => {
     setProcessing(id)
     try {
+      const body: Record<string, string> = { businessId, status }
+      if (businessNote?.trim()) body.businessNote = businessNote.trim()
       const response = await fetch(`/api/appointments/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ businessId, status }),
+        body: JSON.stringify(body),
       })
       const data = await response.json().catch(() => ({}))
       if (response.ok) {
         toast({ title: 'Статус оновлено', type: 'success' })
+        setShowRejectAppointmentModal(null)
         await loadNotifications()
         onUpdate()
       } else {
@@ -442,17 +488,33 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
 
   const count = appointments.length + changeRequests.length
 
-  const handleRequestDecision = async (requestId: string, action: 'approve' | 'reject') => {
+  const handleRequestDecision = async (requestId: string, action: 'approve' | 'reject', decisionNote?: string) => {
+    if (action === 'reject') {
+      if (notificationSettings.promptCommentOnReject) {
+        setShowRejectChangeRequestModal(requestId)
+        setRejectChangeRequestNote('')
+        return
+      }
+      await doRequestDecision(requestId, action)
+      return
+    }
+    await doRequestDecision(requestId, action)
+  }
+
+  const doRequestDecision = async (requestId: string, action: 'approve' | 'reject', decisionNote?: string) => {
     setProcessing(requestId)
     try {
+      const body: Record<string, string> = { businessId, action }
+      if (decisionNote?.trim()) body.decisionNote = decisionNote.trim()
       const res = await fetch(`/api/appointment-change-requests/${requestId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ businessId, action }),
+        body: JSON.stringify(body),
       })
       const data = await res.json().catch(() => ({}))
       if (res.ok) {
         toast({ title: action === 'approve' ? 'Запит підтверджено' : 'Запит відхилено', type: 'success' })
+        setShowRejectChangeRequestModal(null)
         await loadNotifications()
         onUpdate()
       } else {
@@ -610,7 +672,14 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
                     key={appointment.id}
                     appointment={appointment}
                     servicesMap={servicesMap}
-                    onConfirm={handleConfirm}
+                    onConfirmClick={(id) => {
+                      if (notificationSettings.promptCommentOnConfirm !== false) {
+                        setShowConfirmAppointmentModal(id)
+                        setConfirmAppointmentNote('')
+                      } else {
+                        handleConfirm(id)
+                      }
+                    }}
                     onReschedule={handleReschedule}
                     onStatusChange={handleStatusChange}
                     processing={processing}
@@ -633,6 +702,130 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
         </div>
       </div>
     </ModalPortal>
+
+      {/* Модалка при підтвердженні запису */}
+      {showConfirmAppointmentModal && (
+        <ModalPortal>
+          <div className="modal-overlay modal-overlay-nested sm:!p-4" onClick={() => setShowConfirmAppointmentModal(null)}>
+            <div
+              className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button type="button" onClick={() => setShowConfirmAppointmentModal(null)} className="modal-close touch-target text-gray-400 hover:text-white rounded-full" aria-label="Закрити">
+                <XIcon className="w-5 h-5" />
+              </button>
+              <h3 className="modal-title pr-10 mb-1">Підтвердити запис</h3>
+              <p className="text-sm text-gray-400 mb-4">
+                Клієнт отримає сповіщення в Telegram. Можна додати коментар (необов'язково):
+              </p>
+              <textarea
+                value={confirmAppointmentNote}
+                onChange={(e) => setConfirmAppointmentNote(e.target.value)}
+                placeholder="Наприклад: Чекаємо на вас! Підготуйте документи."
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/30 resize-none"
+              />
+              <div className="flex gap-2 pt-4">
+                <button type="button" onClick={() => setShowConfirmAppointmentModal(null)} className="flex-1 px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/15">
+                  Скасувати
+                </button>
+                <button
+                  type="button"
+                  onClick={() => handleConfirm(showConfirmAppointmentModal, confirmAppointmentNote)}
+                  disabled={processing === showConfirmAppointmentModal}
+                  className="flex-1 px-4 py-3 rounded-xl bg-white text-black text-sm font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {processing === showConfirmAppointmentModal ? 'Підтвердження...' : 'Підтвердити'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
+      {/* Модалка при відхиленні запису (статус → Скасовано) */}
+      {showRejectAppointmentModal && (
+        <ModalPortal>
+          <div className="modal-overlay modal-overlay-nested sm:!p-4" onClick={() => setShowRejectAppointmentModal(null)}>
+            <div
+              className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button type="button" onClick={() => setShowRejectAppointmentModal(null)} className="modal-close touch-target text-gray-400 hover:text-white rounded-full" aria-label="Закрити">
+                <XIcon className="w-5 h-5" />
+              </button>
+              <h3 className="modal-title pr-10 mb-1">Відхилити запис</h3>
+              <p className="text-sm text-gray-400 mb-4">
+                Клієнт отримає сповіщення в Telegram. Можна додати коментар:
+              </p>
+              <textarea
+                value={rejectAppointmentNote}
+                onChange={(e) => setRejectAppointmentNote(e.target.value)}
+                placeholder="Наприклад: На жаль, цей час уже зайнятий. Зателефонуйте нам для іншого слоту."
+                rows={3}
+                className="w-full px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/30 resize-none"
+              />
+              <div className="flex gap-2 pt-4">
+                <button type="button" onClick={() => setShowRejectAppointmentModal(null)} className="flex-1 px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/15">
+                  Скасувати
+                </button>
+                <button
+                  type="button"
+                  onClick={() => doStatusChange(showRejectAppointmentModal, 'Cancelled', rejectAppointmentNote)}
+                  disabled={processing === showRejectAppointmentModal}
+                  className="flex-1 px-4 py-3 rounded-xl bg-rose-600 text-white text-sm font-semibold hover:bg-rose-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {processing === showRejectAppointmentModal ? 'Збереження...' : 'Відхилити'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </ModalPortal>
+      )}
+
+      {/* Модалка при відхиленні запиту клієнта (перенесення/скасування) */}
+      {showRejectChangeRequestModal && (() => {
+        const req = changeRequests.find((r) => r.id === showRejectChangeRequestModal)
+        const typeLabel = req?.type === 'CANCEL' ? 'скасування' : req?.type === 'RESCHEDULE' ? 'перенесення' : 'запиту'
+        return (
+          <ModalPortal>
+            <div className="modal-overlay modal-overlay-nested sm:!p-4" onClick={() => setShowRejectChangeRequestModal(null)}>
+              <div
+                className="relative w-[95%] sm:w-full sm:max-w-md sm:my-auto modal-content modal-dialog text-white max-h-[85dvh] flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <button type="button" onClick={() => setShowRejectChangeRequestModal(null)} className="modal-close touch-target text-gray-400 hover:text-white rounded-full" aria-label="Закрити">
+                  <XIcon className="w-5 h-5" />
+                </button>
+                <h3 className="modal-title pr-10 mb-1">Відхилити запит на {typeLabel}</h3>
+                <p className="text-sm text-gray-400 mb-4">
+                  Клієнт отримає сповіщення в Telegram. Можна додати коментар:
+                </p>
+                <textarea
+                  value={rejectChangeRequestNote}
+                  onChange={(e) => setRejectChangeRequestNote(e.target.value)}
+                  placeholder="Наприклад: На жаль, інші слоти зайняті. Спробуйте іншу дату."
+                  rows={3}
+                  className="w-full px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-white/30 resize-none"
+                />
+                <div className="flex gap-2 pt-4">
+                  <button type="button" onClick={() => setShowRejectChangeRequestModal(null)} className="flex-1 px-4 py-3 rounded-xl border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/15">
+                    Скасувати
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => doRequestDecision(showRejectChangeRequestModal, 'reject', rejectChangeRequestNote)}
+                    disabled={processing === showRejectChangeRequestModal}
+                    className="flex-1 px-4 py-3 rounded-xl bg-rose-600 text-white text-sm font-semibold hover:bg-rose-500 disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {processing === showRejectChangeRequestModal ? 'Обробка...' : 'Відхилити'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </ModalPortal>
+        )
+      })()}
 
       {showDonePriceModalForId && (() => {
         const apt = appointments.find((a) => a.id === showDonePriceModalForId)

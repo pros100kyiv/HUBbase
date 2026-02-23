@@ -65,6 +65,12 @@ npm run db:seed
 npm run dev
 ```
 
+## 🧪 Тестування
+
+**E2E (Playwright):** `npm run test:e2e` — 47 тестів у браузері. Швидкий smoke: `npm run test:e2e:critical`. Детально: [e2e/README.md](e2e/README.md).
+
+**API:** `npm run test:api` — потрібен запущений `npm run dev`.
+
 ## 🧪 Тестовий акаунт
 
 Після seed:

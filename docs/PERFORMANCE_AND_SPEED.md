@@ -20,10 +20,11 @@
 
 ## Оптимізації коду (швидке перше завантаження)
 
-- **Next.js** — `optimizePackageImports` для `date-fns` (менший bundle), `compress: true`, без `X-Powered-By`.
+- **Бронювання** — бізнес завантажується на **сервері** (`lib/booking-fetch-business.ts`), клієнт отримує дані в HTML — без client-side API round-trip.
+- **Next.js** — `optimizePackageImports` для `date-fns`, `@radix-ui/*` (менший bundle), `compress: true`, без `X-Powered-By`.
 - **Dashboard** — AIChatWidget, ProfileSetupModal, BlockedOverlay підвантажуються динамічно (lazy), щоб не тягнути їх у початковий JS.
 - **Navbar** — GlobalSearch та NotificationsPanel підвантажуються при першому відкритті пошуку/сповіщень.
-- **Бронювання** — кроки 2–5 (послуга, майстер, час, підсумок) підвантажуються по мірі переходу по кроках; перший екран (LandingStep) завантажується одразу.
+- **Бронювання** — бізнес з сервера; кроки 2–5 (послуга, майстер, час, підсумок) lazy-loaded по мірі переходу; LandingStep одразу.
 - **QR-сторінка** — бібліотека `qrcode.react` підвантажується тільки на цій сторінці (dynamic import).
 - **BookingContext** — колбеки та value провайдера мемоїзовані (`useCallback`/`useMemo`), щоб зменшити зайві ре-рендери.
-- **Loading UI** — `app/loading.tsx` (глобальний) та `app/booking/[slug]/loading.tsx` показують індикатор під час переходу між сторінками.
+- **Loading UI** — `app/loading.tsx` (глобальний), `app/dashboard/loading.tsx` (skeleton), `app/booking/[slug]/loading.tsx`.

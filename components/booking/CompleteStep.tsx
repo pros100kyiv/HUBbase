@@ -48,11 +48,16 @@ export function CompleteStep({ businessName, businessLocation, timeZone, busines
 
   useEffect(() => {
     if (!businessSlug?.trim()) return
-    fetch(`/api/booking/telegram-invite?slug=${encodeURIComponent(businessSlug)}`)
+    const token = state.confirmation?.manageToken
+    const url =
+      token && token.length >= 20
+        ? `/api/booking/telegram-invite?slug=${encodeURIComponent(businessSlug)}&manageToken=${encodeURIComponent(token)}`
+        : `/api/booking/telegram-invite?slug=${encodeURIComponent(businessSlug)}`
+    fetch(url)
       .then((r) => r.json())
       .then((d) => (d?.hasTelegram && d?.inviteLink ? setTgInviteLink(d.inviteLink) : null))
       .catch(() => {})
-  }, [businessSlug])
+  }, [businessSlug, state.confirmation?.manageToken])
 
   const isPriceAfterProcedure =
     state.bookingWithoutService || (state.customServiceName && state.customServiceName.trim().length > 0)
@@ -232,24 +237,48 @@ export function CompleteStep({ businessName, businessLocation, timeZone, busines
 
       const reg = await getPushRegistration()
 
+      let applicationServerKey: Uint8Array
+      try {
+        applicationServerKey = urlBase64ToUint8Array(publicKey)
+      } catch (e) {
+        throw new Error('Невірний формат ключа push. Зверніться до адміністратора сайту.')
+      }
+
       let sub = await withTimeout(reg.pushManager.getSubscription(), 10000, 'Не вдалося перевірити підписку (timeout)')
       if (!sub) {
         sub = await withTimeout(
           reg.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(publicKey),
+            applicationServerKey,
           }),
           20000,
           'Не вдалося створити підписку Push (timeout)'
         )
       }
 
+      const bufToBase64 = (buf: ArrayBuffer | null | undefined) => {
+        if (!buf || buf.byteLength === 0) return ''
+        const arr = new Uint8Array(buf)
+        let binary = ''
+        for (let i = 0; i < arr.length; i++) binary += String.fromCharCode(arr[i])
+        return btoa(binary)
+      }
+      const subscriptionJson =
+        typeof sub.toJSON === 'function'
+          ? sub.toJSON()
+          : {
+              endpoint: sub.endpoint,
+              keys: {
+                p256dh: sub.getKey?.('p256dh') ? bufToBase64(sub.getKey('p256dh')) : undefined,
+                auth: sub.getKey?.('auth') ? bufToBase64(sub.getKey('auth')) : undefined,
+              },
+            }
       const ac = new AbortController()
       const reqTimeout = setTimeout(() => ac.abort(), 15000)
       const res = await fetch('/api/push/subscribe', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ token, subscription: sub }),
+        body: JSON.stringify({ token, subscription: subscriptionJson }),
         signal: ac.signal,
       }).finally(() => clearTimeout(reqTimeout))
       const data = await res.json().catch(() => ({}))
@@ -344,7 +373,7 @@ export function CompleteStep({ businessName, businessLocation, timeZone, busines
         <div className="rounded-xl p-4 mb-4 card-glass border border-black/10 dark:border-white/10">
           <p className="text-sm font-semibold text-foreground mb-2">Нагадування</p>
           <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-            Push-нагадування працюють через браузер (краще у режимі «Додати на головний екран»).
+            Push-нагадування працюють на телефоні та комп’ютері. На iPhone: спочатку додайте сторінку на початок екрану (⋮ → «На екран Домівки»), потім натисніть кнопку нижче.
           </p>
           <button
             type="button"
@@ -388,7 +417,9 @@ export function CompleteStep({ businessName, businessLocation, timeZone, busines
               Сповіщення в Telegram
             </p>
             <p className="text-xs text-gray-600 dark:text-gray-400 mb-3">
-              Підключіть бота — отримуйте підтвердження, нагадування про візит та можливість перенести або скасувати запис.
+              {state.confirmation?.manageToken
+                ? 'Натисніть — перейдете в бот і одразу побачите підтвердження вашого запису. Там можна отримувати нагадування, перенести чи скасувати візит.'
+                : 'Підключіть бота — отримуйте підтвердження, нагадування про візит та можливість перенести або скасувати запис.'}
             </p>
             <a
               href={tgInviteLink}
@@ -397,7 +428,7 @@ export function CompleteStep({ businessName, businessLocation, timeZone, busines
               className="w-full min-h-[48px] py-3 rounded-xl bg-[#0088cc] hover:bg-[#0077b5] text-white text-sm font-semibold transition-colors active:scale-[0.98] inline-flex items-center justify-center gap-2"
             >
               <TelegramIcon />
-              Відкрити Telegram-бота
+              {state.confirmation?.manageToken ? 'Перейти в бот — побачити запис' : 'Відкрити Telegram-бота'}
             </a>
           </div>
         )}

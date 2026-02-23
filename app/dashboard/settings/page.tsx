@@ -8,6 +8,7 @@ import { BusinessCardEditor } from '@/components/admin/BusinessCardEditor'
 import { BookingSlotsSettings } from '@/components/admin/BookingSlotsSettings'
 import { ClientChangeRequestsSettings } from '@/components/admin/ClientChangeRequestsSettings'
 import { IntegrationsSettings } from '@/components/admin/IntegrationsSettings'
+import { BackgroundSettings } from '@/components/admin/BackgroundSettings'
 import { PasswordForLoginSection } from '@/components/admin/PasswordForLoginSection'
 import {
   ClockIcon,
@@ -18,6 +19,7 @@ import {
   TrashIcon,
   MoneyIcon,
   ImageIcon,
+  PaletteIcon,
 } from '@/components/icons'
 import { toast } from '@/components/ui/toast'
 import { Confetti, triggerConfetti } from '@/components/ui/confetti'
@@ -89,7 +91,7 @@ const getCategoryColor = (index: number) => {
   return colors[index % colors.length]
 }
 
-type Tab = 'info' | 'schedule' | 'services' | 'businessCard' | 'integrations'
+type Tab = 'info' | 'schedule' | 'services' | 'businessCard' | 'integrations' | 'background'
 
 const TAB_LABELS: Record<Tab, string> = {
   info: 'Інформація',
@@ -97,6 +99,7 @@ const TAB_LABELS: Record<Tab, string> = {
   services: 'Послуги',
   businessCard: 'Візитівка',
   integrations: 'Інтеграції',
+  background: 'Фон',
 }
 
 export default function SettingsPage() {
@@ -234,7 +237,7 @@ export default function SettingsPage() {
     if (typeof window === 'undefined') return
     const params = new URLSearchParams(window.location.search)
     const tabParam = params.get('tab')
-    const allowedTabs: Tab[] = ['info', 'schedule', 'services', 'businessCard', 'integrations']
+    const allowedTabs: Tab[] = ['info', 'schedule', 'services', 'businessCard', 'integrations', 'background']
     if (tabParam === 'telegram') {
       setActiveTab('integrations')
     } else if (tabParam && allowedTabs.includes(tabParam as Tab)) {
@@ -619,6 +622,23 @@ export default function SettingsPage() {
                 </div>
               </div>
             </button>
+            <button
+              onClick={() => setTab('background')}
+              className={cn(
+                'rounded-xl p-3 text-left transition-all border',
+                activeTab === 'background' ? 'card-glass border-white/30 bg-white/15' : 'card-glass-subtle border-white/10 hover:border-white/20'
+              )}
+            >
+              <div className="flex items-center gap-2">
+                <div className="w-8 h-8 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center">
+                  <PaletteIcon className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs text-gray-400">Фон</p>
+                  <p className="text-sm font-bold text-white">Колір</p>
+                </div>
+              </div>
+            </button>
           </div>
           )}
 
@@ -626,7 +646,7 @@ export default function SettingsPage() {
           <div className="rounded-xl p-3 card-glass-subtle">
             <div className="flex items-center justify-between gap-2 flex-wrap">
               <div className="flex gap-2 flex-wrap">
-              {(['info', 'schedule', 'businessCard', 'integrations'] as Tab[]).map((tab) => (
+              {(['info', 'schedule', 'businessCard', 'integrations', 'background'] as Tab[]).map((tab) => (
                 <button
                   key={tab}
                   onClick={() => setTab(tab)}
@@ -1213,6 +1233,11 @@ export default function SettingsPage() {
               }}
             />
             </div>
+          )}
+
+          {/* Фон — колір фону для темної теми */}
+          {activeTab === 'background' && (
+            <BackgroundSettings />
           )}
 
           {/* Integrations Tab */}

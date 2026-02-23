@@ -66,9 +66,9 @@ export function TelegramBookingsCard({ businessId, bookingEnabled }: TelegramBoo
   const pendingBookings = bookings.filter((b) => b.status === 'Pending' || b.status === 'Очікує')
 
   return (
-    <div className="rounded-2xl p-5 md:p-6 card-glass min-w-0 w-full overflow-hidden border border-white/10">
-      <div className="flex items-center gap-2 mb-4">
-        <div className="w-10 h-10 rounded-xl bg-[#0088cc]/20 flex items-center justify-center">
+    <div className="rounded-2xl p-5 md:p-6 card-glass min-w-0 w-full overflow-hidden border border-white/10 transition-all duration-200 hover:border-white/15">
+      <div className="flex items-center gap-3 mb-4">
+        <div className="w-11 h-11 rounded-xl bg-[#0088cc]/25 flex items-center justify-center shrink-0">
           <svg className="w-6 h-6 text-[#0088cc]" fill="currentColor" viewBox="0 0 24 24">
             <path d="M12 0C5.373 0 0 5.373 0 12s5.373 12 12 12 12-5.373 12-12S18.627 0 12 0zm5.562 8.192l-1.87 8.803c-.14.658-.537.818-1.084.508l-3-2.21-1.446 1.394c-.14.18-.357.295-.6.295-.002 0-.003 0-.005 0l.213-3.053 5.56-5.022c.24-.213-.054-.334-.373-.12l-6.87 4.326-2.96-.924c-.64-.203-.658-.64.135-.954l11.566-4.458c.538-.196 1.006.128.832.941z" />
           </svg>
@@ -90,17 +90,17 @@ export function TelegramBookingsCard({ businessId, bookingEnabled }: TelegramBoo
       ) : (
         <>
           <div className="grid grid-cols-3 gap-2 mb-5">
-            <div className="rounded-xl p-3 bg-white/5 border border-white/10 text-center">
+            <div className="rounded-xl p-3.5 bg-white/5 border border-white/10 text-center transition-colors hover:bg-white/[0.07]">
               <div className="text-xl font-bold text-white">{stats.total}</div>
-              <div className="text-[10px] text-gray-400 uppercase tracking-wider">всього</div>
+              <div className="text-[10px] text-gray-400 uppercase tracking-wider mt-0.5">всього</div>
             </div>
-            <div className="rounded-xl p-3 bg-amber-500/10 border border-amber-500/20 text-center">
+            <div className="rounded-xl p-3.5 bg-amber-500/10 border border-amber-500/20 text-center transition-colors hover:bg-amber-500/15">
               <div className="text-xl font-bold text-amber-300">{stats.pending}</div>
-              <div className="text-[10px] text-amber-200/70 uppercase tracking-wider">очікують</div>
+              <div className="text-[10px] text-amber-200/70 uppercase tracking-wider mt-0.5">очікують</div>
             </div>
-            <div className="rounded-xl p-3 bg-emerald-500/10 border border-emerald-500/20 text-center">
+            <div className="rounded-xl p-3.5 bg-emerald-500/10 border border-emerald-500/20 text-center transition-colors hover:bg-emerald-500/15">
               <div className="text-xl font-bold text-emerald-300">{stats.thisWeek}</div>
-              <div className="text-[10px] text-emerald-200/70 uppercase tracking-wider">цього тижня</div>
+              <div className="text-[10px] text-emerald-200/70 uppercase tracking-wider mt-0.5">цього тижня</div>
             </div>
           </div>
 

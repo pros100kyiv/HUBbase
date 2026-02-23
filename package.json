@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --webpack",
+    "dev": "next dev --turbopack",
     "dev:turbo": "next dev --turbo",
     "dev:open": "node scripts/open-browser.js",
     "build": "prisma generate && next build",
@@ -41,6 +41,14 @@
     "test-clients:add": "tsx scripts/add-test-clients.ts",
     "test-clients:remove": "tsx scripts/remove-test-clients.ts",
     "test:api": "tsx scripts/api-integration-tests.ts",
+    "test:e2e": "playwright test",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:debug": "playwright test --debug",
+    "test:e2e:report": "playwright show-report",
+    "test:e2e:critical": "playwright test --project=critical",
+    "test:e2e:smoke": "playwright test --grep @smoke",
+    "test:e2e:comprehensive": "playwright test e2e/tests/comprehensive.spec.ts",
     "auto-dev": "node scripts/auto-run-dev.js",
     "business:update-identifiers": "tsx scripts/update-business-identifiers.ts",
     "business:block": "tsx scripts/block-business.ts",
@@ -74,6 +82,8 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.11.1",
+    "@playwright/test": "^1.58.2",
     "@types/bcryptjs": "^2.4.6",
     "@types/node": "^22.7.9",
     "@types/pg": "^8.16.0",

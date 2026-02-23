@@ -32,10 +32,10 @@ interface Business {
   name: string
   slug: string
   settings?: string | null
-  primaryColor?: string
-  secondaryColor?: string
-  backgroundColor?: string
-  surfaceColor?: string
+  primaryColor?: string | null
+  secondaryColor?: string | null
+  backgroundColor?: string | null
+  surfaceColor?: string | null
   description?: string | null
   logo?: string | null
   avatar?: string | null
@@ -46,10 +46,17 @@ interface Business {
   location?: string | null
 }
 
-export default function BookingPageClient({ slug }: { slug: string }) {
+export default function BookingPageClient({
+  slug,
+  initialBusiness = null,
+}: {
+  slug: string
+  /** Бізнес з сервера — миттєвий показ без client fetch */
+  initialBusiness?: Business | null
+}) {
   const { state, setBusinessId } = useBooking()
-  const [business, setBusiness] = useState<Business | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
+  const [business, setBusiness] = useState<Business | null>(initialBusiness)
+  const [isLoading, setIsLoading] = useState(!initialBusiness)
   const [reloadNonce, setReloadNonce] = useState(0)
   const activeSlugRef = useRef<string | null>(null)
 
@@ -60,10 +67,18 @@ export default function BookingPageClient({ slug }: { slug: string }) {
     }
     activeSlugRef.current = slug
 
+    // Якщо є initialBusiness з сервера і це перший рендер — вже готово
+    if (reloadNonce === 0 && initialBusiness && initialBusiness.slug === slug) {
+      setBusiness(initialBusiness)
+      setBusinessId(initialBusiness.id)
+      setIsLoading(false)
+      return
+    }
+
     const ac = new AbortController()
     setIsLoading(true)
 
-    // cache: 'no-store' to always show fresh business card changes
+    // Refetch для оновлень з dashboard або якщо сервер не передав initialBusiness
     fetch(`/api/business/${encodeURIComponent(slug)}?t=${Date.now()}`, { signal: ac.signal, cache: 'no-store' })
       .then(async (res) => {
         if (!res.ok) throw new Error('Business not found')
@@ -87,7 +102,7 @@ export default function BookingPageClient({ slug }: { slug: string }) {
       })
 
     return () => ac.abort()
-  }, [slug, reloadNonce, setBusinessId])
+  }, [slug, reloadNonce, setBusinessId, initialBusiness])
 
   // Listen for business card updates from dashboard (other tab)
   useEffect(() => {

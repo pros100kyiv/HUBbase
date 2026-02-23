@@ -25,6 +25,10 @@ pnpm-debug.log*
 # Vercel
 .vercel
 
+# Playwright
+playwright-report/
+test-results/
+
 # OS
 .DS_Store
 Thumbs.db

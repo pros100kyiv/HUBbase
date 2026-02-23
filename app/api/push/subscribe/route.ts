@@ -16,30 +16,41 @@ export async function POST(request: Request) {
   }
 
   const token = typeof body?.token === 'string' ? body.token.trim() : ''
-  const subscription = (body?.subscription || {}) as IncomingSubscription
+  const subscription = (body?.subscription || {}) as IncomingSubscription & { keys?: { p256dh?: string; p256DH?: string; auth?: string } }
 
   const endpoint = typeof subscription?.endpoint === 'string' ? subscription.endpoint.trim() : ''
-  const p256dh = typeof subscription?.keys?.p256dh === 'string' ? subscription.keys.p256dh.trim() : ''
-  const auth = typeof subscription?.keys?.auth === 'string' ? subscription.keys.auth.trim() : ''
+  const keys = subscription?.keys
+  const p256dh = (typeof keys?.p256dh === 'string' ? keys.p256dh : typeof keys?.p256DH === 'string' ? keys.p256DH : '')?.trim() ?? ''
+  const auth = (typeof keys?.auth === 'string' ? keys.auth : '')?.trim() ?? ''
 
   if (!token || token.length < 20) {
-    return NextResponse.json({ error: 'Invalid token' }, { status: 400 })
+    return NextResponse.json({ error: 'Немає токена доступу до запису. Оновіть сторінку та спробуйте знову.' }, { status: 400 })
   }
   if (!endpoint || !p256dh || !auth) {
-    return NextResponse.json({ error: 'Invalid subscription payload' }, { status: 400 })
+    return NextResponse.json({
+      error: 'Неправильний формат підписки (endpoint або keys відсутні). Спробуйте в іншому браузері.',
+    }, { status: 400 })
   }
 
   const tokenHash = hashAppointmentAccessToken(token)
-  const access = await prisma.appointmentAccessToken.findFirst({
-    where: { tokenHash, revokedAt: null },
-    select: { appointmentId: true, businessId: true },
-  })
+  let access: { appointmentId: string; businessId: string } | null = null
+  try {
+    access = await prisma.appointmentAccessToken.findFirst({
+      where: { tokenHash, revokedAt: null },
+      select: { appointmentId: true, businessId: true },
+    })
+  } catch (e) {
+    console.error('Push subscribe: DB error', e)
+    return NextResponse.json({ error: 'Помилка сервера. Спробуйте пізніше.' }, { status: 500 })
+  }
   if (!access) {
-    return NextResponse.json({ error: 'Appointment not found or access denied' }, { status: 404 })
+    return NextResponse.json({
+      error: 'Запис не знайдено або посилання застаріло. Відкрийте сторінку керування записом знову.',
+    }, { status: 404 })
   }
 
-  // Multi-tenant safety: bind subscription to (businessId, appointmentId).
-  await prisma.pushSubscription.upsert({
+  try {
+    await prisma.pushSubscription.upsert({
     where: { appointmentId_endpoint: { appointmentId: access.appointmentId, endpoint } },
     create: {
       businessId: access.businessId,
@@ -55,6 +66,10 @@ export async function POST(request: Request) {
       userAgent: request.headers.get('user-agent'),
     },
   })
+  } catch (e) {
+    console.error('Push subscribe: upsert error', e)
+    return NextResponse.json({ error: 'Не вдалося зберегти підписку. Спробуйте пізніше.' }, { status: 500 })
+  }
 
   return NextResponse.json({ ok: true })
 }

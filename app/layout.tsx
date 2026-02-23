@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from 'next'
 import './globals.css'
 import { BookingProvider } from '@/contexts/BookingContext'
 import { ThemeProvider } from '@/contexts/ThemeContext'
+import { BackgroundProvider } from '@/contexts/BackgroundContext'
 import { NavigationProgressProvider } from '@/contexts/NavigationProgressContext'
 import { ToastContainer } from '@/components/ui/toast'
 import { PushServiceWorkerRegister } from '@/components/push/PushServiceWorkerRegister'
@@ -43,7 +44,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
-  themeColor: '#050505',
+  themeColor: '#05050f',
   viewportFit: 'cover', // safe area for notched devices
 }
 
@@ -56,6 +57,10 @@ export default function RootLayout({
     <html lang="uk" className="dark oled" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+        <meta name="mobile-web-app-capable" content="yes" />
+        <link rel="apple-touch-icon" href="/icon.png" />
         {/* Підтвердження домену для Meta Business Suite: додайте META_DOMAIN_VERIFICATION у Vercel зі значенням content з тега, який покаже Meta */}
         {process.env.META_DOMAIN_VERIFICATION ? (
           <meta name="facebook-domain-verification" content={process.env.META_DOMAIN_VERIFICATION} />
@@ -65,16 +70,23 @@ export default function RootLayout({
             __html: `
               (function() {
                 try {
-                  var theme = localStorage.getItem('theme');
-                  var initialTheme = theme === 'light' || theme === 'dark' || theme === 'oled' ? theme : 'oled';
                   var root = document.documentElement;
-                  root.classList.remove('light', 'dark', 'oled');
-                  if (initialTheme === 'oled') {
-                    root.classList.add('dark', 'oled');
-                  } else if (initialTheme === 'dark') {
-                    root.classList.add('dark');
-                  } else {
-                    root.classList.add('light');
+                  root.classList.remove('light', 'dark');
+                  root.classList.add('dark', 'oled');
+                  var customBg = localStorage.getItem('custom-bg-color');
+                  if (customBg && /^#[0-9a-fA-F]{6}$/.test(customBg)) {
+                    root.style.setProperty('--custom-bg-base', customBg);
+                    root.dataset.customBg = '1';
+                  }
+                  var customBgLight = localStorage.getItem('custom-bg-color-light');
+                  if (customBgLight && /^#[0-9a-fA-F]{6}$/.test(customBgLight)) {
+                    root.style.setProperty('--custom-bg-light', customBgLight);
+                    root.dataset.customBgLight = '1';
+                  }
+                  var grad = localStorage.getItem('custom-bg-gradient');
+                  if (grad != null) {
+                    var g = parseInt(grad, 10);
+                    if (g >= 0 && g <= 100) root.style.setProperty('--custom-gradient-opacity', String(g / 100));
                   }
                 } catch (e) {}
               })();
@@ -100,13 +112,15 @@ export default function RootLayout({
           }}
         />
         <ThemeProvider>
-          <BookingProvider>
+          <BackgroundProvider>
+            <BookingProvider>
             <NavigationProgressProvider>
               <ToastContainer />
-              <PushServiceWorkerRegister />
-              {children}
-            </NavigationProgressProvider>
-          </BookingProvider>
+                <PushServiceWorkerRegister />
+                {children}
+              </NavigationProgressProvider>
+            </BookingProvider>
+          </BackgroundProvider>
         </ThemeProvider>
       </body>
     </html>

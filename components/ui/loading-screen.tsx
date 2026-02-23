@@ -83,20 +83,20 @@ export function LoadingScreen({ variant = 'full', label = 'Завантажує�
     <div
       className={
         isFull
-          ? 'fixed inset-0 z-50 flex items-center justify-center bg-[#0A0A0A] animate-content-fade-in outline-none'
+          ? 'fixed inset-0 z-50 flex items-center justify-center bg-[#08080a] animate-content-fade-in outline-none'
           : 'flex items-center justify-center min-h-[280px] p-8 animate-content-fade-in outline-none'
       }
     >
       <div className="flex flex-col items-center gap-8">
         <LogoWithRing />
         <div className="flex flex-col items-center gap-2">
-          <p className="text-sm font-medium text-white/90 flex items-baseline gap-0.5">
+          <p className="text-sm font-medium text-white/95 flex items-baseline gap-0.5">
             <span>{label}</span>
             <span className="inline-flex w-5" aria-hidden>
               <span className="animate-[loading-dots-opacity_0.6s_ease-in-out_infinite]">...</span>
             </span>
           </p>
-          <span className="text-xs text-white/50 font-medium tracking-tight" style={{ letterSpacing: '-0.02em' }}>
+          <span className="text-xs text-white/60 font-medium tracking-tight" style={{ letterSpacing: '-0.02em' }}>
             Xbase
           </span>
         </div>

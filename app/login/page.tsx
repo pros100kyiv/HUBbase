@@ -130,7 +130,7 @@ function LoginForm() {
 
   return (
     <AuthLayout title="Вхід">
-      <form onSubmit={handleSubmit} className="space-y-4">
+      <form onSubmit={handleSubmit} className="space-y-4" data-testid="login-form">
         <div>
           <label htmlFor="login-email" className="block text-sm font-medium mb-2 text-gray-300">Email *</label>
           <Input
@@ -181,6 +181,7 @@ function LoginForm() {
         <button
           type="submit"
           disabled={isLoading}
+          data-testid="login-submit"
           className="w-full min-h-[52px] px-6 py-3.5 rounded-xl bg-white text-black font-semibold hover:bg-gray-100 disabled:opacity-50 transition-all active:scale-[0.98] shadow-lg shadow-black/20"
         >
           {isLoading ? 'Вхід...' : 'Увійти'}

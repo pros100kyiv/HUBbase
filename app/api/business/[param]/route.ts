@@ -382,13 +382,16 @@ export async function PATCH(
         ...(reminderSmsEnabled !== undefined && { reminderSmsEnabled }),
         ...(reminderEmailEnabled !== undefined && { reminderEmailEnabled }),
         ...(reminderTelegramEnabled !== undefined && { reminderTelegramEnabled }),
-        // reminderHoursBefore, bookingSlots, clientChangeRequests зберігаються в settings JSON
-        ...((reminderHoursBefore !== undefined || bookingSlots !== undefined || clientChangeRequests !== undefined) && (() => {
+        // reminderHoursBefore, reminderPushEnabled, bookingSlots, clientChangeRequests зберігаються в settings JSON
+        ...((reminderHoursBefore !== undefined || body.reminderPushEnabled !== undefined || bookingSlots !== undefined || clientChangeRequests !== undefined) && (() => {
           try {
             const prev = (currentBusiness as { settings?: string | null })?.settings
             const parsed = prev ? JSON.parse(prev) : {}
             if (reminderHoursBefore !== undefined) {
               parsed.reminderHoursBefore = Number(reminderHoursBefore) || 24
+            }
+            if (body.reminderPushEnabled !== undefined) {
+              parsed.reminderPushEnabled = body.reminderPushEnabled === true
             }
             if (bookingSlots !== undefined && bookingSlots !== null && typeof bookingSlots === 'object') {
               const b = bookingSlots as Record<string, unknown>
@@ -411,7 +414,9 @@ export async function PATCH(
             }
             return { settings: JSON.stringify(parsed) }
           } catch {
-            const base = reminderHoursBefore !== undefined ? { reminderHoursBefore: Number(reminderHoursBefore) || 24 } : {}
+            const base: Record<string, unknown> = {}
+            if (reminderHoursBefore !== undefined) base.reminderHoursBefore = Number(reminderHoursBefore) || 24
+            if (body.reminderPushEnabled !== undefined) base.reminderPushEnabled = body.reminderPushEnabled === true
             const slots = bookingSlots !== undefined && typeof bookingSlots === 'object' ? { bookingSlots } : {}
             const changes =
               clientChangeRequests !== undefined && typeof clientChangeRequests === 'object'

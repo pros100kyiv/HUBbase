@@ -40,17 +40,17 @@ function ScreenshotBlock({ src, title, desc, featured = false }: { src: string; 
   }
   return (
     <figure className={`group ${figClass}`}>
-      <div className="absolute inset-0">
+      <div className="absolute inset-0 overflow-hidden">
         <Image
           src={src}
           alt={title}
           fill
-          className="object-cover object-top transition-transform duration-300 group-hover:scale-[1.02]"
+          className="object-cover object-top transition-transform duration-500 group-hover:scale-[1.03] ease-out"
           sizes={featured ? '(max-width: 768px) 100vw, 80vw' : '(max-width: 768px) 100vw, 50vw'}
           onError={() => setError(true)}
         />
       </div>
-      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+      <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
       <figcaption className="absolute bottom-0 left-0 right-0 p-4 text-white opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none">
         <span className="font-semibold block">{title}</span>
         <span className="text-sm text-white/80">{desc}</span>
@@ -162,17 +162,17 @@ export default function Home() {
           </Link>
           <Link
             href="/register"
-            className="text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 focus-visible:outline-offset-2"
+            className="text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-500 px-4 py-2 rounded-lg transition-all duration-200 active:scale-[0.98] shadow-md shadow-emerald-900/25 focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 focus-visible:outline-offset-2"
           >
             Реєстрація
           </Link>
         </nav>
       </header>
 
-      <main id="main-content" className="relative z-10" role="main" tabIndex={-1}>
+      <main id="main-content" className="relative z-10" role="main" tabIndex={-1} data-testid="home-main">
         {/* Hero */}
         <section className="px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 pb-16 sm:pb-24 text-center" aria-labelledby="hero-heading">
-          <span className="inline-block px-3 py-1 rounded-full text-xs font-medium bg-white/10 text-gray-300 border border-white/10 mb-6 landing-animate-in" role="status">
+          <span className="inline-block px-4 py-1.5 rounded-full text-xs font-medium bg-white/[0.08] text-gray-300 border border-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] mb-6 landing-animate-in" role="status">
             Технології вашого комфорту
           </span>
           <h1 id="hero-heading" className="landing-hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white max-w-4xl mx-auto mb-4 sm:mb-6 landing-animate-in landing-animate-in-1">
@@ -187,7 +187,7 @@ export default function Home() {
           <div className="flex flex-col sm:flex-row gap-3 justify-center landing-animate-in landing-animate-in-3">
             <Link
               href="/register"
-              className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition-all active:scale-[0.98] shadow-lg shadow-black/20 inline-flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 focus-visible:outline-offset-2"
+              className="w-full sm:w-auto min-h-[52px] px-8 py-3.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold rounded-xl transition-all duration-200 active:scale-[0.98] shadow-lg shadow-emerald-900/30 hover:shadow-emerald-500/25 hover:shadow-xl inline-flex items-center justify-center focus-visible:outline focus-visible:outline-2 focus-visible:outline-emerald-400 focus-visible:outline-offset-2"
             >
               Почати безкоштовно
             </Link>

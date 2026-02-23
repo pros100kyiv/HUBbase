@@ -1,8 +1,10 @@
 import { Telegraf, Context, Markup } from 'telegraf'
 import { format, parseISO } from 'date-fns'
 import { uk } from 'date-fns/locale'
+import { formatInTimeZone } from 'date-fns-tz'
 import { prisma } from './prisma'
 import { parseBookingSlotsOptions } from './utils/booking-settings'
+import { hashAppointmentAccessToken } from './utils/appointment-access-token'
 
 interface TelegramBotConfig {
   token: string
@@ -17,6 +19,23 @@ interface TelegramBotMessageSettings {
   bookingServiceMode?: 'both' | 'pricelist_only' | 'simple_only'
   /** true = повідомлення приймаються тільки після натискання кнопки «Написати повідомлення» */
   messagesOnlyViaButton?: boolean
+  /** Сповіщення клієнту в Telegram при підтвердженні/відхиленні запису */
+  notifyOnAppointmentConfirm?: boolean
+  notifyOnAppointmentReject?: boolean
+  notifyOnChangeRequestReject?: boolean
+  /** Показувати модалку з полем коментаря при підтвердженні/відхиленні */
+  promptCommentOnConfirm?: boolean
+  promptCommentOnReject?: boolean
+  /** Кнопка «Мої записи» — показувати майбутні візити клієнта */
+  myAppointmentsEnabled?: boolean
+  /** Кнопка «Інформація про бізнес» */
+  infoButtonEnabled?: boolean
+  /** В інфо: кнопка «Прокласти маршрут» (Google Maps) */
+  infoRouteButtonEnabled?: boolean
+  /** В інфо: кнопка «Зателефонувати» */
+  infoCallButtonEnabled?: boolean
+  /** В інфо: кнопка «Записатися онлайн» */
+  infoBookingButtonEnabled?: boolean
 }
 
 interface BookingState {
@@ -104,37 +123,107 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     return rolePermissions.includes('*') || rolePermissions.includes(permission)
   }
 
-  // Клавіатура «Написати повідомлення» — для клієнтів та нових користувачів
-  const getWriteMessageKeyboard = (bookingEnabled: boolean) => {
-    const buttons: any[] = [[Markup.button.callback('✉️ Написати повідомлення', 'menu_write_message')]]
-    if (bookingEnabled) {
-      buttons.unshift([Markup.button.callback('📅 Записатися до спеціаліста', 'book_start')])
-    }
+  // Клавіатура для клієнтів та нових користувачів
+  const getWriteMessageKeyboard = (settings: TelegramBotMessageSettings) => {
+    const bookingEnabled = !!settings.bookingEnabled
+    const showInfo = settings.infoButtonEnabled !== false
+    const showMyAppointments = settings.myAppointmentsEnabled !== false
+    const buttons: any[] = []
+    if (showInfo) buttons.push([Markup.button.callback('ℹ️ Інформація про бізнес', 'menu_info')])
+    if (bookingEnabled) buttons.push([Markup.button.callback('📅 Записатися до спеціаліста', 'book_start')])
+    if (showMyAppointments) buttons.push([Markup.button.callback('📋 Мої записи', 'menu_my_appointments')])
+    buttons.push([Markup.button.callback('✉️ Написати повідомлення', 'menu_write_message')])
     return Markup.inlineKeyboard(buttons)
   }
 
-  // Головне меню з кнопками (спрощене - тільки сповіщення)
-  const getMainMenu = (role: string) => {
+  // Головне меню для співробітників
+  const getMainMenu = (role: string, settings?: TelegramBotMessageSettings) => {
+    const showInfo = settings?.infoButtonEnabled !== false
     const buttons: any[] = []
-
-    // Тільки сповіщення та нагадування
     if (hasPermission(role, 'create_broadcast')) {
       buttons.push([Markup.button.callback('⏰ Створити нагадування', 'menu_reminder_create')])
       buttons.push([Markup.button.callback('📝 Мої нагадування', 'menu_reminders')])
     }
-
+    if (showInfo) buttons.push([Markup.button.callback('ℹ️ Інформація про бізнес', 'menu_info')])
     buttons.push([Markup.button.callback('✉️ Написати повідомлення', 'menu_write_message')])
     buttons.push([Markup.button.callback('ℹ️ Допомога', 'menu_help')])
-
     return Markup.inlineKeyboard(buttons)
   }
 
-  // Команда /start
+  // Команда /start (в т.ч. deep link після зовнішнього запису: ?start=booked_<token>)
   bot.command('start', async (ctx: Context) => {
     try {
       const telegramId = BigInt(ctx.from?.id || 0)
+      const msgText = (ctx.message && 'text' in ctx.message ? ctx.message.text : '') || ''
+      const payload = msgText.replace(/^\/start\s*/i, '').trim()
 
-      await logAction('command', 'start', null, ctx.from?.id?.toString())
+      await logAction('command', 'start', payload || null, ctx.from?.id?.toString())
+
+      // Прихід після зовнішнього запису — показати підтвердження
+      if (payload.startsWith('booked_')) {
+        const token = payload.slice(7).trim()
+        if (token.length >= 20) {
+          try {
+            const tokenHash = hashAppointmentAccessToken(token)
+            const access = await prisma.appointmentAccessToken.findFirst({
+              where: { tokenHash, businessId: config.businessId, revokedAt: null },
+              select: {
+                appointment: {
+                  select: {
+                    id: true,
+                    clientName: true,
+                    startTime: true,
+                    endTime: true,
+                    status: true,
+                    customServiceName: true,
+                    master: { select: { name: true } },
+                    business: { select: { name: true, slug: true } },
+                  },
+                },
+              },
+            })
+            if (access?.appointment) {
+              const apt = access.appointment
+              const tz = 'Europe/Kyiv'
+              const startDate = new Date(apt.startTime)
+              const endDate = new Date(apt.endTime)
+              const dayStr = formatInTimeZone(startDate, tz, 'd MMMM yyyy', { locale: uk })
+              const timeStr = `${formatInTimeZone(startDate, tz, 'HH:mm', { locale: uk })}–${formatInTimeZone(endDate, tz, 'HH:mm', { locale: uk })}`
+              const svcStr = apt.customServiceName?.trim() || 'Послуга вказана при записі'
+              const statusLabel =
+                String(apt.status || '').toLowerCase() === 'pending' || apt.status?.toLowerCase().includes('очіку')
+                  ? 'Очікує підтвердження'
+                  : apt.status?.toLowerCase().includes('підтвер')
+                    ? 'Підтверджено'
+                    : apt.status || '—'
+
+              const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'
+              const managePath = apt.business?.slug ? `/booking/${apt.business.slug}/manage/${token}` : null
+              const manageUrl = managePath
+                ? `${baseUrl.replace(/\/$/, '')}${managePath.startsWith('/') ? '' : '/'}${managePath}`
+                : null
+
+              const text =
+                `✅ Ви записалися!\n\n` +
+                `📅 ${dayStr}, ${timeStr}\n` +
+                `👤 Спеціаліст: ${apt.master?.name || '—'}\n` +
+                `📋 ${svcStr}\n` +
+                `📌 Статус: ${statusLabel}\n\n` +
+                (manageUrl
+                  ? `🔗 Можете перенести або скасувати запис за посиланням (потрібне підтвердження майстра).`
+                  : `Підтвердження та нагадування надходитимуть сюди.`)
+
+              const keyboard = manageUrl
+                ? Markup.inlineKeyboard([[Markup.button.url('📌 Відкрити керування записом', manageUrl)]])
+                : undefined
+              await ctx.reply(text, keyboard)
+              return
+            }
+          } catch (e) {
+            console.error('Telegram /start booked_ error:', e)
+          }
+        }
+      }
 
       const telegramUser = await prisma.telegramUser.findUnique({
         where: { telegramId },
@@ -158,7 +247,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
           .replace(/\{\{name\}\}/g, ctx.from?.first_name || 'користувач')
           .replace(/\{\{role\}\}/g, getRoleName(telegramUser.role))
 
-        await ctx.reply(text, getMainMenu(telegramUser.role))
+        await ctx.reply(text, getMainMenu(telegramUser.role, settings))
         return
       }
 
@@ -168,7 +257,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
       }
 
       const newUserMsg = settings.newUserMessage?.trim() || DEFAULT_NEW_USER
-      await ctx.reply(newUserMsg, getWriteMessageKeyboard(!!settings.bookingEnabled))
+      await ctx.reply(newUserMsg, getWriteMessageKeyboard(settings))
     } catch (error) {
       console.error('Error in /start command:', error)
       await ctx.reply('❌ Помилка при обробці команди.')
@@ -213,10 +302,11 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
       .then(res => res.json())
       .catch(() => [])
 
+    const settings = await getBotSettings(config.businessId)
     if (!reminders || reminders.length === 0) {
       await ctx.editMessageText(
         '📝 Немає створених нагадувань.\n\nОберіть дію:',
-        getMainMenu(user.role)
+        getMainMenu(user.role, settings)
       )
       return
     }
@@ -229,7 +319,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
 
     await ctx.editMessageText(
       `📝 Мої нагадування:\n\n${remindersText}\n\nОберіть дію:`,
-      getMainMenu(user.role)
+      getMainMenu(user.role, settings)
     )
   })
 
@@ -263,9 +353,12 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     await ctx.reply('👤 Оберіть спеціаліста:', Markup.inlineKeyboard(buttons))
   })
 
-  // Команда /info — інформація про бізнес (як кнопка «Інформація про бізнес»)
-  bot.command('info', async (ctx: Context) => {
-    const user = await getUser(ctx)
+  // Відправка інформації про бізнес (спільна логіка для /info та menu_info)
+  const sendBusinessInfo = async (
+    ctx: Context,
+    user: Awaited<ReturnType<typeof getUser>>,
+    settings: TelegramBotMessageSettings
+  ) => {
     const business = await prisma.business.findUnique({
       where: { id: config.businessId },
       select: { name: true, slug: true, phone: true, address: true, location: true, workingHours: true },
@@ -276,19 +369,47 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     }
     const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'
     const bookingUrl = business.slug ? `${baseUrl.replace(/\/$/, '')}/booking/${business.slug}` : null
+    const addr = (business.address || business.location || '').trim()
+    const phone = (business.phone || '').trim()
+
     let text = `🏢 *${business.name || 'Бізнес'}*\n\n`
-    if (business.address?.trim()) text += `📍 Адреса: ${business.address}\n`
-    if (business.location?.trim()) text += `📍 ${business.location}\n`
-    if (business.phone?.trim()) text += `📞 Телефон: ${business.phone}\n`
+    if (addr) text += `📍 ${addr}\n`
+    if (phone) text += `📞 ${phone}\n`
     if (business.workingHours?.trim()) text += `🕐 Графік: ${business.workingHours}\n`
     if (bookingUrl) text += `\n🔗 Запис онлайн: ${bookingUrl}`
-    await ctx.reply(text, { parse_mode: 'Markdown' })
-    if (user && user.businessId === config.businessId) {
-      await ctx.reply('Оберіть дію:', getMainMenu(user.role))
-    } else {
-      const settings = await getBotSettings(config.businessId)
-      await ctx.reply('Оберіть дію:', getWriteMessageKeyboard(!!settings.bookingEnabled))
+
+    const showRoute = settings.infoRouteButtonEnabled !== false && addr
+    const showCall = settings.infoCallButtonEnabled !== false && phone
+    const showBook = settings.infoBookingButtonEnabled !== false && bookingUrl
+    const actionButtons: ReturnType<typeof Markup.button.url>[][] = []
+    if (showRoute) {
+      const mapQuery = encodeURIComponent(addr)
+      actionButtons.push([Markup.button.url('🗺 Прокласти маршрут', `https://www.google.com/maps/search/?api=1&query=${mapQuery}`)])
     }
+    if (showCall) {
+      const digits = phone.replace(/\D/g, '')
+      const tel =
+        digits.startsWith('380') ? `+${digits}` : digits.startsWith('0') ? `+38${digits}` : `+380${digits}`
+      actionButtons.push([Markup.button.url('📞 Зателефонувати', `tel:${tel}`)])
+    }
+    if (showBook && bookingUrl) {
+      actionButtons.push([Markup.button.url('📅 Записатися онлайн', bookingUrl)])
+    }
+    const keyboard = actionButtons.length > 0 ? Markup.inlineKeyboard(actionButtons) : undefined
+
+    await ctx.reply(text, { parse_mode: 'Markdown', ...(keyboard && { reply_markup: keyboard.reply_markup }) })
+    if (user && user.businessId === config.businessId) {
+      await ctx.reply('Оберіть дію:', getMainMenu(user.role, settings))
+    } else {
+      await ctx.reply('Оберіть дію:', getWriteMessageKeyboard(settings))
+    }
+  }
+
+  // Команда /info — інформація про бізнес
+  bot.command('info', async (ctx: Context) => {
+    const user = await getUser(ctx)
+    const settings = await getBotSettings(config.businessId)
+    await sendBusinessInfo(ctx, user, settings)
   })
 
   // Команда для створення нагадування
@@ -379,6 +500,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     await ctx.answerCbQuery('⏰ Відправка нагадування...')
 
     try {
+      const settings = await getBotSettings(config.businessId)
       const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'
       const response = await fetch(`${baseUrl}/api/telegram/reminders/${reminderId}/send`, {
         method: 'POST',
@@ -391,14 +513,15 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
           `Відправлено: ${data.sentCount} клієнтів\n` +
           `Помилок: ${data.failedCount}\n\n` +
           `Оберіть дію:`,
-          getMainMenu(user.role)
+          getMainMenu(user.role, settings)
         )
       } else {
-        await ctx.editMessageText('❌ Помилка при відправці нагадування.', getMainMenu(user.role))
+        await ctx.editMessageText('❌ Помилка при відправці нагадування.', getMainMenu(user.role, settings))
       }
     } catch (error) {
       console.error('Error sending reminder:', error)
-      await ctx.editMessageText('❌ Помилка при відправці.', getMainMenu(user.role))
+      const settings = await getBotSettings(config.businessId)
+      await ctx.editMessageText('❌ Помилка при відправці.', getMainMenu(user.role, settings))
     }
   })
 
@@ -406,7 +529,8 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
   bot.action('menu_cancel', async (ctx: Context) => {
     const user = await getUser(ctx)
     await ctx.answerCbQuery('Скасовано')
-    await ctx.editMessageText('Операцію скасовано.\n\nОберіть дію:', getMainMenu(user?.role || 'VIEWER'))
+    const settings = await getBotSettings(config.businessId)
+    await ctx.editMessageText('Операцію скасовано.\n\nОберіть дію:', getMainMenu(user?.role || 'VIEWER', settings))
   })
 
   // Кнопка «Написати повідомлення» — дозволяє наступне текстове повідомлення, показує підказку
@@ -420,11 +544,11 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
     }
     const msg =
       '💬 Напишіть ваше повідомлення нижче.\n\nМи отримаємо його та відповімо найближчим часом.'
+    const settings = await getBotSettings(config.businessId)
     if (user && user.businessId === config.businessId) {
-      await ctx.reply(msg, getMainMenu(user.role))
+      await ctx.reply(msg, getMainMenu(user.role, settings))
     } else {
-      const settings = await getBotSettings(config.businessId)
-      await ctx.reply(msg, getWriteMessageKeyboard(!!settings.bookingEnabled))
+      await ctx.reply(msg, getWriteMessageKeyboard(settings))
     }
   })
 
@@ -432,41 +556,117 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
   bot.action('menu_info', async (ctx: Context) => {
     const user = await getUser(ctx)
     await ctx.answerCbQuery('ℹ️ Інформація')
-    const business = await prisma.business.findUnique({
-      where: { id: config.businessId },
-      select: { name: true, slug: true, phone: true, address: true, location: true, workingHours: true },
-    })
-    if (!business) {
-      await ctx.reply('Інформація недоступна.')
+    const settings = await getBotSettings(config.businessId)
+    await sendBusinessInfo(ctx, user, settings)
+  })
+
+  // Кнопка «Мої записи» — для клієнтів (по telegramChatId)
+  bot.action('menu_my_appointments', async (ctx: Context) => {
+    const user = await getUser(ctx)
+    await ctx.answerCbQuery('📋 Мої записи')
+    const chatId = ctx.chat?.id ? String(ctx.chat.id) : ''
+
+    const client = chatId
+      ? await prisma.client.findFirst({
+          where: { businessId: config.businessId, telegramChatId: chatId },
+          select: { id: true },
+        })
+      : null
+
+    if (!client) {
+      const settings = await getBotSettings(config.businessId)
+      await ctx.reply(
+        `📋 *Мої записи*\n\n` +
+          `У вас поки немає записів через цей бот.\n\n` +
+          (settings.bookingEnabled ? `Натисніть «📅 Записатися» — після першого візиту тут зʼявляться ваші записи.` : `Запишіться на сайті — тоді тут зʼявлятимуться ваші візити.`),
+        { parse_mode: 'Markdown' }
+      )
+      if (user && user.businessId === config.businessId) {
+        await ctx.reply('Оберіть дію:', getMainMenu(user.role, settings))
+      } else {
+        await ctx.reply('Оберіть дію:', getWriteMessageKeyboard(settings))
+      }
       return
     }
-    const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || 'https://xbase.online'
-    const bookingUrl = business.slug ? `${baseUrl.replace(/\/$/, '')}/booking/${business.slug}` : null
-    let text = `🏢 *${business.name || 'Бізнес'}*\n\n`
-    if (business.address?.trim()) text += `📍 Адреса: ${business.address}\n`
-    if (business.location?.trim()) text += `📍 ${business.location}\n`
-    if (business.phone?.trim()) text += `📞 Телефон: ${business.phone}\n`
-    if (business.workingHours?.trim()) text += `🕐 Графік: ${business.workingHours}\n`
-    if (bookingUrl) text += `\n🔗 Запис онлайн: ${bookingUrl}`
-    await ctx.reply(text, { parse_mode: 'Markdown' })
-    if (user && user.businessId === config.businessId) {
-      await ctx.reply('Оберіть дію:', getMainMenu(user.role))
+
+    const now = new Date()
+    const appointments = await prisma.appointment.findMany({
+      where: {
+        clientId: client.id,
+        businessId: config.businessId,
+        startTime: { gte: now },
+        status: { notIn: ['Cancelled', 'Скасовано'] },
+      },
+      select: {
+        id: true,
+        startTime: true,
+        endTime: true,
+        status: true,
+        customServiceName: true,
+        master: { select: { name: true } },
+      },
+      orderBy: { startTime: 'asc' },
+      take: 5,
+    })
+
+    const tz = 'Europe/Kyiv'
+    if (appointments.length === 0) {
+      await ctx.reply(
+        `📋 *Мої записи*\n\nУ вас немає майбутніх візитів.\n\nТут зʼявлятимуться підтверджені записи та нагадування.`,
+        { parse_mode: 'Markdown' }
+      )
     } else {
-      const settings = await getBotSettings(config.businessId)
-      await ctx.reply('Оберіть дію:', getWriteMessageKeyboard(!!settings.bookingEnabled))
+      const lines = appointments.map((apt, i) => {
+        const start = new Date(apt.startTime)
+        const day = formatInTimeZone(start, tz, 'd MMM, HH:mm', { locale: uk })
+        const svc = apt.customServiceName?.trim() || '—'
+        const statusIcon =
+          String(apt.status || '').toLowerCase().includes('підтвер') || apt.status === 'Confirmed'
+            ? '✅'
+            : String(apt.status || '').toLowerCase().includes('очіку') || apt.status === 'Pending'
+              ? '⏳'
+              : '📌'
+        return `${statusIcon} ${i + 1}. ${day}\n   ${apt.master?.name || '—'} • ${svc}`
+      })
+      await ctx.reply(
+        `📋 *Мої записи*\n\n${lines.join('\n\n')}\n\n_Нагадування надходитимуть автоматично._`,
+        { parse_mode: 'Markdown' }
+      )
+    }
+
+    const settings = await getBotSettings(config.businessId)
+    if (user && user.businessId === config.businessId) {
+      await ctx.reply('Оберіть дію:', getMainMenu(user.role, settings))
+    } else {
+      await ctx.reply('Оберіть дію:', getWriteMessageKeyboard(settings))
     }
   })
 
-  // Callback для допомоги
+  // Callback для допомоги — структурований текст, поради, FAQ
   bot.action('menu_help', async (ctx: Context) => {
     const user = await getUser(ctx)
     await logAction('callback', 'menu_help', null, ctx.from?.id?.toString())
 
-    const commands = getAvailableCommands(user?.role || 'VIEWER')
-    await ctx.editMessageText(
-      `ℹ️ Допомога\n\nДоступні команди:\n${commands.join('\n')}\n\nВаша роль: ${getRoleName(user?.role || 'VIEWER')}\n\nОберіть дію:`,
-      getMainMenu(user?.role || 'VIEWER')
-    )
+    const role = user?.role || 'VIEWER'
+    const commands = getAvailableCommands(role)
+    const isStaff = user && user.businessId === config.businessId && hasPermission(role, 'create_broadcast')
+
+    let text =
+      `ℹ️ *Допомога*\n\n` +
+      `📌 *Швидкі дії:*\n` +
+      `• ℹ️ Інформація — адреса, графік, телефон, запис онлайн\n` +
+      `• 📋 Мої записи — ваші майбутні візити\n` +
+      `• ✉️ Написати повідомлення — звʼязок з бізнесом\n\n` +
+      `📌 *Команди:*\n${commands.join('\n')}\n\n` +
+      `💡 *Порада:* натисніть кнопку «Інформація про бізнес» — там є кнопки для маршруту та дзвінка.\n\n` +
+      `_Ваша роль: ${getRoleName(role)}_`
+
+    if (isStaff) {
+      text += `\n\n⏰ *Для співробітників:* /reminder <текст> — створити нагадування для клієнтів`
+    }
+
+    const settings = await getBotSettings(config.businessId)
+    await ctx.editMessageText(text, { parse_mode: 'Markdown', ...getMainMenu(role, settings) })
   })
 
   // ——— Запис через бота (кнопки) ———
@@ -1137,7 +1337,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
         },
       })
       const autoReply = settings.autoReplyMessage?.trim() || DEFAULT_AUTO_REPLY
-      await ctx.reply(autoReply, getWriteMessageKeyboard(!!settings.bookingEnabled))
+      await ctx.reply(autoReply, getWriteMessageKeyboard(settings))
     } catch (err) {
       console.error('Error saving Telegram inbox message:', err)
       await ctx.reply('❌ Не вдалося зберегти повідомлення. Спробуйте пізніше.')

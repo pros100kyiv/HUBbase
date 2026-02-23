@@ -114,8 +114,9 @@ export async function PATCH(
   }
 
   const bodyKeys = Object.keys(body).filter(k => k !== 'businessId')
-  const statusOnly = bodyKeys.length === 1 && body.status != null
+  const statusOnly = bodyKeys.length <= 2 && body.status != null && (bodyKeys.length === 1 || (bodyKeys.length === 2 && body.businessNote != null))
   const newStatus = toStatus(body.status)
+  const businessNote = typeof body.businessNote === 'string' ? body.businessNote.trim() : ''
 
   if (statusOnly && !newStatus) {
     return NextResponse.json(
@@ -126,9 +127,11 @@ export async function PATCH(
 
   if (statusOnly && newStatus) {
     try {
+      const updateData: { status: string; businessNote?: string } = { status: newStatus }
+      if (businessNote) updateData.businessNote = businessNote
       const result = await prisma.appointment.updateMany({
         where: { id: appointmentId, businessId },
-        data: { status: newStatus },
+        data: updateData,
       })
       if (result.count === 0) {
         return NextResponse.json({ error: 'Appointment not found' }, { status: 404 })
@@ -141,7 +144,8 @@ export async function PATCH(
         sendAppointmentNotificationToTelegram(
           businessId,
           appointmentId,
-          newStatus === 'Confirmed' ? 'confirmed' : 'cancelled'
+          newStatus === 'Confirmed' ? 'confirmed' : 'cancelled',
+          businessNote ? { businessNote } : undefined
         ).catch((e) => console.error('TG notify:', e))
       }
       return NextResponse.json(updated)
@@ -170,6 +174,7 @@ export async function PATCH(
   const servicesJson = toServicesJson(body.services)
   if (servicesJson !== null) data.services = servicesJson
   if (body.notes !== undefined) data.notes = toStrOrNull(body.notes)
+  if (body.businessNote !== undefined) data.businessNote = toStrOrNull(body.businessNote)
   if (body.procedureDone !== undefined) data.procedureDone = toStrOrNull(body.procedureDone)
   if (body.customPrice !== undefined) data.customPrice = toIntOrNull(body.customPrice)
   if (body.customServiceName !== undefined) data.customServiceName = toStrOrNull(body.customServiceName)
@@ -221,20 +226,22 @@ export async function PATCH(
     })
     const isReschedule = startTime && endTime
     const statusChanged = newStatus && (newStatus === 'Confirmed' || newStatus === 'Cancelled')
+    const noteForNotify = typeof body.businessNote === 'string' && body.businessNote.trim() ? { businessNote: body.businessNote.trim() } : undefined
     if (statusChanged || isReschedule) {
       const { sendAppointmentNotificationToTelegram } = await import('@/lib/services/appointment-telegram-notify')
       if (newStatus === 'Cancelled') {
-        sendAppointmentNotificationToTelegram(businessId, appointmentId, 'cancelled').catch((e) =>
+        sendAppointmentNotificationToTelegram(businessId, appointmentId, 'cancelled', noteForNotify).catch((e) =>
           console.error('TG notify:', e)
         )
       } else if (newStatus === 'Confirmed') {
-        sendAppointmentNotificationToTelegram(businessId, appointmentId, 'confirmed').catch((e) =>
+        sendAppointmentNotificationToTelegram(businessId, appointmentId, 'confirmed', noteForNotify).catch((e) =>
           console.error('TG notify:', e)
         )
       } else if (isReschedule && startTime && endTime) {
         sendAppointmentNotificationToTelegram(businessId, appointmentId, 'rescheduled', {
           newStartTime: startTime,
           newEndTime: endTime,
+          ...noteForNotify,
         }).catch((e) => console.error('TG notify:', e))
       }
     }

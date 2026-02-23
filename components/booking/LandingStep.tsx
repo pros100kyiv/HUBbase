@@ -92,7 +92,7 @@ export function LandingStep({ business }: LandingStepProps) {
       <div className="absolute inset-0 bg-black/65 backdrop-blur-[1px]" aria-hidden />
 
       <div className="relative z-10 w-full max-w-3xl mx-auto px-2 sm:px-4">
-        <div className="rounded-2xl border border-white/10 bg-white/[0.06] shadow-2xl shadow-black/30 overflow-hidden">
+        <div className="rounded-2xl border border-white/12 bg-white/[0.07] shadow-2xl shadow-black/40 overflow-hidden backdrop-blur-sm">
           <div className="p-5 sm:p-7 text-center">
             <div className="flex items-center justify-center mb-4">
               {logoSrc ? (
@@ -160,8 +160,8 @@ export function LandingStep({ business }: LandingStepProps) {
             <div className="hidden md:flex flex-col sm:flex-row items-center justify-center gap-2 md:gap-3">
               <button
                 type="button"
-                className="px-6 md:px-8 py-3 md:py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-colors active:scale-[0.98] text-sm md:text-base inline-flex items-center gap-2"
-                style={{ boxShadow: '0 2px 8px 0 rgba(0, 0, 0, 0.35)' }}
+                data-testid="booking-record-online"
+                className="px-6 md:px-8 py-3 md:py-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-all duration-200 active:scale-[0.98] text-sm md:text-base inline-flex items-center gap-2 shadow-lg shadow-emerald-900/40 hover:shadow-emerald-500/20"
                 onClick={() => setStep(1)}
               >
                 Запис онлайн
@@ -190,6 +190,7 @@ export function LandingStep({ business }: LandingStepProps) {
         <div className="flex gap-2">
           <button
             type="button"
+            data-testid="booking-record-online"
             className="flex-1 min-h-[48px] py-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition-colors active:scale-[0.98] text-sm touch-target"
             style={{ boxShadow: '0 2px 4px 0 rgba(0, 0, 0, 0.25)' }}
             onClick={() => setStep(1)}

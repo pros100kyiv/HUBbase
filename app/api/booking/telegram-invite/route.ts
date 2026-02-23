@@ -1,6 +1,7 @@
 /**
- * GET /api/booking/telegram-invite?slug=xxx | businessId=xxx
+ * GET /api/booking/telegram-invite?slug=xxx | businessId=xxx [&manageToken=xxx]
  * Повертає посилання на Telegram-бота для запису та сповіщень (публічний доступ).
+ * Якщо manageToken передано — посилання веде в бот з показом підтвердження запису.
  */
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
@@ -13,6 +14,7 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const slug = searchParams.get('slug')?.trim()
     const businessId = searchParams.get('businessId')?.trim()
+    const manageToken = searchParams.get('manageToken')?.trim()
 
     if (!slug && !businessId) {
       return NextResponse.json({ inviteLink: null, hasTelegram: false }, { status: 200 })
@@ -42,7 +44,13 @@ export async function GET(request: Request) {
         return NextResponse.json({ inviteLink: null, hasTelegram: false }, { status: 200 })
       }
 
-      const inviteLink = `https://t.me/${botUsername}?start=${business.businessIdentifier}`
+      // Після запису: посилання з start=booked_<token> — бот покаже "Ви записалися"
+      const startPayload =
+        manageToken && manageToken.length >= 20 && manageToken.length <= 56
+          ? `booked_${manageToken}`
+          : business.businessIdentifier
+
+      const inviteLink = `https://t.me/${botUsername}?start=${encodeURIComponent(startPayload)}`
       return NextResponse.json({ inviteLink, hasTelegram: true }, { status: 200 })
     } catch {
       return NextResponse.json({ inviteLink: null, hasTelegram: false }, { status: 200 })

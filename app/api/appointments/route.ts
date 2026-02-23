@@ -243,6 +243,7 @@ export async function POST(request: Request) {
           status: initialStatus,
           isFromBooking: isFromBookingFlag,
           source: isFromTelegram ? 'telegram' : sourceVal,
+          ...(isFromTelegram && tgChatId ? { telegramChatId: tgChatId } : {}),
         },
       })
 
@@ -303,8 +304,11 @@ export async function POST(request: Request) {
     return NextResponse.json(
       {
         ...appointment,
-        ...(manageToken && business?.slug
-          ? { manageToken, manageUrl: `/booking/${business.slug}/manage/${manageToken}` }
+        ...(manageToken
+          ? {
+              manageToken,
+              ...(business?.slug ? { manageUrl: `/booking/${business.slug}/manage/${manageToken}` } : {}),
+            }
           : {}),
       },
       { status: 201 }

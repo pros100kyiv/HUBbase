@@ -153,8 +153,8 @@ function TelegramQuickConnectButton({
         onClick={() => setShowConfirm(true)}
         disabled={connecting || !businessId}
         className={cn(
-          'w-full px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors active:scale-[0.98] text-center',
-          'bg-[#0088cc] hover:bg-[#0088cc]/90 text-white'
+          'w-full px-3 py-2.5 rounded-xl text-xs font-semibold transition-all duration-200 active:scale-[0.98] text-center',
+          'bg-[#0088cc] hover:bg-[#0099dd] text-white shadow-md shadow-[#0088cc]/25'
         )}
       >
         {connecting ? 'Підключення...' : 'Підключити'}
@@ -211,12 +211,18 @@ function TelegramConfirmModal({
   )
 }
 
+const InstagramIcon = () => (
+  <svg className="w-5 h-5" viewBox="0 0 24 24" fill="currentColor" aria-hidden>
+    <path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z" />
+  </svg>
+)
+
 const PLATFORM_META: Record<string, { icon: React.ReactNode; shortDesc: string }> = {
-  telegram: { icon: <BotIcon className="w-5 h-5" />, shortDesc: 'Повідомлення від клієнтів' },
-  instagram: { icon: <span className="text-xl">📷</span>, shortDesc: 'Direct-листи' },
-  whatsapp: { icon: <span className="text-xl">💬</span>, shortDesc: 'Скоро' },
-  facebook: { icon: <span className="text-xl">f</span>, shortDesc: 'Скоро' },
-  viber: { icon: <span className="text-xl">V</span>, shortDesc: 'Скоро' },
+  telegram: { icon: <BotIcon className="w-5 h-5 text-[#0088cc]" />, shortDesc: 'Повідомлення від клієнтів' },
+  instagram: { icon: <InstagramIcon />, shortDesc: 'Direct-листи' },
+  whatsapp: { icon: <span className="text-lg">💬</span>, shortDesc: 'Скоро' },
+  facebook: { icon: <span className="text-lg font-bold text-blue-400">f</span>, shortDesc: 'Скоро' },
+  viber: { icon: <span className="text-lg font-bold text-purple-400">V</span>, shortDesc: 'Скоро' },
 }
 
 type SocialTab = 'chat' | 'booking'
@@ -343,92 +349,110 @@ export default function SocialPage() {
   }
 
   return (
-    <div className="w-full max-w-7xl mx-auto min-w-0 overflow-hidden">
-      <div className="grid grid-cols-dashboard-main lg:grid-cols-dashboard-main-lg gap-3 md:gap-6 min-w-0 w-full">
-        <div className="space-y-3 md:space-y-6 min-w-0 overflow-hidden">
-          <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
-            Соціальні мережі
-          </h1>
+    <div className="w-full max-w-7xl mx-auto min-w-0">
+      <div className="grid grid-cols-dashboard-main lg:grid-cols-dashboard-main-lg gap-4 md:gap-6 min-w-0 w-full">
+        <div className="space-y-4 md:space-y-6 min-w-0 overflow-visible">
+          <div>
+            <h1 className="text-xl md:text-2xl font-bold text-white" style={{ letterSpacing: '-0.02em' }}>
+              Соціальні мережі
+            </h1>
+            <p className="text-sm text-gray-400 mt-1">Telegram, Instagram та листи клієнтів в одній панелі</p>
+          </div>
 
-          {/* Компактні картки: тільки Telegram і Instagram */}
-          <div className="flex flex-wrap gap-2 md:gap-3">
+          {/* Картки інтеграцій — однакова висота */}
+          <div className="flex flex-wrap gap-3 md:gap-4 pl-1">
             {integrations.map((integration) => (
               <div
                 key={integration.id}
                 className={cn(
-                  'rounded-xl p-3 md:p-4 card-glass min-w-[140px] flex-1 max-w-[200px]',
-                  integration.connected && 'ring-1 ring-green-500/50'
+                  'rounded-2xl p-4 md:p-5 card-glass min-w-[150px] flex-1 max-w-[220px] flex flex-col min-h-[200px]',
+                  'transition-all duration-200 hover:border-white/15 hover:shadow-lg hover:shadow-black/20',
+                  integration.connected && 'border-2 border-green-500/50 shadow-[0_0_0_1px_rgba(34,197,94,0.4)]'
                 )}
               >
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="w-8 h-8 rounded-lg bg-white/15 flex items-center justify-center text-white">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className={cn(
+                    'w-10 h-10 rounded-xl flex items-center justify-center text-white shrink-0',
+                    integration.id === 'telegram' && 'bg-[#0088cc]/25',
+                    integration.id === 'instagram' && 'bg-gradient-to-br from-[#f09433]/30 to-[#e6683c]/30',
+                    integration.id === 'whatsapp' && 'bg-emerald-500/25',
+                    integration.id === 'facebook' && 'bg-blue-500/25',
+                    integration.id === 'viber' && 'bg-purple-500/25',
+                    !['telegram','instagram','whatsapp','facebook','viber'].includes(integration.id) && 'bg-white/10'
+                  )}>
                     {integration.icon}
                   </div>
-                  <span className="text-sm font-semibold text-white">{integration.name}</span>
-                  {integration.connected ? (
-                    <CheckIcon className="w-4 h-4 text-green-400 ml-auto" />
-                  ) : (
-                    <XIcon className="w-4 h-4 text-gray-500 ml-auto" />
+                  <div className="min-w-0 flex-1">
+                    <span className="text-sm font-semibold text-white block truncate">{integration.name}</span>
+                    {integration.connected ? (
+                      <span className="flex items-center gap-1 text-xs text-green-400">
+                        <CheckIcon className="w-3.5 h-3.5 shrink-0" /> Підключено
+                      </span>
+                    ) : (
+                      <span className="text-[11px] text-gray-500">Не підключено</span>
+                    )}
+                  </div>
+                </div>
+                <p className="text-[11px] text-gray-400 mb-3">{integration.shortDesc}</p>
+                <div className="mt-auto">
+                  {integration.id === 'telegram' ? (
+                    <TelegramQuickConnectButton
+                      businessId={business?.id}
+                      connected={integration.connected}
+                      onConnected={onTelegramConnected}
+                      onDisconnected={onTelegramConnected}
+                      onOpenSettings={() => router.push('/dashboard/settings?tab=integrations')}
+                    />
+                  ) : integration.id === 'instagram' ? (
+                    <a
+                      href={integration.connected ? '#' : `/api/instagram/oauth?businessId=${business?.id}`}
+                      className={cn(
+                        'block w-full px-3 py-2.5 rounded-xl text-[11px] font-semibold text-center transition-all duration-200',
+                        integration.connected
+                          ? 'border border-white/20 bg-white/5 text-gray-400 cursor-default'
+                          : 'bg-gradient-to-r from-[#f09433] to-[#e6683c] text-white hover:shadow-lg hover:shadow-orange-500/20 hover:opacity-95'
+                      )}
+                      onClick={(e) => integration.connected && e.preventDefault()}
+                    >
+                      {integration.connected ? 'Підключено' : 'Підключити'}
+                    </a>
+                ) : (
+                    <div className="w-full px-3 py-2.5 rounded-xl text-[11px] font-medium text-center border border-white/10 bg-white/[0.04] text-gray-500">
+                      Скоро
+                    </div>
                   )}
                 </div>
-                <p className="text-[10px] text-gray-400 mb-2">{integration.shortDesc}</p>
-                {integration.id === 'telegram' ? (
-                  <TelegramQuickConnectButton
-                    businessId={business?.id}
-                    connected={integration.connected}
-                    onConnected={onTelegramConnected}
-                    onDisconnected={onTelegramConnected}
-                    onOpenSettings={() => router.push('/dashboard/settings?tab=integrations')}
-                  />
-                ) : integration.id === 'instagram' ? (
-                  <a
-                    href={integration.connected ? '#' : `/api/instagram/oauth?businessId=${business?.id}`}
-                    className={cn(
-                      'block w-full px-2 py-1.5 rounded-lg text-[11px] font-semibold text-center transition-colors',
-                      integration.connected
-                        ? 'border border-white/20 bg-white/5 text-gray-400 cursor-default'
-                        : 'bg-gradient-to-r from-[#f09433] to-[#e6683c] text-white hover:opacity-90'
-                    )}
-                    onClick={(e) => integration.connected && e.preventDefault()}
-                  >
-                    {integration.connected ? 'Підключено' : 'Підключити'}
-                  </a>
-                ) : (
-                  <div className="w-full px-2 py-1.5 rounded-lg text-[11px] font-medium text-center border border-white/10 bg-white/5 text-gray-500">
-                    Скоро
-                  </div>
-                )}
               </div>
             ))}
           </div>
         </div>
 
-        <div className="dashboard-sidebar-col space-y-3 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
+        <div className="dashboard-sidebar-col space-y-4 md:space-y-6 flex flex-col min-w-0 w-full max-w-full overflow-hidden">
           {/* Tabs: Chat | Booking */}
-          <div className="rounded-xl p-1 card-glass flex w-full sm:w-fit sm:inline-flex">
+          <div className="rounded-xl p-1.5 card-glass-elevated border border-white/10 flex w-full sm:w-fit sm:inline-flex gap-1">
             <button
               type="button"
               onClick={() => setTab('chat')}
               className={cn(
-                'flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-semibold transition-all',
+                'flex-1 sm:flex-none px-5 py-3 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2',
                 activeTab === 'chat'
-                  ? 'bg-white/15 text-white shadow-sm'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-white/20 text-white shadow-md'
+                  : 'text-gray-400 hover:text-white hover:bg-white/10'
               )}
             >
-              💬 Чат
+              <span className="text-base" aria-hidden>💬</span> Чат
             </button>
             <button
               type="button"
               onClick={() => setTab('booking')}
               className={cn(
-                'flex-1 sm:flex-none px-4 py-2.5 rounded-lg text-sm font-semibold transition-all flex items-center justify-center gap-1.5',
+                'flex-1 sm:flex-none px-5 py-3 rounded-lg text-sm font-semibold transition-all duration-200 flex items-center justify-center gap-2',
                 activeTab === 'booking'
-                  ? 'bg-white/15 text-white shadow-sm'
-                  : 'text-gray-400 hover:text-white hover:bg-white/5'
+                  ? 'bg-white/20 text-white shadow-md'
+                  : 'text-gray-400 hover:text-white hover:bg-white/10'
               )}
             >
-              📅 Запис
+              <span className="text-base" aria-hidden>📅</span> Запис
             </button>
           </div>
 
@@ -447,29 +471,29 @@ export default function SocialPage() {
             <TelegramBookingsCard businessId={business.id} bookingEnabled={bookingEnabled} />
           )}
 
-          <div className="rounded-xl p-4 card-glass">
-            <h3 className="text-sm font-semibold text-white mb-2">Швидкі дії</h3>
+          <div className="rounded-xl p-4 md:p-5 card-glass border border-white/10">
+            <h3 className="text-sm font-semibold text-white mb-3">Швидкі дії</h3>
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
                 onClick={() => router.push('/dashboard/settings?tab=integrations')}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-white/20 text-white hover:bg-white/10"
+                className="px-4 py-2.5 rounded-xl text-xs font-medium border border-white/20 text-white hover:bg-white/10 hover:border-white/25 transition-colors"
               >
-                Інтеграції
+                ⚙️ Інтеграції
               </button>
               <button
                 type="button"
                 onClick={() => router.push('/dashboard/main')}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-white/20 text-white hover:bg-white/10"
+                className="px-4 py-2.5 rounded-xl text-xs font-medium border border-white/20 text-white hover:bg-white/10 hover:border-white/25 transition-colors"
               >
-                Головна
+                🏠 Головна
               </button>
               <button
                 type="button"
                 onClick={() => router.push('/dashboard/appointments')}
-                className="px-3 py-1.5 rounded-lg text-xs font-medium border border-white/20 text-white hover:bg-white/10"
+                className="px-4 py-2.5 rounded-xl text-xs font-medium border border-white/20 text-white hover:bg-white/10 hover:border-white/25 transition-colors"
               >
-                Записи
+                📆 Записи
               </button>
             </div>
           </div>

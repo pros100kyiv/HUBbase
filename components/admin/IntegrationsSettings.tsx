@@ -6,6 +6,15 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { TelegramSettings } from './TelegramSettings'
 
+type IntegrationsTab = 'telegram' | 'channels' | 'reminders' | 'payments'
+
+const INTEGRATION_TABS: { id: IntegrationsTab; label: string; icon: string }[] = [
+  { id: 'telegram', label: 'Telegram', icon: '📱' },
+  { id: 'channels', label: 'SMS і Email', icon: '✉️' },
+  { id: 'reminders', label: 'Нагадування', icon: '⏰' },
+  { id: 'payments', label: 'Платежі', icon: '💳' },
+]
+
 interface IntegrationsSettingsProps {
   business: any
   onUpdate: (data: any) => Promise<void>
@@ -14,6 +23,7 @@ interface IntegrationsSettingsProps {
 
 export function IntegrationsSettings({ business, onUpdate, onRefetchBusiness }: IntegrationsSettingsProps) {
   const [isSaving, setIsSaving] = useState(false)
+  const [activeTab, setActiveTab] = useState<IntegrationsTab>('telegram')
 
   // SMS
   const [smsApiKey, setSmsApiKey] = useState(business?.smsApiKey || '')
@@ -48,6 +58,15 @@ export function IntegrationsSettings({ business, onUpdate, onRefetchBusiness }: 
     } catch {}
     return 24
   })
+  const [reminderPushEnabled, setReminderPushEnabled] = useState(() => {
+    try {
+      if (business?.settings) {
+        const s = JSON.parse(business.settings)
+        if (typeof s?.reminderPushEnabled === 'boolean') return s.reminderPushEnabled
+      }
+    } catch {}
+    return true
+  })
 
   useEffect(() => {
     if (business) {
@@ -67,6 +86,7 @@ export function IntegrationsSettings({ business, onUpdate, onRefetchBusiness }: 
         if (business.settings) {
           const s = JSON.parse(business.settings)
           if (typeof s?.reminderHoursBefore === 'number') setReminderHoursBefore(s.reminderHoursBefore)
+          if (typeof s?.reminderPushEnabled === 'boolean') setReminderPushEnabled(s.reminderPushEnabled)
         }
       } catch {}
     }
@@ -91,7 +111,8 @@ export function IntegrationsSettings({ business, onUpdate, onRefetchBusiness }: 
         reminderSmsEnabled,
         reminderEmailEnabled,
         reminderTelegramEnabled,
-        reminderHoursBefore: reminderHoursBefore || 24
+        reminderHoursBefore: reminderHoursBefore || 24,
+        reminderPushEnabled
       })
     } finally {
       setIsSaving(false)
@@ -114,8 +135,28 @@ export function IntegrationsSettings({ business, onUpdate, onRefetchBusiness }: 
 
   return (
     <div className="space-y-4">
-      {/* Telegram */}
-      {business && (
+      {/* Табі */}
+      <div className="flex flex-wrap gap-1 p-1 rounded-xl bg-black/[0.04] dark:bg-white/[0.06] border border-black/5 dark:border-white/10">
+        {INTEGRATION_TABS.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id)}
+            className={cn(
+              'px-3 py-2 rounded-lg text-sm font-medium transition-colors',
+              activeTab === tab.id
+                ? 'bg-white dark:bg-white/10 text-foreground shadow-sm'
+                : 'text-gray-600 dark:text-gray-400 hover:text-foreground hover:bg-black/[0.02] dark:hover:bg-white/[0.04]'
+            )}
+          >
+            <span className="mr-1.5">{tab.icon}</span>
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* Контент за табом */}
+      {activeTab === 'telegram' && business && (
         <TelegramSettings
           business={business}
           onUpdate={onUpdate}
@@ -123,12 +164,15 @@ export function IntegrationsSettings({ business, onUpdate, onRefetchBusiness }: 
         />
       )}
 
-      {/* SMS — згорнуто */}
-      <details className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
-        <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none select-none hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
-          <span className="font-medium text-foreground">SMS</span>
-          <StatusBadge configured={!!smsApiKey} label="Не налаштовано" />
-        </summary>
+      {activeTab === 'channels' && (
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">Канали для відправки SMS та Email. Потрібні для нагадувань та сповіщень.</p>
+          {/* SMS */}
+          <details className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden" open>
+            <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none select-none hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
+              <span className="font-medium text-foreground">SMS</span>
+              <StatusBadge configured={!!smsApiKey} label="Не налаштовано" />
+            </summary>
         <div className="p-4 pt-0 space-y-3 border-t border-black/5 dark:border-white/5">
           <div>
             <label className="text-xs text-gray-500 dark:text-gray-400 mb-1 block">API (SMSC.ua — login:password)</label>
@@ -156,8 +200,8 @@ export function IntegrationsSettings({ business, onUpdate, onRefetchBusiness }: 
         </div>
       </details>
 
-      {/* Email — згорнуто */}
-      <details className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
+          {/* Email */}
+          <details className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden" open>
         <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none select-none hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
           <span className="font-medium text-foreground">Email</span>
           <StatusBadge configured={!!emailApiKey} label="Не налаштовано" />
@@ -198,9 +242,13 @@ export function IntegrationsSettings({ business, onUpdate, onRefetchBusiness }: 
           </div>
         </div>
       </details>
+        </div>
+      )}
 
-      {/* Платежі — згорнуто */}
-      <details className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden">
+      {activeTab === 'payments' && (
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">Онлайн-оплата через LiqPay. Клієнти зможуть оплачувати при записі.</p>
+          <details className="rounded-xl border border-black/10 dark:border-white/10 overflow-hidden" open>
         <summary className="flex items-center justify-between gap-3 px-4 py-3 cursor-pointer list-none select-none hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
           <span className="font-medium text-foreground">Платежі (LiqPay)</span>
           <StatusBadge configured={paymentEnabled && !!paymentApiKey && !!paymentMerchantId} label="Вимкнено" />
@@ -244,8 +292,12 @@ export function IntegrationsSettings({ business, onUpdate, onRefetchBusiness }: 
           )}
         </div>
       </details>
+        </div>
+      )}
 
-      {/* Нагадування — компактний блок */}
+      {activeTab === 'reminders' && (
+        <div className="space-y-4">
+          <p className="text-sm text-gray-600 dark:text-gray-400">Автоматичні нагадування клієнтам перед візитом. Оберіть канали та час.</p>
       <div className="rounded-xl border border-black/10 dark:border-white/10 p-4 space-y-3">
         <h3 className="text-sm font-semibold text-foreground">Нагадування клієнтам</h3>
         <label className="flex items-center gap-2 cursor-pointer">
@@ -278,14 +330,22 @@ export function IntegrationsSettings({ business, onUpdate, onRefetchBusiness }: 
                 <input type="checkbox" checked={reminderTelegramEnabled} onChange={(e) => setReminderTelegramEnabled(e.target.checked)} disabled={!business?.telegramBotToken} className="w-4 h-4 rounded" />
                 <span className="text-xs">Telegram</span>
               </label>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input type="checkbox" checked={reminderPushEnabled} onChange={(e) => setReminderPushEnabled(e.target.checked)} className="w-4 h-4 rounded" />
+                <span className="text-xs">Push</span>
+              </label>
             </div>
           </div>
         )}
       </div>
+        </div>
+      )}
 
-      <Button onClick={handleSave} disabled={isSaving} className="w-full h-11 font-medium">
-        {isSaving ? 'Збереження…' : 'Зберегти налаштування'}
-      </Button>
+      {activeTab !== 'telegram' && (
+        <Button onClick={handleSave} disabled={isSaving} className="w-full h-11 font-medium">
+          {isSaving ? 'Збереження…' : 'Зберегти налаштування'}
+        </Button>
+      )}
     </div>
   )
 }

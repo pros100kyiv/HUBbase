@@ -43,8 +43,8 @@ export function NavigationProgressProvider({ children }: { children: React.React
           <div
             className="h-full w-1/3 min-w-[120px] rounded-r-full animate-[navigation-progress_1.4s_ease-in-out_infinite]"
             style={{
-              background: 'linear-gradient(90deg, #6366f1, #8b5cf6)',
-              boxShadow: '0 0 12px rgba(99, 102, 241, 0.5)',
+              background: 'linear-gradient(90deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%)',
+              boxShadow: '0 0 16px rgba(99, 102, 241, 0.45), 0 0 4px rgba(139, 92, 246, 0.3)',
             }}
           />
         </div>

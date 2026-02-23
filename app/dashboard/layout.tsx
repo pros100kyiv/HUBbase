@@ -184,7 +184,7 @@ export default function DashboardLayout({
       
       {/* Main Content Area — на десктопі ширина = viewport − сайдбар, щоб контент не виходив за екран */}
       <main className="relative w-full min-w-0 max-w-full overflow-x-hidden ml-0 md:ml-64 md:w-[calc(100vw-16rem)] pt-14 md:pt-16 min-h-screen safe-bottom pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)]" data-dashboard-content>
-        <div className="dashboard-content-inner w-full min-w-0 max-w-full overflow-x-hidden px-3 py-3 md:p-6 pb-[max(5rem,env(safe-area-inset-bottom)+3.5rem)] md:pb-6 animate-content-fade-in">
+        <div className="dashboard-content-inner w-full min-w-0 max-w-full overflow-x-hidden px-3 py-3 md:pl-8 md:pr-6 md:pt-6 md:pb-6 pb-[max(5rem,env(safe-area-inset-bottom)+3.5rem)] animate-content-fade-in">
           {children}
         </div>
       </main>

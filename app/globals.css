@@ -145,7 +145,7 @@
     min-height: 100dvh;
     min-height: -webkit-fill-available;
     overflow-x: hidden;
-    background: #0A0A0A;
+    background: #05050f;
     background-image:
       radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.15) 0%, transparent 50%),
       radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.12) 0%, transparent 50%),
@@ -299,10 +299,26 @@
       radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.03) 0%, transparent 55%);
     color: #111827;
   }
+  /* Custom background (світла): --custom-bg-light */
+  html[data-custom-bg-light="1"].light body {
+    background: var(--custom-bg-light);
+    color: #111827;
+  }
+  html[data-custom-bg-light="1"].light body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: var(--custom-gradient-opacity, 1);
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(0, 0, 0, 0.02) 0%, transparent 55%),
+      radial-gradient(circle at 80% 20%, rgba(99, 102, 241, 0.03) 0%, transparent 55%);
+  }
 
   /* Xbase: темна тема — глибокий читабельний фон */
   .dark body {
-    background: #0F172A;
+    background: #05050f;
     background-image:
       radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.08) 0%, transparent 50%),
       radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
@@ -312,9 +328,42 @@
 
   /* Xbase: OLED — справжній чорний */
   .oled body {
-    background: #000000;
+    background: #05050f;
     background-image: none;
     color: #F8FAFC;
+  }
+
+  /* Custom background (темна/OLED): --custom-bg-base, --custom-gradient-opacity (0–1) */
+  html[data-custom-bg="1"].dark body {
+    background: var(--custom-bg-base);
+    color: #F8FAFC;
+  }
+  html[data-custom-bg="1"].dark body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: var(--custom-gradient-opacity, 1);
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.08) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
+      radial-gradient(circle at 50% 70%, rgba(139, 92, 246, 0.05) 0%, transparent 50%);
+  }
+  html[data-custom-bg="1"].oled body {
+    background: var(--custom-bg-base);
+    color: #F8FAFC;
+  }
+  html[data-custom-bg="1"].oled body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    z-index: -1;
+    pointer-events: none;
+    opacity: var(--custom-gradient-opacity, 1);
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(255, 255, 255, 0.06) 0%, transparent 50%),
+      radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.04) 0%, transparent 50%);
   }
 
   /* OLED: темні поверхні для карток і панелей */
@@ -644,7 +693,7 @@
 
   /* Xbase: Navbar і Sidebar — скло як на реєстрації/вході, з градієнтом на фоні */
   .navbar-theme {
-    background-color: rgba(18, 18, 22, 0.82);
+    background-color: rgba(5, 5, 15, 0.88);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
@@ -654,13 +703,22 @@
       0 8px 32px -8px rgba(0, 0, 0, 0.15);
   }
   .dark .navbar-theme {
-    background-color: rgba(15, 23, 42, 0.85);
+    background-color: rgba(5, 5, 15, 0.9);
     border-bottom-color: rgba(255, 255, 255, 0.08);
   }
   .oled .navbar-theme {
-    background-color: rgba(8, 8, 10, 0.92);
+    background-color: rgba(5, 5, 15, 0.92);
     border-bottom-color: rgba(255, 255, 255, 0.06);
     box-shadow: 0 1px 0 0 rgba(255, 255, 255, 0.05), 0 4px 16px rgba(0, 0, 0, 0.35);
+  }
+  /* Custom background: navbar і sidebar узгоджуються з фоном */
+  html[data-custom-bg="1"].dark .navbar-theme {
+    background-color: color-mix(in srgb, var(--custom-bg-base) 90%, transparent);
+    border-bottom-color: rgba(255, 255, 255, 0.08);
+  }
+  html[data-custom-bg="1"].oled .navbar-theme {
+    background-color: color-mix(in srgb, var(--custom-bg-base) 92%, transparent);
+    border-bottom-color: rgba(255, 255, 255, 0.06);
   }
   .light .navbar-theme {
     background-color: rgba(255, 255, 255, 0.88);
@@ -672,35 +730,51 @@
   .light .navbar-theme .text-white { color: #1a1a1a !important; }
   .light .navbar-theme .text-gray-300,
   .light .navbar-theme .text-gray-400 { color: #4b5563 !important; }
+  html[data-custom-bg-light="1"].light .navbar-theme {
+    background-color: color-mix(in srgb, var(--custom-bg-light) 92%, transparent);
+    border-bottom-color: rgba(0, 0, 0, 0.08);
+  }
   .sidebar-theme {
-    background-color: rgba(18, 18, 22, 0.78);
+    background-color: rgba(5, 5, 15, 0.86);
     backdrop-filter: blur(24px);
     -webkit-backdrop-filter: blur(24px);
     border-right: 1px solid rgba(255, 255, 255, 0.1);
     box-shadow:
       inset -1px 0 0 rgba(255, 255, 255, 0.04),
-      4px 0 24px -4px rgba(0, 0, 0, 0.2),
-      8px 0 32px -8px rgba(0, 0, 0, 0.12);
+      2px 0 12px -4px rgba(0, 0, 0, 0.15);
   }
   .dark .sidebar-theme {
-    background-color: rgba(15, 23, 42, 0.82);
+    background-color: rgba(5, 5, 15, 0.88);
     border-right-color: rgba(255, 255, 255, 0.08);
   }
   .oled .sidebar-theme {
-    background-color: rgba(8, 8, 10, 0.9);
+    background-color: rgba(5, 5, 15, 0.9);
     border-right-color: rgba(255, 255, 255, 0.06);
     box-shadow: inset -1px 0 0 rgba(255, 255, 255, 0.03), 2px 0 16px rgba(0, 0, 0, 0.35);
+  }
+  /* Custom background: sidebar узгоджується з фоном */
+  html[data-custom-bg="1"].dark .sidebar-theme {
+    background-color: color-mix(in srgb, var(--custom-bg-base) 88%, transparent);
+    border-right-color: rgba(255, 255, 255, 0.08);
+  }
+  html[data-custom-bg="1"].oled .sidebar-theme {
+    background-color: color-mix(in srgb, var(--custom-bg-base) 90%, transparent);
+    border-right-color: rgba(255, 255, 255, 0.06);
   }
   .light .sidebar-theme {
     background-color: rgba(255, 255, 255, 0.85);
     border-right-color: rgba(0, 0, 0, 0.08);
     box-shadow:
       inset -1px 0 0 rgba(0, 0, 0, 0.04),
-      2px 0 12px -2px rgba(0, 0, 0, 0.06);
+      1px 0 8px -4px rgba(0, 0, 0, 0.08);
   }
   .light .sidebar-theme .text-white { color: #1a1a1a !important; }
   .light .sidebar-theme .text-gray-400,
   .light .sidebar-theme .text-gray-500 { color: #6b7280 !important; }
+  html[data-custom-bg-light="1"].light .sidebar-theme {
+    background-color: color-mix(in srgb, var(--custom-bg-light) 90%, transparent);
+    border-right-color: rgba(0, 0, 0, 0.08);
+  }
   .sidebar-theme .border-b,
   .sidebar-theme .border-t { border-color: rgba(255, 255, 255, 0.1); }
   .light .sidebar-theme .border-b,
@@ -1004,16 +1078,20 @@
     letter-spacing: -0.03em;
   }
   .landing-hero-gradient {
-    background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(99, 102, 241, 0.25) 0%, transparent 50%),
-                radial-gradient(ellipse 60% 40% at 80% 50%, rgba(139, 92, 246, 0.12) 0%, transparent 50%),
-                radial-gradient(ellipse 50% 30% at 20% 60%, rgba(59, 130, 246, 0.1) 0%, transparent 50%);
+    background:
+      radial-gradient(ellipse 90% 55% at 50% -15%, rgba(99, 102, 241, 0.28) 0%, transparent 55%),
+      radial-gradient(ellipse 65% 45% at 85% 45%, rgba(139, 92, 246, 0.14) 0%, transparent 50%),
+      radial-gradient(ellipse 55% 35% at 15% 65%, rgba(59, 130, 246, 0.12) 0%, transparent 50%),
+      radial-gradient(ellipse 100% 40% at 50% 110%, rgba(0, 0, 0, 0.4) 0%, transparent 45%);
   }
   .landing-card-hover {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.25s ease, border-color 0.2s ease;
   }
   .landing-card-hover:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.4), 0 0 0 1px rgba(255, 255, 255, 0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 24px 48px -16px rgba(0, 0, 0, 0.45),
+                0 0 0 1px rgba(255, 255, 255, 0.12),
+                0 0 24px -4px rgba(99, 102, 241, 0.15);
   }
   @keyframes landing-fade-in-up {
     from { opacity: 0; transform: translateY(16px); }
@@ -1119,12 +1197,15 @@
   @keyframes navigation-progress {
     0% {
       transform: translateX(-100%);
+      opacity: 1;
     }
     50% {
       transform: translateX(200%);
+      opacity: 0.9;
     }
     100% {
       transform: translateX(-100%);
+      opacity: 1;
     }
   }
 
@@ -1156,7 +1237,7 @@
     to { opacity: 1; }
   }
   .animate-content-fade-in {
-    animation: content-fade-in 0.2s ease-out forwards;
+    animation: content-fade-in 0.28s cubic-bezier(0.22, 1, 0.36, 1) forwards;
   }
   .mounted-fade-in {
     opacity: 0;

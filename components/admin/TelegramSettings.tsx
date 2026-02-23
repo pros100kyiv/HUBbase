@@ -12,6 +12,23 @@ interface TelegramBotMessageSettings {
   bookingServiceMode?: 'both' | 'pricelist_only' | 'simple_only'
   /** true = приймати повідомлення тільки після натискання кнопки «Написати повідомлення» */
   messagesOnlyViaButton?: boolean
+  /** Сповіщення клієнту в Telegram при підтвердженні/відхиленні запису */
+  notifyOnAppointmentConfirm?: boolean
+  notifyOnAppointmentReject?: boolean
+  notifyOnChangeRequestReject?: boolean
+  /** Показувати модалку з полем коментаря при підтвердженні/відхиленні */
+  promptCommentOnConfirm?: boolean
+  promptCommentOnReject?: boolean
+  /** Кнопка «Мої записи» — показувати майбутні візити клієнта */
+  myAppointmentsEnabled?: boolean
+  /** Кнопка «Інформація про бізнес» */
+  infoButtonEnabled?: boolean
+  /** В інфо: кнопка «Прокласти маршрут» (Google Maps) */
+  infoRouteButtonEnabled?: boolean
+  /** В інфо: кнопка «Зателефонувати» */
+  infoCallButtonEnabled?: boolean
+  /** В інфо: кнопка «Записатися онлайн» */
+  infoBookingButtonEnabled?: boolean
 }
 
 const DEFAULT_WELCOME = '✅ Вітаємо, {{name}}!\n\nВаша роль: {{role}}\n\nВи отримуватимете сповіщення про нові записи та нагадування.\n\nОберіть дію:'
@@ -35,7 +52,6 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
   const [tokenInput, setTokenInput] = useState('')
   const [savingToken, setSavingToken] = useState(false)
   const [tokenError, setTokenError] = useState<string | null>(null)
-  const [telegramUsers, setTelegramUsers] = useState<any[]>([])
   const [webhookSet, setWebhookSet] = useState<boolean | null>(null)
   const [settingWebhook, setSettingWebhook] = useState(false)
   const [botSettings, setBotSettings] = useState<TelegramBotMessageSettings>(() => {
@@ -57,19 +73,6 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
       if (s) setBotSettings(JSON.parse(s) as TelegramBotMessageSettings)
     } catch {}
   }, [business])
-
-  const loadData = () => {
-    if (business.id) {
-      fetch(`/api/telegram/users?businessId=${business.id}`)
-        .then(res => res.json())
-        .then(data => setTelegramUsers(Array.isArray(data) ? data : []))
-        .catch(() => setTelegramUsers([]))
-    }
-  }
-
-  useEffect(() => {
-    loadData()
-  }, [business.id])
 
   const saveToken = async () => {
     if (!business.id || !tokenInput.trim()) return
@@ -293,6 +296,123 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
                 Запис через бота — клієнти можуть записатися до спеціаліста кнопками (без введення тексту)
               </label>
             </div>
+
+            <div className="pt-3 pb-2 border-t border-gray-200 dark:border-gray-600">
+              <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">
+                Кнопки та функції бота
+              </p>
+              <div className="space-y-3">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={botSettings.infoButtonEnabled !== false}
+                    onChange={(e) => setBotSettings((s) => ({ ...s, infoButtonEnabled: e.target.checked }))}
+                    className="w-4 h-4 mt-0.5"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Кнопка «ℹ️ Інформація про бізнес» — адреса, графік, телефон, посилання на запис</span>
+                </label>
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={botSettings.myAppointmentsEnabled !== false}
+                    onChange={(e) => setBotSettings((s) => ({ ...s, myAppointmentsEnabled: e.target.checked }))}
+                    className="w-4 h-4 mt-0.5"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Кнопка «📋 Мої записи» — показувати клієнту його майбутні візити</span>
+                </label>
+                <p className="text-[10px] text-gray-500 mt-1 pl-6">У блоці «Інформація» можна увімкнути/вимкнути швидкі кнопки:</p>
+                <div className="pl-6 space-y-2">
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={botSettings.infoRouteButtonEnabled !== false}
+                      onChange={(e) => setBotSettings((s) => ({ ...s, infoRouteButtonEnabled: e.target.checked }))}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm text-gray-600 dark:text-gray-400">🗺 Прокласти маршрут (Google Maps)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={botSettings.infoCallButtonEnabled !== false}
+                      onChange={(e) => setBotSettings((s) => ({ ...s, infoCallButtonEnabled: e.target.checked }))}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm text-gray-600 dark:text-gray-400">📞 Зателефонувати</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={botSettings.infoBookingButtonEnabled !== false}
+                      onChange={(e) => setBotSettings((s) => ({ ...s, infoBookingButtonEnabled: e.target.checked }))}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm text-gray-600 dark:text-gray-400">📅 Записатися онлайн</span>
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="pt-3 pb-2 border-t border-gray-200 dark:border-gray-600">
+              <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">
+                Сповіщення клієнту в Telegram
+              </p>
+              <div className="space-y-3">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={botSettings.notifyOnAppointmentConfirm !== false}
+                    onChange={(e) => setBotSettings((s) => ({ ...s, notifyOnAppointmentConfirm: e.target.checked }))}
+                    className="w-4 h-4 mt-0.5"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Відправляти сповіщення при підтвердженні запису</span>
+                </label>
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={botSettings.notifyOnAppointmentReject !== false}
+                    onChange={(e) => setBotSettings((s) => ({ ...s, notifyOnAppointmentReject: e.target.checked }))}
+                    className="w-4 h-4 mt-0.5"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Відправляти сповіщення при відхиленні запису</span>
+                </label>
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={botSettings.notifyOnChangeRequestReject !== false}
+                    onChange={(e) => setBotSettings((s) => ({ ...s, notifyOnChangeRequestReject: e.target.checked }))}
+                    className="w-4 h-4 mt-0.5"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Відправляти сповіщення при відхиленні запиту клієнта (перенесення/скасування)</span>
+                </label>
+              </div>
+            </div>
+
+            <div className="pt-3 pb-2 border-t border-gray-200 dark:border-gray-600">
+              <p className="text-xs font-semibold text-gray-600 dark:text-gray-400 uppercase tracking-wider mb-3">
+                Модалки з полем коментаря
+              </p>
+              <div className="space-y-3">
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={botSettings.promptCommentOnConfirm !== false}
+                    onChange={(e) => setBotSettings((s) => ({ ...s, promptCommentOnConfirm: e.target.checked }))}
+                    className="w-4 h-4 mt-0.5"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Показувати модалку з полем коментаря при підтвердженні</span>
+                </label>
+                <label className="flex items-start gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={botSettings.promptCommentOnReject !== false}
+                    onChange={(e) => setBotSettings((s) => ({ ...s, promptCommentOnReject: e.target.checked }))}
+                    className="w-4 h-4 mt-0.5"
+                  />
+                  <span className="text-sm text-gray-700 dark:text-gray-300">Показувати модалку з полем коментаря при відхиленні</span>
+                </label>
+              </div>
+            </div>
             {botSettings.bookingEnabled && (
               <div className="mb-4 pl-6 border-l-2 border-gray-200 dark:border-gray-600">
                 <label className="block text-xs font-medium text-gray-600 dark:text-gray-400 mb-2">
@@ -342,47 +462,6 @@ export function TelegramSettings({ business, onUpdate, onRefetchBusiness }: Tele
             </Button>
           </div>
         </details>
-      )}
-
-      {/* Користувачі бота */}
-      {telegramBotToken && (
-      <details className="border-t border-black/10 dark:border-white/10">
-        <summary className="cursor-pointer list-none px-4 py-3 text-sm font-medium text-foreground hover:bg-black/[0.02] dark:hover:bg-white/[0.02]">
-          Користувачі бота
-          {telegramUsers.length > 0 && <span className="text-gray-500 ml-1">({telegramUsers.length})</span>}
-        </summary>
-        <div className="px-4 pb-4 pt-2">
-        
-        {telegramUsers.length === 0 ? (
-          <p className="text-sm text-gray-500 text-center py-4">
-            Немає зареєстрованих користувачів
-          </p>
-        ) : (
-          <div className="space-y-2">
-            {telegramUsers.map((user) => (
-              <div key={user.id} className="p-3 rounded-lg bg-black/[0.04] dark:bg-white/[0.04]">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <p className="text-sm font-black text-foreground">
-                      {user.firstName} {user.lastName}
-                    </p>
-                    <p className="text-xs text-gray-500">@{user.username || 'без username'}</p>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1">
-                      Роль: {user.role === 'OWNER' ? 'Власник' : user.role === 'ADMIN' ? 'Адміністратор' : user.role === 'MANAGER' ? 'Менеджер' : user.role === 'EMPLOYEE' ? 'Співробітник' : user.role === 'CLIENT' ? 'Клієнт' : 'Переглядач'}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    <span className={`text-xs px-2 py-1 rounded ${user.isActive ? 'bg-green-100 text-green-700 dark:bg-green-900/20 dark:text-green-400' : 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-400'}`}>
-                      {user.isActive ? 'Активний' : 'Неактивний'}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-        </div>
-      </details>
       )}
     </div>
   )

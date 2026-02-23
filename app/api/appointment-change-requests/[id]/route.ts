@@ -167,7 +167,13 @@ export async function PATCH(request: Request, context: { params: Promise<{ id: s
     return { request: updatedReq, appointment: updatedApt }
   })
 
-  if (action === 'approve' && result.appointment) {
+  if (action === 'reject') {
+    const { sendAppointmentNotificationToTelegram } = await import('@/lib/services/appointment-telegram-notify')
+    sendAppointmentNotificationToTelegram(businessId, reqRow.appointmentId, 'change_request_rejected', {
+      businessNote: decisionNote || undefined,
+      rejectedRequestType: reqRow.type,
+    }).catch((e) => console.error('TG notify change_request_rejected:', e))
+  } else if (action === 'approve' && result.appointment) {
     const { sendAppointmentNotificationToTelegram } = await import('@/lib/services/appointment-telegram-notify')
     if (reqRow.type === 'CANCEL') {
       sendAppointmentNotificationToTelegram(businessId, reqRow.appointmentId, 'cancelled').catch((e) =>

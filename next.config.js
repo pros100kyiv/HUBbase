@@ -26,7 +26,13 @@ const nextConfig = {
   },
   // Менший initial bundle: tree-shake великі пакети
   experimental: {
-    optimizePackageImports: ['date-fns', 'date-fns/locale'],
+    optimizePackageImports: [
+      'date-fns',
+      'date-fns/locale',
+      '@radix-ui/react-dialog',
+      '@radix-ui/react-select',
+      '@radix-ui/react-slot',
+    ],
   },
 }
 

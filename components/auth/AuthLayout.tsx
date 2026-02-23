@@ -55,7 +55,7 @@ export function AuthLayout({ title, children }: AuthLayoutProps) {
 
       <main className="relative z-10 flex items-center justify-center px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] py-6 sm:py-12">
         <div className="w-full max-w-md">
-          <div className="rounded-2xl p-6 sm:p-8 card-glass-elevated border border-white/10">
+          <div className="rounded-2xl p-6 sm:p-8 card-glass-elevated border border-white/12 shadow-xl shadow-black/20">
             <div className="flex flex-col items-center mb-6">
               <div className="mb-4">
                 <XbaseLogo size="lg" variant="light" />
