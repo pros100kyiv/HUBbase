@@ -1243,7 +1243,7 @@ export function createEnhancedTelegramBot(config: TelegramBotConfig) {
       // Заборона — тільки через кнопку
       const denyMsg =
         '💬 Щоб надіслати повідомлення, натисніть кнопку «✉️ Написати повідомлення» нижче.'
-      await ctx.reply(denyMsg, getWriteMessageKeyboard(!!settings.bookingEnabled))
+      await ctx.reply(denyMsg, getWriteMessageKeyboard(settings))
       return
     }
 
