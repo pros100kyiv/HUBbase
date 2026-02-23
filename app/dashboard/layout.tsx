@@ -212,7 +212,7 @@ export default function DashboardLayout({
       {false && mounted && (() => {
         try {
           const businessData = getBusinessData()
-          if (businessData) {
+          if (typeof businessData === 'string') {
             const business = JSON.parse(businessData)
             if (business?.id) {
               return (
