@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { getBusinessData, clearBusinessData } from '@/lib/business-storage'
 
 export default function DashboardPage() {
   const router = useRouter()
