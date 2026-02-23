@@ -154,12 +154,13 @@ export async function GET(request: Request) {
           }
         }
 
-        if (biz.reminderTelegramEnabled && biz.telegramBotToken && apt.client?.telegramChatId) {
+        const tgChatId = apt.client?.telegramChatId?.trim() || (apt as { telegramChatId?: string | null }).telegramChatId?.trim() || ''
+        if (biz.reminderTelegramEnabled && biz.telegramBotToken && tgChatId) {
           try {
             const bot = new Telegraf(biz.telegramBotToken)
             const tgMsg = `⏰ ${msgText}\n\n` +
               `Перенести або скасувати запис можна лише після підтвердження в кабінеті. Посилання для керування — у підтвердженні запису.`
-            await bot.telegram.sendMessage(apt.client.telegramChatId, tgMsg, { parse_mode: 'HTML' })
+            await bot.telegram.sendMessage(tgChatId, tgMsg, { parse_mode: 'HTML' })
             sent++
             aptSent = true
             await prisma.reminderLog.create({

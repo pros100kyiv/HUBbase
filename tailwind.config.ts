@@ -18,6 +18,9 @@ const config = {
       },
     },
     extend: {
+      screens: {
+        xs: "375px",
+      },
       colors: {
         background: "rgb(var(--background) / <alpha-value>)",
         surface: "#FFFFFF",

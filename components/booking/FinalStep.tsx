@@ -148,7 +148,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
                 onChange={(e) => setClientName(e.target.value)}
                 placeholder="Ваше ім'я"
                 className={cn(
-                  'w-full px-4 py-3 sm:py-2.5 rounded-lg border text-foreground dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/20 dark:focus:ring-white/30 min-h-[48px] sm:min-h-0',
+                  'w-full px-4 py-3 sm:py-2.5 rounded-lg border text-base sm:text-sm text-foreground dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/20 dark:focus:ring-white/30 min-h-[48px] sm:min-h-0',
                   errors.name ? 'border-red-500 bg-red-500/10' : 'border-black/10 dark:border-white/20 bg-black/[0.04] dark:bg-white/10 focus:bg-black/[0.06] dark:focus:bg-white/15'
                 )}
               />
@@ -162,7 +162,7 @@ export function FinalStep({ businessId }: FinalStepProps) {
                 placeholder="0XX XXX XX XX"
                 type="tel"
                 className={cn(
-                  'w-full px-4 py-3 sm:py-2.5 rounded-lg border text-foreground dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/20 dark:focus:ring-white/30 min-h-[48px] sm:min-h-0',
+                  'w-full px-4 py-3 sm:py-2.5 rounded-lg border text-base sm:text-sm text-foreground dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/20 dark:focus:ring-white/30 min-h-[48px] sm:min-h-0',
                   errors.phone ? 'border-red-500 bg-red-500/10' : 'border-black/10 dark:border-white/20 bg-black/[0.04] dark:bg-white/10 focus:bg-black/[0.06] dark:focus:bg-white/15'
                 )}
               />

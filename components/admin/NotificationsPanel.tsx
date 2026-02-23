@@ -8,6 +8,7 @@ import { StatusSwitcher, type StatusValue } from './StatusSwitcher'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { toast } from '@/components/ui/toast'
 import { cn, fixMojibake } from '@/lib/utils'
+import { NewAppointmentPushCard } from './NewAppointmentPushCard'
 
 interface Appointment {
   id: string
@@ -573,6 +574,9 @@ export function NotificationsPanel({ businessId, isOpen, onClose, onUpdate }: No
 
           {/* Контент: скрол */}
           <div className="flex-1 overflow-y-auto overflow-x-hidden p-4 sm:p-5 pb-[max(1.5rem,env(safe-area-inset-bottom))] min-h-0">
+            <div className="mb-4">
+              <NewAppointmentPushCard businessId={businessId} />
+            </div>
             {loading ? (
               <div className="flex flex-col items-center justify-center py-12">
                 <div className="w-10 h-10 rounded-full border-2 border-white/20 border-t-white/60 animate-spin mb-4" />

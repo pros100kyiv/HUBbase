@@ -274,7 +274,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
           <div className="mb-4">
             <h3 className="text-sm font-semibold text-foreground mb-2">Найближчі вільні:</h3>
             <div className="flex flex-wrap gap-2">
-              {recommendedSlots.map((rec) => {
+                  {recommendedSlots.map((rec) => {
                 const isSelected =
                   state.selectedDate &&
                   state.selectedTime === rec.time &&
@@ -285,7 +285,7 @@ export function TimeStep({ businessId }: TimeStepProps) {
                     type="button"
                     onClick={() => handleRecommendedClick(rec)}
                     className={cn(
-                      'min-h-[40px] px-3 py-2 rounded-lg text-xs font-medium transition-colors active:scale-[0.98]',
+                      'min-h-[44px] sm:min-h-[40px] px-3 py-2 rounded-lg text-xs font-medium transition-colors active:scale-[0.98] touch-target',
                       isSelected
                         ? 'bg-white text-black shadow-md ring-2 ring-black/20 dark:ring-white/50'
                         : 'bg-black/[0.04] dark:bg-white/10 border border-black/10 dark:border-white/20 text-foreground dark:text-white hover:bg-black/[0.06] dark:hover:bg-white/20'

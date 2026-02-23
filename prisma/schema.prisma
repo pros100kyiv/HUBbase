@@ -88,6 +88,7 @@ model Business {
   notes                        Note[]
   payments                     Payment[]
   pushSubscriptions            PushSubscription[]
+  staffPushSubscriptions       BusinessStaffPushSubscription[]
   reminderLogs                 ReminderLog[]
   services                     Service[]
   socialInboxMessages          SocialInboxMessage[]
@@ -264,6 +265,21 @@ model PushSubscription {
   @@unique([appointmentId, endpoint])
   @@index([businessId])
   @@index([appointmentId])
+}
+
+model BusinessStaffPushSubscription {
+  id          String   @id @default(cuid())
+  businessId  String
+  endpoint    String
+  p256dh      String
+  auth        String
+  userAgent   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  business    Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
+
+  @@unique([businessId, endpoint])
+  @@index([businessId])
 }
 
 model AppointmentChangeRequest {
@@ -478,6 +494,17 @@ model TelegramChatMapping {
   business   Business @relation(fields: [businessId], references: [id], onDelete: Cascade)
 
   @@index([businessId])
+}
+
+model TelegramBookingSession {
+  id         String   @id @default(cuid())
+  sessionKey String   @unique
+  state      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([expiresAt])
 }
 
 model TelegramLog {

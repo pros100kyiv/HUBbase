@@ -78,7 +78,7 @@ export function LandingStep({ business }: LandingStepProps) {
   }
 
   return (
-    <div className="relative min-h-screen flex items-center justify-center overflow-hidden py-12 px-4 pb-24 md:pb-12">
+    <div className="relative min-h-screen flex items-center justify-center overflow-hidden py-12 px-3 sm:px-4 pb-24 md:pb-12 pt-[max(3rem,calc(env(safe-area-inset-top)+2rem))]">
       {/* Background */}
       {business?.businessCardBackgroundImage ? (
         <div
@@ -91,7 +91,7 @@ export function LandingStep({ business }: LandingStepProps) {
       )}
       <div className="absolute inset-0 bg-black/65 backdrop-blur-[1px]" aria-hidden />
 
-      <div className="relative z-10 w-full max-w-3xl mx-auto px-2 sm:px-4">
+      <div className="relative z-10 w-full max-w-3xl mx-auto px-2 sm:px-4 min-w-0">
         <div className="rounded-2xl border border-white/12 bg-white/[0.07] shadow-2xl shadow-black/40 overflow-hidden backdrop-blur-sm">
           <div className="p-5 sm:p-7 text-center">
             <div className="flex items-center justify-center mb-4">
@@ -109,7 +109,7 @@ export function LandingStep({ business }: LandingStepProps) {
               )}
             </div>
 
-            <h1 className="text-xl sm:text-2xl md:text-4xl font-bold mb-2 text-white" style={{ letterSpacing: '-0.02em' }}>
+            <h1 className="text-lg sm:text-2xl md:text-4xl font-bold mb-2 text-white break-words" style={{ letterSpacing: '-0.02em' }}>
               {business?.name || 'Бізнес'}
             </h1>
 
@@ -183,7 +183,7 @@ export function LandingStep({ business }: LandingStepProps) {
         </div>
       </div>
 
-      <div className="fixed bottom-0 left-0 right-0 z-20 md:hidden px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 space-y-2">
+      <div className="fixed bottom-0 left-0 right-0 z-20 md:hidden px-3 sm:px-4 pb-[max(1rem,env(safe-area-inset-bottom))] pt-2 space-y-2 pl-[max(0.75rem,env(safe-area-inset-left))] pr-[max(0.75rem,env(safe-area-inset-right))]">
         <div className="flex justify-center">
           <InstallAppBadges variant="compact" />
         </div>
@@ -212,17 +212,18 @@ export function LandingStep({ business }: LandingStepProps) {
         </div>
       </div>
 
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-20 flex items-center">
-        <div className="px-3 py-2 rounded-xl bg-white/10 border border-white/15 backdrop-blur-sm">
+      <div className="fixed top-[max(1rem,env(safe-area-inset-top))] left-1/2 -translate-x-1/2 z-20 flex items-center pointer-events-none">
+        <div className="px-2.5 sm:px-3 py-1.5 sm:py-2 rounded-xl bg-white/10 border border-white/15 backdrop-blur-sm">
           <XbaseLogo size="sm" variant="light" />
         </div>
       </div>
 
-      <div className="fixed top-4 left-4 z-20">
+      <div className="fixed top-[max(1rem,env(safe-area-inset-top))] left-[max(0.5rem,env(safe-area-inset-left))] z-20">
         <button
           type="button"
-          className="px-3 py-2 rounded-lg border border-white/20 bg-white/10 text-white text-sm font-medium hover:bg-white/20 transition-colors"
+          className="touch-target min-h-[44px] px-2.5 sm:px-3 py-2 rounded-lg border border-white/20 bg-white/10 text-white text-xs sm:text-sm font-medium hover:bg-white/20 transition-colors active:scale-[0.98]"
           onClick={() => window.location.href = '/'}
+          aria-label="На головну"
         >
           ← Головна
         </button>

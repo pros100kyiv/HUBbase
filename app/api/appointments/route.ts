@@ -301,6 +301,12 @@ export async function POST(request: Request) {
       // Не викидаємо помилку, щоб не зламати створення запису
     }
 
+    // Push-сповіщення про новий запис для власника бізнесу (fire-and-forget)
+    const { sendNewAppointmentPush } = await import('@/lib/services/new-appointment-push')
+    sendNewAppointmentPush(bid, appointment.id, business?.slug ?? null, null, normalizedClientName, start).catch((e) => {
+      console.error('Push new appointment error:', e)
+    })
+
     return NextResponse.json(
       {
         ...appointment,

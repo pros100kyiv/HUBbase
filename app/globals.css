@@ -126,12 +126,15 @@
   html {
     width: 100%;
     max-width: 100vw;
+    min-width: 320px;
     height: 100%;
     min-height: 100vh;
     min-height: 100dvh;
     min-height: -webkit-fill-available;
     -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: rgba(255, 255, 255, 0.1);
     overflow-x: hidden;
+    overflow-y: scroll;
     box-sizing: border-box;
   }
   *, *::before, *::after {
@@ -1768,10 +1771,16 @@
     background: transparent;
   }
 
-  /* Mobile: touch targets min 44px, safe area */
+  /* Mobile: touch targets min 44px (Apple HIG), safe area */
   .touch-target {
     min-height: 44px;
     min-width: 44px;
+  }
+  /* iOS Safari: reduce long-press callout on interactive elements */
+  @supports (-webkit-touch-callout: none) {
+    button, [role="button"] {
+      -webkit-touch-callout: none;
+    }
   }
   .safe-bottom {
     padding-bottom: max(0.75rem, env(safe-area-inset-bottom));

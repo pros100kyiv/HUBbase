@@ -53,8 +53,8 @@ export function AuthLayout({ title, children }: AuthLayoutProps) {
         </nav>
       </header>
 
-      <main className="relative z-10 flex items-center justify-center px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] py-6 sm:py-12">
-        <div className="w-full max-w-md">
+      <main className="relative z-10 flex items-center justify-center px-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] py-6 sm:py-12 min-h-0">
+        <div className="w-full max-w-md min-w-0 px-1 sm:px-0">
           <div className="rounded-2xl p-6 sm:p-8 card-glass-elevated border border-white/12 shadow-xl shadow-black/20">
             <div className="flex flex-col items-center mb-6">
               <div className="mb-4">

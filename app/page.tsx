@@ -149,7 +149,7 @@ export default function Home() {
       <div className="fixed inset-0 pointer-events-none landing-hero-gradient" aria-hidden />
 
       {/* Header */}
-      <header className="relative z-20 flex items-center justify-between px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
+      <header className="relative z-20 flex items-center justify-between pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))] sm:px-6 lg:px-8 py-4 sm:py-5">
         <Link href="/" className="flex items-center min-h-[44px] min-w-[44px] rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 focus-visible:outline-offset-2" aria-label="Xbase — на головну">
           <XbaseLogo size="lg" variant="light" />
         </Link>
@@ -171,11 +171,11 @@ export default function Home() {
 
       <main id="main-content" className="relative z-10" role="main" tabIndex={-1} data-testid="home-main">
         {/* Hero */}
-        <section className="px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 pb-16 sm:pb-24 text-center" aria-labelledby="hero-heading">
+        <section className="px-4 sm:px-6 lg:px-8 pt-8 sm:pt-12 pb-16 sm:pb-24 text-center pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]" aria-labelledby="hero-heading">
           <span className="inline-block px-4 py-1.5 rounded-full text-xs font-medium bg-white/[0.08] text-gray-300 border border-white/15 shadow-[inset_0_1px_0_rgba(255,255,255,0.08)] mb-6 landing-animate-in" role="status">
             Технології вашого комфорту
           </span>
-          <h1 id="hero-heading" className="landing-hero-title text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white max-w-4xl mx-auto mb-4 sm:mb-6 landing-animate-in landing-animate-in-1">
+          <h1 id="hero-heading" className="landing-hero-title text-3xl sm:text-5xl md:text-6xl lg:text-7xl font-extrabold text-white max-w-4xl mx-auto mb-4 sm:mb-6 landing-animate-in landing-animate-in-1 break-words">
             Онлайн-запис. Єдина панель. Повний контроль.
           </h1>
           <p className="text-lg sm:text-xl text-gray-400 max-w-2xl mx-auto mb-2 landing-animate-in landing-animate-in-2">
@@ -351,7 +351,7 @@ export default function Home() {
         </section>
 
         {/* Footer */}
-        <footer className="relative border-t border-white/10 px-4 sm:px-6 lg:px-8 py-8 sm:py-10" role="contentinfo">
+        <footer className="relative border-t border-white/10 px-4 sm:px-6 lg:px-8 py-8 sm:py-10 pl-[max(1rem,env(safe-area-inset-left))] pr-[max(1rem,env(safe-area-inset-right))]" role="contentinfo">
           <div className="max-w-6xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
             <Link href="/" className="flex items-center rounded-lg focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 focus-visible:outline-offset-2" aria-label="Xbase — на головну">
               <XbaseLogo size="md" variant="light" />
@@ -373,7 +373,7 @@ export default function Home() {
             </nav>
           </div>
           <div className="max-w-6xl mx-auto mt-6 pt-6 border-t border-white/5 flex flex-col sm:flex-row items-center justify-center sm:justify-between gap-4">
-            <nav className="flex flex-wrap items-center justify-center gap-x-6 gap-y-1 text-sm" aria-label="Юридичні документи">
+            <nav className="flex flex-wrap items-center justify-center gap-x-4 sm:gap-x-6 gap-y-2 text-sm" aria-label="Юридичні документи">
               <Link href="/privacy" className="text-gray-400 hover:text-white transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-white/70 focus-visible:outline-offset-2 rounded">
                 Політика конфіденційності
               </Link>

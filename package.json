@@ -29,6 +29,7 @@
     "telegram:update-tokens": "tsx scripts/update-telegram-token.ts",
     "telegram:set-photo": "tsx scripts/set-telegram-bot-photo.ts",
     "telegram:verify": "tsx scripts/verify-telegram-integration.ts",
+    "telegram:booking-flow": "tsx scripts/telegram-booking-flow.ts",
     "db:cleanup": "tsx scripts/cleanup-database.ts",
     "db:sync-management": "tsx scripts/sync-all-businesses-to-management-center.ts",
     "db:migrate-neon": "tsx scripts/migrate-neon-account.ts",

@@ -110,12 +110,12 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
 
         {/* Mode selector (reduces visual overload) */}
         <div className="mb-4">
-          <div className="grid grid-cols-3 gap-2 rounded-xl p-2 bg-black/[0.03] dark:bg-white/[0.06] border border-black/10 dark:border-white/10">
+          <div className="grid grid-cols-3 gap-1.5 sm:gap-2 rounded-xl p-2 bg-black/[0.03] dark:bg-white/[0.06] border border-black/10 dark:border-white/10">
             <button
               type="button"
               onClick={() => handleModeChange('catalog')}
               className={cn(
-                'min-h-[40px] rounded-lg text-xs font-semibold transition-colors',
+                'min-h-[44px] sm:min-h-[40px] rounded-lg text-[11px] sm:text-xs font-semibold transition-colors touch-target',
                 mode === 'catalog'
                   ? 'bg-white text-black shadow-sm'
                   : 'bg-transparent text-gray-700 dark:text-gray-300 hover:bg-black/[0.04] dark:hover:bg-white/10'
@@ -127,7 +127,7 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
               type="button"
               onClick={() => handleModeChange('without')}
               className={cn(
-                'min-h-[40px] rounded-lg text-xs font-semibold transition-colors',
+                'min-h-[44px] sm:min-h-[40px] rounded-lg text-[11px] sm:text-xs font-semibold transition-colors touch-target',
                 mode === 'without'
                   ? 'bg-white text-black shadow-sm'
                   : 'bg-transparent text-gray-700 dark:text-gray-300 hover:bg-black/[0.04] dark:hover:bg-white/10'
@@ -139,7 +139,7 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
               type="button"
               onClick={() => handleModeChange('custom')}
               className={cn(
-                'min-h-[40px] rounded-lg text-xs font-semibold transition-colors',
+                'min-h-[44px] sm:min-h-[40px] rounded-lg text-[11px] sm:text-xs font-semibold transition-colors touch-target',
                 mode === 'custom'
                   ? 'bg-white text-black shadow-sm'
                   : 'bg-transparent text-gray-700 dark:text-gray-300 hover:bg-black/[0.04] dark:hover:bg-white/10'
@@ -183,7 +183,7 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
               onChange={(e) => setCustomServiceName(e.target.value)}
               onFocus={handleCustomServiceFocus}
               placeholder="Наприклад: консультація, масаж спини..."
-              className="w-full px-4 py-2.5 rounded-xl border border-black/10 dark:border-white/15 bg-black/[0.03] dark:bg-white/10 text-foreground dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/20 dark:focus:ring-white/30 focus:bg-black/[0.05] dark:focus:bg-white/[0.14] text-sm"
+              className="w-full px-4 py-3 sm:py-2.5 rounded-xl border border-black/10 dark:border-white/15 bg-black/[0.03] dark:bg-white/10 text-foreground dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/20 dark:focus:ring-white/30 focus:bg-black/[0.05] dark:focus:bg-white/[0.14] text-base sm:text-sm min-h-[48px] sm:min-h-0"
             />
             <p className="text-xs text-gray-600 dark:text-gray-400 mt-1.5">Вартість визначиться після процедури</p>
           </div>
@@ -196,7 +196,7 @@ export function ServiceStep({ businessId }: ServiceStepProps) {
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Пошук послуги..."
-                className="w-full px-4 py-2.5 rounded-xl border border-black/10 dark:border-white/15 bg-black/[0.03] dark:bg-white/10 text-foreground dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/20 dark:focus:ring-white/30 text-sm"
+                className="w-full px-4 py-3 sm:py-2.5 rounded-xl border border-black/10 dark:border-white/15 bg-black/[0.03] dark:bg-white/10 text-foreground dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-black/20 dark:focus:ring-white/30 text-base sm:text-sm min-h-[48px] sm:min-h-0"
               />
             </div>
             <div className="space-y-2 mb-5">

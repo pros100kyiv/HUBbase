@@ -2631,6 +2631,12 @@ async function executeAgentAction(params: {
       select: { id: true, startTime: true, endTime: true, masterId: true, status: true },
     })
 
+    const { sendNewAppointmentPush } = await import('@/lib/services/new-appointment-push')
+    const biz = await prisma.business.findUnique({ where: { id: businessId }, select: { slug: true } })
+    sendNewAppointmentPush(businessId, appointment.id, biz?.slug ?? null, null, clientName, startTime).catch((e) => {
+      console.error('Push new appointment (AI):', e)
+    })
+
     return {
       message: decision.reply || 'Готово, запис створено.',
       actionData: { action: 'create_appointment', status: 'completed', appointment },
