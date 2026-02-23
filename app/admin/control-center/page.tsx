@@ -505,22 +505,6 @@ export default function ControlCenterPage() {
           <ActivityTab refreshTrigger={refreshTrigger} />
         )}
 
-        {activeTab === 'graph' && (
-          <GraphTab />
-        )}
-
-        {activeTab === 'analytics' && (
-          <AnalyticsTab stats={stats} />
-        )}
-
-        {activeTab === 'integrations' && (
-          <IntegrationsTab refreshTrigger={refreshTrigger} />
-        )}
-
-        {activeTab === 'security' && (
-          <SecurityTab />
-        )}
-
         {activeTab === 'finances' && (
           <FinancesTab refreshTrigger={refreshTrigger} />
         )}
