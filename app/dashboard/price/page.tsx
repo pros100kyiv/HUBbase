@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { SearchIcon, FilterIcon, CheckSquareIcon, SquareIcon, ChevronDownIcon, EditIcon, TrashIcon, XIcon, CalendarIcon } from '@/components/icons'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { toast } from '@/components/ui/toast'
+import { getBusinessData } from '@/lib/business-storage'
 
 interface Service {
   id: string
@@ -42,7 +43,7 @@ export default function PricePage() {
   }
 
   useEffect(() => {
-    const businessData = localStorage.getItem('business')
+    const businessData = getBusinessData()
     if (!businessData) {
       router.push('/login')
       return

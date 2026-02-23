@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { XbaseLogo } from '@/components/layout/XbaseLogo'
+import { getBusinessData } from '@/lib/business-storage'
 
 // Порядок файлів зіставлено з вмістом скріншотів (не з часом створення)
 const screenshotFiles = [
@@ -122,7 +123,7 @@ export default function Home() {
 
   // Якщо вхід вже є — при відкритті додатка відкриваємо головну дашборду
   useEffect(() => {
-    const businessData = typeof window !== 'undefined' ? localStorage.getItem('business') : null
+    const businessData = typeof window !== 'undefined' ? getBusinessData() : null
     if (businessData) {
       try {
         const parsed = JSON.parse(businessData)

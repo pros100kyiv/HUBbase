@@ -89,7 +89,7 @@ export default function QRPage() {
             type="button"
             onClick={() => {
               if (typeof window !== 'undefined') {
-                const business = localStorage.getItem('business')
+                const business = getBusinessData()
                 if (business) {
                   router.push('/dashboard')
                 } else {

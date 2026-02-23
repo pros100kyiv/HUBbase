@@ -52,7 +52,7 @@ export function TelegramLoginButton() {
         }
 
         // Зберігаємо бізнес так само, як при звичайному вході
-        localStorage.setItem('business', JSON.stringify(data.business))
+        setBusinessData(data.business, true)
 
         toast({
           title: data.message || 'Вхід через Telegram успішний',

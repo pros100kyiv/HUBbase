@@ -11,6 +11,7 @@ import { SocialMessagesCard } from '@/components/admin/SocialMessagesCard'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { toast } from '@/components/ui/toast'
 import { uaPhoneDigits } from '@/lib/utils/phone'
+import { getBusinessData } from '@/lib/business-storage'
 import { VisitHistorySections, type VisitHistoryItem, type VisitTone } from '@/components/admin/VisitHistorySections'
 
 function findClientByPhoneNumber(clients: Client[], input: string): Client | null {
@@ -104,7 +105,7 @@ export default function ClientsPage() {
   const openedClientIdFromUrlRef = useRef<string | null>(null)
 
   useEffect(() => {
-    const businessData = localStorage.getItem('business')
+    const businessData = getBusinessData()
     if (!businessData) {
       router.push('/login')
       return

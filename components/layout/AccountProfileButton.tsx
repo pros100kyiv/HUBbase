@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { clearBusinessData } from '@/lib/business-storage'
 import { useRouter } from 'next/navigation'
 
 interface AccountProfileButtonProps {
@@ -39,7 +40,7 @@ export function AccountProfileButton({ business, router }: AccountProfileButtonP
   const avatar = business?.avatar || business?.logo
 
   const handleLogout = () => {
-    localStorage.removeItem('business')
+    clearBusinessData()
     setIsOpen(false)
     router.push('/login')
   }

@@ -7,6 +7,7 @@ import { ClockIcon, UserIcon, SettingsIcon, TrashIcon, ChevronDownIcon } from '@
 import { MasterScheduleModal } from '@/components/admin/MasterScheduleModal'
 import { QuickMasterCard } from '@/components/admin/QuickMasterCard'
 import { toast } from '@/components/ui/toast'
+import { getBusinessData } from '@/lib/business-storage'
 import { addDays, startOfWeek, format as formatDate } from 'date-fns'
 import { uk } from 'date-fns/locale'
 
@@ -131,7 +132,7 @@ export default function SchedulePage() {
   }, [business?.id])
 
   useEffect(() => {
-    const raw = localStorage.getItem('business')
+    const raw = getBusinessData()
     if (!raw) {
       router.push('/login')
       return

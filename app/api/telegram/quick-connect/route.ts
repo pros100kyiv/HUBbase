@@ -24,9 +24,10 @@ export async function POST(request: NextRequest) {
 
     if (!PLATFORM_BOT_TOKEN) {
       return NextResponse.json({
-        error: 'Платформний Telegram бот не налаштований. Зверніться до адміністратора.',
+        error: 'Платформний Telegram бот не налаштований. Ви можете підключити свого бота в налаштуваннях.',
+        code: 'BOT_NOT_CONFIGURED',
         success: false,
-      }, { status: 500 })
+      }, { status: 503 })
     }
 
     const business = await prisma.business.findUnique({

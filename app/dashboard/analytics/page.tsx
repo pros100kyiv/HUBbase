@@ -8,6 +8,7 @@ import { format, subDays } from 'date-fns'
 import { MonthProgressCard } from '@/components/admin/MonthProgressCard'
 import { Modal } from '@/components/ui/modal'
 import { toast } from '@/components/ui/toast'
+import { getBusinessData } from '@/lib/business-storage'
 
 type DetailSection = {
   title?: string
@@ -102,7 +103,7 @@ export default function AnalyticsPage() {
   }, [business?.id, period])
 
   useEffect(() => {
-    const businessData = localStorage.getItem('business')
+    const businessData = getBusinessData()
     if (!businessData) {
       router.push('/login')
       return

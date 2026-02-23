@@ -7,7 +7,7 @@ export default function DashboardPage() {
   const router = useRouter()
 
   useEffect(() => {
-    const businessData = localStorage.getItem('business')
+    const businessData = getBusinessData()
     if (!businessData) {
       router.push('/login')
       return
@@ -15,7 +15,7 @@ export default function DashboardPage() {
     try {
       const parsed = JSON.parse(businessData)
       if (!parsed?.id || !parsed?.name) {
-        localStorage.removeItem('business')
+        clearBusinessData()
         router.push('/login')
         return
       }
@@ -23,7 +23,7 @@ export default function DashboardPage() {
       router.replace('/dashboard/main')
       return
     } catch {
-      localStorage.removeItem('business')
+      clearBusinessData()
       router.push('/login')
     }
   }, [router])

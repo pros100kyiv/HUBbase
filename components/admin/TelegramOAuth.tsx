@@ -4,6 +4,7 @@ import { useEffect, useState, useRef, useCallback } from 'react'
 import { BotIcon, CheckIcon, XIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
+import { setBusinessData } from '@/lib/business-storage'
 
 // Динамічний імпорт toast для уникнення помилок SSR
 let toast: any = null
@@ -151,7 +152,7 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
           // Якщо це автоматична реєстрація - зберігаємо бізнес в localStorage
           if (data.action === 'register' && data.business) {
             if (typeof window !== 'undefined') {
-              localStorage.setItem('business', JSON.stringify(data.business))
+              setBusinessData(data.business, true)
               console.log('[TelegramOAuth] ✅ Business saved to localStorage')
             }
           }
@@ -159,7 +160,7 @@ export function TelegramOAuth({ businessId, onConnected }: TelegramOAuthProps) {
           // Якщо це вхід - оновлюємо localStorage
           if (data.action === 'login' && data.business) {
             if (typeof window !== 'undefined') {
-              localStorage.setItem('business', JSON.stringify(data.business))
+              setBusinessData(data.business, true)
               console.log('[TelegramOAuth] ✅ Business updated in localStorage')
             }
           }

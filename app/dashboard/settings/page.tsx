@@ -25,6 +25,7 @@ import { toast } from '@/components/ui/toast'
 import { Confetti, triggerConfetti } from '@/components/ui/confetti'
 import { cn } from '@/lib/utils'
 import { normalizeUaPhone, isValidUaPhone } from '@/lib/utils/phone'
+import { getBusinessData, setBusinessData, clearBusinessData } from '@/lib/business-storage'
 
 interface Business {
   id: string
@@ -157,7 +158,7 @@ export default function SettingsPage() {
     // Перевіряємо чи є дані в localStorage
     if (typeof window === 'undefined') return
     
-    const businessData = localStorage.getItem('business')
+    const businessData = getBusinessData()
     if (!businessData) {
       router.push('/login')
       return
@@ -169,7 +170,7 @@ export default function SettingsPage() {
       // Перевіряємо чи є обов'язкові поля
       if (!parsed || !parsed.id || !parsed.name) {
         console.error('Invalid business data:', parsed)
-        localStorage.removeItem('business')
+        clearBusinessData()
         router.push('/login')
         return
       }
@@ -192,7 +193,7 @@ export default function SettingsPage() {
           }
           setBusiness(updatedBusiness)
           setFormData(updatedBusiness)
-          localStorage.setItem('business', JSON.stringify(updatedBusiness))
+          setBusinessData(updatedBusiness)
         }
         if (servicesData) {
           setServices(servicesData)
@@ -203,7 +204,7 @@ export default function SettingsPage() {
       })
     } catch (error) {
       console.error('Error parsing business data:', error)
-      localStorage.removeItem('business')
+      clearBusinessData()
       router.push('/login')
     }
   }, [router])
@@ -300,7 +301,7 @@ export default function SettingsPage() {
         description: 'Невірний формат ID. Будь ласка, увійдіть знову.', 
         type: 'error' 
       })
-      localStorage.removeItem('business')
+      clearBusinessData()
       setTimeout(() => router.push('/login'), 2000)
       return
     }
@@ -338,7 +339,7 @@ export default function SettingsPage() {
           customNiche: saved.customNiche || '',
           businessIdentifier: saved.businessIdentifier || '',
         })
-        localStorage.setItem('business', JSON.stringify(saved))
+        setBusinessData(saved)
         toast({ title: 'Збережено', type: 'success', duration: 1500 })
         setShowConfetti(true)
         setTimeout(() => setShowConfetti(false), 2000)
@@ -446,7 +447,7 @@ export default function SettingsPage() {
       const data = await res.json().catch(() => ({}))
 
       if (res.ok && data.success) {
-        localStorage.removeItem('business')
+        clearBusinessData()
         toast({ title: 'Акаунт видалено', type: 'success' })
         router.push('/login')
       } else {
@@ -1210,7 +1211,7 @@ export default function SettingsPage() {
                   if (updated.business) {
                     setBusiness(updated.business)
                     setFormData(updated.business)
-                    localStorage.setItem('business', JSON.stringify(updated.business))
+                    setBusinessData(updated.business)
                     // Signal booking pages (other tab) to refetch визитівка info
                     try {
                       const now = String(Date.now())
@@ -1251,7 +1252,7 @@ export default function SettingsPage() {
                   const d = await r.json()
                   if (d.business) {
                     setBusiness(d.business)
-                    localStorage.setItem('business', JSON.stringify(d.business))
+                    setBusinessData(d.business)
                   }
                 }
               }}
@@ -1265,7 +1266,7 @@ export default function SettingsPage() {
                   const { business: updatedBusiness } = await response.json()
                   if (updatedBusiness) {
                     setBusiness(updatedBusiness)
-                    localStorage.setItem('business', JSON.stringify(updatedBusiness))
+                    setBusinessData(updatedBusiness)
                   }
                   toast({ title: 'Налаштування збережено', type: 'success' })
                 } else {

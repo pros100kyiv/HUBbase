@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { AuthLayout } from '@/components/auth/AuthLayout'
 import { Input } from '@/components/ui/input'
 import { ErrorToast } from '@/components/ui/error-toast'
+import { getBusinessData, setBusinessData } from '@/lib/business-storage'
 import { cn } from '@/lib/utils'
 
 function LoginForm() {
@@ -14,6 +15,7 @@ function LoginForm() {
     email: '',
     password: '',
   })
+  const [rememberMe, setRememberMe] = useState(true)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [isLoading, setIsLoading] = useState(false)
   const [showErrorToast, setShowErrorToast] = useState(false)
@@ -23,7 +25,7 @@ function LoginForm() {
 
   // Якщо вхід вже є — одразу відкриваємо головну дашборду
   useEffect(() => {
-    const businessData = localStorage.getItem('business')
+    const businessData = getBusinessData()
     if (businessData) {
       try {
         const parsed = JSON.parse(businessData)
@@ -96,8 +98,8 @@ function LoginForm() {
         return
       }
 
-      // Зберігаємо бізнес в localStorage
-      localStorage.setItem('business', JSON.stringify(data.business))
+      // Зберігаємо бізнес (localStorage або sessionStorage залежно від "Запам'ятати мене")
+      setBusinessData(data.business, rememberMe)
       
       // Показуємо повідомлення про успіх
       setErrorMessage('Успішний вхід')
@@ -171,6 +173,23 @@ function LoginForm() {
           />
           {errors.password && <p className="text-red-400 text-xs mt-1">{errors.password}</p>}
         </div>
+
+        <label className="flex items-center gap-3 cursor-pointer group touch-target py-1">
+          <input
+            type="checkbox"
+            checked={rememberMe}
+            onChange={(e) => setRememberMe(e.target.checked)}
+            className="w-5 h-5 rounded border-white/20 bg-white/5 text-white focus:ring-2 focus:ring-white/30 focus:ring-offset-0 focus:ring-offset-transparent"
+            aria-describedby="remember-hint"
+          />
+          <span className="flex items-center gap-2 text-sm text-gray-300 group-hover:text-white transition-colors">
+            <svg className="w-4 h-4 text-white/70" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden>
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+            </svg>
+            Запам'ятати мене
+          </span>
+          <span id="remember-hint" className="sr-only">Залишити вхід після закриття браузера</span>
+        </label>
 
         {errors.submit && (
           <div className="bg-red-500/20 border border-red-500/50 rounded-xl p-3">

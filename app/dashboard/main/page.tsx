@@ -8,6 +8,7 @@ import { FreeSlotsModal } from '@/components/admin/FreeSlotsModal'
 import { WeeklyProcessCard } from '@/components/admin/WeeklyProcessCard'
 import { NotesCard } from '@/components/admin/NotesCard'
 import { SocialMessagesCard } from '@/components/admin/SocialMessagesCard'
+import { getBusinessData } from '@/lib/business-storage'
 
 interface Appointment {
   id: string
@@ -40,7 +41,7 @@ export default function MainPage() {
   const [freeSlotsDate, setFreeSlotsDate] = useState<Date | null>(null)
 
   useEffect(() => {
-    const businessData = localStorage.getItem('business')
+    const businessData = getBusinessData()
     if (!businessData) {
       router.push('/login')
       return

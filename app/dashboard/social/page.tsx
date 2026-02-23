@@ -6,6 +6,7 @@ import { BotIcon, CheckIcon, XIcon } from '@/components/icons'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { cn } from '@/lib/utils'
 import { toast } from '@/components/ui/toast'
+import { getBusinessData, setBusinessData } from '@/lib/business-storage'
 import { SocialMessagesCard } from '@/components/admin/SocialMessagesCard'
 import { TelegramBookingsCard } from '@/components/admin/TelegramBookingsCard'
 
@@ -22,10 +23,17 @@ function TelegramQuickConnectButton({
   onDisconnected?: () => void
   onOpenSettings?: () => void
 }) {
+  const router = useRouter()
   const [connecting, setConnecting] = useState(false)
   const [disconnecting, setDisconnecting] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
   const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false)
+  const [showBotNotConfiguredModal, setShowBotNotConfiguredModal] = useState(false)
+
+  const openBotSettings = () => {
+    setShowBotNotConfiguredModal(false)
+    router.push('/dashboard/settings?tab=integrations')
+  }
 
   const handleConnect = async () => {
     if (!businessId || connecting) return
@@ -46,6 +54,8 @@ function TelegramQuickConnectButton({
           duration: 6000,
         })
         onConnected()
+      } else if (data.code === 'BOT_NOT_CONFIGURED') {
+        setShowBotNotConfiguredModal(true)
       } else {
         toast({ title: 'Помилка', description: data.error || 'Не вдалося підключити', type: 'error' })
       }
@@ -166,6 +176,12 @@ function TelegramQuickConnectButton({
           loading={connecting}
         />
       )}
+      {showBotNotConfiguredModal && (
+        <BotNotConfiguredModal
+          onOpenSettings={openBotSettings}
+          onClose={() => setShowBotNotConfiguredModal(false)}
+        />
+      )}
     </>
   )
 }
@@ -207,6 +223,52 @@ function TelegramConfirmModal({
         </div>
       </div>
     </div>
+    </ModalPortal>
+  )
+}
+
+function BotNotConfiguredModal({
+  onOpenSettings,
+  onClose,
+}: {
+  onOpenSettings: () => void
+  onClose: () => void
+}) {
+  return (
+    <ModalPortal>
+      <div
+        className="fixed inset-0 z-[9999] flex items-center justify-center p-4 bg-black/70"
+        onClick={onClose}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="bot-not-configured-title"
+      >
+        <div
+          className="rounded-xl p-6 card-glass max-w-sm w-full shadow-xl"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <h3 id="bot-not-configured-title" className="text-lg font-bold text-white mb-2">
+            Telegram-бот не налаштований
+          </h3>
+          <p className="text-sm text-gray-300 mb-4">
+            Швидке підключення недоступне. Ви можете підключити свого бота в налаштуваннях — додайте токен бота і налаштуйте його для отримання повідомлень.
+          </p>
+          <div className="flex gap-2">
+            <button
+              onClick={onClose}
+              className="flex-1 px-4 py-2 rounded-lg border border-white/20 text-gray-300 hover:bg-white/10"
+            >
+              Закрити
+            </button>
+            <button
+              onClick={onOpenSettings}
+              className="flex-1 px-4 py-2 rounded-lg bg-[#0088cc] text-white font-semibold hover:bg-[#0088cc]/90"
+            >
+              Відкрити налаштування
+            </button>
+          </div>
+        </div>
+      </div>
     </ModalPortal>
   )
 }
@@ -271,7 +333,7 @@ export default function SocialPage() {
   }, [searchParams, router])
 
   useEffect(() => {
-    const businessData = localStorage.getItem('business')
+    const businessData = getBusinessData()
     if (!businessData) {
       router.push('/login')
       return
@@ -342,7 +404,7 @@ export default function SocialPage() {
         const d = await r.json()
         if (d.business) {
           setBusiness(d.business)
-          localStorage.setItem('business', JSON.stringify(d.business))
+          setBusinessData(d.business)
         }
       }
     }

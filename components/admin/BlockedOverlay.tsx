@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { clearBusinessData } from '@/lib/business-storage'
 
 interface BlockedOverlayProps {
   blockReason?: string | null
@@ -15,7 +16,7 @@ export function BlockedOverlay({ blockReason, blockedAt }: BlockedOverlayProps) 
   const router = useRouter()
 
   const handleLogout = () => {
-    localStorage.removeItem('business')
+    clearBusinessData()
     router.push('/login')
   }
 

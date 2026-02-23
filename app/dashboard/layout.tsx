@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { Navbar } from '@/components/layout/Navbar'
 import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
 import { registerMobileMenuState } from '@/lib/ui/mobile-menu-state'
+import { getBusinessData, setBusinessData } from '@/lib/business-storage'
 
 const Sidebar = dynamic(
   () => import('@/components/admin/Sidebar').then((m) => ({ default: m.Sidebar })),
@@ -47,7 +48,7 @@ export default function DashboardLayout({
   const [blockInfo, setBlockInfo] = useState<{ reason?: string; blockedAt?: string } | null>(null)
   useEffect(() => {
     setMounted(true)
-    const businessData = localStorage.getItem('business')
+    const businessData = getBusinessData()
     if (businessData) {
       try {
         const parsed = JSON.parse(businessData)
@@ -103,7 +104,7 @@ export default function DashboardLayout({
 
   // Heartbeat для статусу онлайн/офлайн в Центрі управління
   useEffect(() => {
-    const businessData = localStorage.getItem('business')
+    const businessData = getBusinessData()
     if (!businessData) return
 
     let businessId: string | null = null
@@ -142,7 +143,7 @@ export default function DashboardLayout({
     if (updatedBusiness) {
       setBusiness(updatedBusiness)
       // Оновлюємо localStorage
-      localStorage.setItem('business', JSON.stringify(updatedBusiness))
+      setBusinessData(updatedBusiness)
       // Закриваємо модальне вікно тільки якщо профіль заповнений
       if (updatedBusiness.profileCompleted) {
         setShowProfileModal(false)
@@ -207,10 +208,10 @@ export default function DashboardLayout({
         </button>
       </div>
 
-      {/* AI Chat Widget — плавна поява після mount */}
-      {mounted && (() => {
+      {/* AI Chat Widget — тимчасово приховано */}
+      {false && mounted && (() => {
         try {
-          const businessData = localStorage.getItem('business')
+          const businessData = getBusinessData()
           if (businessData) {
             const business = JSON.parse(businessData)
             if (business?.id) {

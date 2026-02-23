@@ -33,7 +33,7 @@ export default function TestFlowPage() {
       })
       const data = await response.json()
       if (response.ok && data.business) {
-        localStorage.setItem('business', JSON.stringify(data.business))
+        setBusinessData(data.business, true)
         window.location.href = '/dashboard'
       } else {
         setLoginError(data.error || 'Невідома помилка')

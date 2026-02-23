@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { ErrorToast } from '@/components/ui/error-toast'
 import { cn } from '@/lib/utils'
 import { normalizeUaPhone, isValidUaPhone } from '@/lib/utils/phone'
+import { setBusinessData } from '@/lib/business-storage'
 
 interface ProfileSetupModalProps {
   business: any
@@ -195,7 +196,7 @@ export function ProfileSetupModal({ business, onComplete, onClose }: ProfileSetu
           niche: formData.niche,
           customNiche: formData.niche === 'OTHER' ? formData.customNiche.trim() : null,
         }
-        localStorage.setItem('business', JSON.stringify(fullBusiness))
+        setBusinessData(fullBusiness)
         
         // Показуємо повідомлення
         try {

@@ -10,6 +10,7 @@ import { UserIcon, SearchIcon, DownloadIcon, FilterIcon, CheckIcon, CalendarIcon
 import { QuickMasterCard } from '@/components/admin/QuickMasterCard'
 import { DateRangePicker } from '@/components/admin/DateRangePicker'
 import { toast } from '@/components/ui/toast'
+import { getBusinessData } from '@/lib/business-storage'
 
 const MasterScheduleModal = dynamic(
   () => import('@/components/admin/MasterScheduleModal').then((m) => ({ default: m.MasterScheduleModal })),
@@ -73,7 +74,7 @@ export default function MastersPage() {
   const [dateFilterEnd, setDateFilterEnd] = useState<Date | null>(null)
 
   useEffect(() => {
-    const businessData = localStorage.getItem('business')
+    const businessData = getBusinessData()
     if (!businessData) {
       router.push('/login')
       return

@@ -7,6 +7,7 @@ import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
 import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, ShareIcon, MoneyIcon, ClockIcon, CreditCardIcon } from '@/components/icons'
 import { XbaseLogo } from '@/components/layout/XbaseLogo'
 import { NotificationsPanel } from './NotificationsPanel'
+import { getBusinessData } from '@/lib/business-storage'
 
 interface NavItem {
   id: string
@@ -30,7 +31,7 @@ export function Sidebar({ className }: SidebarProps) {
   const [showNotifications, setShowNotifications] = useState(false)
 
   useEffect(() => {
-    const businessData = localStorage.getItem('business')
+    const businessData = getBusinessData()
     if (businessData) {
       try {
         const parsed = JSON.parse(businessData)

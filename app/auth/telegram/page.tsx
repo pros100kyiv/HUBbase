@@ -4,6 +4,7 @@ import { useEffect, useState, Suspense, useCallback } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { BotIcon } from '@/components/icons'
 import { Button } from '@/components/ui/button'
+import { setBusinessData } from '@/lib/business-storage'
 
 /**
  * Сторінка для автоматичної реєстрації/входу через Telegram OAuth
@@ -40,7 +41,7 @@ function TelegramAuthContent() {
       if (response.ok && data.success) {
         setStatus('success')
         if (data.business) {
-          localStorage.setItem('business', JSON.stringify(data.business))
+          setBusinessData(data.business, true)
         }
         if (data.action === 'register') {
           setMessage('Бізнес автоматично створено! Перенаправлення...')

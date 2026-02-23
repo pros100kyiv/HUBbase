@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { format, startOfMonth, endOfMonth, startOfWeek, endOfWeek, isSameDay, eachDayOfInterval, isSameMonth } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { useRouter } from 'next/navigation'
+import { getBusinessData } from '@/lib/business-storage'
 import { cn, fixMojibake } from '@/lib/utils'
 import { UserIcon, ClockIcon } from '@/components/icons'
 
@@ -35,7 +36,7 @@ export function WeeklyProcessCard({ businessId }: WeeklyProcessCardProps) {
   useEffect(() => {
     if (!businessId) {
       // Try to get from localStorage
-      const businessData = localStorage.getItem('business')
+      const businessData = getBusinessData()
       if (businessData) {
         try {
           const parsed = JSON.parse(businessData)

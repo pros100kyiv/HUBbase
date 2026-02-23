@@ -26,6 +26,7 @@ import {
   ChevronRightIcon,
 } from '@/components/icons'
 import { cn } from '@/lib/utils'
+import { getBusinessData } from '@/lib/business-storage'
 
 const PLAN_ORDER: SubscriptionPlanKey[] = ['FREE', 'START', 'BUSINESS', 'PRO']
 
@@ -50,7 +51,7 @@ export default function SubscriptionPage() {
   const [mastersCount, setMastersCount] = useState<number>(0)
 
   useEffect(() => {
-    const businessData = localStorage.getItem('business')
+    const businessData = getBusinessData()
     if (!businessData) {
       router.push('/login')
       return

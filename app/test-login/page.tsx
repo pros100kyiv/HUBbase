@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
+import { getBusinessData } from '@/lib/business-storage'
 
 export default function TestLoginPage() {
   const [result, setResult] = useState<any>(null)
@@ -33,7 +34,7 @@ export default function TestLoginPage() {
   }
 
   const checkLocalStorage = () => {
-    const business = localStorage.getItem('business')
+    const business = getBusinessData()
     setResult({
       localStorage: business ? JSON.parse(business) : null,
     })

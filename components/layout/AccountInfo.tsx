@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { UserIcon, ChevronDownIcon } from '@/components/icons'
 import { cn } from '@/lib/utils'
+import { clearBusinessData } from '@/lib/business-storage'
 
 interface AccountInfoProps {
   business: any
@@ -167,7 +168,7 @@ export function AccountInfo({ business }: AccountInfoProps) {
               </button>
               <button
                 onClick={() => {
-                  localStorage.removeItem('business')
+                  clearBusinessData()
                   window.location.href = '/login'
                 }}
                 className="w-full px-3 py-2 text-left text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-900/20 rounded-candy-xs transition-colors"

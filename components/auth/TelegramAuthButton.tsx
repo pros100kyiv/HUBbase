@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { setBusinessData } from '@/lib/business-storage'
 
 const LAST_TELEGRAM_USER_KEY = 'lastTelegramUserName'
 const TELEGRAM_ORG_URL = 'https://telegram.org' // тільки для посилання «Вийти в браузері»
@@ -95,7 +96,7 @@ export function TelegramAuthButton({ text, isRegister = false, forgotPasswordMod
         
         if (response.ok && data.success) {
           if (data.business) {
-            localStorage.setItem('business', JSON.stringify(data.business))
+            setBusinessData(data.business, true)
             if (!data.business.profileCompleted) {
               localStorage.setItem('showProfileModal', '1')
             }

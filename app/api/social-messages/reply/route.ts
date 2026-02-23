@@ -4,17 +4,31 @@ import { prisma } from '@/lib/prisma'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { businessId, messageId, platform, reply } = body
+    const { businessId, messageId, platform, reply, externalChatId } = body
 
-    if (!businessId || !messageId || !platform || typeof reply !== 'string' || !reply.trim()) {
-      return NextResponse.json({ error: 'Missing required fields: businessId, messageId, platform, reply' }, { status: 400 })
+    if (!businessId || !platform || typeof reply !== 'string' || !reply.trim()) {
+      return NextResponse.json({ error: 'Missing required fields: businessId, platform, reply' }, { status: 400 })
     }
 
-    const inboxMessage = await prisma.socialInboxMessage.findFirst({
-      where: { id: messageId, businessId, direction: 'inbound' },
-    })
-    if (!inboxMessage || !inboxMessage.externalChatId) {
-      return NextResponse.json({ error: 'Message not found or cannot reply' }, { status: 404 })
+    let chatId: string | null = null
+    let replyToMessageId: string | null = null
+
+    if (messageId) {
+      const inboxMessage = await prisma.socialInboxMessage.findFirst({
+        where: { id: messageId, businessId, direction: 'inbound' },
+      })
+      if (!inboxMessage || !inboxMessage.externalChatId) {
+        return NextResponse.json({ error: 'Message not found or cannot reply' }, { status: 404 })
+      }
+      chatId = inboxMessage.externalChatId
+      replyToMessageId = messageId
+    } else if (externalChatId && typeof externalChatId === 'string') {
+      const trimmed = externalChatId.trim()
+      if (trimmed) chatId = trimmed
+    }
+
+    if (!chatId) {
+      return NextResponse.json({ error: 'Need messageId or externalChatId to send' }, { status: 400 })
     }
 
     if (platform === 'telegram') {
@@ -25,8 +39,6 @@ export async function POST(request: Request) {
       if (!business?.telegramBotToken) {
         return NextResponse.json({ error: 'Telegram bot not configured' }, { status: 400 })
       }
-
-      const chatId = inboxMessage.externalChatId
       const replyText = reply.trim()
       const res = await fetch(`https://api.telegram.org/bot${business.telegramBotToken}/sendMessage`, {
         method: 'POST',
@@ -58,15 +70,16 @@ export async function POST(request: Request) {
           senderName: 'Ви',
           message: replyText,
           isRead: true,
-          replyToId: messageId,
+          replyToId: replyToMessageId,
         },
       })
 
-      // Позначити вхідне як прочитане
-      await prisma.socialInboxMessage.updateMany({
-        where: { id: messageId, businessId },
-        data: { isRead: true },
-      })
+      if (replyToMessageId) {
+        await prisma.socialInboxMessage.updateMany({
+          where: { id: replyToMessageId, businessId },
+          data: { isRead: true },
+        })
+      }
 
       return NextResponse.json({ success: true })
     }
@@ -80,7 +93,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: 'Instagram not connected' }, { status: 400 })
       }
 
-      const recipientId = inboxMessage.externalChatId
+      const recipientId = chatId
       const replyText = reply.trim()
       const sendRes = await fetch(
         `https://graph.facebook.com/v18.0/me/messages?access_token=${encodeURIComponent(integration.accessToken)}`,
@@ -117,14 +130,16 @@ export async function POST(request: Request) {
           senderName: 'Ви',
           message: replyText,
           isRead: true,
-          replyToId: messageId,
+          replyToId: replyToMessageId,
         },
       })
 
-      await prisma.socialInboxMessage.updateMany({
-        where: { id: messageId, businessId },
-        data: { isRead: true },
-      })
+      if (replyToMessageId) {
+        await prisma.socialInboxMessage.updateMany({
+          where: { id: replyToMessageId, businessId },
+          data: { isRead: true },
+        })
+      }
 
       return NextResponse.json({ success: true })
     }

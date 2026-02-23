@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { BotIcon, SendIcon, UserIcon } from '@/components/icons'
+import { getBusinessData } from '@/lib/business-storage'
 
 interface Message {
   id: string
@@ -191,7 +192,7 @@ export function AIChatWidget({ businessId, className }: AIChatWidgetProps) {
     const fromProp = (businessId || '').trim()
     if (fromProp) return fromProp
     try {
-      const raw = localStorage.getItem('business')
+      const raw = getBusinessData()
       if (!raw) return ''
       const parsed = JSON.parse(raw)
       return typeof parsed?.id === 'string' ? parsed.id : ''

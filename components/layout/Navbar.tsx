@@ -9,6 +9,7 @@ import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
 import { MenuIcon, QRIcon } from '@/components/icons'
 import { setMobileMenuState, getMobileMenuState } from '@/lib/ui/mobile-menu-state'
 import { playNotificationSound } from '@/lib/notification-sound'
+import { getBusinessData, clearBusinessData } from '@/lib/business-storage'
 import { AccountProfileButton } from '@/components/layout/AccountProfileButton'
 import { XbaseLogo } from '@/components/layout/XbaseLogo'
 
@@ -62,7 +63,7 @@ export function Navbar() {
 
   useEffect(() => {
     const loadBusiness = () => {
-      const businessData = localStorage.getItem('business')
+      const businessData = getBusinessData()
       if (!businessData) {
         setBusiness(null)
         return
@@ -95,7 +96,7 @@ export function Navbar() {
   const { startNavigation } = useNavigationProgress()
 
   const handleLogout = () => {
-    localStorage.removeItem('business')
+    clearBusinessData()
     setBusiness(null)
     startNavigation()
     router.push('/login')

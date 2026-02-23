@@ -10,6 +10,7 @@ import { Modal } from '@/components/ui/modal'
 import { CalendarIcon, ChevronLeftIcon, ChevronRightIcon, SearchIcon, FilterIcon, CheckIcon, UserIcon, EditIcon } from '@/components/icons'
 import { cn, fixMojibake } from '@/lib/utils'
 import { toast } from '@/components/ui/toast'
+import { getBusinessData } from '@/lib/business-storage'
 import { StatusSwitcher } from '@/components/admin/StatusSwitcher'
 
 const CreateAppointmentForm = dynamic(
@@ -271,7 +272,7 @@ export default function AppointmentsPage() {
   }
 
   useEffect(() => {
-    const businessData = localStorage.getItem('business')
+    const businessData = getBusinessData()
     if (!businessData) {
       router.push('/login')
       return

@@ -41,6 +41,23 @@ export function NewAppointmentPushCard({ businessId, className }: NewAppointment
     return () => { cancelled = true }
   }, [canUsePush])
 
+  // Перевірка існуючої підписки при завантаженні — щоб не скидати стан після оновлення сторінки
+  useEffect(() => {
+    let cancelled = false
+    const checkExistingSubscription = async () => {
+      if (!canUsePush) return
+      try {
+        const reg = await navigator.serviceWorker.ready
+        const sub = await reg.pushManager.getSubscription()
+        if (!cancelled && sub) setPushEnabled(true)
+      } catch {
+        // Ігноруємо — push опціональний
+      }
+    }
+    checkExistingSubscription()
+    return () => { cancelled = true }
+  }, [canUsePush])
+
   const urlBase64ToUint8Array = (base64String: string) => {
     const padding = '='.repeat((4 - (base64String.length % 4)) % 4)
     const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/')

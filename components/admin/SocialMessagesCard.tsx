@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { format } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
@@ -73,6 +73,8 @@ export function SocialMessagesCard({ businessId, initialOpenChat, onChatClose, m
   const [replyError, setReplyError] = useState<string | null>(null)
   const [hiddenChats, setHiddenChatsState] = useState<string[]>(() => getHiddenChats(businessId))
   const [firstInboundIdFromThread, setFirstInboundIdFromThread] = useState<string>('')
+  const selectedChatRef = useRef<SocialChat | null>(null)
+  selectedChatRef.current = selectedChat
 
   const visibleChats = chats.filter((c) => !hiddenChats.includes(`${c.platform}::${c.externalChatId}`))
   const hasUnread = chats.some((c) => c.unreadCount > 0)
@@ -105,18 +107,19 @@ export function SocialMessagesCard({ businessId, initialOpenChat, onChatClose, m
   }, [selectedChat?.externalChatId, selectedChat?.platform])
 
   // Відкрити чат з URL/initialOpenChat (наприклад з картки клієнта)
+  // Важливо: при зміні initialOpenChat завжди оновлювати selectedChat, щоб повідомлення йшли потрібному клієнту
   useEffect(() => {
-    if (!initialOpenChat || !businessId) return
+    if (!initialOpenChat || !businessId || !initialOpenChat.externalChatId) return
     const match = chats.find(
       (c) => c.platform === initialOpenChat.platform && c.externalChatId === initialOpenChat.externalChatId
     )
     if (match) {
-      if (!selectedChat || selectedChat.externalChatId !== match.externalChatId) {
+      if (!selectedChat || selectedChat.externalChatId !== match.externalChatId || selectedChat.platform !== match.platform) {
         setSelectedChat(match)
         setCollapsed(false)
       }
-    } else if (!selectedChat) {
-      // Чат може ще не бути в списку — відкриваємо з мінімальними даними
+    } else {
+      // Чат може ще не бути в списку — відкриваємо віртуальний чат з даними клієнта
       const virtualChat: SocialChat = {
         platform: initialOpenChat.platform,
         externalChatId: initialOpenChat.externalChatId,
@@ -128,8 +131,10 @@ export function SocialMessagesCard({ businessId, initialOpenChat, onChatClose, m
         phone: initialOpenChat.phone ?? undefined,
         email: initialOpenChat.email ?? undefined,
       }
-      setSelectedChat(virtualChat)
-      setCollapsed(false)
+      if (!selectedChat || selectedChat.externalChatId !== virtualChat.externalChatId || selectedChat.platform !== virtualChat.platform) {
+        setSelectedChat(virtualChat)
+        setCollapsed(false)
+      }
     }
   }, [initialOpenChat, businessId, chats])
 
@@ -151,19 +156,33 @@ export function SocialMessagesCard({ businessId, initialOpenChat, onChatClose, m
 
   const loadThread = async (chat: SocialChat) => {
     setThreadLoading(true)
+    setFirstInboundIdFromThread('')
     try {
       const response = await fetch(
         `/api/social-messages?businessId=${businessId}&chatId=${encodeURIComponent(chat.externalChatId)}&platform=${encodeURIComponent(chat.platform)}`
       )
       if (response.ok) {
         const data = await response.json()
-        setThread(data || [])
+        const list = Array.isArray(data) ? data : []
+        const firstInbound = list.find((m: { direction?: string }) => m.direction === 'inbound')
+        // Оновлюємо тільки якщо цей чат ще обраний — інакше race при швидкому перемиканні
+        const stillSelected = selectedChatRef.current?.externalChatId === chat.externalChatId &&
+          selectedChatRef.current?.platform === chat.platform
+        if (stillSelected) {
+          setThread(list)
+          if (firstInbound?.id) setFirstInboundIdFromThread(firstInbound.id)
+        }
       }
     } catch (error) {
       console.error('Error loading thread:', error)
-      setThread([])
+      const stillSelected = selectedChatRef.current?.externalChatId === chat.externalChatId &&
+        selectedChatRef.current?.platform === chat.platform
+      if (stillSelected) setThread([])
     } finally {
-      setThreadLoading(false)
+      if (selectedChatRef.current?.externalChatId === chat.externalChatId &&
+          selectedChatRef.current?.platform === chat.platform) {
+        setThreadLoading(false)
+      }
     }
   }
 
@@ -186,29 +205,32 @@ export function SocialMessagesCard({ businessId, initialOpenChat, onChatClose, m
   }
 
   const handleReply = async () => {
-    if (!selectedChat || !replyText.trim()) return
-    const inboundId = selectedChat.firstInboundId || firstInboundIdFromThread
-    if (!inboundId) {
-      setReplyError('Неможливо відповісти в цей чат')
-      return
-    }
+    const chat = selectedChat
+    if (!chat || !replyText.trim() || !chat.externalChatId) return
+    // Фіксуємо chat на момент натискання, щоб уникнути race condition при зміні чату
+    const inboundId = chat.firstInboundId || firstInboundIdFromThread
     setReplyError(null)
     try {
       setSending(true)
+      const body: Record<string, unknown> = {
+        businessId,
+        platform: chat.platform,
+        reply: replyText.trim(),
+      }
+      if (inboundId) {
+        body.messageId = inboundId
+      } else {
+        body.externalChatId = chat.externalChatId
+      }
       const response = await fetch('/api/social-messages/reply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          businessId,
-          messageId: selectedChat.firstInboundId,
-          platform: selectedChat.platform,
-          reply: replyText.trim(),
-        }),
+        body: JSON.stringify(body),
       })
       const data = await response.json().catch(() => ({}))
       if (response.ok && data.success !== false) {
         setReplyText('')
-        loadThread(selectedChat)
+        loadThread(chat)
         loadChats(true)
       } else {
         setReplyError(data.error || data.details || 'Не вдалося відправити. Спробуйте ще раз.')
@@ -399,7 +421,7 @@ export function SocialMessagesCard({ businessId, initialOpenChat, onChatClose, m
             </div>
             <div className="flex flex-wrap gap-2 px-3 py-2 flex-shrink-0 border-t border-white/10">
               <button type="button" onClick={handleCloseChat} className="px-3 py-2 bg-white/5 border border-white/10 rounded-md text-xs font-medium text-white hover:bg-white/10 transition-colors">Закрити</button>
-              <button onClick={handleReply} disabled={!replyText.trim() || sending || !(selectedChat.firstInboundId || firstInboundIdFromThread)} className="px-3 py-2 bg-white text-black rounded-md text-xs font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">{sending ? 'Відправка...' : 'Відправити'}</button>
+              <button onClick={handleReply} disabled={!replyText.trim() || sending || !selectedChat?.externalChatId} className="px-3 py-2 bg-white text-black rounded-md text-xs font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">{sending ? 'Відправка...' : 'Відправити'}</button>
             </div>
           </div>
         </div>
@@ -673,7 +695,7 @@ export function SocialMessagesCard({ businessId, initialOpenChat, onChatClose, m
                     </button>
                     <button
                       onClick={handleReply}
-                      disabled={!replyText.trim() || sending || !(selectedChat.firstInboundId || firstInboundIdFromThread)}
+                      disabled={!replyText.trim() || sending || !selectedChat?.externalChatId}
                       className="px-3 py-2 bg-white text-black rounded-md text-xs font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {sending ? 'Відправка...' : 'Відправити'}

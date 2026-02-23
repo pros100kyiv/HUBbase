@@ -6,6 +6,7 @@ import { AuthLayout } from '@/components/auth/AuthLayout'
 import { Input } from '@/components/ui/input'
 import { ErrorToast } from '@/components/ui/error-toast'
 import { toast } from '@/components/ui/toast'
+import { setBusinessData } from '@/lib/business-storage'
 import { cn } from '@/lib/utils'
 
 const FALLBACK_ERROR = 'Помилка при реєстрації. Спробуйте ще раз.'
@@ -113,8 +114,8 @@ function RegisterForm() {
         return
       }
 
-      // Зберігаємо бізнес в localStorage (в продакшені використовуйте cookies)
-      localStorage.setItem('business', JSON.stringify(data.business))
+      // Зберігаємо бізнес (за замовчуванням — запам'ятати, бо реєстрація)
+      setBusinessData(data.business, true)
       // Після реєстрації нового бізнесу — у кабінеті показати модалку заповнення профілю
       if (!data.isLogin) {
         localStorage.setItem('showProfileModal', '1')
