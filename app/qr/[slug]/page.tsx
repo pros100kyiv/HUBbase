@@ -10,6 +10,7 @@ const QRCodeSVG = dynamic(
 )
 import { toast } from '@/components/ui/toast'
 import { InstallAppBadges } from '@/components/layout/InstallAppBadges'
+import { getBusinessData } from '@/lib/business-storage'
 
 export default function QRPage() {
   const params = useParams()
