@@ -14,8 +14,9 @@ async function main() {
 
   const isNeon = url.includes('neon.tech')
   const isPooler = url.includes('-pooler')
+  const hasConnectionLimit = /[?&]connection_limit=/.test(url)
   if (isNeon) {
-    console.log('🔗 Використовується Neon (pooler:', isPooler, ')\n')
+    console.log('🔗 Використовується Neon (pooler:', isPooler, ', connection_limit:', hasConnectionLimit ? 'так' : 'немає', ')\n')
   }
 
   try {
@@ -25,10 +26,15 @@ async function main() {
     const count = await prisma.business.count()
     console.log('   Бізнесів у базі:', count)
 
-    if (isNeon && isPooler) {
-      console.log('\n💡 Порада: для міграцій (prisma migrate) на Neon краще мати прямий URL.')
-      console.log('   У Neon dashboard візьми "Direct connection" і додай в .env як DIRECT_URL.')
-      console.log('   Потім у prisma/schema.prisma в datasource додай: directUrl = env("DIRECT_URL")')
+    if (isNeon) {
+      const tips: string[] = []
+      if (!isPooler) tips.push('використай Pooled URL (з -pooler у хості)')
+      if (!hasConnectionLimit && process.env.VERCEL) tips.push('на Vercel додаток сам додає connection_limit=1')
+      if (!hasConnectionLimit && !process.env.VERCEL) tips.push('для serverless можна додати &connection_limit=1 до DATABASE_URL')
+      if (!isPooler) {
+        tips.push('для міграцій краще DIRECT_URL (без -pooler) + directUrl у schema.prisma')
+      }
+      if (tips.length) console.log('\n💡 Поради:', tips.join('; '))
     }
   } catch (e) {
     console.error('❌ Помилка підключення:', (e as Error).message)

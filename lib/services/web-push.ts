@@ -5,7 +5,7 @@ let vapidConfigured = false
 function ensureVapidConfigured(): boolean {
   if (vapidConfigured) return true
 
-  const subject = process.env.VAPID_SUBJECT || 'mailto:support@xbase.online'
+  const subject = process.env.VAPID_SUBJECT || 'mailto:onlinexbase@gmail.com'
   const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY
   const privateKey = process.env.VAPID_PRIVATE_KEY
 
@@ -21,7 +21,7 @@ function ensureVapidConfigured(): boolean {
 /** true якщо VAPID налаштовано (без викиду) */
 export function isVapidConfigured(): boolean {
   try {
-    const subject = process.env.VAPID_SUBJECT || 'mailto:support@xbase.online'
+    const subject = process.env.VAPID_SUBJECT || 'mailto:onlinexbase@gmail.com'
     const publicKey = process.env.NEXT_PUBLIC_VAPID_PUBLIC_KEY || process.env.VAPID_PUBLIC_KEY
     const privateKey = process.env.VAPID_PRIVATE_KEY
     return !!(publicKey && publicKey.trim() && privateKey && privateKey.trim())

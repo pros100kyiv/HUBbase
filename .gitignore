@@ -29,6 +29,9 @@ pnpm-debug.log*
 playwright-report/
 test-results/
 
+# Backups (містять дані БД)
+backups/
+
 # OS
 .DS_Store
 Thumbs.db

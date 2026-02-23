@@ -24,6 +24,8 @@ import {
   ImageIcon,
   LightBulbIcon,
   ChevronRightIcon,
+  TikTokIcon,
+  InstagramIcon,
 } from '@/components/icons'
 import { cn } from '@/lib/utils'
 import { getBusinessData } from '@/lib/business-storage'
@@ -307,13 +309,46 @@ export default function SubscriptionPage() {
                 Змінити план або продовжити trial може адміністратор платформи. Напишіть у підтримку.
               </p>
             </div>
-            <a
-              href="mailto:support@xbase.online"
-              className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-medium text-sm transition-colors shrink-0"
-            >
-              Зв’язатися з підтримкою
-              <ChevronRightIcon className="w-4 h-4" />
-            </a>
+            <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 shrink-0">
+              <div className="flex flex-wrap gap-2">
+                <a
+                  href="mailto:onlinexbase@gmail.com"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-medium text-sm transition-colors"
+                >
+                  onlinexbase@gmail.com
+                  <ChevronRightIcon className="w-4 h-4" />
+                </a>
+                <a
+                  href="tel:+380930303938"
+                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-white/15 hover:bg-white/25 text-white font-medium text-sm transition-colors"
+                >
+                  +380 93 030 39 38
+                  <ChevronRightIcon className="w-4 h-4" />
+                </a>
+              </div>
+              <div className="flex items-center gap-2 pt-2 sm:pt-0 sm:pl-2 sm:border-l border-white/10">
+                <a
+                  href="https://www.tiktok.com/@xbase.online"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white/90 hover:text-white transition-colors"
+                  aria-label="TikTok"
+                >
+                  <TikTokIcon className="w-5 h-5" />
+                  <span className="text-sm font-medium hidden sm:inline">@xbase.online</span>
+                </a>
+                <a
+                  href="https://www.instagram.com/xbase.online"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center justify-center gap-2 px-3 py-2.5 rounded-xl bg-white/10 hover:bg-white/20 text-white/90 hover:text-white transition-colors"
+                  aria-label="Instagram"
+                >
+                  <InstagramIcon className="w-5 h-5" />
+                  <span className="text-sm font-medium hidden sm:inline">xbase.online</span>
+                </a>
+              </div>
+            </div>
           </div>
         </div>
       )}

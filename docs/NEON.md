@@ -36,10 +36,16 @@ DATABASE_URL="postgresql://USER:PASSWORD@ep-xxx-pooler.REGION.aws.neon.tech/DBNA
    npx tsx scripts/verify-neon-connection.ts
    ```
 
+## Оптимізація для serverless (Vercel)
+
+- **Pooled** — обов'язково URL з `-pooler` у хості.
+- **connection_limit=1** — на Vercel додаток автоматично додає цей параметр (менше з'єднань).
+- **directUrl** — опційно для міграцій (Direct connection без -pooler).
+
 ## Prisma
 
 - У `schema.prisma`: `provider = "postgresql"`, `url = env("DATABASE_URL")`.
-- Клієнт у `lib/prisma.ts` — один екземпляр на процес (нормально для serverless).
+- Клієнт у `lib/prisma.ts` — один екземпляр на процес + auto `connection_limit=1` на Vercel.
 
 ## Якщо не підключається
 

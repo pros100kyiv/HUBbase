@@ -70,7 +70,7 @@ export default function AdminLoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               required
               className="w-full px-4 py-2 border border-white/20 rounded-lg bg-white/10 text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-white/30 focus:bg-white/15"
-              placeholder="developer@xbase.online"
+              placeholder="onlinexbase@gmail.com"
             />
           </div>
 

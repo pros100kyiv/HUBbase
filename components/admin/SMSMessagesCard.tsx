@@ -24,10 +24,27 @@ export function SMSMessagesCard({ businessId }: SMSMessagesCardProps) {
   const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
-    if (businessId) {
-      loadMessages()
-      const interval = setInterval(loadMessages, 120_000) // 2 хв — економія compute (Neon sleep)
-      return () => clearInterval(interval)
+    if (!businessId) return
+    loadMessages()
+    let interval: ReturnType<typeof setInterval> | null = null
+    const start = () => {
+      if (interval) return
+      interval = setInterval(() => {
+        if (document.visibilityState === 'visible') loadMessages()
+      }, 120_000)
+    }
+    const stop = () => {
+      if (interval) {
+        clearInterval(interval)
+        interval = null
+      }
+    }
+    start()
+    const onVis = () => (document.visibilityState === 'visible' ? start() : stop())
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      stop()
+      document.removeEventListener('visibilitychange', onVis)
     }
   }, [businessId])
 

@@ -4,7 +4,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { cn } from '@/lib/utils'
 import { useNavigationProgress } from '@/contexts/NavigationProgressContext'
-import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, ShareIcon, MoneyIcon, ClockIcon, CreditCardIcon } from '@/components/icons'
+import { HomeIcon, CalendarIcon, UsersIcon, UserIcon, ChartIcon, SettingsIcon, ShareIcon, MoneyIcon, ClockIcon, CreditCardIcon, TikTokIcon, InstagramIcon } from '@/components/icons'
 import { XbaseLogo } from '@/components/layout/XbaseLogo'
 import { NotificationsPanel } from './NotificationsPanel'
 import { getBusinessData } from '@/lib/business-storage'
@@ -59,10 +59,12 @@ export function Sidebar({ className }: SidebarProps) {
       }
     }
     fetchPendingCount()
-    const interval = setInterval(fetchPendingCount, 120_000)
+    let interval: ReturnType<typeof setInterval> | null = setInterval(() => {
+      if (document.visibilityState === 'visible') fetchPendingCount()
+    }, 120_000)
     return () => {
       cancelled = true
-      clearInterval(interval)
+      if (interval) clearInterval(interval)
     }
   }, [business?.id])
 
@@ -193,6 +195,53 @@ export function Sidebar({ className }: SidebarProps) {
                 </span>
               </button>
             </div>
+          </div>
+
+          {/* Міні-блок: хто за платформою — Xbase */}
+          <div className="mt-6 pt-4 border-t border-white/10">
+            <a
+              href="https://xbase.online"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="block rounded-xl p-3 bg-white/5 hover:bg-white/10 border border-white/5 transition-colors group"
+            >
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-gray-500 mb-1.5">
+                Платформа
+              </p>
+              <p className="text-sm font-semibold text-white group-hover:text-emerald-400/90 transition-colors">
+                Xbase
+              </p>
+              <p className="text-[11px] text-gray-500 mt-1">Записи та клієнти онлайн · xbase.online</p>
+              <div className="flex items-center gap-2 mt-2.5">
+                <a
+                  href="https://www.tiktok.com/@xbase.online"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                  aria-label="TikTok"
+                >
+                  <TikTokIcon className="w-4 h-4" />
+                </a>
+                <a
+                  href="https://www.instagram.com/xbase.online"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors"
+                  aria-label="Instagram"
+                >
+                  <InstagramIcon className="w-4 h-4" />
+                </a>
+                <a
+                  href="mailto:onlinexbase@gmail.com"
+                  onClick={(e) => e.stopPropagation()}
+                  className="text-[10px] text-gray-500 hover:text-white ml-auto transition-colors truncate max-w-[100px]"
+                >
+                  Підтримка
+                </a>
+              </div>
+            </a>
           </div>
         </nav>
       </aside>

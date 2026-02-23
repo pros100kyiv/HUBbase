@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { XbaseLogo } from '@/components/layout/XbaseLogo'
+import { TikTokIcon, InstagramIcon } from '@/components/icons'
 import { getBusinessData } from '@/lib/business-storage'
 
 // Порядок файлів зіставлено з вмістом скріншотів (не з часом створення)
@@ -386,7 +387,36 @@ export default function Home() {
               </Link>
             </nav>
           </div>
-          <p className="max-w-6xl mx-auto mt-4 text-center text-xs text-gray-500">
+          <div className="max-w-6xl mx-auto mt-6 flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8">
+            <div className="flex items-center gap-4">
+              <a
+                href="https://www.tiktok.com/@xbase.online"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-gray-400 hover:text-white transition-all"
+                aria-label="TikTok @xbase.online"
+              >
+                <TikTokIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">@xbase.online</span>
+              </a>
+              <a
+                href="https://www.instagram.com/xbase.online"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex items-center gap-2 px-3 py-2 rounded-xl bg-white/5 hover:bg-white/15 text-gray-400 hover:text-white transition-all"
+                aria-label="Instagram xbase.online"
+              >
+                <InstagramIcon className="w-5 h-5" />
+                <span className="text-sm font-medium">xbase.online</span>
+              </a>
+            </div>
+            <div className="flex items-center gap-3 text-xs text-gray-500">
+              <a href="mailto:onlinexbase@gmail.com" className="hover:text-white transition-colors">onlinexbase@gmail.com</a>
+              <span className="text-gray-600">·</span>
+              <a href="tel:+380930303938" className="hover:text-white transition-colors">+380 93 030 39 38</a>
+            </div>
+          </div>
+          <p className="max-w-6xl mx-auto mt-3 text-center text-xs text-gray-500">
             Xbase — записи та відвідувачі в одній базі · xbase.online
           </p>
         </footer>

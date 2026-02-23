@@ -79,7 +79,7 @@ export function SocialMessagesCard({ businessId, initialOpenChat, onChatClose, m
   const visibleChats = chats.filter((c) => !hiddenChats.includes(`${c.platform}::${c.externalChatId}`))
   const hasUnread = chats.some((c) => c.unreadCount > 0)
   const unreadTotal = chats.reduce((sum, c) => sum + c.unreadCount, 0)
-  const pollIntervalMs = hasUnread || !collapsed ? 20_000 : 120_000
+  const pollIntervalMs = hasUnread || !collapsed ? 45_000 : 120_000 // 45s при непрочитаних (було 20s — зменшення трафіку)
 
   useEffect(() => {
     loadChats(false)
@@ -91,8 +91,26 @@ export function SocialMessagesCard({ businessId, initialOpenChat, onChatClose, m
   }, [collapsed])
 
   useEffect(() => {
-    const interval = setInterval(() => loadChats(true), pollIntervalMs)
-    return () => clearInterval(interval)
+    let interval: ReturnType<typeof setInterval> | null = null
+    const startPolling = () => {
+      if (interval) return
+      interval = setInterval(() => {
+        if (document.visibilityState === 'visible') loadChats(true)
+      }, pollIntervalMs)
+    }
+    const stopPolling = () => {
+      if (interval) {
+        clearInterval(interval)
+        interval = null
+      }
+    }
+    startPolling()
+    const onVis = () => (document.visibilityState === 'visible' ? startPolling() : stopPolling())
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      stopPolling()
+      document.removeEventListener('visibilitychange', onVis)
+    }
   }, [businessId, pollIntervalMs])
 
   useEffect(() => {

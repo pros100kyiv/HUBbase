@@ -27,7 +27,7 @@ type DetailSlot = {
   action?: { label: string; url: string }
 }
 
-const REFRESH_INTERVAL_MS = 120_000 // 2 хв — економія compute (Neon sleep)
+const REFRESH_INTERVAL_MS = 180_000 // 3 хв — зменшення Fast Origin Transfer
 
 interface Service {
   id: string
@@ -126,11 +126,29 @@ export default function AnalyticsPage() {
     setTrendsVisibleCount(TRENDS_PAGE_SIZE)
   }, [advancedStats?.dailyTrends?.length, period])
 
-  // Оновлення в реальному часі: інтервал
+  // Оновлення в реальному часі: інтервал (пауза коли вкладка прихована)
   useEffect(() => {
     if (!business?.id) return
-    const interval = setInterval(() => loadData(true), REFRESH_INTERVAL_MS)
-    return () => clearInterval(interval)
+    let interval: ReturnType<typeof setInterval> | null = null
+    const start = () => {
+      if (interval) return
+      interval = setInterval(() => {
+        if (document.visibilityState === 'visible') loadData(true)
+      }, REFRESH_INTERVAL_MS)
+    }
+    const stop = () => {
+      if (interval) {
+        clearInterval(interval)
+        interval = null
+      }
+    }
+    start()
+    const onVis = () => (document.visibilityState === 'visible' ? start() : stop())
+    document.addEventListener('visibilitychange', onVis)
+    return () => {
+      stop()
+      document.removeEventListener('visibilitychange', onVis)
+    }
   }, [business?.id, period, loadData])
 
   // Оновлення при поверненні на вкладку

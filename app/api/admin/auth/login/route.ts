@@ -48,7 +48,7 @@ export async function POST(request: Request) {
 
       if (!dbAdmin || !dbAdmin.isActive) {
         // КРОК 3: Перевіряємо developer email з .env (fallback)
-        const developerEmail = process.env.DEVELOPER_EMAIL || 'developer@xbase.online'
+        const developerEmail = process.env.DEVELOPER_EMAIL || 'onlinexbase@gmail.com'
         const developerPassword = process.env.DEVELOPER_PASSWORD
 
         if (email === developerEmail.toLowerCase() && developerPassword) {

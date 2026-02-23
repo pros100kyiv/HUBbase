@@ -153,8 +153,8 @@ export function Navbar() {
       if (disposed) return
       pendingPollTimeoutRef.current = window.setTimeout(() => {
         fetchPending().finally(() => {
-          // Кожну хвилину при відкритій вкладці — щоб не пропустити новий запис
-          scheduleNext(60_000)
+          // Кожні 2 хв при відкритій вкладці (було 1 хв — зменшення Fast Origin Transfer)
+          scheduleNext(120_000)
         })
       }, ms)
     }
@@ -165,9 +165,9 @@ export function Navbar() {
       }
     }
 
-    // Initial fetch + lightweight polling (кожну хвилину)
+    // Initial fetch + lightweight polling (кожні 2 хв)
     fetchPending()
-    scheduleNext(60_000)
+    scheduleNext(120_000)
     document.addEventListener('visibilitychange', onVisibility)
 
     return () => {
