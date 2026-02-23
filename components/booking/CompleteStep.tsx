@@ -249,7 +249,7 @@ export function CompleteStep({ businessName, businessLocation, timeZone, busines
         sub = await withTimeout(
           reg.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey,
+            applicationServerKey: applicationServerKey as BufferSource,
           }),
           20000,
           'Не вдалося створити підписку Push (timeout)'
