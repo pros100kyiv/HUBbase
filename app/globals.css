@@ -256,17 +256,11 @@
     color: #FFFFFF;
   }
   
-  /* Картка «Мій день» — як інші картки (glass), з тінню щоб трохи відрізнялась */
+  /* Картка «Мій день» — підложка в загальний колір (прозора), рамка для відділення */
   .card-floating {
-    background-color: rgba(255, 255, 255, 0.06);
-    backdrop-filter: blur(12px);
-    -webkit-backdrop-filter: blur(12px);
-    border: 1px solid rgba(255, 255, 255, 0.12);
+    background-color: transparent;
     color: #FFFFFF;
-    box-shadow:
-      0 4px 16px -4px rgba(0, 0, 0, 0.35),
-      0 8px 24px -8px rgba(0, 0, 0, 0.25),
-      0 0 0 1px rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.12);
   }
 
   /* Стандарт карток: напівпрозорі (як на вкладці Прайс), адаптуються під будь-яку тему фону */
@@ -373,7 +367,9 @@
   .oled .panel-bg {
     background-color: rgba(0, 0, 0, 0.95);
   }
-  .oled .card-floating,
+  .oled .card-floating {
+    background: transparent;
+  }
   .oled .dashboard-card {
     background: #0C0C0E;
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.06);
@@ -509,13 +505,9 @@
   .light .card-glass-elevated .text-gray-400 { color: #6b7280; }
   .light .card-glass-elevated input::placeholder { color: #9ca3af; }
   .light .card-floating {
-    background-color: #FFFFFF;
+    background-color: transparent;
     color: #111827;
     border: 1px solid rgba(0, 0, 0, 0.12);
-    box-shadow:
-      0 2px 8px rgba(0, 0, 0, 0.06),
-      0 4px 16px -4px rgba(0, 0, 0, 0.08),
-      0 0 0 1px rgba(0, 0, 0, 0.04);
   }
   .light .bg-gray-100 {
     background-color: #F3F4F6;

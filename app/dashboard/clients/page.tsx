@@ -7,6 +7,7 @@ import { uk } from 'date-fns/locale'
 import { cn } from '@/lib/utils'
 import { ChevronDownIcon, ChevronUpIcon, UsersIcon, SearchIcon, DownloadIcon, FilterIcon, CheckIcon, CalendarIcon, PhoneIcon, UserIcon, XIcon, SettingsIcon, TelegramIcon } from '@/components/icons'
 import { QuickClientCard } from '@/components/admin/QuickClientCard'
+import { SocialMessagesCard } from '@/components/admin/SocialMessagesCard'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { toast } from '@/components/ui/toast'
 import { uaPhoneDigits } from '@/lib/utils/phone'
@@ -97,6 +98,7 @@ export default function ClientsPage() {
   const [clientsTotal, setClientsTotal] = useState(0)
   const [clientsTotalPages, setClientsTotalPages] = useState(1)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [openChatForClient, setOpenChatForClient] = useState<{ platform: string; externalChatId: string; senderName: string; phone?: string; email?: string } | null>(null)
   const INITIAL_VISIBLE_COUNT = 10
   const searchParams = useSearchParams()
   const openedClientIdFromUrlRef = useRef<string | null>(null)
@@ -930,7 +932,7 @@ export default function ClientsPage() {
                             <button onClick={() => { setViewMode('cards'); setExpandedClient(client.id) }} className="p-1.5 text-white hover:bg-white/10 rounded-lg transition-colors" title="Відкрити картку клієнта" aria-label="Відкрити картку клієнта"><UserIcon className="w-4 h-4" /></button>
                             <button onClick={() => window.open(`tel:${client.phone}`)} className="p-1.5 text-blue-400 hover:bg-white/10 rounded-lg transition-colors" title="Дзвінок"><PhoneIcon className="w-4 h-4" /></button>
                             {client.telegramChatId && (
-                              <button onClick={() => router.push(`/dashboard/social?tab=chat&openChat=telegram::${encodeURIComponent(client.telegramChatId ?? '')}`)} className="p-1.5 text-[#0088cc] hover:bg-white/10 rounded-lg transition-colors" title="Відкрити переписку"><TelegramIcon className="w-4 h-4" /></button>
+                              <button onClick={() => setOpenChatForClient({ platform: 'telegram', externalChatId: client.telegramChatId ?? '', senderName: client.name || 'Клієнт', phone: client.phone, email: client.email ?? undefined })} className="p-1.5 text-[#0088cc] hover:bg-white/10 rounded-lg transition-colors" title="Відкрити переписку"><TelegramIcon className="w-4 h-4" /></button>
                             )}
                             <button onClick={() => router.push(`/dashboard/appointments?create=true&clientPhone=${encodeURIComponent(client.phone)}&clientName=${encodeURIComponent(client.name || '')}`)} className="p-1.5 text-green-400 hover:bg-white/10 rounded-lg transition-colors" title="Записати"><CalendarIcon className="w-4 h-4" /></button>
                             <button onClick={() => handleEditClient(client)} className="touch-target min-h-[44px] min-w-[44px] p-2 text-gray-300 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center" title="Редагувати" aria-label="Редагувати"><SettingsIcon className="w-4 h-4" /></button>
@@ -1002,7 +1004,7 @@ export default function ClientsPage() {
                         <button onClick={() => handleClientClick(client)} className="p-1.5 text-white hover:bg-white/10 rounded-lg transition-colors" title="Відкрити картку клієнта" aria-label="Відкрити картку клієнта"><UserIcon className="w-4 h-4" /></button>
                         <button onClick={() => window.open(`tel:${client.phone}`)} className="p-1.5 text-blue-400 hover:bg-white/10 rounded-lg transition-colors" title="Дзвінок"><PhoneIcon className="w-4 h-4" /></button>
                         {client.telegramChatId && (
-                          <button onClick={() => router.push(`/dashboard/social?tab=chat&openChat=telegram::${encodeURIComponent(String(client.telegramChatId))}`)} className="p-1.5 text-[#0088cc] hover:bg-white/10 rounded-lg transition-colors" title="Відкрити переписку"><TelegramIcon className="w-4 h-4" /></button>
+                          <button onClick={() => setOpenChatForClient({ platform: 'telegram', externalChatId: String(client.telegramChatId), senderName: client.name || 'Клієнт', phone: client.phone, email: client.email ?? undefined })} className="p-1.5 text-[#0088cc] hover:bg-white/10 rounded-lg transition-colors" title="Відкрити переписку"><TelegramIcon className="w-4 h-4" /></button>
                         )}
                         <button onClick={() => router.push(`/dashboard/appointments?create=true&clientPhone=${encodeURIComponent(client.phone)}&clientName=${encodeURIComponent(client.name || '')}`)} className="p-1.5 text-green-400 hover:bg-white/10 rounded-lg transition-colors" title="Записати"><CalendarIcon className="w-4 h-4" /></button>
                         <button onClick={() => handleEditClient(client)} className="touch-target min-h-[44px] min-w-[44px] p-2 text-gray-300 hover:bg-white/10 rounded-lg transition-colors flex items-center justify-center" title="Редагувати" aria-label="Редагувати"><SettingsIcon className="w-4 h-4" /></button>
@@ -1476,6 +1478,16 @@ export default function ClientsPage() {
             </div>
           </div>
         </ModalPortal>
+      )}
+
+      {/* Модалка переписки — відкривається при кліку на іконку Telegram у клієнта */}
+      {openChatForClient && business && (
+        <SocialMessagesCard
+          businessId={business.id}
+          initialOpenChat={openChatForClient}
+          onChatClose={() => setOpenChatForClient(null)}
+          modalOnly
+        />
       )}
 
       {/* Quick Client Card Modal */}

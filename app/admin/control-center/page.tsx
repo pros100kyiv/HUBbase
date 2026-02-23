@@ -6,7 +6,6 @@ import { format, formatDistanceToNow } from 'date-fns'
 import { uk } from 'date-fns/locale'
 import { ModalPortal } from '@/components/ui/modal-portal'
 import { toast } from '@/components/ui/toast'
-import { InstallAppBadges } from '@/components/layout/InstallAppBadges'
 import { 
   BuildingIcon, 
   UsersIcon, 
@@ -27,7 +26,8 @@ import {
   CreditCardIcon
 } from '@/components/icons'
 
-type Tab = 'overview' | 'businesses' | 'phones' | 'activity' | 'graph' | 'analytics' | 'integrations' | 'security' | 'finances' | 'clients' | 'admins' | 'subscriptions' | 'settings' | 'export'
+type Tab = 'overview' | 'businesses' | 'subscriptions' | 'activity' | 'phones' | 'clients' | 'finances' | 'system'
+type SystemSubTab = 'admins' | 'integrations' | 'settings' | 'export' | 'security'
 
 interface Business {
   id: string
@@ -104,6 +104,7 @@ export default function ControlCenterPage() {
   const [isAuthorized, setIsAuthorized] = useState(false)
   const [isLoadingAuth, setIsLoadingAuth] = useState(true)
   const [activeTab, setActiveTab] = useState<Tab>('overview')
+  const [systemSubTab, setSystemSubTab] = useState<SystemSubTab>('admins')
   const [businesses, setBusinesses] = useState<Business[]>([])
   const [stats, setStats] = useState<any>(null)
   const [loading, setLoading] = useState(true)
@@ -327,20 +328,22 @@ export default function ControlCenterPage() {
   }
 
   const tabs = [
-    { id: 'overview', label: 'Огляд', icon: BuildingIcon },
+    { id: 'overview', label: 'Огляд', icon: ChartIcon },
     { id: 'businesses', label: 'Бізнеси', icon: UsersIcon },
     { id: 'subscriptions', label: 'Підписки', icon: CreditCardIcon },
-    { id: 'phones', label: 'Телефонний довідник', icon: PhoneIcon },
-    { id: 'activity', label: 'Архів дій', icon: CalendarIcon },
-    { id: 'graph', label: 'Граф зв\'язків', icon: LinkIcon },
-    { id: 'analytics', label: 'Аналітика', icon: ChartIcon },
-    { id: 'integrations', label: 'Інтеграції', icon: LinkIcon },
-    { id: 'security', label: 'Безпека', icon: ShieldIcon },
-    { id: 'finances', label: 'Фінанси', icon: MoneyIcon },
+    { id: 'activity', label: 'Архів', icon: CalendarIcon },
+    { id: 'phones', label: 'Телефони', icon: PhoneIcon },
     { id: 'clients', label: 'Клієнти', icon: UsersIcon },
+    { id: 'finances', label: 'Фінанси', icon: MoneyIcon },
+    { id: 'system', label: 'Система', icon: SettingsIcon },
+  ]
+
+  const systemSubTabs: { id: SystemSubTab; label: string; icon: typeof ShieldIcon }[] = [
     { id: 'admins', label: 'Адміністратори', icon: ShieldIcon },
+    { id: 'integrations', label: 'Інтеграції', icon: LinkIcon },
+    { id: 'export', label: 'Експорт', icon: DownloadIcon },
     { id: 'settings', label: 'Налаштування', icon: SettingsIcon },
-    { id: 'export', label: 'Експорт/Імпорт', icon: DownloadIcon },
+    { id: 'security', label: 'Безпека', icon: ShieldIcon },
   ]
 
   if (isLoadingAuth) {
@@ -358,8 +361,8 @@ export default function ControlCenterPage() {
   }
 
   return (
-    <div className="min-h-screen p-3 sm:p-4 md:p-6 pb-[max(1rem,env(safe-area-inset-bottom))] bg-[#0F172A]" style={{ backdropFilter: 'blur(30px)', WebkitBackdropFilter: 'blur(30px)' }}>
-      <div className="max-w-7xl mx-auto w-full">
+    <div className="min-h-screen p-2 sm:p-4 md:p-6 pb-[max(1rem,env(safe-area-inset-bottom)+0.5rem)] pl-[max(0.5rem,env(safe-area-inset-left))] pr-[max(0.5rem,env(safe-area-inset-right))]">
+      <div className="w-full max-w-7xl mx-auto min-w-0 overflow-x-hidden">
       {loadError && (
         <div className="mb-4 rounded-xl p-4 bg-red-500/20 border border-red-500/50 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
           <div className="min-w-0">
@@ -371,7 +374,7 @@ export default function ControlCenterPage() {
           </div>
           <button
             onClick={() => { setLoadError(null); loadData(); }}
-            className="px-4 py-2 bg-red-500/30 hover:bg-red-500/50 text-white rounded-lg font-medium shrink-0"
+            className="min-h-[44px] px-4 py-2 bg-red-500/30 hover:bg-red-500/50 text-white rounded-lg font-medium shrink-0 touch-manipulation"
           >
             Повторити
           </button>
@@ -380,55 +383,46 @@ export default function ControlCenterPage() {
       {/* Live Stats Bar */}
       <LiveStatsBar refreshTrigger={refreshTrigger} onManualRefresh={handleRefresh} />
 
-      {/* Header */}
-      <div className="mb-4 md:mb-6 flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-3 sm:gap-4">
-        <div className="min-w-0 flex-1">
-          <h1 className="text-2xl sm:text-3xl md:text-4xl font-black text-white mb-1 sm:mb-2" style={{ letterSpacing: '-0.02em' }}>
-            🎯 Центр управління
-          </h1>
-          <p className="text-gray-300 text-sm sm:text-base hidden sm:block">
-            Управління всіма бізнесами та процесами системи · дані оновлюються в реальному часі
-          </p>
+      {/* Header — як у dashboard */}
+      <div className="flex items-center justify-between gap-3 mb-4 md:mb-6">
+        <div className="min-w-0">
+          <div className="flex items-center gap-3">
+            <h1 className="text-xl md:text-2xl font-bold text-white truncate" style={{ letterSpacing: '-0.02em' }}>
+              Центр управління
+            </h1>
+            <a
+              href="/admin/login"
+              onClick={(e) => {
+                e.preventDefault()
+                localStorage.removeItem('adminToken')
+                localStorage.removeItem('adminEmail')
+                router.push('/admin/login')
+              }}
+              className="text-xs text-gray-400 hover:text-white transition-colors shrink-0"
+            >
+              Вийти
+            </a>
+          </div>
+          <p className="text-sm text-gray-400 mt-0.5 hidden sm:block">Бізнеси, підписки, архів · дані в реальному часі</p>
         </div>
-        <div className="flex flex-col sm:flex-row gap-3 shrink-0">
-          <div className="hidden sm:flex gap-2">
-            <button
-              type="button"
-              onClick={handleSync}
-              disabled={syncing}
-              className="px-3 sm:px-4 py-2.5 min-h-[44px] rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50 transition-colors font-medium text-sm sm:text-base"
-              title="Синхронізувати всі акаунти з центром управління"
-            >
-              {syncing ? 'Синхр...' : 'Синхронізувати'}
-            </button>
-            <button
-              type="button"
-              onClick={handleRefresh}
-              disabled={loading}
-              className="px-3 sm:px-4 py-2.5 min-h-[44px] rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 transition-colors font-medium text-sm sm:text-base"
-            >
-              {loading ? 'Оновл...' : 'Оновити'}
-            </button>
-          </div>
-          <div className="sm:hidden flex gap-2">
-            <button
-              type="button"
-              onClick={handleSync}
-              disabled={syncing}
-              className="flex-1 min-h-[44px] px-3 py-2.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50 transition-colors font-medium text-sm"
-            >
-              {syncing ? 'Синхр...' : 'Синхр.'}
-            </button>
-            <button
-              type="button"
-              onClick={handleRefresh}
-              disabled={loading}
-              className="flex-1 min-h-[44px] px-3 py-2.5 rounded-lg border border-white/20 bg-white/10 text-white hover:bg-white/20 disabled:opacity-50 transition-colors font-medium text-sm"
-            >
-              {loading ? 'Оновл...' : 'Оновити'}
-            </button>
-          </div>
-          <InstallAppBadges variant="compact" className="self-start sm:self-center" />
+        <div className="flex gap-2 shrink-0">
+          <button
+            type="button"
+            onClick={handleSync}
+            disabled={syncing}
+            className="px-4 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50 transition-colors font-medium text-sm"
+            title="Синхронізувати з центром"
+          >
+            {syncing ? '…' : 'Синхр.'}
+          </button>
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={loading}
+            className="px-4 py-2.5 rounded-xl border border-white/10 bg-white/5 text-white hover:bg-white/10 disabled:opacity-50 transition-colors font-medium text-sm"
+          >
+            {loading ? '…' : 'Оновити'}
+          </button>
         </div>
       </div>
 
@@ -437,7 +431,7 @@ export default function ControlCenterPage() {
         <select
           value={activeTab}
           onChange={(e) => setActiveTab(e.target.value as Tab)}
-          className="w-full min-h-[48px] px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none cursor-pointer"
+          className="w-full min-h-[44px] px-4 py-3 rounded-xl border border-white/10 bg-white/5 text-white text-base font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 appearance-none cursor-pointer touch-manipulation"
           style={{ 
             backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
             backgroundRepeat: 'no-repeat',
@@ -455,31 +449,30 @@ export default function ControlCenterPage() {
       </div>
 
       {/* Tabs — десктоп */}
-      <div className="mb-6 hidden md:flex flex-wrap gap-2 border-b border-white/10 overflow-x-auto pb-px">
+      <div className="mb-4 hidden md:flex flex-wrap gap-1 overflow-x-auto pb-px">
         {tabs.map((tab) => {
           const Icon = tab.icon
           return (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as Tab)}
-              className={`px-4 py-2 flex items-center gap-2 font-medium transition-colors border-b-2 whitespace-nowrap ${
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap ${
                 activeTab === tab.id
-                  ? 'border-white text-white'
-                  : 'border-transparent text-gray-400 hover:text-white'
+                  ? 'bg-white/10 text-white'
+                  : 'text-gray-400 hover:text-white hover:bg-white/5'
               }`}
-              style={{ letterSpacing: '-0.01em' }}
             >
-              <Icon className="w-5 h-5" />
+              <Icon className="w-4 h-4" />
               {tab.label}
             </button>
           )
         })}
       </div>
 
-      {/* Tab Content */}
-      <div className="card-glass rounded-xl p-4 sm:p-6 min-w-0 overflow-hidden">
+      {/* Tab Content — стиль як dashboard */}
+      <div className="rounded-xl p-4 sm:p-6 card-glass-subtle min-w-0 overflow-hidden border border-white/10">
         {activeTab === 'overview' && (
-          <OverviewTab stats={stats ?? defaultStats} loading={loading} />
+          <OverviewTab stats={stats ?? defaultStats} loading={loading} refreshTrigger={refreshTrigger} getAuthHeaders={getAuthHeaders} />
         )}
 
         {activeTab === 'businesses' && (
@@ -532,14 +525,6 @@ export default function ControlCenterPage() {
           <FinancesTab refreshTrigger={refreshTrigger} />
         )}
 
-        {activeTab === 'clients' && (
-          <ClientsTab refreshTrigger={refreshTrigger} />
-        )}
-
-        {activeTab === 'admins' && (
-          <AdminsTab refreshTrigger={refreshTrigger} />
-        )}
-
         {activeTab === 'subscriptions' && (
           <SubscriptionsTab
             businesses={businesses}
@@ -549,12 +534,31 @@ export default function ControlCenterPage() {
           />
         )}
 
-        {activeTab === 'settings' && (
-          <SettingsTab />
-        )}
-
-        {activeTab === 'export' && (
-          <ExportTab />
+        {activeTab === 'system' && (
+          <div className="space-y-4 sm:space-y-6">
+            <div className="flex gap-2 overflow-x-auto pb-2 -mx-1 px-1 border-b border-white/10 scrollbar-hide sm:flex-wrap">
+              {systemSubTabs.map((st) => {
+                const Icon = st.icon
+                return (
+                  <button
+                    key={st.id}
+                    onClick={() => setSystemSubTab(st.id)}
+                    className={`min-h-[44px] px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 whitespace-nowrap shrink-0 touch-manipulation ${
+                      systemSubTab === st.id ? 'bg-white/10 text-white' : 'text-gray-400 hover:text-white hover:bg-white/5'
+                    }`}
+                  >
+                    <Icon className="w-4 h-4" />
+                    {st.label}
+                  </button>
+                )
+              })}
+            </div>
+            {systemSubTab === 'admins' && <AdminsTab refreshTrigger={refreshTrigger} />}
+            {systemSubTab === 'integrations' && <IntegrationsTab refreshTrigger={refreshTrigger} />}
+            {systemSubTab === 'export' && <ExportTab />}
+            {systemSubTab === 'settings' && <SettingsTab />}
+            {systemSubTab === 'security' && <SecurityTab />}
+          </div>
         )}
       </div>
       </div>
@@ -599,8 +603,8 @@ function LiveStatsBar({ refreshTrigger, onManualRefresh }: { refreshTrigger?: nu
 
   if (loading && !realtimeStats) {
     return (
-      <div className="mb-4 rounded-xl p-4 card-glass animate-pulse">
-        <div className="h-12 bg-white/10 rounded-lg" />
+      <div className="mb-4 rounded-xl p-4 bg-white/5 border border-white/10 animate-pulse">
+        <div className="h-10 bg-white/10 rounded-lg" />
       </div>
     )
   }
@@ -608,21 +612,21 @@ function LiveStatsBar({ refreshTrigger, onManualRefresh }: { refreshTrigger?: nu
   const s = realtimeStats || { total: 0, online: 0, idle: 0, offline: 0, newToday: 0, blocked: 0 }
 
   return (
-    <div className="mb-4 rounded-xl p-3 sm:p-4 card-glass">
-      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-3 sm:gap-4">
-        <div className="flex flex-wrap items-center gap-2 sm:gap-4">
-        <div className="flex items-center gap-2">
-          <span className="relative flex h-2.5 w-2.5">
+    <div className="mb-3 sm:mb-4 rounded-xl p-3 sm:p-4 bg-white/5 border border-white/10">
+      <div className="flex flex-col sm:flex-row sm:flex-wrap sm:items-center sm:justify-between gap-2 sm:gap-4">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 sm:gap-4">
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-green-500" />
+            <span className="relative inline-flex rounded-full h-full w-full bg-green-500" />
           </span>
-          <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Live</span>
+          <span className="text-[10px] sm:text-xs font-medium text-gray-400 uppercase tracking-wider">Live</span>
         </div>
 
-        <div className="flex flex-wrap gap-2 sm:gap-4 md:gap-6">
-          <div className="flex items-center gap-2">
-            <span className="text-base sm:text-lg md:text-xl font-bold text-white">{s.total}</span>
-            <span className="text-sm text-gray-400">всього</span>
+        <div className="flex flex-wrap gap-x-3 gap-y-1 sm:gap-4 md:gap-6">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <span className="text-sm sm:text-base md:text-xl font-bold text-white tabular-nums">{s.total}</span>
+            <span className="text-[10px] sm:text-xs text-gray-400">всього</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-lg md:text-xl font-bold text-green-400">{s.online}</span>
@@ -649,10 +653,10 @@ function LiveStatsBar({ refreshTrigger, onManualRefresh }: { refreshTrigger?: nu
         </div>
         </div>
 
-        <div className="flex items-center gap-2 sm:gap-3 shrink-0 mt-2 sm:mt-0">
+        <div className="flex items-center gap-2 shrink-0 mt-1 sm:mt-0">
           {s.updatedAt && (
-            <span className="text-xs text-gray-500">
-              Оновлено: {new Date(s.updatedAt).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+            <span className="text-[10px] sm:text-xs text-gray-500 hidden xs:inline">
+              {new Date(s.updatedAt).toLocaleTimeString('uk-UA', { hour: '2-digit', minute: '2-digit', second: '2-digit' })}
             </span>
           )}
           {onManualRefresh && (
@@ -660,7 +664,7 @@ function LiveStatsBar({ refreshTrigger, onManualRefresh }: { refreshTrigger?: nu
               type="button"
               onClick={() => onManualRefresh()}
               disabled={loading}
-              className="p-2 min-w-[44px] min-h-[44px] sm:p-1.5 sm:min-w-0 sm:min-h-0 rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors flex items-center justify-center"
+              className="p-2 min-w-[44px] min-h-[44px] rounded-lg hover:bg-white/10 text-gray-400 hover:text-white transition-colors flex items-center justify-center touch-manipulation"
               title="Оновити всі дані та статистику"
             >
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -674,10 +678,26 @@ function LiveStatsBar({ refreshTrigger, onManualRefresh }: { refreshTrigger?: nu
   )
 }
 
-// Overview Tab Component
-function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
-  if (loading) {
-    return <div className="text-center py-12 text-white">Завантаження...</div>
+// Overview Tab Component — огляд + аналітика за період
+function OverviewTab({ stats, loading, refreshTrigger, getAuthHeaders }: { stats: any; loading: boolean; refreshTrigger?: number; getAuthHeaders: () => Record<string, string> }) {
+  const [analytics, setAnalytics] = useState<any>(null)
+  const [period, setPeriod] = useState<'day' | 'week' | 'month' | 'year'>('week')
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const res = await fetch(`/api/admin/analytics?period=${period}&_t=${Date.now()}`, { headers: getAuthHeaders(), cache: 'no-store' })
+        if (res.ok) {
+          const data = await res.json()
+          setAnalytics(data)
+        }
+      } catch { setAnalytics(null) }
+    }
+    load()
+  }, [period, refreshTrigger])
+
+  if (loading && !stats) {
+    return <div className="text-center py-12 text-gray-400">Завантаження...</div>
   }
 
   const cards = [
@@ -724,30 +744,33 @@ function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
 
   return (
     <div className="space-y-6">
+      {loading && (
+        <div className="text-xs text-gray-500">Оновлення статистики…</div>
+      )}
       {!hasData && (
         <div className="rounded-xl p-6 bg-white/5 border border-white/10 text-center text-gray-300">
           <p className="mb-2">Ще немає даних у системі.</p>
           <p className="text-sm">Натисніть кнопку <strong>«Синхронізувати»</strong> або <strong>«Оновити»</strong> вгорі, щоб підтягнути бізнеси.</p>
         </div>
       )}
-      <h2 className="text-2xl font-bold text-white">
+      <h2 className="text-lg font-semibold text-white mb-2">
         Статистика системи
       </h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3 md:gap-4">
         {cards.map((card, index) => {
           const Icon = card.icon
           return (
             <div
               key={index}
-              className="card-glass rounded-xl p-6"
+              className="rounded-xl p-3 sm:p-4 md:p-5 bg-white/5 border border-white/10 min-w-0"
             >
-              <div className="flex items-center justify-between mb-4">
-                <Icon className={`w-8 h-8 ${card.colorClass}`} />
-                <span className="text-3xl font-black text-white">
+              <div className="flex items-center justify-between gap-2 mb-1 sm:mb-2">
+                <Icon className={`w-5 h-5 sm:w-6 sm:h-6 shrink-0 ${card.colorClass}`} />
+                <span className="text-lg sm:text-xl md:text-2xl font-bold text-white tabular-nums truncate">
                   {card.value}
                 </span>
               </div>
-              <p className="text-gray-300 font-medium">
+              <p className="text-[10px] sm:text-xs md:text-sm text-gray-400 line-clamp-2">
                 {card.title}
               </p>
             </div>
@@ -759,7 +782,7 @@ function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
           <h3 className="text-lg font-semibold text-white mb-4">За нішею</h3>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
             {byNiche.map((n: { niche: string; _count: number }) => (
-              <div key={n.niche || 'empty'} className="card-glass rounded-lg p-4">
+              <div key={n.niche || 'empty'} className="rounded-xl p-4 bg-white/5 border border-white/10">
                 <div className="text-lg font-bold text-white">{n._count}</div>
                 <div className="text-sm text-gray-400">{n.niche || 'Інше'}</div>
               </div>
@@ -767,6 +790,37 @@ function OverviewTab({ stats, loading }: { stats: any; loading: boolean }) {
           </div>
         </div>
       )}
+
+      {/* Аналітика за період */}
+      <div>
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-4 mb-3">
+          <h3 className="text-base sm:text-lg font-semibold text-white">Реєстрації за період</h3>
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value as any)}
+            className="min-h-[44px] w-full sm:w-auto px-3 py-2 rounded-lg border border-white/10 bg-white/5 text-white text-sm touch-manipulation"
+          >
+            <option value="day">День</option>
+            <option value="week">Тиждень</option>
+            <option value="month">Місяць</option>
+            <option value="year">Рік</option>
+          </select>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3">
+          <div className="rounded-xl p-3 sm:p-4 bg-white/5 border border-white/10 min-h-[60px] flex flex-col justify-center">
+            <div className="text-xs sm:text-sm text-gray-400">Реєстрацій</div>
+            <div className="text-xl sm:text-2xl font-bold text-white">{analytics?.registrations?.total ?? '—'}</div>
+          </div>
+          <div className="rounded-xl p-3 sm:p-4 bg-white/5 border border-white/10 min-h-[60px] flex flex-col justify-center">
+            <div className="text-xs sm:text-sm text-gray-400">Всього бізнесів</div>
+            <div className="text-xl sm:text-2xl font-bold text-white">{analytics?.overview?.totalBusinesses ?? stats?.total ?? '—'}</div>
+          </div>
+          <div className="rounded-xl p-3 sm:p-4 bg-white/5 border border-white/10 min-h-[60px] flex flex-col justify-center">
+            <div className="text-xs sm:text-sm text-gray-400">Активних</div>
+            <div className="text-xl sm:text-2xl font-bold text-white">{analytics?.overview?.activeBusinesses ?? stats?.active ?? '—'}</div>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
@@ -1883,11 +1937,11 @@ function PhonesTab({ refreshTrigger }: { refreshTrigger?: number }) {
         Телефонний довідник
       </h2>
       
-      <div className="mb-6 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
+      <div className="mb-4 sm:mb-6 flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
         <select
           value={category}
           onChange={(e) => setCategory(e.target.value as any)}
-          className="min-h-[44px] px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white w-full sm:w-auto"
+          className="min-h-[44px] px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white w-full sm:w-auto touch-manipulation"
         >
           <option value="all">Всі категорії</option>
           <option value="BUSINESS">Бізнеси</option>
@@ -1899,7 +1953,7 @@ function PhonesTab({ refreshTrigger }: { refreshTrigger?: number }) {
           placeholder="Пошук по номеру..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          className="flex-1 min-h-[44px] min-w-0 px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white placeholder-gray-400"
+          className="flex-1 min-h-[44px] min-w-0 px-4 py-2 border border-white/10 rounded-lg bg-white/5 text-white placeholder-gray-400 touch-manipulation"
         />
       </div>
 

@@ -15,6 +15,8 @@ interface SocialChat {
   lastMessageAt: string
   unreadCount: number
   firstInboundId: string
+  phone?: string | null
+  email?: string | null
 }
 
 interface ThreadMessage {
@@ -31,7 +33,11 @@ interface ThreadMessage {
 interface SocialMessagesCardProps {
   businessId: string
   /** Якщо задано, автоматично відкрити цей чат при завантаженні */
-  initialOpenChat?: { platform: string; externalChatId: string } | null
+  initialOpenChat?: { platform: string; externalChatId: string; senderName?: string; phone?: string; email?: string } | null
+  /** Викликається при закритті модалки чату */
+  onChatClose?: () => void
+  /** Якщо true, показувати тільки модалку (без картки списку) — для вбудовування зі сторінки клієнтів */
+  modalOnly?: boolean
 }
 
 const HIDDEN_CHATS_KEY = (bid: string) => `xbase_hidden_chats_${bid}`
@@ -55,17 +61,16 @@ function setHiddenChats(businessId: string, keys: string[]) {
   } catch {}
 }
 
-export function SocialMessagesCard({ businessId, initialOpenChat }: SocialMessagesCardProps) {
+export function SocialMessagesCard({ businessId, initialOpenChat, onChatClose, modalOnly }: SocialMessagesCardProps) {
   const [chats, setChats] = useState<SocialChat[]>([])
   const [loading, setLoading] = useState(true)
-  const [collapsed, setCollapsed] = useState(true)
+  const [collapsed, setCollapsed] = useState(!!modalOnly)
   const [selectedChat, setSelectedChat] = useState<SocialChat | null>(null)
   const [thread, setThread] = useState<ThreadMessage[]>([])
   const [threadLoading, setThreadLoading] = useState(false)
   const [replyText, setReplyText] = useState('')
   const [sending, setSending] = useState(false)
   const [replyError, setReplyError] = useState<string | null>(null)
-  const [fullscreen, setFullscreen] = useState(false)
   const [hiddenChats, setHiddenChatsState] = useState<string[]>(() => getHiddenChats(businessId))
   const [firstInboundIdFromThread, setFirstInboundIdFromThread] = useState<string>('')
 
@@ -115,11 +120,13 @@ export function SocialMessagesCard({ businessId, initialOpenChat }: SocialMessag
       const virtualChat: SocialChat = {
         platform: initialOpenChat.platform,
         externalChatId: initialOpenChat.externalChatId,
-        senderName: 'Клієнт',
+        senderName: initialOpenChat.senderName ?? 'Клієнт',
         lastMessage: '',
         lastMessageAt: new Date().toISOString(),
         unreadCount: 0,
         firstInboundId: '',
+        phone: initialOpenChat.phone ?? undefined,
+        email: initialOpenChat.email ?? undefined,
       }
       setSelectedChat(virtualChat)
       setCollapsed(false)
@@ -214,12 +221,17 @@ export function SocialMessagesCard({ businessId, initialOpenChat }: SocialMessag
     }
   }
 
+  const handleCloseChat = () => {
+    setSelectedChat(null)
+    onChatClose?.()
+  }
+
   const handleHideChat = (chat: SocialChat) => {
     const key = `${chat.platform}::${chat.externalChatId}`
     const next = [...hiddenChats, key]
     setHiddenChatsState(next)
     setHiddenChats(businessId, next)
-    setSelectedChat(null)
+    handleCloseChat()
     setChats((prev) => prev.filter((c) => `${c.platform}::${c.externalChatId}` !== key))
   }
 
@@ -308,6 +320,93 @@ export function SocialMessagesCard({ businessId, initialOpenChat }: SocialMessag
   const hasAny = visibleChats.length > 0
   const latest = visibleChats[0]
 
+  if (modalOnly) {
+    return selectedChat ? (
+      <ModalPortal>
+        <div className="modal-overlay sm:!p-4 flex items-center justify-center" onClick={handleCloseChat}>
+          <div
+            className="relative modal-content modal-dialog text-white flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200 w-[95vw] sm:w-[min(320px,95vw)] max-w-[320px] max-h-[80dvh] rounded-2xl shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Шапка чату */}
+            <div className="flex-shrink-0 flex items-center justify-between gap-2 px-3 py-2.5 border-b border-white/10">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <div className={cn(
+                  'w-7 h-7 rounded-full flex items-center justify-center text-white flex-shrink-0 [&>svg]:w-3.5 [&>svg]:h-3.5',
+                  getPlatformBgColor(selectedChat.platform)
+                )}>
+                  {getPlatformIcon(selectedChat.platform)}
+                </div>
+                <div className="min-w-0">
+                  <div className="text-sm font-semibold truncate">{selectedChat.senderName}</div>
+                  <div className="text-[10px] text-gray-400 flex flex-wrap items-center gap-x-2 gap-y-0 min-w-0">
+                    {selectedChat.phone && (
+                      <a href={`tel:${selectedChat.phone}`} className="hover:text-blue-400 transition-colors truncate" title="Зателефонувати">
+                        {selectedChat.phone}
+                      </a>
+                    )}
+                    {selectedChat.email && (
+                      <a href={`mailto:${selectedChat.email}`} className="hover:text-blue-400 transition-colors truncate" title="Написати">
+                        {selectedChat.email}
+                      </a>
+                    )}
+                    {(selectedChat.phone || selectedChat.email) && (
+                      <span className="text-gray-500">·</span>
+                    )}
+                    <span>{getPlatformShortName(selectedChat.platform)}</span>
+                  </div>
+                </div>
+              </div>
+              <div className="flex items-center gap-0.5 flex-shrink-0">
+                <button type="button" onClick={handleCloseChat} className="modal-close touch-target text-gray-400 hover:text-white rounded-lg p-1.5" aria-label="Закрити">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+              <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-1.5">
+                {threadLoading ? (
+                  <div className="text-xs text-gray-500 py-8 text-center">Завантаження...</div>
+                ) : thread.length === 0 ? (
+                  <div className="text-xs text-gray-500 py-8 text-center">Немає повідомлень</div>
+                ) : (
+                  thread.map((msg) => {
+                    const isYou = msg.direction === 'outbound'
+                    return (
+                      <div key={msg.id} className={cn('flex', isYou ? 'justify-end' : 'justify-start')}>
+                        <div className={cn('max-w-[85%] rounded-2xl px-3 py-2', isYou ? 'rounded-br-md bg-[#0088cc] text-white' : 'rounded-bl-md bg-[#1e1e1e] text-gray-100 border border-white/10')}>
+                          {!isYou && <div className="text-[10px] text-[#54a9eb] font-medium mb-0.5">{msg.senderName}</div>}
+                          <div className="text-[13px] leading-relaxed whitespace-pre-wrap break-words">{msg.message}</div>
+                          <div className={cn('text-[10px] opacity-60 mt-0.5', isYou ? 'text-right' : 'text-left')}>{format(new Date(msg.timestamp), 'HH:mm', { locale: uk })}</div>
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+              <div className="flex-shrink-0 p-3 pt-2 border-t border-white/10 space-y-1">
+                <textarea
+                  value={replyText}
+                  onChange={(e) => { setReplyText(e.target.value); setReplyError(null) }}
+                  placeholder="Повідомлення..."
+                  className="w-full bg-[#1e1e1e] border border-white/15 rounded-xl px-3 py-2.5 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-[#0088cc]/50 min-h-[40px] resize-none"
+                  rows={1}
+                />
+                {replyError && <p className="text-xs text-red-400" role="alert">{replyError}</p>}
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-2 px-3 py-2 flex-shrink-0 border-t border-white/10">
+              <button type="button" onClick={handleCloseChat} className="px-3 py-2 bg-white/5 border border-white/10 rounded-md text-xs font-medium text-white hover:bg-white/10 transition-colors">Закрити</button>
+              <button onClick={handleReply} disabled={!replyText.trim() || sending || !(selectedChat.firstInboundId || firstInboundIdFromThread)} className="px-3 py-2 bg-white text-black rounded-md text-xs font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed">{sending ? 'Відправка...' : 'Відправити'}</button>
+            </div>
+          </div>
+        </div>
+      </ModalPortal>
+    ) : null
+  }
+
   return (
     <div className="rounded-xl p-4 md:p-6 card-glass-subtle min-w-0 w-full max-w-full overflow-hidden">
       {/* Header */}
@@ -378,23 +477,41 @@ export function SocialMessagesCard({ businessId, initialOpenChat }: SocialMessag
           <p className="text-xs text-gray-500">Налаштування → Telegram: підключіть бота та налаштуйте webhook, щоб отримувати повідомлення тут</p>
         </div>
       ) : (
-        <>
-          <div className="space-y-2 md:space-y-3 max-h-[300px] md:max-h-[400px] overflow-y-auto pr-1">
-            {visibleChats.map((chat) => (
-              <button
+        <div className="space-y-2 md:space-y-3 max-h-[300px] md:max-h-[400px] overflow-y-auto pr-1">
+          {visibleChats.map((chat) => (
+              <div
                 key={`${chat.platform}::${chat.externalChatId}`}
-                onClick={() => {
-                  setSelectedChat(chat)
-                  setReplyError(null)
-                }}
                 className={cn(
-                  'w-full text-left rounded-lg p-3 md:p-3 transition-colors active:scale-[0.98] touch-manipulation min-h-[64px]',
+                  'w-full text-left rounded-lg p-3 md:p-3 transition-colors touch-manipulation min-h-[64px] relative',
                   chat.unreadCount > 0
                     ? 'bg-white/10 border border-white/20'
                     : 'bg-white/5 border border-white/10 hover:bg-white/8'
                 )}
               >
-                <div className="flex items-start gap-2 md:gap-3">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedChat(chat)
+                    setReplyError(null)
+                  }}
+                  className="absolute inset-0 w-full h-full text-left rounded-lg"
+                  style={{ zIndex: 0 }}
+                />
+                <button
+                  type="button"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    handleHideChat(chat)
+                  }}
+                  className="absolute top-2 right-2 z-10 p-1.5 rounded-lg text-gray-400 hover:text-white hover:bg-white/10 transition-colors touch-target"
+                  aria-label="Сховати чат"
+                  title="Сховати"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+                <div className="flex items-start gap-2 md:gap-3 relative z-[1] pointer-events-none">
                   <div className={cn(
                     'w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center flex-shrink-0 text-white',
                     getPlatformBgColor(chat.platform)
@@ -423,114 +540,107 @@ export function SocialMessagesCard({ businessId, initialOpenChat }: SocialMessag
                     </p>
                   </div>
                 </div>
-              </button>
+              </div>
             ))}
-          </div>
+        </div>
+      )}
 
-          {/* Thread Modal — повна переписка */}
-          {selectedChat && (
+      {/* Thread Modal — повна переписка (показується і для віртуального чату з клієнтів) */}
+      {selectedChat && (
             <ModalPortal>
-              <div
-                className={cn(
-                  'modal-overlay sm:!p-4 flex items-center justify-center',
-                  fullscreen && '!p-0 !items-stretch !justify-stretch'
-                )}
-                onClick={() => setSelectedChat(null)}
-              >
+              <div className="modal-overlay sm:!p-4 flex items-center justify-center" onClick={handleCloseChat}>
                 <div
-                  className={cn(
-                    'relative modal-content modal-dialog text-white flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200',
-                    fullscreen
-                      ? 'w-full h-full max-w-none max-h-none rounded-none sm:rounded-none'
-                      : 'w-[95%] sm:w-full max-w-md max-h-[85dvh] rounded-2xl'
-                  )}
+                  className="relative modal-content modal-dialog text-white flex flex-col min-h-0 animate-in fade-in zoom-in-95 duration-200 w-[95vw] sm:w-[min(320px,95vw)] max-w-[320px] max-h-[80dvh] rounded-2xl shadow-2xl"
                   onClick={(e) => e.stopPropagation()}
                 >
-                  {/* Header */}
-                  <div className="flex-shrink-0 flex items-center justify-between gap-2 p-3 sm:p-4 border-b border-white/10">
-                    <div className="flex items-center gap-2 min-w-0">
+                  {/* Шапка чату */}
+                  <div className="flex-shrink-0 flex items-center justify-between gap-2 px-3 py-2.5 border-b border-white/10">
+                    <div className="flex items-center gap-1.5 min-w-0">
                       <div className={cn(
-                        'w-10 h-10 rounded-full flex items-center justify-center text-white flex-shrink-0',
+                        'w-7 h-7 rounded-full flex items-center justify-center text-white flex-shrink-0 [&>svg]:w-3.5 [&>svg]:h-3.5',
                         getPlatformBgColor(selectedChat.platform)
                       )}>
                         {getPlatformIcon(selectedChat.platform)}
                       </div>
                       <div className="min-w-0">
-                        <div className="modal-title truncate">{selectedChat.senderName}</div>
-                        <div className="modal-subtitle">{getPlatformShortName(selectedChat.platform)}</div>
+                        <div className="text-sm font-semibold truncate">{selectedChat.senderName}</div>
+                        <div className="text-[10px] text-gray-400 flex flex-wrap items-center gap-x-2 gap-y-0 min-w-0">
+                          {selectedChat.phone && (
+                            <a href={`tel:${selectedChat.phone}`} className="hover:text-blue-400 transition-colors truncate" title="Зателефонувати">
+                              {selectedChat.phone}
+                            </a>
+                          )}
+                          {selectedChat.email && (
+                            <a href={`mailto:${selectedChat.email}`} className="hover:text-blue-400 transition-colors truncate" title="Написати">
+                              {selectedChat.email}
+                            </a>
+                          )}
+                          {(selectedChat.phone || selectedChat.email) && (
+                            <span className="text-gray-500">·</span>
+                          )}
+                          <span>{getPlatformShortName(selectedChat.platform)}</span>
+                        </div>
                       </div>
                     </div>
-                    <div className="flex items-center gap-1 flex-shrink-0">
+                    <div className="flex items-center gap-0.5 flex-shrink-0">
                       <button
                         type="button"
-                        onClick={() => setFullscreen((v) => !v)}
-                        className="p-2 text-gray-400 hover:text-white rounded-lg hover:bg-white/10 transition-colors"
-                        title={fullscreen ? 'Згорнути' : 'Розгорнути'}
-                        aria-label={fullscreen ? 'Згорнути' : 'Розгорнути'}
-                      >
-                        {fullscreen ? (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 6v12M6 18h12" />
-                          </svg>
-                        ) : (
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 8V4m0 0h4M4 4l5 5m11-1V4m0 0h-4m4 0l-5 5M4 16v4m0 0h4m-4 0l5-5m11 5l-5-5m5 5v-4m0 4h-4" />
-                          </svg>
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setSelectedChat(null)}
-                        className="modal-close touch-target text-gray-400 hover:text-white rounded-xl p-2"
+                        onClick={handleCloseChat}
+                        className="modal-close touch-target text-gray-400 hover:text-white rounded-lg p-1.5"
                         aria-label="Закрити"
                       >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                         </svg>
                       </button>
                     </div>
                   </div>
 
-                  {/* Scrollable thread */}
-                  <div className="flex-1 min-h-0 overflow-y-auto px-3 sm:px-4 py-3 flex flex-col">
-                    <div className="flex-1 min-h-[120px] space-y-3 mb-4">
+                  {/* Область переписки */}
+                  <div className="flex-1 min-h-0 overflow-hidden flex flex-col">
+                    <div className="flex-1 min-h-0 overflow-y-auto px-3 py-3 space-y-1.5">
                       {threadLoading ? (
-                        <div className="text-sm text-gray-400 py-8 text-center">Завантаження переписки...</div>
+                        <div className="text-xs text-gray-500 py-8 text-center">Завантаження...</div>
                       ) : thread.length === 0 ? (
-                        <div className="text-sm text-gray-500 py-8 text-center">Немає повідомлень</div>
+                        <div className="text-xs text-gray-500 py-8 text-center">Немає повідомлень</div>
                       ) : (
-                        thread.map((msg) => (
-                          <div
-                            key={msg.id}
-                            className={cn(
-                              'rounded-xl p-3 max-w-[90%] sm:max-w-[85%]',
-                              msg.direction === 'outbound'
-                                ? 'ml-auto bg-blue-600/30 border border-blue-500/30'
-                                : 'mr-auto bg-white/5 border border-white/10'
-                            )}
-                          >
-                            <p className="text-xs text-gray-400 mb-0.5">
-                              {msg.direction === 'outbound' ? 'Ви' : msg.senderName}
-                            </p>
-                            <p className="text-sm text-gray-100 whitespace-pre-wrap break-words">{msg.message}</p>
-                            <p className="text-[10px] text-gray-500 mt-1">
-                              {format(new Date(msg.timestamp), 'd MMM, HH:mm', { locale: uk })}
-                            </p>
-                          </div>
-                        ))
+                        thread.map((msg) => {
+                          const isYou = msg.direction === 'outbound'
+                          return (
+                            <div
+                              key={msg.id}
+                              className={cn('flex', isYou ? 'justify-end' : 'justify-start')}
+                            >
+                              <div
+                                className={cn(
+                                  'max-w-[85%] rounded-2xl px-3 py-2',
+                                  isYou
+                                    ? 'rounded-br-md bg-[#0088cc] text-white'
+                                    : 'rounded-bl-md bg-[#1e1e1e] text-gray-100 border border-white/10'
+                                )}
+                              >
+                                {!isYou && (
+                                  <div className="text-[10px] text-[#54a9eb] font-medium mb-0.5">{msg.senderName}</div>
+                                )}
+                                <div className="text-[13px] leading-relaxed whitespace-pre-wrap break-words">{msg.message}</div>
+                                <div className={cn('text-[10px] opacity-60 mt-0.5', isYou ? 'text-right' : 'text-left')}>
+                                  {format(new Date(msg.timestamp), 'HH:mm', { locale: uk })}
+                                </div>
+                              </div>
+                            </div>
+                          )
+                        })
                       )}
                     </div>
 
-                    {/* Reply Input */}
-                    <div className="space-y-2 flex-shrink-0">
+                    {/* Поле відповіді */}
+                    <div className="flex-shrink-0 p-3 pt-2 border-t border-white/10 space-y-1">
                       <textarea
                         value={replyText}
                         onChange={(e) => { setReplyText(e.target.value); setReplyError(null) }}
-                        placeholder="Введіть відповідь..."
-                        className="w-full bg-white/5 border border-white/10 rounded-lg p-3 text-white placeholder-gray-400 resize-none focus:outline-none focus:border-white/20 text-sm"
-                        rows={2}
-                        style={{ letterSpacing: '-0.01em' }}
+                        placeholder="Повідомлення..."
+                        className="w-full bg-[#1e1e1e] border border-white/15 rounded-xl px-3 py-2.5 text-white placeholder-gray-500 text-sm focus:outline-none focus:border-[#0088cc]/50 min-h-[40px] resize-none"
+                        rows={1}
                       />
                       {replyError && (
                         <p className="text-xs text-red-400" role="alert">{replyError}</p>
@@ -538,33 +648,33 @@ export function SocialMessagesCard({ businessId, initialOpenChat }: SocialMessag
                     </div>
                   </div>
 
-                  {/* Actions */}
-                  <div className="flex flex-wrap gap-2 p-3 sm:p-4 flex-shrink-0 border-t border-white/10">
+                  {/* Кнопки дій */}
+                  <div className="flex flex-wrap gap-2 px-3 py-2 flex-shrink-0 border-t border-white/10">
                     <button
                       type="button"
                       onClick={() => handleHideChat(selectedChat)}
-                      className="px-3 py-2 text-xs text-gray-400 hover:text-white border border-white/10 rounded-lg hover:bg-white/5 transition-colors"
+                      className="px-2.5 py-1.5 text-[10px] text-gray-400 hover:text-white border border-white/10 rounded-md hover:bg-white/5 transition-colors"
                     >
-                      Сховати чат
+                      Сховати
                     </button>
                     <button
                       type="button"
                       onClick={() => handleDeleteChat(selectedChat)}
-                      className="px-3 py-2 text-xs text-red-400 hover:text-red-300 border border-red-500/30 rounded-lg hover:bg-red-500/10 transition-colors"
+                      className="px-2.5 py-1.5 text-[10px] text-red-400 hover:text-red-300 border border-red-500/30 rounded-md hover:bg-red-500/10 transition-colors"
                     >
-                      Видалити переписку
+                      Видалити
                     </button>
                     <div className="flex-1" />
                     <button
-                      onClick={() => setSelectedChat(null)}
-                      className="px-4 py-2.5 bg-white/5 border border-white/10 rounded-lg text-sm font-medium text-white hover:bg-white/10 transition-colors"
+                      onClick={handleCloseChat}
+                      className="px-3 py-2 bg-white/5 border border-white/10 rounded-md text-xs font-medium text-white hover:bg-white/10 transition-colors"
                     >
                       Закрити
                     </button>
                     <button
                       onClick={handleReply}
                       disabled={!replyText.trim() || sending || !(selectedChat.firstInboundId || firstInboundIdFromThread)}
-                      className="px-4 py-2.5 bg-white text-black rounded-lg text-sm font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
+                      className="px-3 py-2 bg-white text-black rounded-md text-xs font-semibold hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                       {sending ? 'Відправка...' : 'Відправити'}
                     </button>
@@ -572,8 +682,6 @@ export function SocialMessagesCard({ businessId, initialOpenChat }: SocialMessag
                 </div>
               </div>
             </ModalPortal>
-          )}
-        </>
       )}
     </div>
   )
