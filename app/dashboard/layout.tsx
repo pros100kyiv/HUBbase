@@ -211,8 +211,8 @@ export default function DashboardLayout({
       {/* AI Chat Widget — тимчасово приховано */}
       {false && mounted && (() => {
         try {
-          const businessData = getBusinessData()
-          if (typeof businessData === 'string') {
+          const businessData = getBusinessData() ?? ''
+          if (businessData) {
             const business = JSON.parse(businessData)
             if (business?.id) {
               return (
