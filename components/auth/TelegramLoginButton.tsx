@@ -3,6 +3,7 @@
 import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { toast } from '@/components/ui/toast'
+import { setBusinessData } from '@/lib/business-storage'
 
 declare global {
   interface Window {
